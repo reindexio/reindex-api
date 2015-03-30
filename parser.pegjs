@@ -1,10 +1,16 @@
 start
   = call:root_call properties:block
-    { call.properties = properties.properties; return call; }
+    { call.properties = properties; call.root = true; return call; }
 
 root_call
-  = ws? call:call
-    { call.root = true; return call; }
+  = root_call_nested /
+    root_call_direct
+
+root_call_nested = ws? name:identifier calls:calls
+  { return { name: name, calls: calls, type: "call" }; }
+
+root_call_direct = ws? call:call
+  { return { name: call.call, calls: [{parameters: call.parameters}], type: "call"}; }
 
 calls
   = calls:("." call:call { return call })+
@@ -31,11 +37,11 @@ parameter_list
     { return parameter_list; }
 
 parameter
-  = parameter:[a-zA-Z0-9]+ { return parameter.join('') }
+  = parameter:[a-zA-Z0-9_=]+ { return parameter.join('') }
 
 block
   = ws? '{' ws? properties:properties ws? '}' ws?
-    { return { properties: properties } }
+    { return properties }
 
 properties
   = properties:(
@@ -52,15 +58,15 @@ property
 
 simple_property
   = name:identifier ws?
-    { return { name: name }; }
+    { return { name: name, type: "field" }; }
 
 object_property
   = name:identifier properties:block
-    { return { name: name, properties: properties } }
+    { return { name: name, properties: properties, type: "nested" } }
 
 call_property
-  = name:identifier calls:calls properties:block
-    { return { name: name, calls: calls, properties: properties }; }
+  = name:identifier calls:calls properties:block?
+    { return { name: name, calls: calls, properties: properties, type: "call" }; }
 
 property_separator
   = ','

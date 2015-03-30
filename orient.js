@@ -1,4 +1,5 @@
 import Oriento from "oriento";
+import Immutable from "immutable";
 import {DB_CONFIG} from "./settings";
 
 export function getDb() {
@@ -15,25 +16,60 @@ function isOrientClass(cls) {
   );
 }
 
+const ORIENT_TYPES = [
+  'BOOLEAN',
+  'INTEGER',
+  'SHORT',
+  'LONG',
+  'FLOAT',
+  'DOUBLE',
+  'DATETIME',
+  'STRING',
+  'BINARY',
+  'EMBEDDED',
+  'EMBEDDEDLIST',
+  'EMBEDDEDSET',
+  'EMBEDDEDMAP',
+  'LINK',
+  'LINKLIST',
+  'LINKSET',
+  'LINKMAP',
+  'BYTE',
+  'TRANSIENT',
+  'DATE',
+  'CUSTOM',
+  'DECIMAL',
+  'LINKBAG',
+  'ANY'
+];
+
 function extractType(cls) {
   return {
-    name: cls.name
+    name: cls.name,
+    properties: Immutable.Seq(cls.properties)
+      .toKeyedSeq()
+      .mapEntries(([,prop]) => {
+        let obj = {
+          name: prop.name,
+          type: ORIENT_TYPES[prop.type],
+          linkedClass: prop.linkedClass
+        };
+        return [prop.name, obj];
+      })
+      .toJS()
   };
-}
-
-export function getType(db, name) {
-
 }
 
 export function getSchema(db) {
   return db['class']
     .list()
     .then((classes) => {
-      return classes.filter((cls) => !isOrientClass(cls));
-    })
-    .then((classes) => classes.map(extractType));
-}
-
-export function graphqlToSql(query) {
-  let root = query.call;
+      let result = {};
+      for (let cls of classes) {
+        if (!isOrientClass(cls)) {
+          result[cls.name] = extractType(cls);
+        }
+      }
+      return result;
+    });
 }

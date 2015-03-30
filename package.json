@@ -3,6 +3,8 @@
   "description": "graphql-api",
   "repository": {},
   "dependencies": {
+    "base64-js": "0.0.8",
+    "immutable": "^3.7.1",
     "oriento": "^1.1.3",
     "pegjs": "^0.8.0"
   },
