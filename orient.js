@@ -15,7 +15,7 @@ function isOrientClass(cls) {
   );
 }
 
-function extractType(cls, ) {
+function extractType(cls) {
   return {
     name: cls.name
   };
@@ -32,4 +32,8 @@ export function getSchema(db) {
       return classes.filter((cls) => !isOrientClass(cls));
     })
     .then((classes) => classes.map(extractType));
+}
+
+export function graphqlToSql(query) {
+  let root = query.call;
 }
