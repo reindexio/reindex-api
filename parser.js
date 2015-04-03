@@ -33,43 +33,97 @@ module.exports = (function() {
         peg$startRuleFunction  = peg$parsestart,
 
         peg$c0 = peg$FAILED,
-        peg$c1 = function(call, properties) { call.properties = properties; call.root = true; return call; },
+        peg$c1 = function(call, children) {
+              return new graphql.GQLRoot({
+                node: call.set("children", Immutable.List(children))
+              });
+            },
         peg$c2 = null,
-        peg$c3 = function(name, calls) { return { name: name, calls: calls, type: "call" }; },
-        peg$c4 = function(call) { return { name: call.call, calls: [{parameters: call.parameters}], type: "call"}; },
+        peg$c3 = function(name, calls) {
+            return new graphql.GQLNode({
+              name: name,
+              calls: calls
+            });
+          },
+        peg$c4 = function(call) {
+            return new graphql.GQLNode({
+              name: call.name,
+              calls: Immutable.List.of(
+                new graphql.GQLCall({parameters: call.parameters})
+              )
+            });
+          },
         peg$c5 = [],
         peg$c6 = ".",
         peg$c7 = { type: "literal", value: ".", description: "\".\"" },
         peg$c8 = function(call) { return call },
-        peg$c9 = function(calls) { return Array.isArray(calls) ? calls : [calls]; },
-        peg$c10 = function(name, parameters) { return { call: name, parameters: parameters }},
+        peg$c9 = function(calls) {
+              if (Array.isArray(calls)) {
+                return Immutable.List(calls);
+              } else {
+                return Immutable.List.of(calls);
+              }
+            },
+        peg$c10 = function(name, parameters) {
+              return new graphql.GQLCall({
+                name: name,
+                parameters: parameters
+              });
+            },
         peg$c11 = "(",
         peg$c12 = { type: "literal", value: "(", description: "\"(\"" },
         peg$c13 = ")",
         peg$c14 = { type: "literal", value: ")", description: "\")\"" },
-        peg$c15 = function(call_parameters) { return call_parameters; },
+        peg$c15 = function(call_parameters) {
+              return call_parameters;
+            },
         peg$c16 = function(p) { return p },
         peg$c17 = function(first, rest) { return [first].concat(rest); },
-        peg$c18 = function(parameter_list) { return parameter_list; },
-        peg$c19 = /^[a-zA-Z0-9_=]/,
-        peg$c20 = { type: "class", value: "[a-zA-Z0-9_=]", description: "[a-zA-Z0-9_=]" },
-        peg$c21 = function(parameter) { return parameter.join('') },
+        peg$c18 = function(parameter_list) {
+              return Immutable.List(parameter_list);
+            },
+        peg$c19 = /^[a-zA-Z0-9_=\-]/,
+        peg$c20 = { type: "class", value: "[a-zA-Z0-9_=\\-]", description: "[a-zA-Z0-9_=\\-]" },
+        peg$c21 = function(parameter) {
+              return parameter.join('');
+            },
         peg$c22 = "{",
         peg$c23 = { type: "literal", value: "{", description: "\"{\"" },
         peg$c24 = "}",
         peg$c25 = { type: "literal", value: "}", description: "\"}\"" },
-        peg$c26 = function(properties) { return properties },
-        peg$c27 = function(properties) { return properties; },
-        peg$c28 = function(name) { return { name: name, type: "field" }; },
-        peg$c29 = function(name, properties) { return { name: name, properties: properties, type: "nested" } },
-        peg$c30 = function(name, calls, properties) { return { name: name, calls: calls, properties: properties, type: "call" }; },
+        peg$c26 = function(children) {
+              return children;
+            },
+        peg$c27 = function(first, rest) {
+                return [first].concat(rest);
+              },
+        peg$c28 = function(name) {
+              return new graphql.GQLLeaf({
+                name: name
+              });
+            },
+        peg$c29 = function(name, children) {
+              return new graphql.GQLNode({
+                name: name,
+                children: Immutable.List(children)
+              });
+            },
+        peg$c30 = function(name, calls, children) {
+              return new graphql.GQLNode({
+                name: name,
+                calls: Immutable.List(calls),
+                children: Immutable.List(children)
+              });
+            },
         peg$c31 = ",",
         peg$c32 = { type: "literal", value: ",", description: "\",\"" },
         peg$c33 = /^[a-zA-Z$]/,
         peg$c34 = { type: "class", value: "[a-zA-Z$]", description: "[a-zA-Z$]" },
         peg$c35 = /^[a-zA-z0-9_]/,
         peg$c36 = { type: "class", value: "[a-zA-z0-9_]", description: "[a-zA-z0-9_]" },
-        peg$c37 = function(prefix, suffix) { return prefix + suffix.join(''); },
+        peg$c37 = function(prefix, suffix) {
+              return prefix + suffix.join('');
+            },
         peg$c38 = { type: "other", description: "whitespace" },
         peg$c39 = /^[ \t\n\r]/,
         peg$c40 = { type: "class", value: "[ \\t\\n\\r]", description: "[ \\t\\n\\r]" },
@@ -648,7 +702,7 @@ module.exports = (function() {
             s3 = peg$c2;
           }
           if (s3 !== peg$FAILED) {
-            s4 = peg$parseproperties();
+            s4 = peg$parsechildren();
             if (s4 !== peg$FAILED) {
               s5 = peg$parsews();
               if (s5 === peg$FAILED) {
@@ -703,7 +757,7 @@ module.exports = (function() {
       return s0;
     }
 
-    function peg$parseproperties() {
+    function peg$parsechildren() {
       var s0, s1, s2, s3, s4, s5, s6, s7;
 
       s0 = peg$currPos;
@@ -766,7 +820,7 @@ module.exports = (function() {
         }
         if (s3 !== peg$FAILED) {
           peg$reportedPos = s1;
-          s2 = peg$c17(s2, s3);
+          s2 = peg$c27(s2, s3);
           s1 = s2;
         } else {
           peg$currPos = s1;
@@ -778,7 +832,7 @@ module.exports = (function() {
       }
       if (s1 !== peg$FAILED) {
         peg$reportedPos = s0;
-        s1 = peg$c27(s1);
+        s1 = peg$c26(s1);
       }
       s0 = s1;
 
@@ -970,6 +1024,11 @@ module.exports = (function() {
 
       return s0;
     }
+
+
+      var Immutable = require('immutable');
+      var graphql = require('./graphql');
+
 
     peg$result = peg$startRuleFunction();
 
