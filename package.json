@@ -3,12 +3,12 @@
   "description": "graphql-api",
   "repository": {},
   "dependencies": {
-    "base64-js": "0.0.8",
+    "babel": "^4.7.16",
     "immutable": "^3.7.1",
-    "oriento": "^1.1.3",
-    "pegjs": "^0.8.0"
+    "pegjs": "^0.8.0",
+    "rethinkdb": "^1.16.2"
   },
-  "devDependencies": {
-    "babel": "^4.7.16"
+  "scripts": {
+    "compile_grammar": "pegjs parser.pegjs"
   }
 }
