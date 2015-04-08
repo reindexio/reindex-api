@@ -43,8 +43,8 @@ export class OrderByConverter extends Immutable.Record({
 export class IDSelector extends Immutable.Record({
   ids: Immutable.List()
 }) {
-  toRQL(r, db, table, single, obj) {
-    let table = db.table(table);
+  toRQL(r, db, tableName, single) {
+    let table = db.table(tableName);
     if (single) {
       return table.get(this.ids[0]);
     } else {
@@ -54,10 +54,10 @@ export class IDSelector extends Immutable.Record({
 }
 
 export class RelatedSelector extends Immutable.Record({
-  relatedField: ""
+  relatedField: ''
 }) {
-  toRQL(r, db, table, single, obj = undefined) {
-    let table = db.table(table);
+  toRQL(r, db, tableName, single, obj = undefined) {
+    let table = db.table(tableName);
     let selector = obj || r.row;
     if (single) {
       return table.get(selector(this.relatedField));
@@ -68,10 +68,10 @@ export class RelatedSelector extends Immutable.Record({
 }
 
 export class ReverseRelatedSelector extends Immutable.Record({
-  relatedField: ""
+  relatedField: ''
 }) {
-  toRQL(r, db, table, single, obj) {
-    let table = db.table(table);
+  toRQL(r, db, tableName, single, obj) {
+    let table = db.table(tableName);
     let query = table.getAll(obj('id'), {index: this.relatedField});
     if (single) {
       return query.nth(0);
@@ -84,7 +84,7 @@ export class ReverseRelatedSelector extends Immutable.Record({
 export class FieldSelector extends Immutable.Record({
   path: Immutable.List()
 }) {
-  toRQL(r, db, table, single, obj = undefined) {
+  toRQL(r, db, tableName, single, obj = undefined) {
     return this.path.reduce((acc, next) => {
       return acc(next);
     }, obj || r.row);
@@ -232,6 +232,7 @@ function processChild(schema, tableName, query, parents, childNode) {
     }
   } else if (nodeSchema.isEdgeable()) {
     // TODO(freiksenet, 2015-04-08): Stub
+    return processArray();
   } else {
     return processNode(
       schema,
@@ -245,6 +246,7 @@ function processChild(schema, tableName, query, parents, childNode) {
 
 function processArray() {
   // TODO(freiksenet, 2015-04-08): Stub
+  return true;
 }
 
 function processToManyConnection(schema, nodeSchema, query, node, parents) {
@@ -260,7 +262,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
   }
 
   let field = parents.concat(['_']);
-  let query = query.setIn(
+  query = query.setIn(
     ['map', ...field],
     baseQuery
   );
@@ -293,10 +295,10 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
              []
            )
          ];
-      }
+       }
     })
-    .reduce((query, [selector, next]) => {
-      return query.setIn(
+    .reduce((q, [selector, next]) => {
+      return q.setIn(
         ['map', ...selector],
         next
       ).setIn(

@@ -1,0 +1,38 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "strict": 0,
+    "indent": [2, 2],
+    "quotes": [2, "single"],
+    "new-cap": [2, {
+      "capIsNewExceptions": [
+        "List",
+        "OrderedMap",
+        "Map",
+        "Set",
+        "OrderedSet",
+        "Stack",
+        "Range",
+        "Repeat",
+        "Record",
+        "Seq",
+        "KeyedSeq",
+        "IndexedSeq",
+        "SetSeq",
+        "Iterable",
+        "KeyedIterable",
+        "IndexedIterable",
+        "SetIterable",
+        "Collection",
+        "KeyedCollection",
+        "IndexedCollection",
+        "SetCollection"
+      ]
+    }],
+    "no-use-before-define": [2, "nofunc"],
+    "consistent-return": [1]
+  },
+  "env": {
+    "node": true
+  }
+}

@@ -5,7 +5,7 @@ export class GQLRoot extends Immutable.Record({
 }) {}
 
 export class GQLNode extends Immutable.Record({
-  name: "",
+  name: '',
   calls: Immutable.List(),
   children: Immutable.List()
 }) {
@@ -19,13 +19,13 @@ export class GQLNode extends Immutable.Record({
 }
 
 export class GQLCall extends Immutable.Record({
-  name: "",
+  name: '',
   parameters: Immutable.List()
   //kwParameters: Immutable.Map()
 }) {}
 
 export class GQLLeaf extends Immutable.Record({
-  name: ""
+  name: ''
 }) {
   isLeaf() {
     return true;
