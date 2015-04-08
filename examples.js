@@ -79,7 +79,7 @@
 //   }
 // }
 
-/* eslint no-process-exit: [0] */
+/* eslint no-process-exit: [0], no-var: [0] */
 
 require('babel/register');
 var Immutable = require('immutable');
@@ -89,7 +89,7 @@ var parser = require('./parser');
 var query = require('./query');
 
 function makeRootCall(tableName) {
-  return function () {
+  return function tableRootCall() {
     return {
       preQueries: Immutable.List(),
       query: new query.Query({
@@ -160,12 +160,12 @@ var rql2 = query.constructQuery(testSchema, gql2);
 console.log(rql2);
 console.log(rql2.query.toRQL(r, db).toString());
 
-r.connect({}, function (err, conn) {
+r.connect({}, function connectionCallback(err, conn) {
   if (err) {
     console.log(err);
   } else {
     var q = rql2.query.toRQL(r, db);
-    q.run(conn).then(function (result) {
+    q.run(conn).then(function resultCallback(result) {
       console.log(JSON.stringify(result, null, 2));
       process.exit();
     });

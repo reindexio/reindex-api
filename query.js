@@ -160,7 +160,7 @@ function mergeQueries(left, right) {
 
 function mappingToRql(r, db, mapping) {
   function mapper(leaf, key, keys) {
-    return function (obj) {
+    return function subQuery(obj) {
       return Immutable.Map()
         .setIn(keys, leaf.toRQL(r, db, obj))
         .toJS();
