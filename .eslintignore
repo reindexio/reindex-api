@@ -1,2 +1,2 @@
-parser.pegjs
-parser.js
+graphql/Grammar.pegjs
+graphql/Parser.js

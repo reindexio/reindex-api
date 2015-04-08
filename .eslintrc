@@ -1,7 +1,8 @@
 {
   "parser": "babel-eslint",
   "env": {
-    "node": true
+    "node": true,
+    "mocha": true
   },
   "rules": {
     "strict": 0,
@@ -25,7 +26,7 @@
     "space-infix-ops": 2,
     "eol-last": 2,
     "space-before-blocks": 2,
-    "comma-dangle": [2, "always"],
+    "comma-dangle": [2, "always-multiline"],
     "comma-style": 2,
     "semi": [2, "always"],
     "semi-spacing": 2,
@@ -35,7 +36,6 @@
     "no-wrap-func": 2,
     "one-var": [2, "never"],
     "camelcase": 2,
-    "func-names": 2,
     "key-spacing": 2,
     "no-dupe-keys": 2,
     "no-use-before-define": [2, "nofunc"],
