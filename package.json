@@ -15,6 +15,6 @@
   "scripts": {
     "compile_grammar": "pegjs parser.pegjs",
     "lint": "eslint ./",
-    "test": "npm lint"
+    "test": "npm run lint"
   }
 }
