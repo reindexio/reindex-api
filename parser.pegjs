@@ -28,7 +28,7 @@ root_call_direct = ws? call:call
     return new graphql.GQLNode({
       name: call.name,
       calls: Immutable.List.of(
-        new graphql.GQLCall({parameters: call.parameters})
+        new graphql.GQLCall({name: "__call__", parameters: call.parameters})
       )
     });
   }

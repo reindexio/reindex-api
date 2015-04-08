@@ -110,7 +110,7 @@ var testSchema = new schema.Schema({
     Micropost: makeRootCall('Micropost')
   }),
   calls: Immutable.Map({
-    "": getById
+    "__call__": getById
   }),
   tables: Immutable.Map({
     User: Immutable.Map({

@@ -2,7 +2,7 @@ import Immutable from 'immutable';
 import graphql from './graphql';
 import {walkLeafs} from './utils';
 
-export class Slice extends Immutable.Record({
+export class SliceConverter extends Immutable.Record({
   from: undefined,
   to: undefined
 }) {
@@ -11,7 +11,7 @@ export class Slice extends Immutable.Record({
   }
 }
 
-export class CoerceConvert extends Immutable.Record({
+export class CoerceConverter extends Immutable.Record({
   to: ''
 }) {
   toRQL(r, db, query) {
@@ -19,10 +19,24 @@ export class CoerceConvert extends Immutable.Record({
   }
 }
 
-export class CountConvert extends Immutable.Record({
+export class CountConverter extends Immutable.Record({
 }) {
   toRQL(r, db, query) {
     return query.count();
+  }
+}
+
+export class OrderByConverter extends Immutable.Record({
+  orderBy: ''
+}) {
+  toRQL(r, db, query) {
+    let orderBy;
+    if (this.orderBy[0] === '-') {
+      orderBy = r.desc(this.orderBy.slice(1));
+    } else {
+      orderBy = r.asc(this.orderBy);
+    }
+    return query.orderBy(orderBy);
   }
 }
 
@@ -30,11 +44,11 @@ export class IDSelector extends Immutable.Record({
   ids: Immutable.List()
 }) {
   toRQL(r, db, table, single, obj) {
-    let t = db.table(table);
+    let table = db.table(table);
     if (single) {
-      return t.get(this.ids[0]);
+      return table.get(this.ids[0]);
     } else {
-      return t.getAll(...this.ids);
+      return table.getAll(...this.ids);
     }
   }
 }
@@ -43,12 +57,12 @@ export class RelatedSelector extends Immutable.Record({
   relatedField: ""
 }) {
   toRQL(r, db, table, single, obj = undefined) {
-    let t = db.table(table);
+    let table = db.table(table);
     let selector = obj || r.row;
     if (single) {
-      return t.get(selector(this.relatedField));
+      return table.get(selector(this.relatedField));
     } else {
-      return t.getAll(selector(this.relatedField));
+      return table.getAll(selector(this.relatedField));
     }
   }
 }
@@ -57,12 +71,12 @@ export class ReverseRelatedSelector extends Immutable.Record({
   relatedField: ""
 }) {
   toRQL(r, db, table, single, obj) {
-    let t = db.table(table);
-    let q = t.getAll(obj('id'), {index: this.relatedField});
+    let table = db.table(table);
+    let query = table.getAll(obj('id'), {index: this.relatedField});
     if (single) {
-      return q.nth(0);
+      return query.nth(0);
     } else {
-      return q;
+      return query;
     }
   }
 }
@@ -83,43 +97,25 @@ export class Query extends Immutable.Record({
   selector: undefined,
   pluck: Immutable.Map(),
   map: Immutable.OrderedMap(),
-  orderBy: undefined,
-  slice: undefined,
-  convert: undefined
+  converters: Immutable.List()
 }) {
   toRQL(r, db, obj) {
-    let q = this.selector.toRQL(r, db, this.table, this.single, obj);
+    let query = this.selector.toRQL(r, db, this.table, this.single, obj);
 
-    if (this.orderBy) {
-      let orderBy;
-      if (this.orderBy[0] === '-') {
-        orderBy = r.desc(this.orderBy.slice(1));
-      } else {
-        orderBy = r.asc(this.orderBy);
-      }
-      q = q.orderBy(orderBy);
-    }
+    let rqlMap = mappingToRql(r, db, this.map);
+    query = rqlMap.reduce((q, mapping) => {
+      return q.merge(mapping);
+    }, query);
 
-    if (this.slice) {
-      q = this.slice.toRQL(r, db, q);
-    }
-
-    if (!this.map.isEmpty()) {
-      let rqlMap = mappingToRql(r, db, this.map);
-      q = rqlMap.reduce((q, mapping) => {
-        return q.merge(mapping);
-      }, q);
-    }
+    query = this.converters.reduce((q, converter) => {
+      return converter.toRQL(r, db, q);
+    }, query);
 
     if (!this.pluck.isEmpty()) {
-      q = q.pluck(this.pluck.toJS());
+      query = query.pluck(this.pluck.toJS());
     }
 
-    if (this.convert) {
-      q = this.convert.toRQL(r, db, q);
-    }
-
-    return q;
+    return query;
   }
 }
 
@@ -136,7 +132,7 @@ export function constructQuery(schema, graphQLRoot) {
 function processNode(schema, tableName, query, node, parents = []) {
   if (node.isLeaf()) {
     return query.setIn(
-      ['pluck'].concat(parents),
+      ['pluck', ...parents],
       true
     );
   } else {
@@ -157,22 +153,23 @@ function processNode(schema, tableName, query, node, parents = []) {
 function mergeQueries(left, right) {
   return left.merge(right).merge({
     pluck: left.pluck.merge(right.pluck),
-    map: left.map.merge(right.map)
+    map: left.map.merge(right.map),
+    converters: left.converters.concat(right.converters)
   });
 }
 
 function mappingToRql(r, db, mapping) {
-  return walkLeafs(mapping,
-    (leaf, key, keys) => {
-      return function (obj) {
-        return Immutable.Map()
-          .setIn(keys, leaf.toRQL(r, db, obj))
-          .toJS();
-      };
-    }, (leaf) => {
-      return !leaf.toRQL;
-    }
-  );
+  function mapper(leaf, key, keys) {
+    return function (obj) {
+      return Immutable.Map()
+        .setIn(keys, leaf.toRQL(r, db, obj))
+        .toJS();
+    };
+  }
+  function isLeaf(node) {
+    return !node.toRQL;
+  }
+  return walkLeafs(mapping, mapper, isLeaf);
 }
 
 function getRootCall(rootCalls, root) {
@@ -196,7 +193,7 @@ function getNodeSchema(schema, tableName, parents, nodeName) {
   let parentSchema = parents.reduce((schemaPart, next) => {
     let nextSchema = schemaPart.get(next);
     if (nextSchema.isNestable()) {
-      if (nextSchema.isRelation()) {
+      if (nextSchema.isConnection()) {
         return schema[nextSchema.target];
       } else {
         return nextSchema.childSchema;
@@ -215,7 +212,7 @@ function processChild(schema, tableName, query, parents, childNode) {
     parents,
     childNode.name
   );
-  if (nodeSchema.isRelation()) {
+  if (nodeSchema.isConnection()) {
     if (nodeSchema.isEdgeable()) {
       return processToManyConnection(
         schema,
@@ -234,7 +231,7 @@ function processChild(schema, tableName, query, parents, childNode) {
       );
     }
   } else if (nodeSchema.isEdgeable()) {
-
+    // TODO(freiksenet, 2015-04-08): Stub
   } else {
     return processNode(
       schema,
@@ -247,7 +244,7 @@ function processChild(schema, tableName, query, parents, childNode) {
 }
 
 function processArray() {
-
+  // TODO(freiksenet, 2015-04-08): Stub
 }
 
 function processToManyConnection(schema, nodeSchema, query, node, parents) {
@@ -256,7 +253,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
     selector: new ReverseRelatedSelector({
       relatedField: nodeSchema.reverseName
     }),
-    convert: new CoerceConvert({to: 'array'})
+    converters: Immutable.List.of(new CoerceConverter({to: 'array'}))
   });
   if (node.calls) {
     baseQuery = applyCalls(schema, baseQuery, node);
@@ -264,7 +261,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
 
   let field = parents.concat(['_']);
   let query = query.setIn(
-    ['map'].concat(field),
+    ['map', ...field],
     baseQuery
   );
 
@@ -272,7 +269,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
     selector: new FieldSelector({
       path: field
     }),
-    convert: undefined
+    converters: Immutable.List()
   });
 
   return node.children
@@ -281,7 +278,9 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
       if (name === 'count') {
         return [
           parents.concat(['count']),
-          nestedQuery.set('convert', new CountConvert({}))
+          nestedQuery.updateIn(['converters'], (c) => {
+            return c.push(new CountConverter({}));
+          })
         ];
        } else if (name === 'edges') {
          return [
@@ -298,10 +297,10 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
     })
     .reduce((query, [selector, next]) => {
       return query.setIn(
-        ['map'].concat(selector),
+        ['map', ...selector],
         next
       ).setIn(
-        ['pluck'].concat(selector),
+        ['pluck', ...selector],
         true
       );
     }, query);
@@ -322,10 +321,10 @@ function processToOneConnection(schema, targetTable, query, node, parents) {
     []
   );
   return query.setIn(
-    ['map'].concat(parents),
+    ['map', ...parents],
     newQuery
   ).setIn(
-    ['pluck'].concat(parents),
+    ['pluck', ...parents],
     true
   );
 }

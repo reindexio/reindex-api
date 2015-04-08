@@ -28,7 +28,7 @@ export class SchemaPrimitiveField extends Immutable.Record({
     return false;
   }
 
-  isRelation() {
+  isConnection() {
     return false;
   }
 }
@@ -45,7 +45,7 @@ export class SchemaObjectField extends Immutable.Record({
     return false;
   }
 
-  isRelation() {
+  isConnection() {
     return false;
   }
 }
@@ -62,7 +62,7 @@ export class SchemaArrayField extends Immutable.Record({
     return true;
   }
 
-  isRelation() {
+  isConnection() {
     return false;
   }
 }
@@ -80,7 +80,7 @@ export class SchemaConnectionListField extends Immutable.Record({
     return true;
   }
 
-  isRelation() {
+  isConnection() {
     return true;
   }
 }
@@ -98,7 +98,7 @@ export class SchemaConnectionField extends Immutable.Record({
     return false;
   }
 
-  isRelation() {
+  isConnection() {
     return true;
   }
 }

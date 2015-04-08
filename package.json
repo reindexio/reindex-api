@@ -3,10 +3,10 @@
   "description": "graphql-api",
   "repository": {},
   "dependencies": {
+    "babel": "^4.7.16",
     "immutable": "^3.7.1",
     "pegjs": "^0.8.0",
-    "rethinkdbdash": "^1.16.13",
-    "babel": "^4.7.16"
+    "rethinkdb": "^1.16.2"
   },
   "scripts": {
     "compile_grammar": "pegjs parser.pegjs"
