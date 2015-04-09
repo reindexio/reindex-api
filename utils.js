@@ -11,25 +11,25 @@ import Immutable from 'immutable';
 **/
 export function walkLeafs(iterable, mapper,
                           isLeaf = Immutable.Iterable.isIterable) {
-  function walkLeafsRecur(node, mapper, keys, keyed, isLeaf) {
-    if (isLeaf(node)) {
-      if (node.isEmpty()) {
-        return Immutable.List();
-      }
-      if (!keyed) {
-        node = node.entrySeq();
-      }
-      let [nextKey, nextValue] = node.first();
-      let rest = node.skip(1);
-      return walkLeafsRecur(
-        nextValue, mapper, keys.push(nextKey), false, isLeaf
-      ).concat(
-        walkLeafsRecur(rest, mapper, keys, true, isLeaf)
-      );
-    } else {
-      return Immutable.List.of(mapper(node, keys.last(), keys));
-    }
-  }
-
   return walkLeafsRecur(iterable, mapper, Immutable.List(), false, isLeaf);
+}
+
+function walkLeafsRecur(node, mapper, keys, keyed, isLeaf) {
+  if (isLeaf(node)) {
+    if (node.isEmpty()) {
+      return Immutable.List();
+    }
+    if (!keyed) {
+      node = node.entrySeq();
+    }
+    let [nextKey, nextValue] = node.first();
+    let rest = node.skip(1);
+    return walkLeafsRecur(
+      nextValue, mapper, keys.push(nextKey), false, isLeaf
+    ).concat(
+      walkLeafsRecur(rest, mapper, keys, true, isLeaf)
+    );
+  } else {
+    return Immutable.List.of(mapper(node, keys.last(), keys));
+  }
 }

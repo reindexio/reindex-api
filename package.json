@@ -1,6 +1,6 @@
 {
-  "name": "graphql-api",
-  "description": "graphql-api",
+  "name": "reindex-api",
+  "description": "reindex-api",
   "repository": {},
   "dependencies": {
     "babel": "^4.7.16",
@@ -8,7 +8,13 @@
     "pegjs": "^0.8.0",
     "rethinkdb": "^1.16.2"
   },
+  "devDependencies": {
+    "babel-eslint": "^2.0.2",
+    "eslint": "^0.18.0"
+  },
   "scripts": {
-    "compile_grammar": "pegjs parser.pegjs"
+    "compile_grammar": "pegjs parser.pegjs",
+    "lint": "eslint ./",
+    "test": "npm run lint"
   }
 }

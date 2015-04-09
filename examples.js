@@ -79,6 +79,8 @@
 //   }
 // }
 
+/* eslint no-process-exit: [0], no-var: [0] */
+
 require('babel/register');
 var Immutable = require('immutable');
 var r = require('rethinkdb');
@@ -87,7 +89,7 @@ var parser = require('./parser');
 var query = require('./query');
 
 function makeRootCall(tableName) {
-  return function (node) {
+  return function tableRootCall() {
     return {
       preQueries: Immutable.List(),
       query: new query.Query({
@@ -110,7 +112,7 @@ var testSchema = new schema.Schema({
     Micropost: makeRootCall('Micropost')
   }),
   calls: Immutable.Map({
-    "__call__": getById
+    '__call__': getById
   }),
   tables: Immutable.Map({
     User: Immutable.Map({
@@ -144,9 +146,9 @@ var testSchema = new schema.Schema({
 
 var db = r.db('test');
 
-var q1 = "Micropost(f2f7fb49-3581-4caa-b84b-e9489eb47d84) { text, createdAt, author { handle }}";
+var q1 = 'Micropost(f2f7fb49-3581-4caa-b84b-e9489eb47d84) { text, createdAt, author { handle }}';
 var gql1 = parser.parse(q1);
-var q2 = "User(bbd1db98-4ac4-40a7-b514-968059c3dbac) { handle, microposts { count, edges { text, createdAt }}}";
+var q2 = 'User(bbd1db98-4ac4-40a7-b514-968059c3dbac) { handle, microposts { count, edges { text, createdAt }}}';
 var gql2 = parser.parse(q2);
 
 console.log(gql1);
@@ -158,12 +160,16 @@ var rql2 = query.constructQuery(testSchema, gql2);
 console.log(rql2);
 console.log(rql2.query.toRQL(r, db).toString());
 
-r.connect({}, function (err, conn) {
-  var q = rql2.query.toRQL(r, db);
-  q.run(conn).then(function (result) {
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(0);
-  });
+r.connect({}, function connectionCallback(err, conn) {
+  if (err) {
+    console.log(err);
+  } else {
+    var q = rql2.query.toRQL(r, db);
+    q.run(conn).then(function resultCallback(result) {
+      console.log(JSON.stringify(result, null, 2));
+      process.exit();
+    });
+  }
 });
 
 // var Immutable = require('immutable');
