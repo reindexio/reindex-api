@@ -1,131 +1,25 @@
 import Immutable from 'immutable';
-import graphql from './graphql';
-import {walkLeafs} from './utils';
+import Query from './Query';
+import IDSelector from './selectors/IDSelector';
+import RelatedSelector from './selectors/RelatedSelector';
+import ReverseRelatedSelector from './selectors/ReverseRelatedSelector';
+import FieldSelector from './selectors/FieldSelector';
+import CoerceConverter from './converters/CoerceConverter';
+import CountConverter from './converters/CountConverter';
 
-export class SliceConverter extends Immutable.Record({
-  from: undefined,
-  to: undefined
-}) {
-  toRQL(r, db, query) {
-    return query.slice(this.from, this.to);
-  }
-}
-
-export class CoerceConverter extends Immutable.Record({
-  to: ''
-}) {
-  toRQL(r, db, query) {
-    return query.coerceTo(this.to);
-  }
-}
-
-export class CountConverter extends Immutable.Record({
-}) {
-  toRQL(r, db, query) {
-    return query.count();
-  }
-}
-
-export class OrderByConverter extends Immutable.Record({
-  orderBy: ''
-}) {
-  toRQL(r, db, query) {
-    let orderBy;
-    if (this.orderBy[0] === '-') {
-      orderBy = r.desc(this.orderBy.slice(1));
-    } else {
-      orderBy = r.asc(this.orderBy);
-    }
-    return query.orderBy(orderBy);
-  }
-}
-
-export class IDSelector extends Immutable.Record({
-  ids: Immutable.List()
-}) {
-  toRQL(r, db, tableName, single) {
-    let table = db.table(tableName);
-    if (single) {
-      return table.get(this.ids[0]);
-    } else {
-      return table.getAll(...this.ids);
-    }
-  }
-}
-
-export class RelatedSelector extends Immutable.Record({
-  relatedField: ''
-}) {
-  toRQL(r, db, tableName, single, obj = undefined) {
-    let table = db.table(tableName);
-    let selector = obj || r.row;
-    if (single) {
-      return table.get(selector(this.relatedField));
-    } else {
-      return table.getAll(selector(this.relatedField));
-    }
-  }
-}
-
-export class ReverseRelatedSelector extends Immutable.Record({
-  relatedField: ''
-}) {
-  toRQL(r, db, tableName, single, obj) {
-    let table = db.table(tableName);
-    let query = table.getAll(obj('id'), {index: this.relatedField});
-    if (single) {
-      return query.nth(0);
-    } else {
-      return query;
-    }
-  }
-}
-
-export class FieldSelector extends Immutable.Record({
-  path: Immutable.List()
-}) {
-  toRQL(r, db, tableName, single, obj = undefined) {
-    return this.path.reduce((acc, next) => {
-      return acc(next);
-    }, obj || r.row);
-  }
-}
-
-export class Query extends Immutable.Record({
-  table: undefined,
-  single: false,
-  selector: undefined,
-  pluck: Immutable.Map(),
-  map: Immutable.OrderedMap(),
-  converters: Immutable.List()
-}) {
-  toRQL(r, db, obj) {
-    let query = this.selector.toRQL(r, db, this.table, this.single, obj);
-
-    let rqlMap = mappingToRql(r, db, this.map);
-    query = rqlMap.reduce((q, mapping) => {
-      return q.merge(mapping);
-    }, query);
-
-    query = this.converters.reduce((q, converter) => {
-      return converter.toRQL(r, db, q);
-    }, query);
-
-    if (!this.pluck.isEmpty()) {
-      query = query.pluck(this.pluck.toJS());
-    }
-
-    return query;
-  }
-}
-
-export function constructQuery(schema, graphQLRoot) {
+/**
+ * Converts GraphQL AST to Query using schema.
+ *
+ * @param schema - App schema
+ * @param graphQLRoot - root of GraphQL AST
+ */
+export default function graphQLToQuery(schema, graphQLRoot) {
   let {preQueries, query, rootName} = getRootCall(
     schema.rootCalls, graphQLRoot
   );
   return {
     preQueries: preQueries,
-    query: processNode(schema, rootName, query, graphQLRoot.node)
+    query: processNode(schema, rootName, query, graphQLRoot.node),
   };
 }
 
@@ -154,22 +48,8 @@ function mergeQueries(left, right) {
   return left.merge(right).merge({
     pluck: left.pluck.merge(right.pluck),
     map: left.map.merge(right.map),
-    converters: left.converters.concat(right.converters)
+    converters: left.converters.concat(right.converters),
   });
-}
-
-function mappingToRql(r, db, mapping) {
-  function mapper(leaf, key, keys) {
-    return function subQuery(obj) {
-      return Immutable.Map()
-        .setIn(keys, leaf.toRQL(r, db, obj))
-        .toJS();
-    };
-  }
-  function isLeaf(node) {
-    return !node.toRQL;
-  }
-  return walkLeafs(mapping, mapper, isLeaf);
 }
 
 function getRootCall(rootCalls, root) {
@@ -253,9 +133,9 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
   let baseQuery = new Query({
     table: nodeSchema.target,
     selector: new ReverseRelatedSelector({
-      relatedField: nodeSchema.reverseName
+      relatedField: nodeSchema.reverseName,
     }),
-    converters: Immutable.List.of(new CoerceConverter({to: 'array'}))
+    converters: Immutable.List.of(new CoerceConverter({to: 'array'})),
   });
   if (node.calls) {
     baseQuery = applyCalls(schema, baseQuery, node);
@@ -269,9 +149,9 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
 
   let nestedQuery = baseQuery.merge({
     selector: new FieldSelector({
-      path: field
+      path: field,
     }),
-    converters: Immutable.List()
+    converters: Immutable.List(),
   });
 
   return node.children
@@ -282,7 +162,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
           parents.concat(['count']),
           nestedQuery.updateIn(['converters'], (c) => {
             return c.push(new CountConverter({}));
-          })
+          }),
         ];
        } else if (name === 'edges') {
          return [
@@ -293,7 +173,7 @@ function processToManyConnection(schema, nodeSchema, query, node, parents) {
              nestedQuery,
              childNode,
              []
-           )
+           ),
          ];
        }
     })
@@ -316,8 +196,8 @@ function processToOneConnection(schema, targetTable, query, node, parents) {
       single: true,
       table: targetTable,
       selector: new RelatedSelector({
-        relatedField: node.name
-      })
+        relatedField: node.name,
+      }),
     }),
     node,
     []

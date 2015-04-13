@@ -7,18 +7,18 @@ export const SCHEMA_TYPES = {
   bool: 'boolean',
   object: 'object',
   array: 'array',
-  connection: 'connection'
+  connection: 'connection',
 };
 
 export class Schema extends Immutable.Record({
   rootCalls: Immutable.Map(),
   calls: Immutable.Map(),
-  tables: Immutable.Map()
+  tables: Immutable.Map(),
 }) {}
 
 export class SchemaPrimitiveField extends Immutable.Record({
   name: '',
-  type: ''
+  type: '',
 }) {
   isNestable() {
     return false;
@@ -35,7 +35,7 @@ export class SchemaPrimitiveField extends Immutable.Record({
 
 export class SchemaObjectField extends Immutable.Record({
   name: '',
-  childSchema: undefined
+  childSchema: undefined,
 }) {
   isNestable() {
     return true;
@@ -52,7 +52,7 @@ export class SchemaObjectField extends Immutable.Record({
 
 export class SchemaArrayField extends Immutable.Record({
   name: '',
-  childSchema: undefined
+  childSchema: undefined,
 }) {
   isNestable() {
     return true;
@@ -70,7 +70,7 @@ export class SchemaArrayField extends Immutable.Record({
 export class SchemaConnectionListField extends Immutable.Record({
   name: '',
   reverseName: '',
-  target: ''
+  target: '',
 }) {
   isNestable() {
     return true;
@@ -88,7 +88,7 @@ export class SchemaConnectionListField extends Immutable.Record({
 export class SchemaConnectionField extends Immutable.Record({
   name: '',
   reverseName: '',
-  target: ''
+  target: '',
 }) {
   isNestable() {
     return true;

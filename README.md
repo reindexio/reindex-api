@@ -4,7 +4,7 @@ Install rethinkdb.
 
 ```shell
 sudo pip install rethinkdb
-rethinkdb restore testdata.tar.gz
+rethinkdb restore test/testdata.tar.gz
 ```
 
-See examples.js for test queries.
+See test/smoke.js for test queries.

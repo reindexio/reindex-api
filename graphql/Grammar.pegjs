@@ -1,12 +1,12 @@
 {
   var Immutable = require('immutable');
-  var graphql = require('./graphql');
+  var AST = require('./AST');
 }
 
 start
   = call:root_call children:block
     {
-      return new graphql.GQLRoot({
+      return new AST.GQLRoot({
         node: call.set("children", Immutable.List(children))
       });
     }
@@ -17,7 +17,7 @@ root_call
 
 root_call_nested = ws? name:identifier calls:calls
   {
-    return new graphql.GQLNode({
+    return new AST.GQLNode({
       name: name,
       calls: calls
     });
@@ -25,10 +25,10 @@ root_call_nested = ws? name:identifier calls:calls
 
 root_call_direct = ws? call:call
   {
-    return new graphql.GQLNode({
+    return new AST.GQLNode({
       name: call.name,
       calls: Immutable.List.of(
-        new graphql.GQLCall({name: "__call__", parameters: call.parameters})
+        new AST.GQLCall({name: "__call__", parameters: call.parameters})
       )
     });
   }
@@ -46,7 +46,7 @@ calls
 call
   = name:call_name parameters:call_parameters
     {
-      return new graphql.GQLCall({
+      return new AST.GQLCall({
         name: name,
         parameters: parameters
       });
@@ -104,7 +104,7 @@ property
 simple_property
   = name:identifier ws?
     {
-      return new graphql.GQLLeaf({
+      return new AST.GQLLeaf({
         name: name
       });
     }
@@ -112,7 +112,7 @@ simple_property
 object_property
   = name:identifier children:block
     {
-      return new graphql.GQLNode({
+      return new AST.GQLNode({
         name: name,
         children: Immutable.List(children)
       });
@@ -121,7 +121,7 @@ object_property
 call_property
   = name:identifier calls:calls children:block?
     {
-      return new graphql.GQLNode({
+      return new AST.GQLNode({
         name: name,
         calls: Immutable.List(calls),
         children: Immutable.List(children)

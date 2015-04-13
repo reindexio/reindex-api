@@ -34,22 +34,22 @@ module.exports = (function() {
 
         peg$c0 = peg$FAILED,
         peg$c1 = function(call, children) {
-              return new graphql.GQLRoot({
+              return new AST.GQLRoot({
                 node: call.set("children", Immutable.List(children))
               });
             },
         peg$c2 = null,
         peg$c3 = function(name, calls) {
-            return new graphql.GQLNode({
+            return new AST.GQLNode({
               name: name,
               calls: calls
             });
           },
         peg$c4 = function(call) {
-            return new graphql.GQLNode({
+            return new AST.GQLNode({
               name: call.name,
               calls: Immutable.List.of(
-                new graphql.GQLCall({name: "__call__", parameters: call.parameters})
+                new AST.GQLCall({name: "__call__", parameters: call.parameters})
               )
             });
           },
@@ -65,7 +65,7 @@ module.exports = (function() {
               }
             },
         peg$c10 = function(name, parameters) {
-              return new graphql.GQLCall({
+              return new AST.GQLCall({
                 name: name,
                 parameters: parameters
               });
@@ -98,18 +98,18 @@ module.exports = (function() {
                 return [first].concat(rest);
               },
         peg$c28 = function(name) {
-              return new graphql.GQLLeaf({
+              return new AST.GQLLeaf({
                 name: name
               });
             },
         peg$c29 = function(name, children) {
-              return new graphql.GQLNode({
+              return new AST.GQLNode({
                 name: name,
                 children: Immutable.List(children)
               });
             },
         peg$c30 = function(name, calls, children) {
-              return new graphql.GQLNode({
+              return new AST.GQLNode({
                 name: name,
                 calls: Immutable.List(calls),
                 children: Immutable.List(children)
@@ -1027,7 +1027,7 @@ module.exports = (function() {
 
 
       var Immutable = require('immutable');
-      var graphql = require('./graphql');
+      var AST = require('./AST');
 
 
     peg$result = peg$startRuleFunction();
