@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from '../../assert';
 import Immutable from 'immutable';
 import r from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../rTestUtils';
@@ -42,8 +42,8 @@ describe('RelatedSelector', () => {
   it('Should select via parent row', () => {
     let result = makeQuery().first();
 
-    assert(Immutable.is(result.args.first().args, Immutable.List.of('author')),
-          'Should use correct field.');
+    assert.oequal(result.args.first().args, Immutable.List.of('author'),
+                  'Should use correct field.');
     assert.equal(result.args.get(1).op, 'IMPLICIT_VAR',
                  'Should use r.row');
   });
@@ -51,9 +51,8 @@ describe('RelatedSelector', () => {
   it('Should select via argument in closure', () => {
     let result = makeClosureQuery().first();
 
-    assert(Immutable.is(result.args.first().args,
-                        Immutable.List.of('author')),
-          'Should use correct field');
+    assert.oequal(result.args.first().args, Immutable.List.of('author'),
+                  'Should use correct field');
     assert.equal(result.args.get(1).op, 'VAR',
                  'Should use closure variable');
   });
