@@ -9,7 +9,7 @@ describe('OrderByConverter', () => {
     let query = r.db('testdb').table('micropost');
 
     let converter = new OrderByConverter({
-      orderBy: 'createdAt'
+      orderBy: 'createdAt',
     });
     let result = getTerms(
       converter.toReQL(r, r.db('testdb'), query)
@@ -22,7 +22,7 @@ describe('OrderByConverter', () => {
                  'Should have correct field in ascending.');
 
     converter = new OrderByConverter({
-      orderBy: '-createdAt'
+      orderBy: '-createdAt',
     });
     result = getTerms(
       converter.toReQL(r, r.db('testdb'), query)

@@ -9,7 +9,7 @@ describe('SliceConverter', () => {
     let query = r.db('testdb').table('micropost');
 
     let converter = new SliceConverter({
-      from: 3
+      from: 3,
     });
     let result = getTerms(
       converter.toReQL(r, r.db('testdb'), query)
@@ -19,7 +19,7 @@ describe('SliceConverter', () => {
 
     converter = new SliceConverter({
       from: 3,
-      to: 10
+      to: 10,
     });
     result = getTerms(
       converter.toReQL(r, r.db('testdb'), query)

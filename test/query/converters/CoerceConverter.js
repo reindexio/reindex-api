@@ -7,7 +7,7 @@ import CoerceConverter from '../../../query/converters/CoerceConverter';
 describe('CoerceConverter', () => {
   it('Should add coerceTo to query', () => {
     let converter = new CoerceConverter({
-      to: 'array'
+      to: 'array',
     });
     let query = r.db('testdb').table('micropost');
 
