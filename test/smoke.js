@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import r from 'rethinkdb';
 import co from 'co';
 import * as schema from '../schema/schema';
-import Parser from '../graphql/Parser';
+import Parser from '../graphQL/Parser';
 import graphQLToQuery from '../query/graphQLToQuery';
 import Query from '../query/Query';
 import IDSelector from '../query/selectors/IDSelector';
