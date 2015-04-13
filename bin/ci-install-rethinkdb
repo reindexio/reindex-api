@@ -3,8 +3,8 @@
 set -e
 
 source /etc/lsb-release
-URL = "deb http://download.rethinkdb.com/apt $DISTRIB_CODENAME main"
-echo $URL | sudo tee /etc/apt/sources.list.d/rethinkdb.list
+URL="deb http://download.rethinkdb.com/apt $DISTRIB_CODENAME main"
+echo "$URL" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
 wget -qO- http://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install rethinkdb
