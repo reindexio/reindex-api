@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from '../../assert';
 import Immutable from 'immutable';
 import r from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../rTestUtils';
@@ -48,8 +48,8 @@ describe('Field Selector', () => {
     let selectorChain = result.args.first().args
       .filter((arg) => arg.op === 'BRACKET')
       .map((arg) => arg.args.first());
-    assert(Immutable.is(path, selectorChain.reverse()),
-           'Should get correct path from parent');
+    assert.oequal(path, selectorChain.reverse(),
+                  'Should get correct path from parent');
   });
 
   it('Should select via argument in closure', () => {
@@ -61,8 +61,8 @@ describe('Field Selector', () => {
     let selectorChain = result
           .filter((arg) => arg.op === 'BRACKET')
           .map((arg) => arg.args.first());
-    assert(Immutable.is(path, selectorChain.reverse()),
-           'Should get correct path from parent');
+    assert.oequal(path, selectorChain.reverse(),
+                  'Should get correct path from parent');
 
   });
 });

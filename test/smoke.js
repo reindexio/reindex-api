@@ -1,5 +1,5 @@
 import Immutable from 'immutable';
-import assert from 'assert';
+import assert from './assert';
 import uuid from 'uuid';
 import r from 'rethinkdb';
 import co from 'co';
@@ -91,7 +91,7 @@ describe('SmokeTest', () => {
     let q = rql2.query.toReQL(r, r.db(dbName));
     let result = yield q.run(conn);
 
-    assert.deepEqual(result, [
+    assert.oequal(Immutable.fromJS(result), Immutable.fromJS([
       {
         handle: 'freiksenet',
         microposts: {
@@ -104,6 +104,6 @@ describe('SmokeTest', () => {
           ],
         },
       },
-    ]);
+    ]));
   }));
 });
