@@ -1,6 +1,5 @@
 import Immutable from 'immutable';
 import Query from './Query';
-import IDSelector from './selectors/IDSelector';
 import RelatedSelector from './selectors/RelatedSelector';
 import ReverseRelatedSelector from './selectors/ReverseRelatedSelector';
 import FieldSelector from './selectors/FieldSelector';
@@ -38,8 +37,8 @@ function processNode(schema, tableName, query, node, parents = []) {
       .map((childNode) => {
         return processChild(schema, tableName, query, parents, childNode);
       })
-      .reduce((query, newQuery) => {
-        return mergeQueries(query, newQuery);
+      .reduce((currentQuery, newQuery) => {
+        return mergeQueries(currentQuery, newQuery);
       });
   }
 }
@@ -58,8 +57,8 @@ function getRootCall(rootCalls, root) {
 }
 
 function applyCalls(schema, query, node) {
-  return node.calls.reduce((query, call) => {
-    return applyCall(schema, query, node, call);
+  return node.calls.reduce((currentQuery, call) => {
+    return applyCall(schema, currentQuery, node, call);
   }, query);
 }
 

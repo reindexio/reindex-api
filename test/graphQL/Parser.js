@@ -1,6 +1,6 @@
 import assert from '../assert';
 import Immutable from 'immutable';
-import {GQLRoot, GQLNode, GQLLeaf, GQLCall} from '../../graphQL/AST';
+import {GQLNode, GQLLeaf, GQLCall} from '../../graphQL/AST';
 import Parser from '../../graphQL/Parser';
 
 describe('Parser', () => {
