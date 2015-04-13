@@ -1,4 +1,4 @@
-# graphql-api
+# reindex-api
 
 Install rethinkdb.
 

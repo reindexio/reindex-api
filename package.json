@@ -19,7 +19,7 @@
     "mocha": "^2.2.4"
   },
   "scripts": {
-    "compile_grammar": "pegjs graphql/Grammar.pegjs graphql/Parser.js",
+    "compile_grammar": "pegjs graphQL/Grammar.pegjs graphQL/Parser.js",
     "lint": "eslint ./",
     "mocha": "mocha --timeout 5000 --compilers js:babel/register --recursive ./test",
     "test": "npm run lint; npm run mocha"
