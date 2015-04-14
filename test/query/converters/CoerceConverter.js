@@ -1,5 +1,4 @@
 import assert from '../../assert';
-import Immutable from 'immutable';
 import r from 'rethinkdb';
 import {getTerms} from '../rTestUtils';
 import CoerceConverter from '../../../query/converters/CoerceConverter';
