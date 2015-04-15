@@ -1,7 +1,7 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
 import r from 'rethinkdb';
-import {getTerms} from '../rTestUtils';
+import {getTerms} from '../RethinkDBTestUtils';
 import IDSelector from '../../../query/selectors/IDSelector';
 
 describe('IDSelector', () => {

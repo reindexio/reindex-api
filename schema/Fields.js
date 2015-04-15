@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import {Record, List, Map} from 'immutable';
 
 export const SCHEMA_TYPES = {
   number: 'number',
@@ -8,15 +8,17 @@ export const SCHEMA_TYPES = {
   object: 'object',
   array: 'array',
   connection: 'connection',
+  cursor: 'cursor',
+  type: '__type__',
 };
 
-export class Schema extends Immutable.Record({
-  rootCalls: Immutable.Map(),
-  calls: Immutable.Map(),
-  tables: Immutable.Map(),
+export class SchemaType extends Record({
+  name: '',
+  fields: Map(),
+  methods: Map(),
 }) {}
 
-export class SchemaPrimitiveField extends Immutable.Record({
+export class SchemaPrimitiveField extends Record({
   name: '',
   type: '',
 }) {
@@ -33,9 +35,9 @@ export class SchemaPrimitiveField extends Immutable.Record({
   }
 }
 
-export class SchemaObjectField extends Immutable.Record({
+export class SchemaObjectField extends Record({
   name: '',
-  childSchema: undefined,
+  fields: undefined,
 }) {
   isNestable() {
     return true;
@@ -50,9 +52,9 @@ export class SchemaObjectField extends Immutable.Record({
   }
 }
 
-export class SchemaArrayField extends Immutable.Record({
+export class SchemaArrayField extends Record({
   name: '',
-  childSchema: undefined,
+  fields: undefined,
 }) {
   isNestable() {
     return true;
@@ -67,7 +69,25 @@ export class SchemaArrayField extends Immutable.Record({
   }
 }
 
-export class SchemaConnectionListField extends Immutable.Record({
+export class SchemaConnectionField extends Record({
+  name: '',
+  reverseName: '',
+  target: '',
+}) {
+  isNestable() {
+    return true;
+  }
+
+  isEdgeable() {
+    return false;
+  }
+
+  isConnection() {
+    return true;
+  }
+}
+
+export class SchemaReverseConnectionField extends Record({
   name: '',
   reverseName: '',
   target: '',
@@ -85,20 +105,8 @@ export class SchemaConnectionListField extends Immutable.Record({
   }
 }
 
-export class SchemaConnectionField extends Immutable.Record({
+export class SchemaCall extends Record({
   name: '',
-  reverseName: '',
-  target: '',
-}) {
-  isNestable() {
-    return true;
-  }
-
-  isEdgeable() {
-    return false;
-  }
-
-  isConnection() {
-    return true;
-  }
-}
+  args: List(),
+  returns: '',
+}) {}

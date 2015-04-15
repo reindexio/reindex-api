@@ -1,6 +1,6 @@
 import assert from '../../assert';
 import r from 'rethinkdb';
-import {getTerms} from '../rTestUtils';
+import {getTerms} from '../RethinkDBTestUtils';
 import CountConverter from '../../../query/converters/CountConverter';
 
 describe('CountConverter', () => {

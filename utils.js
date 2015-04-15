@@ -23,7 +23,7 @@ function walkLeafsRecur(node, mapper, keys, keyed, isLeaf) {
       node = node.entrySeq();
     }
     let [nextKey, nextValue] = node.first();
-    let rest = node.skip(1);
+    let rest = node.rest();
     return walkLeafsRecur(
       nextValue, mapper, keys.push(nextKey), false, isLeaf
     ).concat(

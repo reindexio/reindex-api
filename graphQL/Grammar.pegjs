@@ -4,34 +4,15 @@
 }
 
 start
-  = call:root_call children:block
+  = ws? call:call calls:(calls?) children:block
     {
       return new AST.GQLRoot({
-        node: call.set("children", Immutable.List(children))
+        name: call.name,
+        calls: calls || Immutable.List(),
+        parameters: call.parameters,
+        children: Immutable.List(children)
       });
     }
-
-root_call
-  = root_call_nested /
-    root_call_direct
-
-root_call_nested = ws? name:identifier calls:calls
-  {
-    return new AST.GQLNode({
-      name: name,
-      calls: calls
-    });
-  }
-
-root_call_direct = ws? call:call
-  {
-    return new AST.GQLNode({
-      name: call.name,
-      calls: Immutable.List.of(
-        new AST.GQLCall({name: "__call__", parameters: call.parameters})
-      )
-    });
-  }
 
 calls
   = calls:("." call:call { return call })+
@@ -46,7 +27,7 @@ calls
 call
   = name:call_name parameters:call_parameters
     {
-      return new AST.GQLCall({
+      return new AST.GQLMethod({
         name: name,
         parameters: parameters
       });

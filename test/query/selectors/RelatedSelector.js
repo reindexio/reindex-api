@@ -1,7 +1,7 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
 import r from 'rethinkdb';
-import {getTerms, getNestedQueryArgument} from '../rTestUtils';
+import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import RelatedSelector from '../../../query/selectors/RelatedSelector';
 
 describe('RelatedSelector', () => {

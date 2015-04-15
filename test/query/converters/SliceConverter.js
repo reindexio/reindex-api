@@ -1,7 +1,7 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
 import r from 'rethinkdb';
-import {getTerms} from '../rTestUtils';
+import {getTerms} from '../RethinkDBTestUtils';
 import SliceConverter from '../../../query/converters/SliceConverter';
 
 describe('SliceConverter', () => {
