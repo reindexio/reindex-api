@@ -24,7 +24,7 @@
   "scripts": {
     "compile_grammar": "pegjs graphQL/Grammar.pegjs graphQL/Parser.js",
     "lint": "eslint ./",
-    "mocha": "mocha --timeout 10000 --require ./babel --recursive ./test",
+    "mocha": "mocha --timeout 10000 --compilers js:babel/register --recursive ./test",
     "start": "nodemon index.js | bunyan -o short",
     "test": "npm run lint; npm run mocha"
   }
