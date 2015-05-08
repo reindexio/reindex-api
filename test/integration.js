@@ -1,7 +1,6 @@
 import {fromJS} from 'immutable';
 import assert from './assert';
 import uuid from 'uuid';
-import co from 'co';
 import RethinkDB from 'rethinkdb';
 import Parser from '../graphQL/Parser';
 import graphQLToQuery from '../query/graphQLToQuery';
@@ -13,12 +12,12 @@ describe('Integration Tests', () => {
 
   before(async function () {
     let conn = await RethinkDB.connect();
-    return await co.wrap(createTestDatabase)(conn, dbName);
+    await createTestDatabase(conn, dbName);
   });
 
   after(async function () {
     let conn = await RethinkDB.connect();
-    return await co.wrap(deleteTestDatabase)(conn, dbName);
+    await deleteTestDatabase(conn, dbName);
   });
 
   async function queryDB(rql) {
