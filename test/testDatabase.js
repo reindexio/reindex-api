@@ -15,6 +15,49 @@ const TEST_DATA = Immutable.fromJS({
         text: 'Test text',
       },
     ],
+    _types: [
+      {
+        name: 'User',
+        fields: [
+          {
+            name: 'id',
+            type: 'string',
+          },
+          {
+            name: 'handle',
+            types: 'string',
+          },
+          {
+            name: 'microposts',
+            type: 'connection',
+            target: 'Micropost',
+            reverseName: 'author',
+          },
+        ],
+      },
+      {
+        name: 'Micropost',
+        fields: [
+          {
+            name: 'id',
+            type: 'string',
+          },
+          {
+            name: 'text',
+            type: 'string',
+          },
+           {
+            name: 'createdAt',
+            type: 'datetime',
+          },
+           {
+            name: 'author',
+            type: 'User',
+            reverseName: 'microposts',
+          },
+        ],
+      },
+    ],
   },
   indexes: [
     {
