@@ -1,9 +1,29 @@
-import {List} from 'immutable';
+import {List, Record, Map} from 'immutable';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
 
-export function nodes(type) {
+class RootCall extends Record({
+  name: undefined,
+  returns: undefined,
+  args: List(),
+  fn: undefined,
+}) {
+  toJS() {
+    return {
+      name: this.name,
+      returns: this.returns,
+      args: this.args.toJS(),
+    };
+  }
+}
+
+class RootArg extends Record({
+  name: undefined,
+  type: undefined,
+}) {}
+
+function nodesFn(type) {
   return {
     preQueries: List(),
     query: new Query({
@@ -14,7 +34,19 @@ export function nodes(type) {
   };
 }
 
-export function node(type, id) {
+const nodes = new RootCall({
+  name: 'nodes',
+  returns: 'connection',
+  args: List([
+    new RootArg({
+      name: 'typeName',
+      type: 'string',
+    }),
+  ]),
+  fn: nodesFn,
+});
+
+function nodeFn(type, id) {
   return {
     preQueries: List(),
     query: new Query({
@@ -25,3 +57,26 @@ export function node(type, id) {
     typeName: type,
   };
 }
+
+const node = new RootCall({
+  name: 'node',
+  returns: 'object',
+  args: List([
+    new RootArg({
+      name: 'typeName',
+      type: 'string',
+    }),
+    new RootArg({
+      name: 'id',
+      type: 'string',
+    }),
+  ]),
+  fn: nodeFn,
+});
+
+const rootCalls = Map({
+  nodes: nodes,
+  node: node,
+});
+
+export default rootCalls;

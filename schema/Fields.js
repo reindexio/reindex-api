@@ -13,14 +13,14 @@ export const SCHEMA_TYPES = {
 };
 
 export class SchemaType extends Record({
-  name: '',
+  name: undefined,
   fields: Map(),
   methods: Map(),
 }) {}
 
 export class SchemaPrimitiveField extends Record({
-  name: '',
-  type: '',
+  name: undefined,
+  type: undefined,
 }) {
   isNestable() {
     return false;
@@ -36,7 +36,7 @@ export class SchemaPrimitiveField extends Record({
 }
 
 export class SchemaObjectField extends Record({
-  name: '',
+  name: undefined,
   fields: undefined,
 }) {
   isNestable() {
@@ -53,7 +53,7 @@ export class SchemaObjectField extends Record({
 }
 
 export class SchemaArrayField extends Record({
-  name: '',
+  name: undefined,
   fields: undefined,
 }) {
   isNestable() {
@@ -70,9 +70,9 @@ export class SchemaArrayField extends Record({
 }
 
 export class SchemaConnectionField extends Record({
-  name: '',
-  reverseName: '',
-  target: '',
+  name: undefined,
+  reverseName: undefined,
+  target: undefined,
 }) {
   isNestable() {
     return true;
@@ -88,9 +88,9 @@ export class SchemaConnectionField extends Record({
 }
 
 export class SchemaReverseConnectionField extends Record({
-  name: '',
-  reverseName: '',
-  target: '',
+  name: undefined,
+  reverseName: undefined,
+  target: undefined,
 }) {
   isNestable() {
     return true;
@@ -106,7 +106,12 @@ export class SchemaReverseConnectionField extends Record({
 }
 
 export class SchemaCall extends Record({
-  name: '',
+  name: undefined,
   args: List(),
-  returns: '',
+  returns: undefined,
+}) {}
+
+export class SchemaArg extends Record({
+  name: undefined,
+  type: undefined,
 }) {}

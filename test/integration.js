@@ -5,7 +5,7 @@ import RethinkDB from 'rethinkdb';
 import Parser from '../graphQL/Parser';
 import graphQLToQuery from '../query/graphQLToQuery';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
-import testSchema from './testSchema';
+import getSchema from '../schema/getSchema';
 
 describe('Integration Tests', () => {
   let dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -21,10 +21,11 @@ describe('Integration Tests', () => {
   });
 
   async function queryDB(rql) {
-    let q = graphQLToQuery(testSchema, Parser.parse(rql));
+    let conn = await RethinkDB.connect();
+    let schema = await getSchema(RethinkDB.db(dbName), conn);
+    let q = graphQLToQuery(schema, Parser.parse(rql));
     q = q.query.toReQL(RethinkDB, RethinkDB.db(dbName));
 
-    let conn = await RethinkDB.connect();
     return fromJS(await q.run(conn));
   }
 

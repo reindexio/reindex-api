@@ -1,5 +1,5 @@
-import {fromJS, List} from 'immutable';
-import * as rootCalls from './rootCalls';
+import {List} from 'immutable';
+import rootCalls from './rootCalls';
 
 /**
  * Converts GraphQL AST to Query using schema.
@@ -24,12 +24,12 @@ function getRootCall(schema, root) {
   let name = root.name;
   let rootCall = schema.calls.get(name);
   if (rootCall) {
-    let fn = rootCalls[rootCall.name];
+    let fn = rootCalls.get(rootCall.name).fn;
     let result = fn(...root.parameters.toArray());
     result.rootCall = rootCall;
     return result;
   } else {
-    let validCalls = fromJS(rootCalls)
+    let validCalls = rootCalls
       .valueSeq()
       .map((rc) => {
         return rc.name;
