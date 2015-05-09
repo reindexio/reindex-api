@@ -24,25 +24,24 @@ const TEST_DATA = Immutable.fromJS({
   ],
 });
 
-export function* createTestDatabase(conn, dbName) {
-  yield r.dbCreate(dbName).run(conn);
-  yield* TEST_DATA.get('tables').map(function* (data, table) {
-    yield r.db(dbName).tableCreate(table).run(conn);
-    yield r
-      .db(dbName)
+export async function createTestDatabase(conn, dbName) {
+  await r.dbCreate(dbName).run(conn);
+  await* TEST_DATA.get('tables').map(async function (data, table) {
+    await r.db(dbName).tableCreate(table).run(conn);
+    await r.db(dbName)
       .table(table)
       .insert(data.toJS())
       .run(conn);
   });
-  yield* TEST_DATA.get('indexes').map(function* (index) {
-    let table = index.get('table');
-    let field = index.get('field');
-    yield r
+  await* TEST_DATA.get('indexes').map(async function (index) {
+    const table = index.get('table');
+    const field = index.get('field');
+    await r
       .db(dbName)
       .table(table)
       .indexCreate(field)
       .run(conn);
-    yield r
+    await r
       .db(dbName)
       .table(table)
       .indexWait(field)
@@ -50,6 +49,6 @@ export function* createTestDatabase(conn, dbName) {
   });
 }
 
-export function* deleteTestDatabase(conn, dbName) {
-  yield r.dbDrop(dbName).run(conn);
+export async function deleteTestDatabase(conn, dbName) {
+  await r.dbDrop(dbName).run(conn);
 }
