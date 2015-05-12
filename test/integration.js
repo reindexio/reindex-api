@@ -12,19 +12,19 @@ describe('Integration Tests', () => {
 
   before(async function () {
     let conn = await RethinkDB.connect();
-    await createTestDatabase(conn, dbName);
+    return await createTestDatabase(conn, dbName);
   });
 
   after(async function () {
     let conn = await RethinkDB.connect();
-    await deleteTestDatabase(conn, dbName);
+    return await deleteTestDatabase(conn, dbName);
   });
 
   async function queryDB(rql) {
     let conn = await RethinkDB.connect();
     let schema = await getSchema(RethinkDB.db(dbName), conn);
     let q = graphQLToQuery(schema, Parser.parse(rql));
-    q = q.query.toReQL(RethinkDB, RethinkDB.db(dbName));
+    q = q.toReQL(RethinkDB, RethinkDB.db(dbName));
 
     return fromJS(await q.run(conn));
   }
@@ -94,5 +94,15 @@ describe('Integration Tests', () => {
         { 'handle': 'fson' },
       ]
     ).toSet());
+  });
+
+  it('Should create and delete type.', async function () {
+    await queryDB(
+      `createType(Test) {}`
+    );
+
+    await queryDB(
+      `deleteType(Test) {}`
+    );
   });
 });
