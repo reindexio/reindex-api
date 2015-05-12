@@ -25,7 +25,7 @@ const TEST_DATA = Immutable.fromJS({
           },
           {
             name: 'handle',
-            types: 'string',
+            type: 'string',
           },
           {
             name: 'microposts',

@@ -13,8 +13,7 @@ import {
 } from '../../schema/Fields';
 import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
 
-describe('Schema Updates', function() {
-  this.timeout(0);
+describe('Schema Updates', () => {
   let dbName = 'testdb_schema_' + uuid.v4().replace(/-/g, '_');
 
   before(async function () {
