@@ -8,16 +8,13 @@ import rootCalls from './rootCalls';
  * @param graphQLRoot - root of GraphQL AST
  */
 export default function graphQLToQuery(schema, graphQLRoot) {
-  let {preQueries, query, typeName, rootCall} = getRootCall(
+  let {query, typeName, rootCall} = getRootCall(
     schema, graphQLRoot
   );
   let typedRoot = graphQLRoot.toTyped(schema, typeName, rootCall);
   query = typedRoot.toQuery(query, List());
 
-  return {
-    preQueries: preQueries,
-    query: query,
-  };
+  return query;
 }
 
 function getRootCall(schema, root) {

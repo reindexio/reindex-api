@@ -44,6 +44,9 @@ function getBaseTypes() {
           type: 'object',
         },
       ],
+    }, {
+      name: 'mutationResult',
+      fields: [],
     },
   ];
 }

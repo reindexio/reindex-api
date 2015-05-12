@@ -1,7 +1,10 @@
 import {List, Record, Map} from 'immutable';
 import Query from './Query';
+import MutationQuery from './MutationQuery';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
+import createType from '../schema/createType';
+import deleteType from '../schema/deleteType';
 
 class RootCall extends Record({
   name: undefined,
@@ -25,7 +28,6 @@ class RootArg extends Record({
 
 function nodesFn(type) {
   return {
-    preQueries: List(),
     query: new Query({
       selector: new AllSelector(),
       table: type,
@@ -48,7 +50,6 @@ const nodes = new RootCall({
 
 function nodeFn(type, id) {
   return {
-    preQueries: List(),
     query: new Query({
       selector: new IDSelector({ids: List.of(id)}),
       table: type,
@@ -74,9 +75,53 @@ const node = new RootCall({
   fn: nodeFn,
 });
 
+function createTypeFn(name) {
+  return {
+    query: new MutationQuery({
+      mutation: createType,
+      arguments: List.of(name),
+    }),
+  };
+}
+
+const createTypeCall = new RootCall({
+  name: 'createType',
+  returns: 'mutationResult',
+  args: List([
+    new RootArg({
+      name: 'typeName',
+      type: 'string',
+    }),
+  ]),
+  fn: createTypeFn,
+});
+
+function deleteTypeFn(name) {
+  return {
+    query: new MutationQuery({
+      mutation: deleteType,
+      arguments: List.of(name),
+    }),
+  };
+}
+
+const deleteTypeCall = new RootCall({
+  name: 'deleteType',
+  returns: 'mutationResult',
+  args: List([
+    new RootArg({
+      name: 'typename',
+      type: 'string',
+    }),
+  ]),
+  fn: deleteTypeFn,
+});
+
 const rootCalls = Map({
   nodes: nodes,
   node: node,
+  createType: createTypeCall,
+  deleteType: deleteTypeCall,
 });
 
 export default rootCalls;
