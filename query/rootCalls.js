@@ -1,10 +1,9 @@
 import {List, Record, Map} from 'immutable';
 import Query from './Query';
-import MutationQuery from './MutationQuery';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
-import createType from '../schema/createType';
-import deleteType from '../schema/deleteType';
+import TypeCreator from './mutators/TypeCreator';
+import TypeDeleter from './mutators/TypeDeleter';
 
 class RootCall extends Record({
   name: undefined,
@@ -77,16 +76,17 @@ const node = new RootCall({
 
 function createTypeFn(name) {
   return {
-    query: new MutationQuery({
-      mutation: createType,
-      arguments: List.of(name),
+    query: new Query({
+      selector: new TypeCreator({
+        name: name,
+      }),
     }),
   };
 }
 
 const createTypeCall = new RootCall({
   name: 'createType',
-  returns: 'mutationResult',
+  returns: 'schemaResult',
   args: List([
     new RootArg({
       name: 'typeName',
@@ -98,16 +98,17 @@ const createTypeCall = new RootCall({
 
 function deleteTypeFn(name) {
   return {
-    query: new MutationQuery({
-      mutation: deleteType,
-      arguments: List.of(name),
+    query: new Query({
+      selector: new TypeDeleter({
+        name: name,
+      }),
     }),
   };
 }
 
 const deleteTypeCall = new RootCall({
   name: 'deleteType',
-  returns: 'mutationResult',
+  returns: 'schemaResult',
   args: List([
     new RootArg({
       name: 'typename',

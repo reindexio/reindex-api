@@ -3,8 +3,8 @@ import assert from '../assert';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import createSchema from '../../schema/createSchema';
-import createType from '../../schema/createType';
-import deleteType from '../../schema/deleteType';
+import TypeCreator from '../../query/mutators/TypeCreator';
+import TypeDeleter from '../../query/mutators/TypeDeleter';
 import getSchema from '../../schema/getSchema';
 import {
   SchemaType,
@@ -36,11 +36,12 @@ describe('Schema Updates', () => {
      }
   );
 
-  it('Should add both table and metadata when type is created.',
+  it('Should add and delet both table and metadata when type created/deleted.',
     async function () {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);
-      await createType(db, 'User').run(conn);
+      let mutator = new TypeCreator({name: 'User'});
+      await mutator.toReQL(RethinkDB, db).run(conn);
 
       let schema = await getSchema(db, conn);
       let userSchema = schema.types.get('User');
@@ -56,22 +57,8 @@ describe('Schema Updates', () => {
         methods: Map(),
       }));
 
-      await deleteType(db, 'User').run(conn);
-    }
-  );
-
-  it('Should delete both table and metadata when type is deleted',
-    async function () {
-      let conn = await RethinkDB.connect();
-      let db = RethinkDB.db(dbName);
-      await createType(db, 'User').run(conn);
-
-      let schema = await getSchema(db, conn);
-      let userSchema = schema.types.get('User');
-
-      assert.isDefined(userSchema);
-
-      await deleteType(db, 'User').run(conn);
+      let deleter = new TypeDeleter({name: 'User'});
+      await deleter.toReQL(RethinkDB, db).run(conn);
 
       schema = await getSchema(db, conn);
       userSchema = schema.types.get('User');

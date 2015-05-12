@@ -1,4 +1,4 @@
-import {fromJS} from 'immutable';
+import {fromJS, Map} from 'immutable';
 import assert from './assert';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
@@ -97,12 +97,11 @@ describe('Integration Tests', () => {
   });
 
   it('Should create and delete type.', async function () {
-    await queryDB(
-      `createType(Test) {}`
-    );
-
-    await queryDB(
-      `deleteType(Test) {}`
-    );
+    assert.oequal(await queryDB(
+      `createType(Test) { success }`
+    ), Map({ success: true }));
+    assert.oequal(await queryDB(
+      `deleteType(Test) { success }`
+    ), Map({ success: true }));
   });
 });

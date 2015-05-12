@@ -45,6 +45,14 @@ function getBaseTypes() {
         },
       ],
     }, {
+      name: 'schemaResult',
+      fields: [
+        {
+          name: 'success',
+          type: 'boolean',
+        },
+      ],
+    }, {
       name: 'mutationResult',
       fields: [],
     },
