@@ -1,7 +1,19 @@
-import chai from 'chai';
-import oequal from 'chai-oequal';
+/* eslint "no-underscore-dangle": 0 */
 
-chai.use(oequal);
+import {is} from 'immutable';
+import chai from 'chai';
+
+function oequal(result) {
+  this.assert(
+    is(this._obj, result),
+    'expected #{act} to be the same as #{exp}',
+    'expected #{act} not to be the same as #{exp}',
+    result.toString(),
+    this._obj.toString()
+  );
+}
+
+chai.Assertion.addMethod('oequal', oequal);
 
 let assert = chai.assert;
 

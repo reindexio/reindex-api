@@ -67,8 +67,12 @@ const TEST_DATA = Immutable.fromJS({
   ],
 });
 
+export function createEmptyDatabase(conn, dbName) {
+  return r.dbCreate(dbName).run(conn);
+}
+
 export async function createTestDatabase(conn, dbName) {
-  await r.dbCreate(dbName).run(conn);
+  await createEmptyDatabase(conn, dbName);
   await* TEST_DATA.get('tables').map(async function (data, table) {
     await r.db(dbName).tableCreate(table).run(conn);
     await r.db(dbName)

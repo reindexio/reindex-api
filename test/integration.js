@@ -12,12 +12,12 @@ describe('Integration Tests', () => {
 
   before(async function () {
     let conn = await RethinkDB.connect();
-    await createTestDatabase(conn, dbName);
+    return await createTestDatabase(conn, dbName);
   });
 
   after(async function () {
     let conn = await RethinkDB.connect();
-    await deleteTestDatabase(conn, dbName);
+    return await deleteTestDatabase(conn, dbName);
   });
 
   async function queryDB(rql) {
