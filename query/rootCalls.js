@@ -5,6 +5,7 @@ import AllSelector from './selectors/AllSelector';
 import TypeCreator from './mutators/TypeCreator';
 import TypeDeleter from './mutators/TypeDeleter';
 import FieldAdder from './mutators/FieldAdder';
+import FieldDeleter from './mutators/FieldDeleter';
 
 class RootCall extends Record({
   name: undefined,
@@ -26,16 +27,6 @@ class RootArg extends Record({
   type: undefined,
 }) {}
 
-function nodesFn(type) {
-  return {
-    query: new Query({
-      selector: new AllSelector(),
-      table: type,
-    }),
-    typeName: type,
-  };
-}
-
 const nodes = new RootCall({
   name: 'nodes',
   returns: 'connection',
@@ -45,19 +36,16 @@ const nodes = new RootCall({
       type: 'string',
     }),
   ]),
-  fn: nodesFn,
+  fn: (type) => {
+    return {
+      query: new Query({
+        selector: new AllSelector(),
+        table: type,
+      }),
+      typeName: type,
+    };
+  },
 });
-
-function nodeFn(type, id) {
-  return {
-    query: new Query({
-      selector: new IDSelector({ids: List.of(id)}),
-      table: type,
-      single: true,
-    }),
-    typeName: type,
-  };
-}
 
 const node = new RootCall({
   name: 'node',
@@ -72,18 +60,17 @@ const node = new RootCall({
       type: 'string',
     }),
   ]),
-  fn: nodeFn,
-});
-
-function createTypeFn(name) {
-  return {
-    query: new Query({
-      selector: new TypeCreator({
-        name: name,
+  fn: (type, id) => {
+    return {
+      query: new Query({
+        selector: new IDSelector({ids: List.of(id)}),
+        table: type,
+        single: true,
       }),
-    }),
-  };
-}
+      typeName: type,
+    };
+  },
+});
 
 const createType = new RootCall({
   name: 'createType',
@@ -94,18 +81,16 @@ const createType = new RootCall({
       type: 'string',
     }),
   ]),
-  fn: createTypeFn,
-});
-
-function deleteTypeFn(name) {
-  return {
-    query: new Query({
-      selector: new TypeDeleter({
-        name: name,
+  fn: (name) => {
+    return {
+      query: new Query({
+        selector: new TypeCreator({
+          name: name,
+        }),
       }),
-    }),
-  };
-}
+    };
+  },
+});
 
 const deleteType = new RootCall({
   name: 'deleteType',
@@ -116,19 +101,16 @@ const deleteType = new RootCall({
       type: 'string',
     }),
   ]),
-  fn: deleteTypeFn,
-});
-
-function addFieldFn(tableName, name, type, options = Map()) {
-  return {
-    query: new Query({
-      selector: new FieldAdder({
-        tableName, name, type, options,
+  fn: (name) => {
+    return {
+      query: new Query({
+        selector: new TypeDeleter({
+          name: name,
+        }),
       }),
-    }),
-    typeName: '__type__',
-  };
-}
+    };
+  },
+});
 
 const addField = new RootCall({
   name: 'addField',
@@ -144,14 +126,48 @@ const addField = new RootCall({
     }),
     new RootArg({
       name: 'type',
-      type: '__type__',
+      type: 'string',
     }),
     new RootArg({
       name: 'options',
       type: 'object',
     }),
   ]),
-  fn: addFieldFn,
+  fn: (tableName, name, type, options = Map()) => {
+    return {
+      query: new Query({
+        selector: new FieldAdder({
+          tableName, name, type, options,
+        }),
+      }),
+      typeName: '__type__',
+    };
+  },
+});
+
+const removeField = new RootCall({
+  name: 'removeField',
+  returns: 'mutationResult',
+  args: List([
+    new RootArg({
+      name: 'tableName',
+      type: 'string',
+    }),
+    new RootArg({
+      name: 'name',
+      type: 'string',
+    }),
+  ]),
+  fn: (tableName, name) => {
+    return {
+      query: new Query({
+        selector: new FieldDeleter({
+          tableName, name,
+        }),
+      }),
+      typeName: '__type__',
+    };
+  },
 });
 
 const rootCalls = Map({
@@ -160,6 +176,7 @@ const rootCalls = Map({
   createType: createType,
   deleteType: deleteType,
   addField: addField,
+  removeField: removeField,
 });
 
 export default rootCalls;

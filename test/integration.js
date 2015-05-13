@@ -130,6 +130,37 @@ describe('Integration Tests', () => {
         }, ],
       },
     }));
+
+    assert.oequal(await queryDB(
+      `removeField(Test, test) {
+        success,
+        changes {
+          count,
+          nodes {
+            oldValue {
+              name
+            },
+            newValue {
+              name
+            }
+          }
+        }
+      }`
+    ), fromJS({
+      success: true,
+      changes: {
+        count: 1,
+        nodes: [{
+          oldValue: {
+            name: 'Test',
+          },
+          newValue: {
+            name: 'Test',
+          },
+        }, ],
+      },
+    }));
+
     assert.oequal(await queryDB(
       `deleteType(Test) { success }`
     ), Map({ success: true }));
