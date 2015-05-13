@@ -1,17 +1,13 @@
 import RethinkDB from 'rethinkdb';
-import rootCalls from '../query/rootCalls';
-import BaseTypes from './BaseTypes';
-
-function getRootCalls() {
-  return rootCalls.toJS();
-}
+import rootCalls from '../rootCalls';
+import BaseTypes from '../../schema/BaseTypes';
 
 export default function getSchemaQuery(db) {
   let baseSchema = {
     calls: getRootCalls(),
     types: BaseTypes,
   };
-  let expr = RethinkDB.expr(baseSchema).merge((schema) => {
+  return RethinkDB.expr(baseSchema).merge((schema) => {
     return {
       types: db
         .table('_types')
@@ -20,5 +16,8 @@ export default function getSchemaQuery(db) {
         .union(schema('types')),
     };
   });
-  return expr;
+}
+
+function getRootCalls() {
+  return rootCalls.valueSeq().toJS();
 }

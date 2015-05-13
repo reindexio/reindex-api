@@ -7,7 +7,7 @@ export default class TypeCreator extends Record({
   toReQL(r, db) {
     let basicType = {
       name: this.name,
-      node: true,
+      isNode: true,
       fields: [{
         name: 'id',
         type: 'string',

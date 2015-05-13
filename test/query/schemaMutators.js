@@ -36,7 +36,7 @@ describe('Schema Updates', () => {
      }
   );
 
-  it('Should add and delet both table and metadata when type created/deleted.',
+  it('Should add and delete both table and metadata when type created/deleted.',
     async function () {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);

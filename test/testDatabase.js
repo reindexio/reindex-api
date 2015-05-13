@@ -18,6 +18,7 @@ const TEST_DATA = Immutable.fromJS({
     _types: [
       {
         name: 'User',
+        isNode: true,
         fields: [
           {
             name: 'id',
@@ -37,6 +38,7 @@ const TEST_DATA = Immutable.fromJS({
       },
       {
         name: 'Micropost',
+        isNode: true,
         fields: [
           {
             name: 'id',

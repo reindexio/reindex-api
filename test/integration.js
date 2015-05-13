@@ -1,4 +1,4 @@
-import {fromJS, Map} from 'immutable';
+import {fromJS, Map, Set} from 'immutable';
 import assert from './assert';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
@@ -94,6 +94,127 @@ describe('Integration Tests', () => {
         { 'handle': 'fson' },
       ]
     ).toSet());
+  });
+
+  it('Should return type information', async function () {
+    let schemaResult = await queryDB(
+      `schema() {
+        calls {
+          nodes {
+            name,
+            returns
+          }
+        },
+        types {
+          nodes {
+            name,
+            isNode
+          }
+        }
+      }`
+    );
+
+    assert.oequal(schemaResult.getIn(['calls', 'nodes']).toSet(), Set(fromJS([
+      {
+        'name': 'schema',
+        'returns': 'schema',
+      },
+      {
+        'name': 'type',
+        'returns': 'type',
+      },
+      {
+        'name': 'nodes',
+        'returns': 'connection',
+      },
+      {
+        'name': 'node',
+        'returns': 'object',
+      },
+      {
+        'name': 'createType',
+        'returns': 'schemaResult',
+      },
+      {
+        'name': 'deleteType',
+        'returns': 'schemaResult',
+      },
+      {
+        'name': 'addField',
+        'returns': 'mutationResult',
+      },
+      {
+        'name': 'removeField',
+        'returns': 'mutationResult',
+      },
+    ])));
+
+    assert.oequal(schemaResult.getIn(['types', 'nodes']).toSet(), Set(fromJS([
+      {
+        'name': 'Micropost',
+        'isNode': true,
+      },
+      {
+        'name': 'User',
+        'isNode': true,
+      },
+      {
+        'name': 'connection',
+      },
+      {
+        'name': 'edges',
+      },
+      {
+        'name': 'nodes',
+      },
+      {
+        'name': 'schemaResult',
+      },
+      {
+        'name': 'mutationResult',
+      },
+      {
+        'name': 'schema',
+      },
+      {
+        'name': 'call',
+      },
+      {
+        'name': 'type',
+      },
+    ])));
+
+    assert.oequal(await queryDB(
+      `type(User) {
+        name,
+        isNode,
+        fields {
+          nodes {
+            name,
+            type
+          }
+        }
+      }`
+    ), fromJS({
+      name: 'User',
+      isNode: true,
+      fields: {
+        nodes: [
+          {
+            'name': 'id',
+            'type': 'string',
+          },
+          {
+            'name': 'handle',
+            'type': 'string',
+          },
+          {
+            'name': 'microposts',
+            'type': 'connection',
+          },
+        ],
+      },
+    }));
   });
 
   it('Should create and delete type.', async function () {

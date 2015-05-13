@@ -4,7 +4,7 @@ export const SCHEMA_TYPES = {
   number: 'number',
   string: 'string',
   datetime: 'datetime',
-  bool: 'boolean',
+  boolean: 'boolean',
   object: 'object',
   array: 'array',
   connection: 'connection',

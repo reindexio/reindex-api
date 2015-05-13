@@ -80,11 +80,55 @@ const BaseTypes = [
       },
     ],
   }, {
-    name: '__type__',
+    name: 'schema',
+    fields: [
+      {
+        name: 'calls',
+        type: 'array',
+        inlineType: 'call',
+      },
+      {
+        name: 'types',
+        type: 'array',
+        inlineType: 'type',
+      },
+    ],
+  }, {
+    name: 'call',
     fields: [
       {
         name: 'name',
         type: 'string',
+      },
+      {
+        name: 'returns',
+        type: 'string',
+      },
+      {
+        name: 'args',
+        type: 'array',
+        fields: [
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'type',
+            type: 'string',
+          },
+        ],
+      },
+    ],
+  }, {
+    name: 'type',
+    fields: [
+      {
+        name: 'name',
+        type: 'string',
+      },
+      {
+        name: 'isNode',
+        type: 'boolean',
       },
       {
         name: 'fields',

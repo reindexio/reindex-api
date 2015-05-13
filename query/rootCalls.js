@@ -6,6 +6,8 @@ import TypeCreator from './mutators/TypeCreator';
 import TypeDeleter from './mutators/TypeDeleter';
 import FieldAdder from './mutators/FieldAdder';
 import FieldDeleter from './mutators/FieldDeleter';
+import SchemaSelector from './selectors/SchemaSelector';
+import TypeSelector from './selectors/TypeSelector';
 
 class RootCall extends Record({
   name: undefined,
@@ -26,6 +28,39 @@ class RootArg extends Record({
   name: undefined,
   type: undefined,
 }) {}
+
+const schema = new RootCall({
+  name: 'schema',
+  returns: 'schema',
+  args: List(),
+  fn: () => {
+    return {
+      query: new Query({
+        selector: new SchemaSelector(),
+      }),
+    };
+  },
+});
+
+const typeCall = new RootCall({
+  name: 'type',
+  returns: 'type',
+  args: List([
+    new RootArg({
+      name: 'typeName',
+      type: 'string',
+    }),
+  ]),
+  fn: (type) => {
+    return {
+      query: new Query({
+        selector: new TypeSelector({
+          name: type,
+        }),
+      }),
+    };
+  },
+});
 
 const nodes = new RootCall({
   name: 'nodes',
@@ -140,7 +175,7 @@ const addField = new RootCall({
           tableName, name, type, options,
         }),
       }),
-      typeName: '__type__',
+      typeName: 'type',
     };
   },
 });
@@ -165,12 +200,14 @@ const removeField = new RootCall({
           tableName, name,
         }),
       }),
-      typeName: '__type__',
+      typeName: 'type',
     };
   },
 });
 
 const rootCalls = Map({
+  schema: schema,
+  type: typeCall,
   nodes: nodes,
   node: node,
   createType: createType,
