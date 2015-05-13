@@ -12,7 +12,7 @@ describe('graphQLToQuery', () => {
       calls: List(),
       children: List([
         new GQLNode({
-          name: 'edges',
+          name: 'nodes',
           children: List([
             new GQLLeaf({
               name: 'createdAt',
@@ -54,7 +54,7 @@ describe('Type Checking', () => {
       calls: List(),
       children: List([
         new GQLNode({
-          name: 'edges',
+          name: 'nodes',
           children: List([
             new GQLLeaf({
               name: 'createdat',
@@ -76,7 +76,7 @@ describe('Type Checking', () => {
       calls: List(),
       children: List([
         new GQLNode({
-          name: 'edges',
+          name: 'nodes',
           children: List([
             new GQLNode({
               name: 'auhtor',
@@ -103,7 +103,7 @@ describe('Type Checking', () => {
       calls: List(),
       children: List([
         new GQLNode({
-          name: 'edges',
+          name: 'nodes',
           children: List([
             new GQLNode({
               name: 'createdAt',
@@ -128,7 +128,7 @@ describe('Type Checking', () => {
       calls: List(),
       children: List([
         new GQLNode({
-          name: 'edges',
+          name: 'nodes',
           children: List([
             new GQLLeaf({
               name: 'author',

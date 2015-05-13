@@ -4,6 +4,7 @@ import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
 import TypeCreator from './mutators/TypeCreator';
 import TypeDeleter from './mutators/TypeDeleter';
+import FieldAdder from './mutators/FieldAdder';
 
 class RootCall extends Record({
   name: undefined,
@@ -84,7 +85,7 @@ function createTypeFn(name) {
   };
 }
 
-const createTypeCall = new RootCall({
+const createType = new RootCall({
   name: 'createType',
   returns: 'schemaResult',
   args: List([
@@ -106,7 +107,7 @@ function deleteTypeFn(name) {
   };
 }
 
-const deleteTypeCall = new RootCall({
+const deleteType = new RootCall({
   name: 'deleteType',
   returns: 'schemaResult',
   args: List([
@@ -118,11 +119,47 @@ const deleteTypeCall = new RootCall({
   fn: deleteTypeFn,
 });
 
+function addFieldFn(tableName, name, type, options = Map()) {
+  return {
+    query: new Query({
+      selector: new FieldAdder({
+        tableName, name, type, options,
+      }),
+    }),
+    typeName: '__type__',
+  };
+}
+
+const addField = new RootCall({
+  name: 'addField',
+  returns: 'mutationResult',
+  args: List([
+    new RootArg({
+      name: 'tableName',
+      type: 'string',
+    }),
+    new RootArg({
+      name: 'name',
+      type: 'string',
+    }),
+    new RootArg({
+      name: 'type',
+      type: '__type__',
+    }),
+    new RootArg({
+      name: 'options',
+      type: 'object',
+    }),
+  ]),
+  fn: addFieldFn,
+});
+
 const rootCalls = Map({
   nodes: nodes,
   node: node,
-  createType: createTypeCall,
-  deleteType: deleteTypeCall,
+  createType: createType,
+  deleteType: deleteType,
+  addField: addField,
 });
 
 export default rootCalls;

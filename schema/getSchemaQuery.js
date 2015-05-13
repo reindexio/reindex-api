@@ -1,68 +1,15 @@
 import RethinkDB from 'rethinkdb';
 import rootCalls from '../query/rootCalls';
+import BaseTypes from './BaseTypes';
 
 function getRootCalls() {
   return rootCalls.toJS();
 }
 
-function getBaseTypes() {
-  return [
-    {
-      name: 'connection',
-      fields: [
-        {
-          name: 'edges',
-          type: 'edges',
-        }, {
-          name: 'count',
-          type: 'count',
-        },
-      ],
-      methods: [
-        {
-          name: 'get',
-          arguments: [
-            {
-              name: 'ids',
-              type: 'array',
-              childType: {
-                type: 'string',
-              },
-            },
-          ],
-          returns: 'connection',
-        },
-      ],
-    }, {
-      name: 'edges',
-      fields: [
-        {
-          name: 'cursor',
-          type: 'cursor',
-        }, {
-          name: 'node',
-          type: 'object',
-        },
-      ],
-    }, {
-      name: 'schemaResult',
-      fields: [
-        {
-          name: 'success',
-          type: 'boolean',
-        },
-      ],
-    }, {
-      name: 'mutationResult',
-      fields: [],
-    },
-  ];
-}
-
 export default function getSchemaQuery(db) {
   let baseSchema = {
     calls: getRootCalls(),
-    types: getBaseTypes(),
+    types: BaseTypes,
   };
   let expr = RethinkDB.expr(baseSchema).merge((schema) => {
     return {

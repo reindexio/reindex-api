@@ -20,7 +20,7 @@ export class TField extends Record({
 
 export class TConnectionRoot extends Record({
   methods: List(),
-  edges: undefined,
+  nodes: undefined,
   count: undefined,
 }) {
   toQuery(query, parents) {
@@ -40,7 +40,7 @@ export class TConnectionRoot extends Record({
       newQuery,
       parents,
       List.of('_'),
-      this.edges,
+      this.nodes,
       this.count
     );
   }
@@ -98,7 +98,7 @@ export class TReverseConnection extends Record({
   target: '',
   reverseName: '',
   methods: List(),
-  edges: undefined,
+  nodes: undefined,
   count: undefined,
 }) {
   toQuery(query, parents) {
@@ -124,7 +124,7 @@ export class TReverseConnection extends Record({
       query,
       parents.push(this.name),
       tempField,
-      this.edges,
+      this.nodes,
       this.count
     );
   }
@@ -133,7 +133,7 @@ export class TReverseConnection extends Record({
 export class TArray extends Record({
   name: '',
   methods: List(),
-  edges: undefined,
+  nodes: undefined,
   count: undefined,
 }) {
   toQuery(query, parents) {
@@ -151,7 +151,7 @@ export class TArray extends Record({
 
     let tempSelector = [...parents, '_'];
     query = query.setIn(
-      ['map', tempSelector],
+      ['map', ...tempSelector],
       baseQuery
     );
 
@@ -159,7 +159,7 @@ export class TArray extends Record({
       query,
       parents,
       tempSelector,
-      this.edges,
+      this.nodes,
       this.count
     );
   }
@@ -187,7 +187,7 @@ function applyCalls(query, methods) {
   return methods.reduce((q, method) => method.toQuery(q), query);
 }
 
-function unwrapEdgeable(query, parents, basePath, edges, count) {
+function unwrapEdgeable(query, parents, basePath, nodes, count) {
   let nestedQuery = new Query({
     selector: new FieldSelector({
       path: basePath,
@@ -204,8 +204,8 @@ function unwrapEdgeable(query, parents, basePath, edges, count) {
     );
   }
 
-  if (edges) {
-    query = mapAndPluck(query, [...parents, 'edges'], edges.toQuery(
+  if (nodes) {
+    query = mapAndPluck(query, [...parents, 'nodes'], nodes.toQuery(
       nestedQuery,
       List()
     ));

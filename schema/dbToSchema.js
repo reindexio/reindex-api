@@ -53,17 +53,20 @@ function convertTypes(typeList) {
 function convertType(type, types) {
   return new SchemaType({
     name: type.get('name'),
-    fields: type
-      .get('fields')
-      .toKeyedSeq()
-      .mapEntries(([, field]) => {
-        return [
-          field.get('name'),
-          convertField(field, types),
-        ];
-      }),
+    fields: convertFields(types, type.get('fields')),
     methods: type.get('methods') || Map(),
   });
+}
+
+function convertFields(types, fields) {
+  return fields
+    .toKeyedSeq()
+    .mapEntries(([, field]) => {
+      return [
+        field.get('name'),
+        convertField(field, types),
+      ];
+    });
 }
 
 function convertField(field, types) {
@@ -82,14 +85,14 @@ function convertField(field, types) {
       target: fieldType,
     });
   } else if (fieldType === SCHEMA_TYPES.object && field.get('fields')) {
-    return new SchemaArrayField({
-      name: fieldName,
-      fields: field.get('fields').map(convertField(field, types)),
-    });
-  } else if (fieldType === SCHEMA_TYPES.array && field.get('childType')) {
     return new SchemaObjectField({
       name: fieldName,
-      fields: convertTypes(field.get('childType'), types),
+      fields: convertFields(types, field.get('fields')),
+    });
+  } else if (fieldType === SCHEMA_TYPES.array && field.get('fields')) {
+    return new SchemaArrayField({
+      name: fieldName,
+      fields: convertFields(types, field.get('fields')),
     });
   } else {
     return new SchemaPrimitiveField({

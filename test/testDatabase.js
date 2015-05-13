@@ -74,7 +74,11 @@ export function createEmptyDatabase(conn, dbName) {
 export async function createTestDatabase(conn, dbName) {
   await createEmptyDatabase(conn, dbName);
   await* TEST_DATA.get('tables').map(async function (data, table) {
-    await r.db(dbName).tableCreate(table).run(conn);
+    let options = {};
+    if (table === '_types') {
+      options.primaryKey = 'name';
+    }
+    await r.db(dbName).tableCreate(table, options).run(conn);
     await r.db(dbName)
       .table(table)
       .insert(data.toJS())
