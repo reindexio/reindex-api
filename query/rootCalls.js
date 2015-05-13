@@ -2,6 +2,8 @@ import {List, Record, Map} from 'immutable';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
+import TypeCreator from './mutators/TypeCreator';
+import TypeDeleter from './mutators/TypeDeleter';
 
 class RootCall extends Record({
   name: undefined,
@@ -25,7 +27,6 @@ class RootArg extends Record({
 
 function nodesFn(type) {
   return {
-    preQueries: List(),
     query: new Query({
       selector: new AllSelector(),
       table: type,
@@ -48,7 +49,6 @@ const nodes = new RootCall({
 
 function nodeFn(type, id) {
   return {
-    preQueries: List(),
     query: new Query({
       selector: new IDSelector({ids: List.of(id)}),
       table: type,
@@ -74,9 +74,55 @@ const node = new RootCall({
   fn: nodeFn,
 });
 
+function createTypeFn(name) {
+  return {
+    query: new Query({
+      selector: new TypeCreator({
+        name: name,
+      }),
+    }),
+  };
+}
+
+const createTypeCall = new RootCall({
+  name: 'createType',
+  returns: 'schemaResult',
+  args: List([
+    new RootArg({
+      name: 'typeName',
+      type: 'string',
+    }),
+  ]),
+  fn: createTypeFn,
+});
+
+function deleteTypeFn(name) {
+  return {
+    query: new Query({
+      selector: new TypeDeleter({
+        name: name,
+      }),
+    }),
+  };
+}
+
+const deleteTypeCall = new RootCall({
+  name: 'deleteType',
+  returns: 'schemaResult',
+  args: List([
+    new RootArg({
+      name: 'typename',
+      type: 'string',
+    }),
+  ]),
+  fn: deleteTypeFn,
+});
+
 const rootCalls = Map({
   nodes: nodes,
   node: node,
+  createType: createTypeCall,
+  deleteType: deleteTypeCall,
 });
 
 export default rootCalls;

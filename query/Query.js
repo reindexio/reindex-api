@@ -47,6 +47,7 @@ export default class Query extends Immutable.Record({
     if (!this.pluck.isEmpty()) {
       query = query.pluck(this.pluck.toJS());
     }
+
     return query;
   }
 }

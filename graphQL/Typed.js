@@ -60,7 +60,7 @@ export class TObject extends Record({
       .map((childNode) => {
         return childNode.toQuery(query, parents);
       })
-      .reduce(mergeQueries);
+      .reduce(mergeQueries, query);
   }
 }
 

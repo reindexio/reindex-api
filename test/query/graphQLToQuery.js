@@ -143,7 +143,7 @@ describe('Type Checking', () => {
     }, /"Micropost.author" is nested, but was not passed fields/);
   });
 
-  it('Shourd fail if invalid fields are passed to edgeables.', () => {
+  it('Should fail if invalid fields are passed to edgeables.', () => {
     let root = new GQLRoot({
       name: 'nodes',
       parameters: List(['Micropost']),
