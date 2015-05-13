@@ -55,7 +55,7 @@ describe('Integration Tests', () => {
         handle,
         microposts {
           count,
-          edges {
+          nodes {
             createdAt,
             text
           }
@@ -68,7 +68,7 @@ describe('Integration Tests', () => {
         'handle': 'freiksenet',
         'microposts': {
           'count': 1,
-          'edges': [
+          'nodes': [
             {
               'createdAt': new Date('2015-04-10T10:24:52.163Z'),
               'text': 'Test text',
@@ -82,13 +82,13 @@ describe('Integration Tests', () => {
   it('Should return correct data for nodes(User)', async function () {
     let result = await queryDB(
       `nodes(User) {
-        edges {
+        nodes {
           handle
         }
       }`
     );
 
-    assert.oequal(result.get('edges').toSet(), fromJS(
+    assert.oequal(result.get('nodes').toSet(), fromJS(
       [
         { 'handle': 'freiksenet'},
         { 'handle': 'fson' },
@@ -100,6 +100,67 @@ describe('Integration Tests', () => {
     assert.oequal(await queryDB(
       `createType(Test) { success }`
     ), Map({ success: true }));
+
+    assert.oequal(await queryDB(
+      `addField(Test, test, string) {
+        success,
+        changes {
+          count,
+          nodes {
+            oldValue {
+              name
+            },
+            newValue {
+              name
+            }
+          }
+        }
+      }`
+    ), fromJS({
+      success: true,
+      changes: {
+        count: 1,
+        nodes: [{
+          oldValue: {
+            name: 'Test',
+          },
+          newValue: {
+            name: 'Test',
+          },
+        }, ],
+      },
+    }));
+
+    assert.oequal(await queryDB(
+      `removeField(Test, test) {
+        success,
+        changes {
+          count,
+          nodes {
+            oldValue {
+              name
+            },
+            newValue {
+              name
+            }
+          }
+        }
+      }`
+    ), fromJS({
+      success: true,
+      changes: {
+        count: 1,
+        nodes: [{
+          oldValue: {
+            name: 'Test',
+          },
+          newValue: {
+            name: 'Test',
+          },
+        }, ],
+      },
+    }));
+
     assert.oequal(await queryDB(
       `deleteType(Test) { success }`
     ), Map({ success: true }));

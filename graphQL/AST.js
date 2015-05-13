@@ -34,21 +34,14 @@ export class GQLRoot extends Record({
       this.methods
     );
 
-    let baseParents;
-    if (returnType === 'object' || returnType === 'connection') {
-      baseParents = List.of(typeName);
-    } else {
-      baseParents = List.of(returnType);
-    }
-
     if (returnType === 'connection') {
-      let {count, edges} = extractConnectionFields(this);
+      let {count, nodes} = extractConnectionFields(this);
 
-      let edgesObject;
-      if (edges) {
-        edgesObject = new TObject({
+      let nodesObject;
+      if (nodes) {
+        nodesObject = new TObject({
           name: null,
-          children: edges.children.map((child) => {
+          children: nodes.children.map((child) => {
             return child.toTyped(schema, List.of(typeName));
           }),
         });
@@ -57,14 +50,18 @@ export class GQLRoot extends Record({
       return new TConnectionRoot({
         methods: methods,
         count: count !== undefined,
-        edges: edgesObject,
+        nodes: nodesObject,
       });
     } else {
+      let type = returnType;
+      if (type === 'object') {
+        type = typeName;
+      }
       return new TObject({
         name: null,
         methods: methods,
         children: this.children.map((child) => {
-          return child.toTyped(schema, baseParents);
+          return child.toTyped(schema, List.of(type), typeName);
         }),
       });
     }
@@ -90,8 +87,16 @@ export class GQLNode extends Record({
   methods: List(),
   children: List(),
 }) {
-  toTyped(schema, parents) {
+  toTyped(schema, parents, dependantType) {
     let type = getNestedSchema(schema, ...parents.push(this.name));
+    if (dependantType && type.type === 'object') {
+      return new TObject({
+        name: this.name,
+        children: this.children.map((child) => {
+          return child.toTyped(schema, List.of(dependantType));
+        }),
+      });
+    }
     if (type && type.isNestable()) {
       let [methods, ] = methodsToTyped(
         schema,
@@ -100,16 +105,16 @@ export class GQLNode extends Record({
       );
 
       if (type.isConnection() && type.isEdgeable()) {
-        let {count, edges} = extractConnectionFields(this);
+        let {count, nodes} = extractConnectionFields(this);
         return new TReverseConnection({
           name: this.name,
           methods: methods,
           target: type.target,
           reverseName: type.reverseName,
           count: count !== undefined,
-          edges: new TObject({
+          nodes: new TObject({
             name: null,
-            children: edges.children.map((child) => {
+            children: nodes.children.map((child) => {
               return child.toTyped(schema, List.of(type.target));
             }),
           }),
@@ -125,15 +130,19 @@ export class GQLNode extends Record({
           }),
         });
       } else if (type.isEdgeable()) {
-        let {count, edges} = extractConnectionFields(this);
+        let {count, nodes} = extractConnectionFields(this);
         return new TArray({
           name: this.name,
           methods: methods,
           count: count !== undefined,
-          edges: new TObject({
+          nodes: new TObject({
             name: null,
-            chidren: edges.children.map((child) => {
-              return child.toTyped(schema, parents.push(this.name));
+            children: nodes.children.map((child) => {
+              return child.toTyped(
+                schema,
+                parents.push(this.name),
+                dependantType
+              );
             }),
           }),
         });
@@ -142,7 +151,11 @@ export class GQLNode extends Record({
           name: this.name,
           methods: methods,
           children: this.children.map((child) => {
-            return child.toTyped(schema, parents.push(this.name));
+            return child.toTyped(
+              schema,
+              parents.push(this.name),
+              dependantType
+            );
           }),
         });
       }
@@ -266,23 +279,23 @@ function methodsToTyped(schema, typeName, methods) {
 
 function extractConnectionFields(node) {
   let count = node.children.find((child) => child.name === 'count');
-  let edges = node.children.find((child) => child.name === 'edges');
+  let nodes = node.children.find((child) => child.name === 'nodes');
   let rest = node.children.filter((child) => {
     return (
       child.name !== 'count' &&
-      child.name !== 'edges'
+      child.name !== 'nodes'
     );
   });
   if (rest.count() === 0) {
     return {
       count: count,
-      edges: edges,
+      nodes: nodes,
     };
   } else {
     let field = rest.first().name;
     throw new Error(
       `"${field}" is an invalid field for a connection. ` +
-      `Valid fields are edges, count.`
+      `Valid fields are nodes, count.`
     );
   }
 }
