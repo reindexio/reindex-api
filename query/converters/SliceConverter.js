@@ -11,7 +11,7 @@ export default class SliceConverter extends Immutable.Record({
   from: 0,
   to: undefined,
 }) {
-  toReQL(r, db, query) {
+  toReQL(db, query) {
     let args = [this.from];
     if (this.to) {
       args.push(this.to);

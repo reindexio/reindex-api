@@ -41,7 +41,7 @@ describe('Schema Updates', () => {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);
       let mutator = new TypeCreator({name: 'User'});
-      await mutator.toReQL(RethinkDB, db).run(conn);
+      await mutator.toReQL(db).run(conn);
 
       let schema = await getSchema(db, conn);
       let userSchema = schema.types.get('User');
@@ -58,7 +58,7 @@ describe('Schema Updates', () => {
       }));
 
       let deleter = new TypeDeleter({name: 'User'});
-      await deleter.toReQL(RethinkDB, db).run(conn);
+      await deleter.toReQL(db).run(conn);
 
       schema = await getSchema(db, conn);
       userSchema = schema.types.get('User');

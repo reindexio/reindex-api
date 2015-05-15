@@ -1,4 +1,5 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
+import RethinkDB from 'rethinkdb';
 
 /**
  * Selects from a table using id(s) from field.
@@ -6,18 +7,15 @@ import Immutable from 'immutable';
  * @implements Selector
  * @param relatedField - field to get id(s) from
  *
- * @method toReQL(r, db, {tableName, single, obj})
+ * @method toReQL(db, {tableName, single, obj})
  */
-export default class RelatedSelector extends Immutable.Record({
-  relatedField: '',
+export default class RelatedSelector extends Record({
+  tableName: undefined,
+  relatedField: undefined,
 }) {
-  toReQL(r, db, {tableName, single, obj}) {
-    let table = db.table(tableName);
-    let selector = obj || r.row;
-    if (single) {
-      return table.get(selector(this.relatedField));
-    } else {
-      return table.getAll(selector(this.relatedField));
-    }
+  toReQL(db, {obj} = {}) {
+    let table = db.table(this.tableName);
+    let selector = obj || RethinkDB.row;
+    return table.get(selector(this.relatedField));
   }
 }

@@ -1,17 +1,20 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
-import r from 'rethinkdb';
+import RethinkDB from 'rethinkdb';
 import {getTerms} from '../RethinkDBTestUtils';
 import IDSelector from '../../../query/selectors/IDSelector';
 
 describe('IDSelector', () => {
-  const ids = Immutable.List([1, 2, 3]);
+  const id = '1';
 
-  function makeQuery(single) {
-    let selector = new IDSelector({ids: ids});
+  function makeQuery() {
+    let selector = new IDSelector({
+      tableName: 'user',
+      id: id,
+    });
 
     return getTerms(selector.toReQL(
-      r, r.db('testdb'), {tableName: 'user', single}
+      RethinkDB.db('testdb'),
     ));
   }
 
@@ -20,14 +23,10 @@ describe('IDSelector', () => {
     assert.equal(result.args.first(), 'user');
   });
 
-  it('Should get both many and single object', () => {
-    let result = makeQuery(true).first();
-    assert.equal(result.op, 'GET', 'Uses get to get single object');
-    assert.oequal(result.args, Immutable.List.of(1),
-                  'Passes only one id');
-
-    result = makeQuery(false).first();
-    assert.equal(result.op, 'GET_ALL', 'Uses get to getAll to get many.');
-    assert.oequal(result.args, ids, 'Passes all ids.');
+  it('Should use correct id', () => {
+    let result = makeQuery().first();
+    assert.equal(result.op, 'GET', 'Uses get to get object');
+    assert.oequal(result.args, Immutable.List.of(id),
+                  'Uses correct id');
   });
 });

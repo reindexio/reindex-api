@@ -1,6 +1,6 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
-import r from 'rethinkdb';
+import RethinkDB from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import FieldSelector from '../../../query/selectors/FieldSelector';
 
@@ -13,8 +13,8 @@ describe('Field Selector', () => {
     });
 
     return getTerms(
-      r.db('testdb').table('micropost').merge(
-        selector.toReQL(r, r.db('testdb'))
+      RethinkDB.db('testdb').table('micropost').merge(
+        selector.toReQL(RethinkDB.db('testdb'))
       )
     );
   }
@@ -25,8 +25,8 @@ describe('Field Selector', () => {
     });
 
     return getNestedQueryArgument(getTerms(
-      r.db('testdb').table('micropost').merge((obj) => {
-        return selector.toReQL(r, r.db('testdb'), {obj});
+      RethinkDB.db('testdb').table('micropost').merge((obj) => {
+        return selector.toReQL(RethinkDB.db('testdb'), {obj});
       })
     ), 0);
   }
@@ -43,7 +43,7 @@ describe('Field Selector', () => {
     let result = makeQuery().first();
 
     assert.equal(result.args.first().args.last().op, 'IMPLICIT_VAR',
-                 'Should use r.row');
+                 'Should use RethinkDB.row');
 
     let selectorChain = result.args.first().args
       .filter((arg) => arg.op === 'BRACKET')

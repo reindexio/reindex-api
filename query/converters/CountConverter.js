@@ -7,7 +7,7 @@ import Immutable from 'immutable';
  */
 export default class CountConverter extends Immutable.Record({
 }) {
-  toReQL(r, db, query) {
+  toReQL(db, query) {
     return query.count();
   }
 }

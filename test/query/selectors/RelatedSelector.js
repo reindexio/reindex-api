@@ -1,27 +1,28 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
-import r from 'rethinkdb';
+import RethinkDB from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import RelatedSelector from '../../../query/selectors/RelatedSelector';
 
 describe('RelatedSelector', () => {
-  function makeQuery(single) {
-    let selector = new RelatedSelector({relatedField: 'author'});
+  function makeQuery() {
+    let selector = new RelatedSelector({
+      tableName: 'micropost',
+      relatedField: 'author',
+    });
 
-    return getTerms(selector.toReQL(
-      r, r.db('testdb'), {tableName: 'micropost', single}
-    ));
+    return getTerms(selector.toReQL(RethinkDB.db('testdb')));
   }
 
   function makeClosureQuery() {
-    let selector = new RelatedSelector({relatedField: 'author'});
+    let selector = new RelatedSelector({
+      tableName: 'micropost',
+      relatedField: 'author',
+    });
 
     return getNestedQueryArgument(getTerms(
-      r.db('testdb').table('micropost').merge((obj) => {
-        return selector.toReQL(r, r.db('testdb'), {
-          tableName: 'micropost',
-          obj,
-        });
+      RethinkDB.db('testdb').table('micropost').merge((obj) => {
+        return selector.toReQL(RethinkDB.db('testdb'), {obj});
       })
     ), 0);
   }
@@ -31,11 +32,8 @@ describe('RelatedSelector', () => {
     assert.equal(result.args.first(), 'micropost');
   });
 
-  it('Should get both many and single object', () => {
-    let result = makeQuery(false).first();
-    assert.equal(result.op, 'GET_ALL', 'Should get many objects with getAll');
-
-    result = makeQuery(true).first();
+  it('Should get object', () => {
+    let result = makeQuery().first();
     assert.equal(result.op, 'GET', 'Should get single object with get');
   });
 

@@ -74,8 +74,9 @@ const nodes = new RootCall({
   fn: (type) => {
     return {
       query: new Query({
-        selector: new AllSelector(),
-        table: type,
+        selector: new AllSelector({
+          tableName: type,
+        }),
       }),
       typeName: type,
     };
@@ -98,9 +99,10 @@ const node = new RootCall({
   fn: (type, id) => {
     return {
       query: new Query({
-        selector: new IDSelector({ids: List.of(id)}),
-        table: type,
-        single: true,
+        selector: new IDSelector({
+          tableName: type,
+          id,
+        }),
       }),
       typeName: type,
     };

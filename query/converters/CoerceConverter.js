@@ -9,7 +9,7 @@ import Immutable from 'immutable';
 export default class CoerceConverter extends Immutable.Record({
   to: '',
 }) {
-  toReQL(r, db, query) {
+  toReQL(db, query) {
     return query.coerceTo(this.to);
   }
 }

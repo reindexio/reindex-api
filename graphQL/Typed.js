@@ -77,9 +77,8 @@ export class TConnection extends Record({
       children: this.children,
     });
     let baseQuery = new Query({
-      single: true,
-      table: this.target,
       selector: new RelatedSelector({
+        tableName: this.target,
         relatedField: this.name,
       }),
     });
@@ -103,11 +102,11 @@ export class TReverseConnection extends Record({
 }) {
   toQuery(query, parents) {
     let selector = new ReverseRelatedSelector({
+      tableName: this.target,
       relatedField: this.reverseName,
     });
 
     let baseQuery = new Query({
-      table: this.target,
       selector: selector,
       converters: List.of(new CoerceConverter({to: 'array'})),
     });

@@ -1,21 +1,20 @@
 import assert from '../../assert';
 import Immutable from 'immutable';
-import r from 'rethinkdb';
+import RethinkDB from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import ReverseRelatedSelector from
   '../../../query/selectors/ReverseRelatedSelector';
 
 describe('ReverseRelatedSelector', () => {
-  function makeQuery(single) {
-    let selector = new ReverseRelatedSelector({relatedField: 'author'});
+  function makeQuery() {
+    let selector = new ReverseRelatedSelector({
+      tableName: 'micropost',
+      relatedField: 'author',
+    });
 
     return getNestedQueryArgument(getTerms(
-      r.db('testdb').table('user').merge((obj) => {
-        return selector.toReQL(r, r.db('testdb'), {
-          tableName: 'micropost',
-          obj,
-          single,
-        });
+      RethinkDB.db('testdb').table('user').merge((obj) => {
+        return selector.toReQL(RethinkDB.db('testdb'), {obj});
       })
     ), 0);
   }
@@ -25,15 +24,9 @@ describe('ReverseRelatedSelector', () => {
     assert.equal(result.args.first(), 'micropost');
   });
 
-  it('Should select both many and single object', () => {
-    let result = makeQuery(false).first();
+  it('Should select both many objects', () => {
+    let result = makeQuery().first();
     assert.equal(result.op, 'GET_ALL', 'Should get many objects with getAll');
-
-    result = makeQuery(true);
-    assert.equal(result.get(1).op, 'GET_ALL',
-                 'Should still get objects with getMany');
-    assert.equal(result.first().op, 'NTH',
-                 'Should get first object with NTH.');
   });
 
   it('Should select via argument in closure using id and index', () => {

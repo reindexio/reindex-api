@@ -6,11 +6,11 @@ import getSchemaQuery from './getSchemaQuery';
  *
  * @implements Selector
  *
- * @method toReQL(r, db)
+ * @method toReQL(db)
  */
 export default class SchemaSelector extends Record({
 }) {
-  toReQL(r, db) {
+  toReQL(db) {
     return getSchemaQuery(db);
   }
 }

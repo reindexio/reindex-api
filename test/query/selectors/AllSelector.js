@@ -1,15 +1,15 @@
 import assert from '../../assert';
-import r from 'rethinkdb';
+import RethinkDB from 'rethinkdb';
 import {getTerms} from '../RethinkDBTestUtils';
 import AllSelector from '../../../query/selectors/AllSelector';
 
 describe('AllSelector', () => {
   function makeQuery() {
-    let selector = new AllSelector();
+    let selector = new AllSelector({
+      tableName: 'user',
+    });
 
-    return getTerms(selector.toReQL(
-      r, r.db('testdb'), {tableName: 'user'}
-    ));
+    return getTerms(selector.toReQL(RethinkDB.db('testdb')));
   }
 
   it('Should use correct table', () => {

@@ -7,12 +7,12 @@ import getSchemaQuery from './getSchemaQuery';
  * @implements Selector
  * @params name - type name
  *
- * @method toReQL(r, db)
+ * @method toReQL(db)
  */
 export default class TypeSelector extends Record({
   name: undefined,
 }) {
-  toReQL(r, db) {
+  toReQL(db) {
     return getSchemaQuery(db)('types')
       .filter({name: this.name})
       .nth(0);
