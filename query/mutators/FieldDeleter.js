@@ -5,7 +5,7 @@ export default class FieldDeleter extends Record({
   tableName: undefined,
   name: undefined,
 }) {
-  toReQL(r, db) {
+  toReQL(db) {
     return RethinkDB.do(
       db.table('_types').get(this.tableName).update({
         fields: RethinkDB.row('fields').difference(
@@ -28,7 +28,7 @@ export default class FieldDeleter extends Record({
         durability: 'soft',
       }),
       /* eslint-disable no-unused-vars */
-      // ReQL wants both arguments to the function in r.do.
+      // ReQL wants both arguments to the function in RethinkDB.do.
       (result, ignored) => {
         return result;
       }

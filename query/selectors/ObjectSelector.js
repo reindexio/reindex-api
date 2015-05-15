@@ -1,4 +1,5 @@
 import {Record, Map} from 'immutable';
+import RethinkDB from 'rethinkdb';
 
 /**
  * Selector that returns a literal object passed to it.
@@ -6,16 +7,12 @@ import {Record, Map} from 'immutable';
  * @implements Selector
  * @params object - Immutable.Map() with only primitive values.
  *
- * @method toReQL(r, db, {single})
+ * @method toReQL(db)
  */
 export default class ObjectSelector extends Record({
   object: Map(),
 }) {
-  toReQL(r, db, {single}) {
-    if (single) {
-      return r(this.object.toJS());
-    } else {
-      return r([this.object.toJS()]);
-    }
+  toReQL() {
+    return RethinkDB.expr(this.object.toJS());
   }
 }

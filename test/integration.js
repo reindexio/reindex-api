@@ -24,7 +24,7 @@ describe('Integration Tests', () => {
     let conn = await RethinkDB.connect();
     let schema = await getSchema(RethinkDB.db(dbName), conn);
     let q = graphQLToQuery(schema, Parser.parse(rql));
-    q = q.toReQL(RethinkDB, RethinkDB.db(dbName));
+    q = q.toReQL(RethinkDB.db(dbName));
 
     return fromJS(await q.run(conn));
   }

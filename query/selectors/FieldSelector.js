@@ -1,4 +1,5 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
+import RethinkDB from 'rethinkdb';
 
 /**
  * Selects from object by path.
@@ -6,14 +7,14 @@ import Immutable from 'immutable';
  * @implements Selector
  * @param path - Immutable.List path
  *
- * @method toReQL(r, db, {obj})
+ * @method toReQL(db, {obj})
  */
-export default class FieldSelector extends Immutable.Record({
-  path: Immutable.List(),
+export default class FieldSelector extends Record({
+  path: undefined,
 }) {
-  toReQL(r, db, {obj} = {}) {
+  toReQL(db, {obj} = {}) {
     return this.path.reduce((acc, next) => {
       return acc(next);
-    }, obj || r.row);
+    }, obj || RethinkDB.row);
   }
 }

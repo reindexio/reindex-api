@@ -1,15 +1,17 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
 
 /**
  * Selects from table
  *
  * @implements Selector
+ * @param tableName - table to select from
  *
- * @method toReQL(r, db, {tableName})
+ * @method toReQL(db)
  */
-export default class AllSelector extends Immutable.Record({
+export default class AllSelector extends Record({
+  tableName: undefined,
 }) {
-  toReQL(r, db, {tableName}) {
-    return db.table(tableName);
+  toReQL(db) {
+    return db.table(this.tableName);
   }
 }

@@ -4,7 +4,7 @@ import RethinkDB from 'rethinkdb';
 export default class TypeCreator extends Record({
   name: undefined,
 }) {
-  toReQL(r, db) {
+  toReQL(db) {
     let basicType = {
       name: this.name,
       isNode: true,

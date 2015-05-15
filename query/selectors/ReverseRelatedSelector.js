@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
 
 /**
  * Selects from the table filtering by id of the given object.
@@ -6,20 +6,18 @@ import Immutable from 'immutable';
  * NB: obj is mandatory for toReQL()
  *
  * @implements Selector
+ * @param tableName - table name to select from.
  * @param relatedField - field (and index) to filter through
  *
- * @method toReQL(r, db, {tableName, single, obj})
+ * @method toReQL(db, {obj})
  */
-export default class ReverseRelatedSelector extends Immutable.Record({
-  relatedField: '',
+export default class ReverseRelatedSelector extends Record({
+  tableName: undefined,
+  relatedField: undefined,
 }) {
-  toReQL(r, db, {tableName, single, obj}) {
-    let table = db.table(tableName);
+  toReQL(db, {obj}) {
+    let table = db.table(this.tableName);
     let query = table.getAll(obj('id'), {index: this.relatedField});
-    if (single) {
-      return query.nth(0);
-    } else {
-      return query;
-    }
+    return query;
   }
 }

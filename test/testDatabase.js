@@ -1,7 +1,7 @@
-import Immutable from 'immutable';
-import r from 'rethinkdb';
+import {fromJS} from 'immutable';
+import RethinkDB from 'rethinkdb';
 
-const TEST_DATA = Immutable.fromJS({
+const TEST_DATA = fromJS({
   tables: {
     User: [
       {id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408', handle: 'fson'},
@@ -70,7 +70,7 @@ const TEST_DATA = Immutable.fromJS({
 });
 
 export function createEmptyDatabase(conn, dbName) {
-  return r.dbCreate(dbName).run(conn);
+  return RethinkDB.dbCreate(dbName).run(conn);
 }
 
 export async function createTestDatabase(conn, dbName) {
@@ -80,8 +80,8 @@ export async function createTestDatabase(conn, dbName) {
     if (table === '_types') {
       options.primaryKey = 'name';
     }
-    await r.db(dbName).tableCreate(table, options).run(conn);
-    await r.db(dbName)
+    await RethinkDB.db(dbName).tableCreate(table, options).run(conn);
+    await RethinkDB.db(dbName)
       .table(table)
       .insert(data.toJS())
       .run(conn);
@@ -89,12 +89,12 @@ export async function createTestDatabase(conn, dbName) {
   await* TEST_DATA.get('indexes').map(async function (index) {
     const table = index.get('table');
     const field = index.get('field');
-    await r
+    await RethinkDB
       .db(dbName)
       .table(table)
       .indexCreate(field)
       .run(conn);
-    await r
+    await RethinkDB
       .db(dbName)
       .table(table)
       .indexWait(field)
@@ -103,5 +103,5 @@ export async function createTestDatabase(conn, dbName) {
 }
 
 export async function deleteTestDatabase(conn, dbName) {
-  await r.dbDrop(dbName).run(conn);
+  await RethinkDB.dbDrop(dbName).run(conn);
 }

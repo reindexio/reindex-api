@@ -1,22 +1,20 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
 
 /**
  * Selects from table by ids.
  *
  * @implements Selector
- * @param ids - Immutable.List() of ids.
+ * @param tableName - table name to select from.
+ * @param id - id to select
  *
- * @method toReQL(r, db, {tableName, single})
+ * @method toReQL(db)
  */
-export default class IDSelector extends Immutable.Record({
-  ids: Immutable.List(),
+export default class IDSelector extends Record({
+  tableName: undefined,
+  id: undefined,
 }) {
-  toReQL(r, db, {tableName, single}) {
-    let table = db.table(tableName);
-    if (single) {
-      return table.get(this.ids.first());
-    } else {
-      return table.getAll(...this.ids);
-    }
+  toReQL(db) {
+    let table = db.table(this.tableName);
+    return table.get(this.id);
   }
 }

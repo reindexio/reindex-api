@@ -7,7 +7,7 @@ export default class FieldAdder extends Record({
   type: undefined,
   options: Map(),
 }) {
-  toReQL(r, db) {
+  toReQL(db) {
     return db.table('_types').get(this.tableName).update({
       fields: RethinkDB.row('fields').append({
         name: this.name,

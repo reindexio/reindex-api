@@ -3,7 +3,6 @@
  *
  * @interface
  interface Selector {
-   toReQL(r: rethinkdb, db: rethinkdb.db,
-         {options}): rethinkdb.query
+   toReQL(db: rethinkdb.db, {options}): rethinkdb.query
  }
  **/
