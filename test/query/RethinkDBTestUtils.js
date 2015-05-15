@@ -1,25 +1,25 @@
-import Immutable from 'immutable';
+import {List, Map, fromJS, Record} from 'immutable';
 import protoDefs from 'rethinkdb/proto-def';
 
-const CODE_TO_TERM = Immutable.Map(
+const CODE_TO_TERM = Map(
   protoDefs.Term.TermType
 ).flip().merge(
-  Immutable.Map(
+  Map(
     protoDefs.Datum.DatumType
   ).flip()
 );
 
-class QueryTerm extends Immutable.Record({
+class QueryTerm extends Record({
   op: '',
-  args: Immutable.List(),
-  optArgs: Immutable.Map(),
+  args: List(),
+  optArgs: Map(),
 }) {}
 
 /**
  * Deconstruct ReQL query to List of terms.
  */
 export function getTerms(rQuery) {
-  return parseQueryString(Immutable.fromJS(rQuery.build()));
+  return parseQueryString(fromJS(rQuery.build()));
 }
 
 /**
@@ -32,10 +32,10 @@ export function getNestedQueryArgument(parsedQuery, position) {
 function parseQueryString(rQuery) {
   let [op, allArgs, optArgs] = rQuery;
   let [child, args] = splitArgsOps(allArgs);
-  return Immutable.List.of(new QueryTerm({
+  return List.of(new QueryTerm({
     op: CODE_TO_TERM.get(op),
     args: args.flatMap(parseArg),
-    optArgs: optArgs ? optArgs : Immutable.Map(),
+    optArgs: optArgs ? optArgs : Map(),
   })).concat(
     child ? parseQueryString(child) : []
   );
@@ -56,9 +56,9 @@ function splitArgsOps(list) {
 }
 
 function parseArg(arg) {
-  if (Immutable.List.isList(arg)) {
+  if (List.isList(arg)) {
     return parseQueryString(arg);
   } else {
-    return Immutable.List.of(arg);
+    return List.of(arg);
   }
 }

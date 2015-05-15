@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
 
 /**
  * Selects from the table filtering by id of the given object.
@@ -11,7 +11,7 @@ import Immutable from 'immutable';
  *
  * @method toReQL(db, {obj})
  */
-export default class ReverseRelatedSelector extends Immutable.Record({
+export default class ReverseRelatedSelector extends Record({
   tableName: undefined,
   relatedField: undefined,
 }) {

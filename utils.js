@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import {List, Iterable} from 'immutable';
 
 /**
  * Walk leafs of nested immutable.js structure, calling function on them, then
@@ -10,14 +10,14 @@ import Immutable from 'immutable';
  *        iteration, Immutable.Iterable.isIterable by default
 **/
 export function walkLeafs(iterable, mapper,
-                          isLeaf = Immutable.Iterable.isIterable) {
-  return walkLeafsRecur(iterable, mapper, Immutable.List(), false, isLeaf);
+                          isLeaf = Iterable.isIterable) {
+  return walkLeafsRecur(iterable, mapper, List(), false, isLeaf);
 }
 
 function walkLeafsRecur(node, mapper, keys, keyed, isLeaf) {
   if (isLeaf(node)) {
     if (node.isEmpty()) {
-      return Immutable.List();
+      return List();
     }
     if (!keyed) {
       node = node.entrySeq();
@@ -30,6 +30,6 @@ function walkLeafsRecur(node, mapper, keys, keyed, isLeaf) {
       walkLeafsRecur(rest, mapper, keys, true, isLeaf)
     );
   } else {
-    return Immutable.List.of(mapper(node, keys.last(), keys));
+    return List.of(mapper(node, keys.last(), keys));
   }
 }

@@ -1,5 +1,5 @@
 import assert from '../../assert';
-import Immutable from 'immutable';
+import {List} from 'immutable';
 import r from 'rethinkdb';
 import {getTerms} from '../RethinkDBTestUtils';
 import SliceConverter from '../../../query/converters/SliceConverter';
@@ -15,7 +15,7 @@ describe('SliceConverter', () => {
       converter.toReQL(r, r.db('testdb'), query)
     ).first();
     assert.equal(result.op, 'SLICE');
-    assert.oequal(result.args, Immutable.List.of(3));
+    assert.oequal(result.args, List.of(3));
 
     converter = new SliceConverter({
       from: 3,
@@ -25,6 +25,6 @@ describe('SliceConverter', () => {
       converter.toReQL(r, r.db('testdb'), query)
     ).first();
     assert.equal(result.op, 'SLICE');
-    assert.oequal(result.args, Immutable.List([3, 10]));
+    assert.oequal(result.args, List([3, 10]));
   });
 });

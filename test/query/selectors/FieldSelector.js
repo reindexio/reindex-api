@@ -1,11 +1,11 @@
 import assert from '../../assert';
-import Immutable from 'immutable';
+import {List} from 'immutable';
 import RethinkDB from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import FieldSelector from '../../../query/selectors/FieldSelector';
 
 describe('Field Selector', () => {
-  const path = Immutable.List(['author', 'handle']);
+  const path = List(['author', 'handle']);
 
   function makeQuery() {
     let selector = new FieldSelector({

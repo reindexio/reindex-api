@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import {Record} from 'immutable';
 
 /**
  * Coerces query.
@@ -6,7 +6,7 @@ import Immutable from 'immutable';
  * @implements Converter
  * @param to - type to coerce to.
  */
-export default class CoerceConverter extends Immutable.Record({
+export default class CoerceConverter extends Record({
   to: '',
 }) {
   toReQL(db, query) {

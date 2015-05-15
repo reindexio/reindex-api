@@ -1,5 +1,5 @@
 {
-  var Immutable = require('immutable');
+  var List = require('immutable').List;
   var AST = require('./AST');
 }
 
@@ -8,9 +8,9 @@ start
     {
       return new AST.GQLRoot({
         name: call.name,
-        calls: calls || Immutable.List(),
-        parameters: call.parameters || Immutable.List(),
-        children: Immutable.List(children)
+        calls: calls || List(),
+        parameters: call.parameters || List(),
+        children: List(children)
       });
     }
 
@@ -18,9 +18,9 @@ calls
   = calls:("." call:call { return call })+
     {
       if (Array.isArray(calls)) {
-        return Immutable.List(calls);
+        return List(calls);
       } else {
-        return Immutable.List.of(calls);
+        return List.of(calls);
       }
     }
 
@@ -50,7 +50,7 @@ parameter_list
       { return [first].concat(rest); }
     )
     {
-      return Immutable.List(parameter_list);
+      return List(parameter_list);
     }
 
 parameter
@@ -95,7 +95,7 @@ object_property
     {
       return new AST.GQLNode({
         name: name,
-        children: Immutable.List(children)
+        children: List(children)
       });
     }
 
@@ -104,8 +104,8 @@ call_property
     {
       return new AST.GQLNode({
         name: name,
-        calls: Immutable.List(calls),
-        children: Immutable.List(children)
+        calls: List(calls),
+        children: List(children)
       });
     }
 

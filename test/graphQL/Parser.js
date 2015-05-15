@@ -1,5 +1,5 @@
 import assert from '../assert';
-import Immutable from 'immutable';
+import {List} from 'immutable';
 import {GQLRoot, GQLNode, GQLLeaf, GQLMethod} from '../../graphQL/AST';
 import Parser from '../../graphQL/Parser';
 
@@ -13,18 +13,18 @@ describe('Parser', () => {
     }`;
     let expected = new GQLRoot({
       name: 'node',
-      parameters: Immutable.List([
+      parameters: List([
         'Micropost',
         'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
       ]),
-      calls: Immutable.List(),
-      children: Immutable.List([
+      calls: List(),
+      children: List([
         new GQLLeaf({ name: 'text'}),
         new GQLLeaf({ name: 'createdAt' }),
         new GQLNode({
           name: 'author',
-          calls: Immutable.List(),
-          children: Immutable.List([
+          calls: List(),
+          children: List([
             new GQLLeaf({ name: 'handle' }),
           ]),
         }),
@@ -38,20 +38,20 @@ describe('Parser', () => {
     let query = 'nodes(Micropost).after(5).first(10) { text }';
     let expected = new GQLRoot({
       name: 'nodes',
-      parameters: Immutable.List([
+      parameters: List([
         'Micropost',
       ]),
-      calls: Immutable.List([
+      calls: List([
         new GQLMethod({
           name: 'after',
-          parameters: Immutable.List.of('5'),
+          parameters: List.of('5'),
         }),
         new GQLMethod({
           name: 'first',
-          parameters: Immutable.List.of('10'),
+          parameters: List.of('10'),
         }),
       ]),
-      children: Immutable.List([
+      children: List([
         new GQLLeaf({ name: 'text'}),
       ]),
     });
@@ -67,13 +67,13 @@ describe('Parser', () => {
     }`;
     let expected = new GQLNode({
       name: 'microposts',
-      calls: Immutable.List([
+      calls: List([
         new GQLMethod({
           name: 'first',
-          parameters: Immutable.List.of('10'),
+          parameters: List.of('10'),
         }),
       ]),
-      children: Immutable.List([
+      children: List([
         new GQLLeaf({ name: 'count'}),
       ]),
     });

@@ -1,7 +1,7 @@
-import Immutable from 'immutable';
+import {fromJS} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-const TEST_DATA = Immutable.fromJS({
+const TEST_DATA = fromJS({
   tables: {
     User: [
       {id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408', handle: 'fson'},

@@ -1,5 +1,5 @@
 import assert from '../../assert';
-import Immutable from 'immutable';
+import {List, Map} from 'immutable';
 import RethinkDB from 'rethinkdb';
 import {getTerms, getNestedQueryArgument} from '../RethinkDBTestUtils';
 import ReverseRelatedSelector from
@@ -32,11 +32,11 @@ describe('ReverseRelatedSelector', () => {
   it('Should select via argument in closure using id and index', () => {
     let result = makeQuery().first();
 
-    assert.oequal(result.args.first().args, Immutable.List.of('id'),
+    assert.oequal(result.args.first().args, List.of('id'),
                   'Should query by id.');
     assert.equal(result.args.get(1).op, 'VAR',
                  'Should use closure variable.');
-    assert.oequal(result.optArgs, Immutable.Map({
+    assert.oequal(result.optArgs, Map({
       index: 'author',
     }), 'Should use index.');
   });
