@@ -9,7 +9,7 @@ start
       return new AST.GQLRoot({
         name: call.name,
         calls: calls || Immutable.List(),
-        parameters: call.parameters,
+        parameters: call.parameters || Immutable.List(),
         children: Immutable.List(children)
       });
     }

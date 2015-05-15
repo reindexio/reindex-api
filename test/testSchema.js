@@ -66,7 +66,7 @@ const testSchema = dbToSchema(fromJS({
       ],
     }, {
       name: 'User',
-      node: true,
+      isNode: true,
       fields: [
         {
           name: 'handle',
@@ -80,7 +80,7 @@ const testSchema = dbToSchema(fromJS({
       ],
     }, {
       name: 'Micropost',
-      node: true,
+      isNode: true,
       fields: [
         {
           name: 'text',

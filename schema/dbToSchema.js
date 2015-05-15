@@ -94,6 +94,11 @@ function convertField(field, types) {
       name: fieldName,
       fields: convertFields(types, field.get('fields')),
     });
+  } else if (fieldType === SCHEMA_TYPES.array && field.get('inlineType')) {
+    return new SchemaArrayField({
+      name: fieldName,
+      fields: convertType(types.get(field.get('inlineType')), types).fields,
+    });
   } else {
     return new SchemaPrimitiveField({
       type: fieldType,

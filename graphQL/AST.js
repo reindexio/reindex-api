@@ -71,12 +71,6 @@ export class GQLRoot extends Record({
 /**
  * One node in GraphQL AST.
  *
- * @interface
- interface GQLTree {
-   isLeaf(): boolean;
-   isNode(): boolean;
- }
- *
  **/
 
 /**
