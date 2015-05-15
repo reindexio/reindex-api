@@ -79,6 +79,24 @@ describe('Integration Tests', () => {
     ));
   });
 
+  it('Should allow querying connections with only a count', async function () {
+    let result = await queryDB(
+      `node(User, bbd1db98-4ac4-40a7-b514-968059c3dbac) {
+        microposts {
+          count
+        }
+      }`
+    );
+
+    assert.oequal(result, fromJS(
+      {
+        'microposts': {
+          'count': 1,
+        },
+      }
+    ));
+  });
+
   it('Should return correct data for nodes(User)', async function () {
     let result = await queryDB(
       `nodes(User) {
