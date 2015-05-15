@@ -1,9 +1,9 @@
 import RethinkDB from 'rethinkdb';
 
 const RethinkDBExecutor = {
-  async executeQuery(connection, dbName, query) {
-    const reQLQuery = query.query.toRQL(RethinkDB, RethinkDB.db(dbName));
-    return await reQLQuery.run(connection);
+  async executeQuery(conn, app, query) {
+    const reQLQuery = query.toReQL(RethinkDB, RethinkDB.db(app.dbName));
+    return await reQLQuery.run(conn);
   },
 };
 export default RethinkDBExecutor;
