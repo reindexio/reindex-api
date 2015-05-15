@@ -1,6 +1,9 @@
 machine:
   node:
     version: 0.12.2
+checkout:
+  post:
+    - git merge origin/master
 dependencies:
   pre:
     - bin/ci-install-rethinkdb
