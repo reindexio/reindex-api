@@ -106,7 +106,7 @@ export class GQLNode extends Record({
           target: type.target,
           reverseName: type.reverseName,
           count: count !== undefined,
-          nodes: new TObject({
+          nodes: nodes && new TObject({
             name: null,
             children: nodes.children.map((child) => {
               return child.toTyped(schema, List.of(type.target));
