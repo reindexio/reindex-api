@@ -1,4 +1,4 @@
-import {List, Record, OrderedMap} from 'immutable';
+import {List, Record, Map, OrderedMap} from 'immutable';
 import Query from '../query/Query';
 import ObjectSelector from '../query/selectors/ObjectSelector';
 import RelatedSelector from '../query/selectors/RelatedSelector';
@@ -8,9 +8,13 @@ import CoerceConverter from '../query/converters/CoerceConverter';
 import CountConverter from '../query/converters/CountConverter';
 
 export class TField extends Record({
-  name: '',
+  name: undefined,
+  call: undefined,
 }) {
   toQuery(query, parents) {
+    if (this.call) {
+      query = applyCall(query, this.call);
+    }
     return query.setIn(
       ['pluck', ...parents, this.name],
       true
@@ -19,40 +23,42 @@ export class TField extends Record({
 }
 
 export class TConnectionRoot extends Record({
-  methods: List(),
-  nodes: undefined,
-  count: undefined,
+  child: undefined,
 }) {
   toQuery(query, parents) {
-    query = applyCalls(query, this.methods);
+    if (this.child.call) {
+      query = applyCall(query, this.child.call);
+    }
     query = query.set(
       'converters',
       query.converters.push(new CoerceConverter({to: 'array'}))
     );
     let newQuery = new Query({
       selector: new ObjectSelector({}),
-      single: true,
       map: new OrderedMap({
         '_': query,
       }),
     });
     return unwrapEdgeable(
       newQuery,
-      parents,
+      parents.push('objects'),
       List.of('_'),
-      this.nodes,
-      this.count
+      this.child.nodes,
+      this.child.count
     );
   }
 }
 
 export class TObject extends Record({
-  name: '',
-  methods: List(),
+  name: undefined,
+  call: undefined,
   children: List(),
 }) {
   toQuery(query, parents) {
-    query = applyCalls(query, this.methods);
+    if (this.call) {
+      query = applyCall(query, this.call);
+    }
+
     if (this.name !== null) {
       parents = parents.push(this.name);
     }
@@ -65,10 +71,10 @@ export class TObject extends Record({
 }
 
 export class TConnection extends Record({
-  name: '',
-  target: '',
-  reverseName: '',
-  methods: List(),
+  name: undefined,
+  target: undefined,
+  reverseName: undefined,
+  call: undefined,
   children: List(),
 }) {
   toQuery(query, parents) {
@@ -82,7 +88,10 @@ export class TConnection extends Record({
         relatedField: this.name,
       }),
     });
-    baseQuery = applyCalls(baseQuery, this.methods);
+
+    if (this.call) {
+      baseQuery = applyCall(baseQuery, this.call);
+    }
     let newQuery = newNode.toQuery(
       baseQuery,
       List()
@@ -93,10 +102,10 @@ export class TConnection extends Record({
 }
 
 export class TReverseConnection extends Record({
-  name: '',
-  target: '',
-  reverseName: '',
-  methods: List(),
+  name: undefined,
+  target: undefined,
+  reverseName: undefined,
+  call: undefined,
   nodes: undefined,
   count: undefined,
 }) {
@@ -110,10 +119,11 @@ export class TReverseConnection extends Record({
       selector: selector,
       converters: List.of(new CoerceConverter({to: 'array'})),
     });
-    baseQuery = applyCalls(baseQuery, this.methods);
+    if (this.call) {
+      baseQuery = applyCall(baseQuery, this.call);
+    }
 
     let tempField = parents.push(this.name).push('_');
-
     query = query.setIn(
       ['map', ...tempField],
       baseQuery
@@ -130,8 +140,8 @@ export class TReverseConnection extends Record({
 }
 
 export class TArray extends Record({
-  name: '',
-  methods: List(),
+  name: undefined,
+  call: undefined,
   nodes: undefined,
   count: undefined,
 }) {
@@ -146,7 +156,9 @@ export class TArray extends Record({
       }),
       table: query.table,
     });
-    baseQuery = applyCalls(baseQuery, this.methods);
+    if (this.call) {
+      baseQuery = applyCall(baseQuery, this.call);
+    }
 
     let tempSelector = [...parents, '_'];
     query = query.setIn(
@@ -164,13 +176,12 @@ export class TArray extends Record({
   }
 }
 
-export class TMethod extends Record({
-  name: '',
-  method: undefined,
-  parameters: List(),
+export class TCall extends Record({
+  fn: undefined,
+  parameters: Map(),
 }) {
   toQuery(query) {
-    return this.method(query, ...this.parameters);
+    return this.fn(query, this.parameters.toObject());
   }
 }
 
@@ -182,8 +193,8 @@ function mergeQueries(left, right) {
   });
 }
 
-function applyCalls(query, methods) {
-  return methods.reduce((q, method) => method.toQuery(q), query);
+function applyCall(query, call) {
+  return call.toQuery(query);
 }
 
 function unwrapEdgeable(query, parents, basePath, nodes, count) {

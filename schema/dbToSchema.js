@@ -29,7 +29,7 @@ function convertCalls(callList) {
         call.get('name'),
         new SchemaCall({
           name: call.get('name'),
-          args: call.get('args'),
+          parameters: call.get('parameters'),
           returns: call.get('returns'),
         }),
       ];
@@ -72,13 +72,13 @@ function convertFields(types, fields) {
 function convertField(field, types) {
   let fieldName = field.get('name');
   let fieldType = field.get('type');
-  if (fieldType === SCHEMA_TYPES.connection) {
+  if (fieldType === SCHEMA_TYPES.connection && field.get('target')) {
     return new SchemaReverseConnectionField({
       name: fieldName,
       reverseName: field.get('reverseName'),
       target: field.get('target'),
     });
-  } else if (types.get(fieldType)) {
+  } else if (fieldType !== SCHEMA_TYPES.connection && types.get(fieldType)) {
     return new SchemaConnectionField({
       name: fieldName,
       reverseName: field.get('reverseName'),
@@ -92,7 +92,7 @@ function convertField(field, types) {
   } else if (fieldType === SCHEMA_TYPES.array && field.get('fields')) {
     return new SchemaArrayField({
       name: fieldName,
-      fields: convertFields(types, field.get('fields')),
+      fields: field.get('fields') && convertFields(types, field.get('fields')),
     });
   } else if (fieldType === SCHEMA_TYPES.array && field.get('inlineType')) {
     return new SchemaArrayField({

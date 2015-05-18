@@ -1,40 +1,18 @@
 {
+  var Map = require('immutable').Map;
   var List = require('immutable').List;
   var AST = require('./AST');
 }
 
 start
-  = ws? call:call calls:(calls?) children:block
+  = ws? call:call_property
     {
       return new AST.GQLRoot({
         name: call.name,
-        calls: calls || List(),
-        parameters: call.parameters || List(),
-        children: List(children)
+        parameters: call.parameters || Map(),
+        children: call.children || List()
       });
     }
-
-calls
-  = calls:("." call:call { return call })+
-    {
-      if (Array.isArray(calls)) {
-        return List(calls);
-      } else {
-        return List.of(calls);
-      }
-    }
-
-call
-  = name:call_name parameters:call_parameters
-    {
-      return new AST.GQLMethod({
-        name: name,
-        parameters: parameters
-      });
-    }
-
-call_name
-  = identifier
 
 call_parameters
   = ws? '(' ws? call_parameters:parameter_list? ')'
@@ -47,16 +25,16 @@ parameter_list
       first:parameter
       rest:(ws? property_separator ws? p:parameter { return p })*
       ws?
-      { return [first].concat(rest); }
+      { return first.merge.apply(first, rest); }
     )
     {
-      return List(parameter_list);
+      return parameter_list;
     }
 
 parameter
-  = parameter:[a-zA-Z0-9_=-]+
+  = name:identifier ws? ':' ws? parameter:[a-zA-Z0-9_=-]+
     {
-      return parameter.join('');
+      return Map().set(name, parameter.join(''));
     }
 
 block
@@ -100,11 +78,11 @@ object_property
     }
 
 call_property
-  = name:identifier calls:calls children:block?
+  = name:identifier parameters:call_parameters children:block?
     {
       return new AST.GQLNode({
         name: name,
-        calls: List(calls),
+        parameters: parameters,
         children: List(children)
       });
     }

@@ -1,4 +1,4 @@
-import {Record, List, Map} from 'immutable';
+import {Record, Map} from 'immutable';
 
 export const SCHEMA_TYPES = {
   number: 'number',
@@ -107,11 +107,6 @@ export class SchemaReverseConnectionField extends Record({
 
 export class SchemaCall extends Record({
   name: undefined,
-  args: List(),
+  parameters: Map(),
   returns: undefined,
-}) {}
-
-export class SchemaArg extends Record({
-  name: undefined,
-  type: undefined,
 }) {}

@@ -1,4 +1,8 @@
-const BaseTypes = [
+import {fromJS, Map} from 'immutable';
+import methods from '../query/methods';
+import rootCalls from '../query/rootCalls';
+
+const builtIns = fromJS([
   {
     name: 'connection',
     fields: [
@@ -13,21 +17,6 @@ const BaseTypes = [
       {
         name: 'nodes',
         type: 'nodes',
-      },
-    ],
-    methods: [
-      {
-        name: 'get',
-        arguments: [
-          {
-            name: 'ids',
-            type: 'array',
-            childType: {
-              type: 'string',
-            },
-          },
-        ],
-        returns: 'connection',
       },
     ],
   }, {
@@ -47,6 +36,14 @@ const BaseTypes = [
       {
         name: 'node',
         type: 'object',
+      },
+    ],
+  }, {
+    name: 'nodesResult',
+    fields: [
+      {
+        name: 'objects',
+        type: 'connection',
       },
     ],
   }, {
@@ -105,7 +102,7 @@ const BaseTypes = [
         type: 'string',
       },
       {
-        name: 'args',
+        name: 'parameters',
         type: 'array',
         fields: [
           {
@@ -115,6 +112,10 @@ const BaseTypes = [
           {
             name: 'type',
             type: 'string',
+          },
+          {
+            name: 'isRequired',
+            type: 'boolean',
           },
         ],
       },
@@ -144,8 +145,43 @@ const BaseTypes = [
           },
         ],
       },
+      {
+        name: 'parameters',
+        type: 'array',
+        fields: [
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'type',
+            type: 'string',
+          },
+        ],
+      },
     ],
   },
-];
+]);
 
-export default BaseTypes;
+let cachedTypes;
+
+function getBaseTypes() {
+  if (cachedTypes) {
+    return cachedTypes;
+  } else {
+    cachedTypes = Map({
+      calls: rootCalls.valueSeq().toList(),
+      types: builtIns.map((type) => {
+        let method = methods.get(type.name);
+        if (method) {
+          return type.set('parameters', method.parameters.valueSeq());
+        } else {
+          return type;
+        }
+      }),
+    });
+    return cachedTypes;
+  }
+}
+
+export default getBaseTypes;

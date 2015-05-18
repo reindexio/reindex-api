@@ -9,7 +9,7 @@ import RethinkDB from 'rethinkdb';
      sorts descending
  */
 export default class OrderByConverter extends Record({
-  orderBy: '',
+  orderBy: undefined,
 }) {
   toReQL(db, query) {
     let orderBy;
