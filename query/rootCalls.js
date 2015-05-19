@@ -1,4 +1,5 @@
-import {List, Record, Map} from 'immutable';
+import {Record, Map} from 'immutable';
+import convertType from '../schema/convertType';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
@@ -12,27 +13,60 @@ import TypeSelector from './selectors/TypeSelector';
 class RootCall extends Record({
   name: undefined,
   returns: undefined,
-  args: List(),
+  parameters: Map(),
   fn: undefined,
 }) {
   toJS() {
     return {
       name: this.name,
       returns: this.returns,
-      args: this.args.toJS(),
+      parameters: this.parameters.valueSeq().toJS(),
     };
+  }
+
+  processParameters(parameters) {
+    let missingRequired = this.parameters
+      .filter((p) => p.isRequired)
+      .keySeq()
+      .toSet()
+      .subtract(parameters.keySeq().toSet());
+    if (missingRequired.count() > 0) {
+      throw new Error(
+        `Root call "${this.name}" wasn't passed required parameter(s) ` +
+        `${missingRequired.join(', ')}.`
+      );
+    }
+    return parameters.mapEntries(([parameter, value]) => {
+      let expectedParameter = this.parameters.get(parameter);
+      if (expectedParameter) {
+        return [
+          expectedParameter.name,
+          convertType(expectedParameter.type, value),
+        ];
+      } else {
+        let validParameters = this.parameters
+          .keySeq()
+          .toArray()
+          .join(', ');
+        throw new Error(
+          `Root call "${this.name}" has no parameter "${parameter}". ` +
+          `Valid parameters are ${validParameters}.`
+        );
+      }
+    });
   }
 }
 
-class RootArg extends Record({
+class RootParameter extends Record({
   name: undefined,
   type: undefined,
+  isRequired: true,
 }) {}
 
 const schema = new RootCall({
   name: 'schema',
   returns: 'schema',
-  args: List(),
+  parameters: Map(),
   fn: () => {
     return {
       query: new Query({
@@ -45,17 +79,17 @@ const schema = new RootCall({
 const typeCall = new RootCall({
   name: 'type',
   returns: 'type',
-  args: List([
-    new RootArg({
-      name: 'typeName',
+  parameters: Map({
+    name: new RootParameter({
+      name: 'name',
       type: 'string',
     }),
-  ]),
-  fn: (type) => {
+  }),
+  fn: ({name}) => {
     return {
       query: new Query({
         selector: new TypeSelector({
-          name: type,
+          name: name,
         }),
       }),
     };
@@ -64,14 +98,14 @@ const typeCall = new RootCall({
 
 const nodes = new RootCall({
   name: 'nodes',
-  returns: 'connection',
-  args: List([
-    new RootArg({
-      name: 'typeName',
+  returns: 'nodesResult',
+  parameters: Map({
+    type: new RootParameter({
+      name: 'type',
       type: 'string',
     }),
-  ]),
-  fn: (type) => {
+  }),
+  fn: ({type}) => {
     return {
       query: new Query({
         selector: new AllSelector({
@@ -86,17 +120,17 @@ const nodes = new RootCall({
 const node = new RootCall({
   name: 'node',
   returns: 'object',
-  args: List([
-    new RootArg({
-      name: 'typeName',
+  parameters: Map({
+    type: new RootParameter({
+      name: 'type',
       type: 'string',
     }),
-    new RootArg({
+    id: new RootParameter({
       name: 'id',
       type: 'string',
     }),
-  ]),
-  fn: (type, id) => {
+  }),
+  fn: ({type, id}) => {
     return {
       query: new Query({
         selector: new IDSelector({
@@ -109,16 +143,16 @@ const node = new RootCall({
   },
 });
 
-const createType = new RootCall({
-  name: 'createType',
+const addType = new RootCall({
+  name: 'addType',
   returns: 'schemaResult',
-  args: List([
-    new RootArg({
-      name: 'typeName',
+  parameters: Map({
+    name: new RootParameter({
+      name: 'name',
       type: 'string',
     }),
-  ]),
-  fn: (name) => {
+  }),
+  fn: ({name}) => {
     return {
       query: new Query({
         selector: new TypeCreator({
@@ -129,16 +163,16 @@ const createType = new RootCall({
   },
 });
 
-const deleteType = new RootCall({
-  name: 'deleteType',
+const removeType = new RootCall({
+  name: 'removeType',
   returns: 'schemaResult',
-  args: List([
-    new RootArg({
-      name: 'typename',
+  parameters: Map({
+    name: new RootParameter({
+      name: 'name',
       type: 'string',
     }),
-  ]),
-  fn: (name) => {
+  }),
+  fn: ({name}) => {
     return {
       query: new Query({
         selector: new TypeDeleter({
@@ -152,29 +186,33 @@ const deleteType = new RootCall({
 const addField = new RootCall({
   name: 'addField',
   returns: 'mutationResult',
-  args: List([
-    new RootArg({
-      name: 'tableName',
-      type: 'string',
-    }),
-    new RootArg({
-      name: 'name',
-      type: 'string',
-    }),
-    new RootArg({
+  parameters: Map({
+    type: new RootParameter({
       name: 'type',
       type: 'string',
     }),
-    new RootArg({
+    fieldName: new RootParameter({
+      name: 'fieldName',
+      type: 'string',
+    }),
+    fieldType: new RootParameter({
+      name: 'fieldType',
+      type: 'string',
+    }),
+    options: new RootParameter({
       name: 'options',
       type: 'object',
+      isRequired: false,
     }),
-  ]),
-  fn: (tableName, name, type, options = Map()) => {
+  }),
+  fn: ({type, fieldName, fieldType, options = Map()}) => {
     return {
       query: new Query({
         selector: new FieldAdder({
-          tableName, name, type, options,
+          tableName: type,
+          name: fieldName,
+          type: fieldType,
+          options,
         }),
       }),
       typeName: 'type',
@@ -185,21 +223,22 @@ const addField = new RootCall({
 const removeField = new RootCall({
   name: 'removeField',
   returns: 'mutationResult',
-  args: List([
-    new RootArg({
-      name: 'tableName',
+  parameters: Map({
+    type: new RootParameter({
+      name: 'type',
       type: 'string',
     }),
-    new RootArg({
-      name: 'name',
+    fieldName: new RootParameter({
+      name: 'fieldName',
       type: 'string',
     }),
-  ]),
-  fn: (tableName, name) => {
+  }),
+  fn: ({type, fieldName}) => {
     return {
       query: new Query({
         selector: new FieldDeleter({
-          tableName, name,
+          tableName: type,
+          name: fieldName,
         }),
       }),
       typeName: 'type',
@@ -212,8 +251,8 @@ const rootCalls = Map({
   type: typeCall,
   nodes: nodes,
   node: node,
-  createType: createType,
-  deleteType: deleteType,
+  addType: addType,
+  removeType: removeType,
   addField: addField,
   removeField: removeField,
 });

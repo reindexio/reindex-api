@@ -29,7 +29,7 @@ describe('POST /graphql', () => {
       method: 'POST',
       url: '/graphql',
       payload: {
-        query: `nodes(Micropost) { nodes { text } }`,
+        query: `nodes(type: Micropost) { objects { nodes { text } } }`,
       },
       headers: {
         host: `${dbName}.example.com`,
@@ -37,11 +37,13 @@ describe('POST /graphql', () => {
     });
     assert.strictEqual(response.statusCode, 200);
     assert.deepEqual(response.result, {
-      nodes: [
-        {
-          text: 'Test text',
-        },
-      ],
+      objects: {
+        nodes: [
+          {
+            text: 'Test text',
+          },
+        ],
+      },
     });
   });
 });

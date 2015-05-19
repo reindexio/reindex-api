@@ -31,7 +31,7 @@ describe('Integration Tests', () => {
 
   it('Should return correct data for node(Micropost, <id>)', async function () {
     let result = await queryDB(
-      `node(Micropost, f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
+      `node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
         author {
@@ -51,9 +51,9 @@ describe('Integration Tests', () => {
 
   it('Should return correct data for node(User, <id>)', async function () {
     let result = await queryDB(
-      `node(User, bbd1db98-4ac4-40a7-b514-968059c3dbac) {
+      `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
         handle,
-        microposts {
+        microposts(orderBy: -text, first: 2) {
           count,
           nodes {
             createdAt,
@@ -81,7 +81,7 @@ describe('Integration Tests', () => {
 
   it('Should allow querying connections with only a count', async function () {
     let result = await queryDB(
-      `node(User, bbd1db98-4ac4-40a7-b514-968059c3dbac) {
+      `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
         microposts {
           count
         }
@@ -99,17 +99,18 @@ describe('Integration Tests', () => {
 
   it('Should return correct data for nodes(User)', async function () {
     let result = await queryDB(
-      `nodes(User) {
-        nodes {
-          handle
+      `nodes(type: User) {
+        objects(orderBy: handle, first: 1) {
+          nodes {
+            handle
+          }
         }
       }`
     );
 
-    assert.oequal(result.get('nodes').toSet(), fromJS(
+    assert.oequal(result.getIn(['objects', 'nodes']).toSet(), fromJS(
       [
         { 'handle': 'freiksenet'},
-        { 'handle': 'fson' },
       ]
     ).toSet());
   });
@@ -117,10 +118,9 @@ describe('Integration Tests', () => {
   it('Should return type information', async function () {
     let schemaResult = await queryDB(
       `schema() {
-        calls {
+        calls(orderBy: name) {
           nodes {
-            name,
-            returns
+            name
           }
         },
         types {
@@ -132,40 +132,32 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(schemaResult.getIn(['calls', 'nodes']).toSet(), Set(fromJS([
+    assert.oequal(schemaResult.getIn(['calls', 'nodes']), fromJS([
       {
-        'name': 'schema',
-        'returns': 'schema',
+        'name': 'addField',
       },
       {
-        'name': 'type',
-        'returns': 'type',
-      },
-      {
-        'name': 'nodes',
-        'returns': 'connection',
+        'name': 'addType',
       },
       {
         'name': 'node',
-        'returns': 'object',
       },
       {
-        'name': 'createType',
-        'returns': 'schemaResult',
-      },
-      {
-        'name': 'deleteType',
-        'returns': 'schemaResult',
-      },
-      {
-        'name': 'addField',
-        'returns': 'mutationResult',
+        'name': 'nodes',
       },
       {
         'name': 'removeField',
-        'returns': 'mutationResult',
       },
-    ])));
+      {
+        'name': 'removeType',
+      },
+      {
+        'name': 'schema',
+      },
+      {
+        'name': 'type',
+      },
+    ]));
 
     assert.oequal(schemaResult.getIn(['types', 'nodes']).toSet(), Set(fromJS([
       {
@@ -186,6 +178,9 @@ describe('Integration Tests', () => {
         'name': 'nodes',
       },
       {
+        name: 'nodesResult',
+      },
+      {
         'name': 'schemaResult',
       },
       {
@@ -203,7 +198,7 @@ describe('Integration Tests', () => {
     ])));
 
     assert.oequal(await queryDB(
-      `type(User) {
+      `type(name: User) {
         name,
         isNode,
         fields {
@@ -237,11 +232,11 @@ describe('Integration Tests', () => {
 
   it('Should create and delete type.', async function () {
     assert.oequal(await queryDB(
-      `createType(Test) { success }`
+      `addType(name: Test) { success }`
     ), Map({ success: true }));
 
     assert.oequal(await queryDB(
-      `addField(Test, test, string) {
+      `addField(type: Test, fieldName: test, fieldType: string) {
         success,
         changes {
           count,
@@ -271,7 +266,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `removeField(Test, test) {
+      `removeField(type: Test, fieldName: test) {
         success,
         changes {
           count,
@@ -301,7 +296,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `deleteType(Test) { success }`
+      `removeType(name: Test) { success }`
     ), Map({ success: true }));
   });
 });
