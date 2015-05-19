@@ -3,6 +3,8 @@ machine:
     version: 0.12.2
 checkout:
   post:
+    - git config --global user.email "circleci@reindex.com"
+    - git config --global user.name "CirceCI Runner"
     - git merge origin/master
 dependencies:
   pre:
