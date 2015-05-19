@@ -1,7 +1,7 @@
 import {Record, Map} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-export default class FieldAdder extends Record({
+export default class AddFieldMutator extends Record({
   tableName: undefined,
   name: undefined,
   type: undefined,

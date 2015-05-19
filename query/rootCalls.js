@@ -3,10 +3,10 @@ import convertType from '../schema/convertType';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
-import TypeCreator from './mutators/TypeCreator';
-import TypeDeleter from './mutators/TypeDeleter';
-import FieldAdder from './mutators/FieldAdder';
-import FieldDeleter from './mutators/FieldDeleter';
+import AddTypeMutator from './mutators/AddTypeMutator';
+import RemoveTypeMutator from './mutators/RemoveTypeMutator';
+import AddFieldMutator from './mutators/AddFieldMutator';
+import RemoveFieldMutator from './mutators/RemoveFieldMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
 
@@ -155,7 +155,7 @@ const addType = new RootCall({
   fn: ({name}) => {
     return {
       query: new Query({
-        selector: new TypeCreator({
+        selector: new AddTypeMutator({
           name: name,
         }),
       }),
@@ -175,7 +175,7 @@ const removeType = new RootCall({
   fn: ({name}) => {
     return {
       query: new Query({
-        selector: new TypeDeleter({
+        selector: new RemoveTypeMutator({
           name: name,
         }),
       }),
@@ -208,7 +208,7 @@ const addField = new RootCall({
   fn: ({type, fieldName, fieldType, options = Map()}) => {
     return {
       query: new Query({
-        selector: new FieldAdder({
+        selector: new AddFieldMutator({
           tableName: type,
           name: fieldName,
           type: fieldType,
@@ -236,7 +236,7 @@ const removeField = new RootCall({
   fn: ({type, fieldName}) => {
     return {
       query: new Query({
-        selector: new FieldDeleter({
+        selector: new RemoveFieldMutator({
           tableName: type,
           name: fieldName,
         }),

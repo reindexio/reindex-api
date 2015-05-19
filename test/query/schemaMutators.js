@@ -3,8 +3,8 @@ import assert from '../assert';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import createSchema from '../../schema/createSchema';
-import TypeCreator from '../../query/mutators/TypeCreator';
-import TypeDeleter from '../../query/mutators/TypeDeleter';
+import AddTypeMutator from '../../query/mutators/AddTypeMutator';
+import RemoveTypeMutator from '../../query/mutators/RemoveTypeMutator';
 import getSchema from '../../schema/getSchema';
 import {
   SchemaType,
@@ -40,7 +40,7 @@ describe('Schema Updates', () => {
     async function () {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);
-      let mutator = new TypeCreator({name: 'User'});
+      let mutator = new AddTypeMutator({name: 'User'});
       await mutator.toReQL(db).run(conn);
 
       let schema = await getSchema(db, conn);
@@ -57,7 +57,7 @@ describe('Schema Updates', () => {
         methods: Map(),
       }));
 
-      let deleter = new TypeDeleter({name: 'User'});
+      let deleter = new RemoveTypeMutator({name: 'User'});
       await deleter.toReQL(db).run(conn);
 
       schema = await getSchema(db, conn);

@@ -1,7 +1,7 @@
 import {Record} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-export default class TypeDeleter extends Record({
+export default class RemoveTypeMutator extends Record({
   name: undefined,
 }) {
   toReQL(db) {
