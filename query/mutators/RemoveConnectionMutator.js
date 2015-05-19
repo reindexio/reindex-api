@@ -32,10 +32,7 @@ export default class RemoveConnectionMutator extends Record({
       // ReQL wants both arguments to the function in RethinkDB.do.
       (l, r, ignored) => {
         return l.merge({
-          changes: {
-            'old_val': l('changes')('old_val').union(r('changes')('old_val')),
-            'new_val': l('changes')('new_val').union(r('changes')('new_val')),
-          },
+          changes: l('changes').union(r('changes')),
         });
       }
       /* eslint-enable */

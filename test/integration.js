@@ -150,6 +150,9 @@ describe('Integration Tests', () => {
 
     assert.oequal(schemaResult.getIn(['calls', 'nodes']), fromJS([
       {
+        name: 'addConnection',
+      },
+      {
         'name': 'addField',
       },
       {
@@ -160,6 +163,9 @@ describe('Integration Tests', () => {
       },
       {
         'name': 'nodes',
+      },
+      {
+        'name': 'removeConnection',
       },
       {
         'name': 'removeField',
@@ -308,6 +314,35 @@ describe('Integration Tests', () => {
             name: 'Test',
           },
         }, ],
+      },
+    }));
+
+    assert.oequal(await queryDB(
+      `addConnection(type: Micropost, targetType: User,
+                     connectionName: reviewed, reverseName: reviewedPosts) {
+         success,
+         changes {
+           count
+         }
+       }`
+    ), fromJS({
+      success: true,
+      changes: {
+        count: 2,
+      },
+    }));
+
+    assert.oequal(await queryDB(
+      `removeConnection(type: Micropost, connectionName: reviewed) {
+         success,
+         changes {
+           count
+         }
+       }`
+    ), fromJS({
+      success: true,
+      changes: {
+        count: 2,
       },
     }));
 

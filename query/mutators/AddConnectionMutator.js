@@ -32,10 +32,7 @@ export default class AddConnectionMutator extends Record({
       }),
       (l, r) => {
         return l.merge({
-          changes: {
-            'old_val': l('changes')('old_val').union(r('changes')('old_val')),
-            'new_val': l('changes')('new_val').union(r('changes')('new_val')),
-          },
+          changes: l('changes').union(r('changes')),
         });
       }
     ).merge({
