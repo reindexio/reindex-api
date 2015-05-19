@@ -100,7 +100,7 @@ export class GQLNode extends Record({
         name: this.name,
         call: processParameters('connection', this.parameters),
         count: count !== undefined,
-        nodes: new TObject({
+        nodes: nodes && new TObject({
           name: null,
           children: nodes.children.map((child) => {
             return child.toTyped(
