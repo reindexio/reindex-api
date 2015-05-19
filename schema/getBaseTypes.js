@@ -1,4 +1,4 @@
-import {fromJS, Map} from 'immutable';
+import {fromJS, Map, List} from 'immutable';
 import methods from '../query/methods';
 import rootCalls from '../query/rootCalls';
 
@@ -172,11 +172,11 @@ function getBaseTypes() {
     cachedTypes = Map({
       calls: rootCalls.valueSeq().toList(),
       types: builtIns.map((type) => {
-        let method = methods.get(type.name);
+        let method = methods.get(type.get('name'));
         if (method) {
           return type.set('parameters', method.parameters.valueSeq());
         } else {
-          return type;
+          return type.set('parameters', List());
         }
       }),
     });
