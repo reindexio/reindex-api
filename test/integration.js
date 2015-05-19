@@ -95,6 +95,22 @@ describe('Integration Tests', () => {
         },
       }
     ));
+
+    result = await queryDB(
+      `nodes(type: User) {
+        objects {
+          count
+        }
+      }`
+    );
+
+    assert.oequal(result, fromJS(
+      {
+        'objects': {
+          'count': 2,
+        },
+      }
+    ));
   });
 
   it('Should return correct data for nodes(User)', async function () {
