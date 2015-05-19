@@ -19,6 +19,7 @@ const testSchema = dbToSchema(
             reverseName: 'author',
           },
         ],
+        parameters: [],
       }, {
         name: 'Micropost',
         isNode: true,
@@ -35,6 +36,7 @@ const testSchema = dbToSchema(
             reverseName: 'microposts',
           },
         ],
+        parameters: [],
       },
     ]));
   })

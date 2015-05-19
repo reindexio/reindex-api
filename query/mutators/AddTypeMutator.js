@@ -8,10 +8,13 @@ export default class AddTypeMutator extends Record({
     let basicType = {
       name: this.name,
       isNode: true,
-      fields: [{
-        name: 'id',
-        type: 'string',
-      }, ],
+      fields: [
+        {
+          name: 'id',
+          type: 'string',
+        },
+      ],
+      parameters: [],
     };
 
     return RethinkDB.do(db.tableCreate(this.name), (result) => {

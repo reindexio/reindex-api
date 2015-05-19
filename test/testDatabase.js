@@ -35,6 +35,7 @@ const TEST_DATA = fromJS({
             reverseName: 'author',
           },
         ],
+        parameters: [],
       },
       {
         name: 'Micropost',
@@ -58,6 +59,7 @@ const TEST_DATA = fromJS({
             reverseName: 'microposts',
           },
         ],
+        parameters: [],
       },
     ],
   },
