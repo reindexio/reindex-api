@@ -15,7 +15,6 @@ export const SCHEMA_TYPES = {
 export class SchemaType extends Record({
   name: undefined,
   fields: Map(),
-  methods: Map(),
 }) {}
 
 export class SchemaPrimitiveField extends Record({

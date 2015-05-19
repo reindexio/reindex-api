@@ -1,7 +1,7 @@
 import {Record} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-export default class TypeCreator extends Record({
+export default class AddTypeMutator extends Record({
   name: undefined,
 }) {
   toReQL(db) {

@@ -1,7 +1,7 @@
 import {Record} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-export default class FieldDeleter extends Record({
+export default class RemoveFieldMutator extends Record({
   tableName: undefined,
   name: undefined,
 }) {

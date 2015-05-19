@@ -3,10 +3,12 @@ import convertType from '../schema/convertType';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
-import TypeCreator from './mutators/TypeCreator';
-import TypeDeleter from './mutators/TypeDeleter';
-import FieldAdder from './mutators/FieldAdder';
-import FieldDeleter from './mutators/FieldDeleter';
+import AddTypeMutator from './mutators/AddTypeMutator';
+import RemoveTypeMutator from './mutators/RemoveTypeMutator';
+import AddFieldMutator from './mutators/AddFieldMutator';
+import RemoveFieldMutator from './mutators/RemoveFieldMutator';
+import AddConnectionMutator from './mutators/AddConnectionMutator';
+import RemoveConnectionMutator from './mutators/RemoveConnectionMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
 
@@ -63,7 +65,7 @@ class RootParameter extends Record({
   isRequired: true,
 }) {}
 
-const schema = new RootCall({
+const schemaCall = new RootCall({
   name: 'schema',
   returns: 'schema',
   parameters: Map(),
@@ -85,7 +87,7 @@ const typeCall = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({name}) => {
+  fn: (schema, {name}) => {
     return {
       query: new Query({
         selector: new TypeSelector({
@@ -105,7 +107,7 @@ const nodes = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({type}) => {
+  fn: (schema, {type}) => {
     return {
       query: new Query({
         selector: new AllSelector({
@@ -130,7 +132,7 @@ const node = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({type, id}) => {
+  fn: (schema, {type, id}) => {
     return {
       query: new Query({
         selector: new IDSelector({
@@ -152,10 +154,10 @@ const addType = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({name}) => {
+  fn: (schema, {name}) => {
     return {
       query: new Query({
-        selector: new TypeCreator({
+        selector: new AddTypeMutator({
           name: name,
         }),
       }),
@@ -172,10 +174,10 @@ const removeType = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({name}) => {
+  fn: (schema, {name}) => {
     return {
       query: new Query({
-        selector: new TypeDeleter({
+        selector: new RemoveTypeMutator({
           name: name,
         }),
       }),
@@ -205,10 +207,10 @@ const addField = new RootCall({
       isRequired: false,
     }),
   }),
-  fn: ({type, fieldName, fieldType, options = Map()}) => {
+  fn: (schema, {type, fieldName, fieldType, options = Map()}) => {
     return {
       query: new Query({
-        selector: new FieldAdder({
+        selector: new AddFieldMutator({
           tableName: type,
           name: fieldName,
           type: fieldType,
@@ -233,10 +235,10 @@ const removeField = new RootCall({
       type: 'string',
     }),
   }),
-  fn: ({type, fieldName}) => {
+  fn: (schema, {type, fieldName}) => {
     return {
       query: new Query({
-        selector: new FieldDeleter({
+        selector: new RemoveFieldMutator({
           tableName: type,
           name: fieldName,
         }),
@@ -246,8 +248,86 @@ const removeField = new RootCall({
   },
 });
 
+const addConnection = new RootCall({
+  name: 'addConnection',
+  returns: 'mutationResult',
+  parameters: Map({
+    type: new RootParameter({
+      name: 'type',
+      type: 'string',
+    }),
+    targetType: new RootParameter({
+      name: 'targetType',
+      type: 'string',
+    }),
+    connectionName: new RootParameter({
+      name: 'connectionName',
+      type: 'string',
+    }),
+    reverseName: new RootParameter({
+      name: 'reverseName',
+      type: 'string',
+    }),
+    options: new RootParameter({
+      name: 'options',
+      type: 'object',
+      isRequired: false,
+    }),
+  }),
+  fn: (schema, {
+    type,
+    targetType,
+    connectionName,
+    reverseName,
+    options = Map()
+  }) => {
+    return {
+      query: new Query({
+        selector: new AddConnectionMutator({
+          tableName: type,
+          targetName: targetType,
+          name: connectionName,
+          reverseName: reverseName,
+          options,
+        }),
+      }),
+      typeName: 'type',
+    };
+  },
+});
+
+const removeConnection = new RootCall({
+  name: 'removeConnection',
+  returns: 'mutationResult',
+  parameters: Map({
+    type: new RootParameter({
+      name: 'type',
+      type: 'string',
+    }),
+    connectionName: new RootParameter({
+      name: 'connectionName',
+      type: 'string',
+    }),
+  }),
+  fn: (schema, {type, connectionName}) => {
+    let schemaType = schema.types.get(type);
+    let connection = schemaType.fields.get(connectionName);
+    return {
+      query: new Query({
+        selector: new RemoveConnectionMutator({
+          tableName: type,
+          targetName: connection.target,
+          name: connectionName,
+          reverseName: connection.reverseName,
+        }),
+      }),
+      typeName: 'type',
+    };
+  },
+});
+
 const rootCalls = Map({
-  schema: schema,
+  schema: schemaCall,
   type: typeCall,
   nodes: nodes,
   node: node,
@@ -255,6 +335,8 @@ const rootCalls = Map({
   removeType: removeType,
   addField: addField,
   removeField: removeField,
+  addConnection: addConnection,
+  removeConnection: removeConnection,
 });
 
 export default rootCalls;
