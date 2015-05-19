@@ -5,10 +5,17 @@ import uuid from 'uuid';
 import createSchema from '../../schema/createSchema';
 import AddTypeMutator from '../../query/mutators/AddTypeMutator';
 import RemoveTypeMutator from '../../query/mutators/RemoveTypeMutator';
+import AddFieldMutator from '../../query/mutators/AddFieldMutator';
+import RemoveFieldMutator from '../../query/mutators/RemoveFieldMutator';
+import AddConnectionMutator from '../../query/mutators/AddConnectionMutator';
+import RemoveConnectionMutator
+  from '../../query/mutators/RemoveConnectionMutator';
 import getSchema from '../../schema/getSchema';
 import {
   SchemaType,
   SchemaPrimitiveField,
+  SchemaConnectionField,
+  SchemaReverseConnectionField,
   SCHEMA_TYPES
 } from '../../schema/Fields';
 import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
@@ -36,15 +43,77 @@ describe('Schema Updates', () => {
      }
   );
 
-  it('Should add and delete both table and metadata when type created/deleted.',
+  it('Should add and remove tables, fields and relations.',
     async function () {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);
-      let mutator = new AddTypeMutator({name: 'User'});
-      await mutator.toReQL(db).run(conn);
+      await (new AddTypeMutator({name: 'User'})).toReQL(db).run(conn);
+      await (new AddTypeMutator({name: 'Micropost'})).toReQL(db).run(conn);
+      await (new AddFieldMutator({
+        tableName: 'User',
+        name: 'handle',
+        type: 'string',
+      })).toReQL(db).run(conn);
+      await (new AddConnectionMutator({
+        tableName: 'Micropost',
+        targetName: 'User',
+        name: 'author',
+        reverseName: 'microposts',
+      })).toReQL(db).run(conn);
 
       let schema = await getSchema(db, conn);
+
       let userSchema = schema.types.get('User');
+      let micropostSchema = schema.types.get('Micropost');
+
+      assert.oequal(userSchema, new SchemaType({
+        name: 'User',
+        fields: Map({
+          id: new SchemaPrimitiveField({
+            name: 'id',
+            type: SCHEMA_TYPES.string,
+          }),
+          handle: new SchemaPrimitiveField({
+            name: 'handle',
+            type: SCHEMA_TYPES.string,
+          }),
+          microposts: new SchemaReverseConnectionField({
+            name: 'microposts',
+            reverseName: 'author',
+            target: 'Micropost',
+          }),
+        }),
+      }));
+
+      assert.oequal(micropostSchema, new SchemaType({
+        name: 'Micropost',
+        fields: Map({
+          id: new SchemaPrimitiveField({
+            name: 'id',
+            type: SCHEMA_TYPES.string,
+          }),
+          author: new SchemaConnectionField({
+            name: 'author',
+            reverseName: 'microposts',
+            target: 'User',
+          }),
+        }),
+      }));
+
+      await (new RemoveFieldMutator({
+        tableName: 'User',
+        name: 'handle',
+      })).toReQL(db).run(conn);
+      await (new RemoveConnectionMutator({
+        tableName: 'Micropost',
+        targetName: 'User',
+        name: 'author',
+        reverseName: 'microposts',
+      })).toReQL(db).run(conn);
+
+      schema = await getSchema(db, conn);
+      userSchema = schema.types.get('User');
+      micropostSchema = schema.types.get('Micropost');
 
       assert.oequal(userSchema, new SchemaType({
         name: 'User',
@@ -54,16 +123,27 @@ describe('Schema Updates', () => {
             type: SCHEMA_TYPES.string,
           }),
         }),
-        methods: Map(),
       }));
 
-      let deleter = new RemoveTypeMutator({name: 'User'});
-      await deleter.toReQL(db).run(conn);
+      assert.oequal(micropostSchema, new SchemaType({
+        name: 'Micropost',
+        fields: Map({
+          id: new SchemaPrimitiveField({
+            name: 'id',
+            type: SCHEMA_TYPES.string,
+          }),
+        }),
+      }));
+
+      await (new RemoveTypeMutator({name: 'User'})).toReQL(db).run(conn);
+      await (new RemoveTypeMutator({name: 'Micropost'})).toReQL(db).run(conn);
 
       schema = await getSchema(db, conn);
       userSchema = schema.types.get('User');
+      micropostSchema = schema.types.get('Micropost');
 
       assert.isUndefined(userSchema);
+      assert.isUndefined(micropostSchema);
     }
   );
 });
