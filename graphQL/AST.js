@@ -78,7 +78,8 @@ export class GQLRoot extends Record({
 }
 
 export class GQLNode extends Record({
-  name: '',
+  name: undefined,
+  alias: undefined,
   parameters: Map(),
   children: List(),
 }) {
@@ -196,7 +197,8 @@ export class GQLNode extends Record({
  * @implements GLQTree
  */
 export class GQLLeaf extends Record({
-  name: '',
+  name: undefined,
+  alias: undefined,
 }) {
   toTyped(schema, parents) {
     let type = getNestedSchema(schema, ...parents.push(this.name));

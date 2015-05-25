@@ -81,4 +81,49 @@ describe('Parser', () => {
 
     assert.oequal(Parser.parse(query).children.first(), expected);
   });
+
+  it('Should be able to parse aliases', () => {
+    let query = `
+      nodes(type: Micropost) {
+        objects(first: 10) as foobar {
+          nodes {
+            text as textName,
+            author as who {
+              handle as nick
+            }
+          }
+        }
+      }
+    `;
+    let expected = List.of(new GQLNode({
+      name: 'objects',
+      alias: 'foobar',
+      parameters: Map({
+        first: '10',
+      }),
+      children: List([
+        new GQLNode({
+          name: 'nodes',
+          children: List([
+            new GQLLeaf({
+              name: 'text',
+              alias: 'textName',
+            }),
+            new GQLNode({
+              name: 'author',
+              alias: 'who',
+              children: List([
+                new GQLLeaf({
+                  name: 'handle',
+                  alias: 'nick',
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      ]),
+    }));
+
+    assert.oequal(Parser.parse(query).children, expected);
+  });
 });
