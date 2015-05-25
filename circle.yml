@@ -5,7 +5,7 @@ checkout:
   post:
     - git config --global user.email "circleci@reindex.com"
     - git config --global user.name "CirceCI Runner"
-    - git merge origin/master
+    - git merge -m "Master merge" origin/master
 dependencies:
   pre:
     - bin/ci-install-rethinkdb
