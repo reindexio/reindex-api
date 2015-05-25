@@ -156,8 +156,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'FooBar',
           targetType: 'User',
-          connectionName: 'burgle',
-          reverseName: 'abargule',
+          fieldName: 'burgle',
+          targetFieldName: 'abargule',
         }));
       }, /Type "FooBar" does not exist/);
 
@@ -165,8 +165,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'User',
           targetType: 'FooBar',
-          connectionName: 'burgle',
-          reverseName: 'abargule',
+          fieldName: 'burgle',
+          targetFieldName: 'abargule',
         }));
       }, /Type "FooBar" does not exist/);
     });
@@ -176,8 +176,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'Micropost',
           targetType: 'User',
-          connectionName: 'author',
-          reverseName: 'abargule',
+          fieldName: 'author',
+          targetFieldName: 'abargule',
         }));
       }, /Type "Micropost" already has a field "author"/);
 
@@ -185,8 +185,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'Micropost',
           targetType: 'User',
-          connectionName: 'gurgle',
-          reverseName: 'microposts',
+          fieldName: 'gurgle',
+          targetFieldName: 'microposts',
         }));
       }, /Type "User" already has a field "microposts"/);
     });
@@ -196,8 +196,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'edges',
           targetType: 'User',
-          connectionName: 'burgle',
-          reverseName: 'abargule',
+          fieldName: 'burgle',
+          targetFieldName: 'abargule',
         }));
       }, /Type "edges" is not a node/);
 
@@ -205,8 +205,8 @@ describe('rootCalls', () => {
         processAndCall(rootCalls.get('addConnection'), Map({
           type: 'User',
           targetType: 'edges',
-          connectionName: 'burgle',
-          reverseName: 'abargule',
+          fieldName: 'burgle',
+          targetFieldName: 'abargule',
         }));
       }, /Type "edges" is not a node/);
     });
@@ -217,7 +217,7 @@ describe('rootCalls', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('removeConnection'), Map({
           type: 'FooBar',
-          connectionName: 'foo',
+          fieldName: 'foo',
         }));
       }, /Type "FooBar" does not exist/);
 
@@ -227,7 +227,7 @@ describe('rootCalls', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('removeConnection'), Map({
           type: 'User',
-          connectionName: 'foo',
+          fieldName: 'foo',
         }));
       }, /Type "User" does not have a field "foo"/);
     });
@@ -236,7 +236,7 @@ describe('rootCalls', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('removeConnection'), Map({
           type: 'edges',
-          connectionName: 'foo',
+          fieldName: 'foo',
         }));
       }, /Type "edges" is not a node/);
 
@@ -246,7 +246,7 @@ describe('rootCalls', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('removeConnection'), Map({
           type: 'User',
-          connectionName: 'handle',
+          fieldName: 'handle',
         }));
       }, /Field "handle" of "User" is not a connection/);
     });

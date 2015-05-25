@@ -228,15 +228,15 @@ const addConnection = new Call({
       type: 'string',
       validators: List.of(new IsNodeValidator()),
     }),
-    connectionName: new Parameter({
-      name: 'connectionName',
+    fieldName: new Parameter({
+      name: 'fieldName',
       type: 'string',
       validators: List.of(new NoFieldValidator({
         typeParameter: 'type',
       })),
     }),
-    reverseName: new Parameter({
-      name: 'reverseName',
+    targetFieldName: new Parameter({
+      name: 'targetFieldName',
       type: 'string',
       validators: List.of(new NoFieldValidator({
         typeParameter: 'targetType',
@@ -251,17 +251,17 @@ const addConnection = new Call({
   call(schema, {
     type,
     targetType,
-    connectionName,
-    reverseName,
+    fieldName,
+    targetFieldName,
     options = Map()
   }) {
     return {
       query: new Query({
         selector: new AddConnectionMutator({
-          tableName: type,
-          targetName: targetType,
-          name: connectionName,
-          reverseName: reverseName,
+          tableName: targetType,
+          targetName: type,
+          name: targetFieldName,
+          reverseName: fieldName,
           options,
         }),
       }),
@@ -279,25 +279,25 @@ const removeConnection = new Call({
       type: 'string',
       validators: List.of(new IsNodeValidator()),
     }),
-    connectionName: new Parameter({
-      name: 'connectionName',
+    fieldName: new Parameter({
+      name: 'fieldName',
       type: 'string',
       validators: List.of(new IsConnectionValidator({
         typeParameter: 'type',
       })),
     }),
   }),
-  call(schema, {type, connectionName}) {
+  call(schema, {type, fieldName}) {
     let existingType = schema.types.get(type);
-    let connection = existingType.fields.get(connectionName);
+    let connection = existingType.fields.get(fieldName);
 
     return {
       query: new Query({
         selector: new RemoveConnectionMutator({
-          tableName: type,
-          targetName: connection.target,
-          name: connectionName,
-          reverseName: connection.reverseName,
+          tableName: connection.target,
+          targetName: type,
+          name: connection.reverseName,
+          reverseName: fieldName,
         }),
       }),
       typeName: 'type',
