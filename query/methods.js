@@ -1,43 +1,29 @@
-import {Map, Record} from 'immutable';
+import {Map} from 'immutable';
+import {Call, Parameter} from './calls';
 import OrderByConverter from './converters/OrderByConverter';
 import SliceConverter from './converters/SliceConverter';
 
-class Method extends Record({
-  type: undefined,
-  parameters: Map(),
-  fn: undefined,
-}) {
-  toJS() {
-    return {
-      type: this.type,
-      parameters: this.parameters.toJS(),
-    };
-  }
-}
-
-class MethodParameter extends Record({
-  name: undefined,
-  type: undefined,
-}) {}
-
-const connectionMethod = new Method({
+const connectionMethod = new Call({
   type: 'connection',
   parameters: Map({
-    first: new MethodParameter({
+    first: new Parameter({
       name: 'first',
       type: 'integer',
+      isRequired: false,
     }),
-    after: new MethodParameter({
+    after: new Parameter({
       name: 'after',
       type: 'integer',
+      isRequired: false,
     }),
-    orderBy: new MethodParameter({
+    orderBy: new Parameter({
       name: 'orderBy',
       type: 'string',
+      isRequired: false,
     }),
   }),
 
-  fn(query, {first, after, orderBy}) {
+  call(query, {first, after, orderBy}) {
     if (orderBy) {
       query = query.updateIn(['converters'], (c) => {
         return c.push(new OrderByConverter({

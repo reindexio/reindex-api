@@ -68,6 +68,7 @@ describe('Schema Updates', () => {
 
       assert.oequal(userSchema, new SchemaType({
         name: 'User',
+        isNode: true,
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
@@ -87,6 +88,7 @@ describe('Schema Updates', () => {
 
       assert.oequal(micropostSchema, new SchemaType({
         name: 'Micropost',
+        isNode: true,
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
@@ -117,6 +119,7 @@ describe('Schema Updates', () => {
 
       assert.oequal(userSchema, new SchemaType({
         name: 'User',
+        isNode: true,
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
@@ -127,6 +130,7 @@ describe('Schema Updates', () => {
 
       assert.oequal(micropostSchema, new SchemaType({
         name: 'Micropost',
+        isNode: true,
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',

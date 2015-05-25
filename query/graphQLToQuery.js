@@ -8,7 +8,7 @@ import {List} from 'immutable';
  */
 export default function graphQLToQuery(schema, graphQLRoot) {
   let {rootCall, parameters} = graphQLRoot.getRootCall(schema);
-  let {query, typeName} = rootCall.fn(schema, parameters.toObject());
+  let {query, typeName} = rootCall.call(schema, parameters.toObject());
 
   let typedRoot = graphQLRoot.toTyped(schema, typeName, rootCall);
   query = typedRoot.toQuery(query, List());

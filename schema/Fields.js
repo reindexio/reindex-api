@@ -14,6 +14,7 @@ export const SCHEMA_TYPES = {
 
 export class SchemaType extends Record({
   name: undefined,
+  isNode: false,
   fields: Map(),
 }) {}
 

@@ -63,7 +63,7 @@ describe('Type Checking', () => {
 
     assert.throws(() => {
       graphQLToQuery(testSchema, root);
-    }, /Root call "nodes" has no parameter "id"/);
+    }, /Call "nodes" has no parameter "id"/);
   });
 
   it('Should fail on missing parameters', () => {
@@ -75,7 +75,7 @@ describe('Type Checking', () => {
 
     assert.throws(() => {
       graphQLToQuery(testSchema, root);
-    }, /Root call "nodes" wasn\'t passed required parameter\(s\) type/);
+    }, /Call "nodes" wasn\'t passed required parameter\(s\) type/);
 
   });
 
