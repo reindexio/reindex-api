@@ -520,8 +520,9 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `addConnection(type: Micropost, targetType: User,
-                     connectionName: reviewed, reverseName: reviewedPosts) {
+      `addConnection(type: User, targetType: Micropost,
+                     fieldName: reviewedPosts,
+                     targetFieldName: reviewedBy) {
          success,
          changes {
            count
@@ -535,7 +536,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `removeConnection(type: Micropost, connectionName: reviewed) {
+      `removeConnection(type: User, fieldName: reviewedPosts) {
          success,
          changes {
            count

@@ -18,7 +18,6 @@ import {
 } from './Typed';
 import rootCalls from '../query/rootCalls';
 import methods from '../query/methods';
-import convertType from '../schema/convertType';
 
 /**
  * Root of the GraphQL query
@@ -28,11 +27,11 @@ export class GQLRoot extends Record({
   parameters: Map(),
   children: List(),
 }) {
-  getRootCall() {
+  getRootCall(schema) {
     let name = this.name;
     let rootCall = rootCalls.get(name);
     if (rootCall) {
-      let parameters = rootCall.processParameters(this.parameters);
+      let parameters = rootCall.processParameters(schema, this.parameters);
       return {rootCall, parameters};
     } else {
       let validCalls = rootCalls
@@ -89,7 +88,7 @@ export class GQLNode extends Record({
     if (dependantType && type.type === 'object') {
       return new TObject({
         name: this.name,
-        call: processParameters('object', this.parameters),
+        call: processParameters(schema, 'object', this.parameters),
         children: this.children.map((child) => {
           return child.toTyped(schema, List.of(dependantType));
         }),
@@ -98,7 +97,7 @@ export class GQLNode extends Record({
       let {count, nodes} = extractConnectionFields(this);
       return new TArray({
         name: this.name,
-        call: processParameters('connection', this.parameters),
+        call: processParameters(schema, 'connection', this.parameters),
         count: count !== undefined,
         nodes: nodes && new TObject({
           name: null,
@@ -115,7 +114,7 @@ export class GQLNode extends Record({
         let {count, nodes} = extractConnectionFields(this);
         return new TReverseConnection({
           name: this.name,
-          call: processParameters('connection', this.parameters),
+          call: processParameters(schema, 'connection', this.parameters),
           target: type.target,
           reverseName: type.reverseName,
           count: count !== undefined,
@@ -129,7 +128,7 @@ export class GQLNode extends Record({
       } else if (type.isConnection()) {
         return new TConnection({
           name: this.name,
-          call: processParameters(type.target, this.parameters),
+          call: processParameters(schema, type.target, this.parameters),
           target: type.target,
           reverseName: type.reverseName,
           children: this.children.map((child) => {
@@ -140,7 +139,7 @@ export class GQLNode extends Record({
         let {count, nodes} = extractConnectionFields(this);
         return new TArray({
           name: this.name,
-          call: processParameters('connection', this.parameters),
+          call: processParameters(schema, 'connection', this.parameters),
           count: count !== undefined,
           nodes: nodes && new TObject({
             name: null,
@@ -156,7 +155,7 @@ export class GQLNode extends Record({
       } else {
         return new TObject({
           name: this.name,
-          call: processParameters(this.name, this.parameters),
+          call: processParameters(schema, this.name, this.parameters),
           children: this.children.map((child) => {
             return child.toTyped(
               schema,
@@ -267,7 +266,7 @@ function extractConnectionFields(node) {
   }
 }
 
-function processParameters(type, parameters) {
+function processParameters(schema, type, parameters) {
   let method = methods.get(type);
   if (!method && parameters.count() === 0) {
     return undefined;
@@ -277,22 +276,8 @@ function processParameters(type, parameters) {
     );
   } else {
     return new TCall({
-      fn: method.fn,
-      parameters: parameters.map((value, parameter) => {
-        let expectedType = method.parameters.get(parameter);
-        if (expectedType) {
-          return convertType(expectedType.type, value);
-        } else {
-          let validParameters = type.parameters
-            .keySeq()
-            .toArray()
-            .join(', ');
-          throw new Error(
-            `"${type}" has no parameter "${parameter}". ` +
-            `Valid parameters are ${validParameters}.`
-          );
-        }
-      }),
+      call: method.call,
+      parameters: method.processParameters(schema, parameters),
     });
   }
 }

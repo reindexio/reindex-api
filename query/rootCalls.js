@@ -1,5 +1,5 @@
-import {Record, Map} from 'immutable';
-import convertType from '../schema/convertType';
+import {Map, List} from 'immutable';
+import {Call, Parameter} from './calls';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
 import AllSelector from './selectors/AllSelector';
@@ -11,65 +11,18 @@ import AddConnectionMutator from './mutators/AddConnectionMutator';
 import RemoveConnectionMutator from './mutators/RemoveConnectionMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
+import NoTypeValidator from './validators/NoTypeValidator';
+import IsTypeValidator from './validators/IsTypeValidator';
+import IsNodeValidator from './validators/IsNodeValidator';
+import NoFieldValidator from './validators/NoFieldValidator';
+import IsFieldValidator from './validators/IsFieldValidator';
+import IsConnectionValidator from './validators/IsConnectionValidator';
 
-class RootCall extends Record({
-  name: undefined,
-  returns: undefined,
-  parameters: Map(),
-  fn: undefined,
-}) {
-  toJS() {
-    return {
-      name: this.name,
-      returns: this.returns,
-      parameters: this.parameters.valueSeq().toJS(),
-    };
-  }
-
-  processParameters(parameters) {
-    let missingRequired = this.parameters
-      .filter((p) => p.isRequired)
-      .keySeq()
-      .toSet()
-      .subtract(parameters.keySeq().toSet());
-    if (missingRequired.count() > 0) {
-      throw new Error(
-        `Root call "${this.name}" wasn't passed required parameter(s) ` +
-        `${missingRequired.join(', ')}.`
-      );
-    }
-    return parameters.mapEntries(([parameter, value]) => {
-      let expectedParameter = this.parameters.get(parameter);
-      if (expectedParameter) {
-        return [
-          expectedParameter.name,
-          convertType(expectedParameter.type, value),
-        ];
-      } else {
-        let validParameters = this.parameters
-          .keySeq()
-          .toArray()
-          .join(', ');
-        throw new Error(
-          `Root call "${this.name}" has no parameter "${parameter}". ` +
-          `Valid parameters are ${validParameters}.`
-        );
-      }
-    });
-  }
-}
-
-class RootParameter extends Record({
-  name: undefined,
-  type: undefined,
-  isRequired: true,
-}) {}
-
-const schemaCall = new RootCall({
+const schemaCall = new Call({
   name: 'schema',
   returns: 'schema',
   parameters: Map(),
-  fn: () => {
+  call() {
     return {
       query: new Query({
         selector: new SchemaSelector(),
@@ -78,16 +31,17 @@ const schemaCall = new RootCall({
   },
 });
 
-const typeCall = new RootCall({
+const typeCall = new Call({
   name: 'type',
   returns: 'type',
   parameters: Map({
-    name: new RootParameter({
+    name: new Parameter({
       name: 'name',
       type: 'string',
+      validators: List.of(new IsTypeValidator()),
     }),
   }),
-  fn: (schema, {name}) => {
+  call(schema, {name}) {
     return {
       query: new Query({
         selector: new TypeSelector({
@@ -98,16 +52,17 @@ const typeCall = new RootCall({
   },
 });
 
-const nodes = new RootCall({
+const nodes = new Call({
   name: 'nodes',
   returns: 'nodesResult',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
   }),
-  fn: (schema, {type}) => {
+  call(schema, {type}) {
     return {
       query: new Query({
         selector: new AllSelector({
@@ -119,20 +74,21 @@ const nodes = new RootCall({
   },
 });
 
-const node = new RootCall({
+const node = new Call({
   name: 'node',
   returns: 'object',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    id: new RootParameter({
+    id: new Parameter({
       name: 'id',
       type: 'string',
     }),
   }),
-  fn: (schema, {type, id}) => {
+  call(schema, {type, id}) {
     return {
       query: new Query({
         selector: new IDSelector({
@@ -145,16 +101,17 @@ const node = new RootCall({
   },
 });
 
-const addType = new RootCall({
+const addType = new Call({
   name: 'addType',
   returns: 'schemaResult',
   parameters: Map({
-    name: new RootParameter({
+    name: new Parameter({
       name: 'name',
       type: 'string',
+      validators: List.of(new NoTypeValidator()),
     }),
   }),
-  fn: (schema, {name}) => {
+  call(schema, {name}) {
     return {
       query: new Query({
         selector: new AddTypeMutator({
@@ -165,16 +122,17 @@ const addType = new RootCall({
   },
 });
 
-const removeType = new RootCall({
+const removeType = new Call({
   name: 'removeType',
   returns: 'schemaResult',
   parameters: Map({
-    name: new RootParameter({
+    name: new Parameter({
       name: 'name',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
   }),
-  fn: (schema, {name}) => {
+  call(schema, {name}) {
     return {
       query: new Query({
         selector: new RemoveTypeMutator({
@@ -185,29 +143,33 @@ const removeType = new RootCall({
   },
 });
 
-const addField = new RootCall({
+const addField = new Call({
   name: 'addField',
   returns: 'mutationResult',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    fieldName: new RootParameter({
+    fieldName: new Parameter({
       name: 'fieldName',
       type: 'string',
+      validators: List.of(new NoFieldValidator({
+        typeParameter: 'type',
+      })),
     }),
-    fieldType: new RootParameter({
+    fieldType: new Parameter({
       name: 'fieldType',
       type: 'string',
     }),
-    options: new RootParameter({
+    options: new Parameter({
       name: 'options',
       type: 'object',
       isRequired: false,
     }),
   }),
-  fn: (schema, {type, fieldName, fieldType, options = Map()}) => {
+  call(schema, {type, fieldName, fieldType, options = Map()}) {
     return {
       query: new Query({
         selector: new AddFieldMutator({
@@ -222,20 +184,24 @@ const addField = new RootCall({
   },
 });
 
-const removeField = new RootCall({
+const removeField = new Call({
   name: 'removeField',
   returns: 'mutationResult',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    fieldName: new RootParameter({
+    fieldName: new Parameter({
       name: 'fieldName',
       type: 'string',
+      validators: List.of(new IsFieldValidator({
+        typeParameter: 'type',
+      })),
     }),
   }),
-  fn: (schema, {type, fieldName}) => {
+  call(schema, {type, fieldName}) {
     return {
       query: new Query({
         selector: new RemoveFieldMutator({
@@ -248,46 +214,54 @@ const removeField = new RootCall({
   },
 });
 
-const addConnection = new RootCall({
+const addConnection = new Call({
   name: 'addConnection',
   returns: 'mutationResult',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    targetType: new RootParameter({
+    targetType: new Parameter({
       name: 'targetType',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    connectionName: new RootParameter({
-      name: 'connectionName',
+    fieldName: new Parameter({
+      name: 'fieldName',
       type: 'string',
+      validators: List.of(new NoFieldValidator({
+        typeParameter: 'type',
+      })),
     }),
-    reverseName: new RootParameter({
-      name: 'reverseName',
+    targetFieldName: new Parameter({
+      name: 'targetFieldName',
       type: 'string',
+      validators: List.of(new NoFieldValidator({
+        typeParameter: 'targetType',
+      })),
     }),
-    options: new RootParameter({
+    options: new Parameter({
       name: 'options',
       type: 'object',
       isRequired: false,
     }),
   }),
-  fn: (schema, {
+  call(schema, {
     type,
     targetType,
-    connectionName,
-    reverseName,
+    fieldName,
+    targetFieldName,
     options = Map()
-  }) => {
+  }) {
     return {
       query: new Query({
         selector: new AddConnectionMutator({
-          tableName: type,
-          targetName: targetType,
-          name: connectionName,
-          reverseName: reverseName,
+          tableName: targetType,
+          targetName: type,
+          name: targetFieldName,
+          reverseName: fieldName,
           options,
         }),
       }),
@@ -296,29 +270,34 @@ const addConnection = new RootCall({
   },
 });
 
-const removeConnection = new RootCall({
+const removeConnection = new Call({
   name: 'removeConnection',
   returns: 'mutationResult',
   parameters: Map({
-    type: new RootParameter({
+    type: new Parameter({
       name: 'type',
       type: 'string',
+      validators: List.of(new IsNodeValidator()),
     }),
-    connectionName: new RootParameter({
-      name: 'connectionName',
+    fieldName: new Parameter({
+      name: 'fieldName',
       type: 'string',
+      validators: List.of(new IsConnectionValidator({
+        typeParameter: 'type',
+      })),
     }),
   }),
-  fn: (schema, {type, connectionName}) => {
-    let schemaType = schema.types.get(type);
-    let connection = schemaType.fields.get(connectionName);
+  call(schema, {type, fieldName}) {
+    let existingType = schema.types.get(type);
+    let connection = existingType.fields.get(fieldName);
+
     return {
       query: new Query({
         selector: new RemoveConnectionMutator({
-          tableName: type,
-          targetName: connection.target,
-          name: connectionName,
-          reverseName: connection.reverseName,
+          tableName: connection.target,
+          targetName: type,
+          name: connection.reverseName,
+          reverseName: fieldName,
         }),
       }),
       typeName: 'type',

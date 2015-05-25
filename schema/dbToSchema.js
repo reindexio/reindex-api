@@ -1,4 +1,3 @@
-import {Map} from 'immutable';
 import Schema from './Schema';
 import {
   SCHEMA_TYPES,
@@ -54,7 +53,7 @@ function convertType(type, types) {
   return new SchemaType({
     name: type.get('name'),
     fields: convertFields(types, type.get('fields')),
-    methods: type.get('methods') || Map(),
+    isNode: type.get('isNode') || false,
   });
 }
 

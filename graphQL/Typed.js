@@ -177,11 +177,11 @@ export class TArray extends Record({
 }
 
 export class TCall extends Record({
-  fn: undefined,
+  call: undefined,
   parameters: Map(),
 }) {
   toQuery(query) {
-    return this.fn(query, this.parameters.toObject());
+    return this.call(query, this.parameters.toObject());
   }
 }
 

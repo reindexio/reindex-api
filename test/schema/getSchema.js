@@ -61,7 +61,7 @@ describe('getSchema', () => {
       userSchema,
       new SchemaType({
         name: 'User',
-        methods: Map(),
+        isNode: true,
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
