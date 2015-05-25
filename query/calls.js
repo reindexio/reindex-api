@@ -34,8 +34,8 @@ export class Call extends Record({
           expectedParameter.validate(schema, value, parameters);
         } catch (e) {
           throw new Error(
-            `Parameter "${parameter}" of call "${this.name}" is invalid. ` +
-            e.message
+            e.message +
+            ` In call "${this.name}" parameter "${parameter}".`
           );
         }
         return [
