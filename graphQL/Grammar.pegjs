@@ -9,6 +9,7 @@ start
     {
       return new AST.GQLRoot({
         name: call.name,
+        alias: call.alias,
         parameters: call.parameters || Map(),
         children: call.children || List()
       });

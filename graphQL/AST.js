@@ -24,6 +24,7 @@ import methods from '../query/methods';
  */
 export class GQLRoot extends Record({
   name: undefined,
+  alias: undefined,
   parameters: Map(),
   children: List(),
 }) {

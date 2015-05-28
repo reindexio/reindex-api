@@ -84,7 +84,7 @@ describe('Parser', () => {
 
   it('Should be able to parse aliases', () => {
     let query = `
-      nodes(type: Micropost) {
+      nodes(type: Micropost) as frobar {
         objects(first: 10) as foobar {
           nodes {
             text as textName,
@@ -123,7 +123,9 @@ describe('Parser', () => {
         }),
       ]),
     }));
+    let result = Parser.parse(query);
 
-    assert.oequal(Parser.parse(query).children, expected);
+    assert.oequal(result.children, expected);
+    assert.oequal(result.alias, 'frobar');
   });
 });
