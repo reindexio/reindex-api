@@ -9,7 +9,7 @@ describe('Parser', () => {
       node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
-        author { handle }
+        author { handle, }
     }`;
     let expected = new GQLRoot({
       name: 'node',
@@ -45,7 +45,7 @@ describe('Parser', () => {
   });
 
   it('Should be able to parse root calls with parameters', () => {
-    let query = 'nodes(type: Micropost, after: 5, first: 10) { text }';
+    let query = 'nodes(type: Micropost, after: 5, first: 10) { text, }';
     let expected = new GQLRoot({
       name: 'nodes',
       parameters: Map({
@@ -80,5 +80,52 @@ describe('Parser', () => {
     });
 
     assert.oequal(Parser.parse(query).children.first(), expected);
+  });
+
+  it('Should be able to parse aliases', () => {
+    let query = `
+      nodes(type: Micropost) as frobar {
+        objects(first: 10) as foobar {
+          nodes {
+            text as textName,
+            author as who {
+              handle as nick
+            }
+          }
+        }
+      }
+    `;
+    let expected = List.of(new GQLNode({
+      name: 'objects',
+      alias: 'foobar',
+      parameters: Map({
+        first: '10',
+      }),
+      children: List([
+        new GQLNode({
+          name: 'nodes',
+          children: List([
+            new GQLLeaf({
+              name: 'text',
+              alias: 'textName',
+            }),
+            new GQLNode({
+              name: 'author',
+              alias: 'who',
+              children: List([
+                new GQLLeaf({
+                  name: 'handle',
+                  alias: 'nick',
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      ]),
+    }));
+    let result = Parser.parse(query);
+
+    assert.oequal(result.children, expected);
+    assert.oequal(result.alias, 'frobar');
   });
 });

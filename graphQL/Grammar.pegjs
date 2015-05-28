@@ -5,17 +5,18 @@
 }
 
 start
-  = ws? call:call_property
+  = ws* call:call_property
     {
       return new AST.GQLRoot({
         name: call.name,
+        alias: call.alias,
         parameters: call.parameters || Map(),
         children: call.children || List()
       });
     }
 
 call_parameters
-  = ws? '(' ws? call_parameters:parameter_list? ')'
+  = ws* '(' ws* call_parameters:parameter_list? ')'
     {
       return call_parameters;
     }
@@ -23,8 +24,8 @@ call_parameters
 parameter_list
   = parameter_list:(
       first:parameter
-      rest:(ws? property_separator ws? p:parameter { return p })*
-      ws?
+      rest:(ws* property_separator ws* p:parameter { return p })*
+      ws*
       { return first.merge.apply(first, rest); }
     )
     {
@@ -32,13 +33,13 @@ parameter_list
     }
 
 parameter
-  = name:identifier ws? ':' ws? parameter:[a-zA-Z0-9_=-]+
+  = name:identifier ws* ':' ws* parameter:[a-zA-Z0-9_=-]+
     {
       return Map().set(name, parameter.join(''));
     }
 
 block
-  = ws? '{' ws? children:children? ws? '}' ws?
+  = ws* '{' ws* children:children? ws* '}' ws*
     {
       return children || [];
     }
@@ -46,11 +47,11 @@ block
 children
   = children:(
       first:property
-      rest:(property_separator ws? p:property { return p })*
+      rest:(property_separator ws* p:property { return p })*
       {
         return [first].concat(rest);
       }
-    )
+    ) property_separator?
     {
       return children;
     }
@@ -61,31 +62,40 @@ property
   / simple_property
 
 simple_property
-  = name:identifier ws?
+  = name:identifier alias:alias? ws*
     {
       return new AST.GQLLeaf({
-        name: name
+        name: name,
+        alias: alias === null ? undefined : alias,
       });
     }
 
 object_property
-  = name:identifier children:block
+  = name:identifier alias:alias? children:block
     {
       return new AST.GQLNode({
         name: name,
-        children: List(children)
+        alias: alias === null ? undefined : alias,
+        children: List(children),
       });
     }
 
 call_property
-  = name:identifier parameters:call_parameters children:block?
+  = name:identifier parameters:call_parameters alias:alias? children:block?
     {
       return new AST.GQLNode({
         name: name,
+        alias: alias === null ? undefined : alias,
         parameters: parameters,
-        children: List(children)
+        children: List(children),
       });
     }
+
+alias
+ = ws+ 'as' ws+ alias:identifier ws*
+   {
+     return alias;
+   }
 
 property_separator
   = ','
@@ -97,4 +107,4 @@ identifier
     }
 
 ws 'whitespace'
-  = [ \t\n\r]*
+  = [ \t\n\r]
