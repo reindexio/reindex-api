@@ -9,7 +9,7 @@ describe('Parser', () => {
       node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
-        author { handle }
+        author { handle, }
     }`;
     let expected = new GQLRoot({
       name: 'node',
@@ -45,7 +45,7 @@ describe('Parser', () => {
   });
 
   it('Should be able to parse root calls with parameters', () => {
-    let query = 'nodes(type: Micropost, after: 5, first: 10) { text }';
+    let query = 'nodes(type: Micropost, after: 5, first: 10) { text, }';
     let expected = new GQLRoot({
       name: 'nodes',
       parameters: Map({

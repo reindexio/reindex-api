@@ -50,7 +50,7 @@ children
       {
         return [first].concat(rest);
       }
-    )
+    ) property_separator?
     {
       return children;
     }
