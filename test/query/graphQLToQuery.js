@@ -180,7 +180,7 @@ describe('Type Checking', () => {
 
     assert.throws(() => {
       graphQLToQuery(testSchema, root);
-    }, /"createdAt" is an invalid field for a connection. /);
+    }, /Scalar field "connection.createdAt" does not exist/);
 
     root = new GQLRoot({
       name: 'nodes',
@@ -194,7 +194,7 @@ describe('Type Checking', () => {
 
     assert.throws(() => {
       graphQLToQuery(testSchema, root);
-    }, /Nested field "nodesResult.createdAt" does not exist/);
+    }, /Scalar field "nodesResult.createdAt" does not exist/);
   });
 
   it('Should fail on invalid parameter types', () => {

@@ -56,9 +56,9 @@ describe('rootCalls', () => {
     it('Should not create a type with built-in name', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('addType'), Map({
-          name: 'nodes',
+          name: 'edges',
         }));
-      }, /Type "nodes" is a built-in non-node type/);
+      }, /Type "edges" is a built-in non-node type/);
     });
   });
 
@@ -74,9 +74,9 @@ describe('rootCalls', () => {
     it('Should not delete a built-in type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('removeType'), Map({
-          name: 'nodes',
+          name: 'edges',
         }));
-      }, /Type "nodes" is not a node/);
+      }, /Type "edges" is not a node/);
     });
   });
 

@@ -31,14 +31,6 @@ const builtIns = fromJS([
       },
     ],
   }, {
-    name: 'nodes',
-    fields: [
-      {
-        name: 'node',
-        type: 'object',
-      },
-    ],
-  }, {
     name: 'nodesResult',
     fields: [
       {
@@ -64,16 +56,19 @@ const builtIns = fromJS([
       {
         name: 'changes',
         type: 'array',
-        fields: [
-          {
-            name: 'oldValue',
-            type: 'object',
-          },
-          {
-            name: 'newValue',
-            type: 'object',
-          },
-        ],
+        target: 'changes',
+      },
+    ],
+  }, {
+    name: 'changes',
+    fields: [
+      {
+        name: 'oldValue',
+        type: 'object',
+      },
+      {
+        name: 'newValue',
+        type: 'object',
       },
     ],
   }, {
@@ -82,12 +77,12 @@ const builtIns = fromJS([
       {
         name: 'calls',
         type: 'array',
-        inlineType: 'call',
+        target: 'call',
       },
       {
         name: 'types',
         type: 'array',
-        inlineType: 'type',
+        target: 'type',
       },
     ],
   }, {
@@ -104,20 +99,7 @@ const builtIns = fromJS([
       {
         name: 'parameters',
         type: 'array',
-        fields: [
-          {
-            name: 'name',
-            type: 'string',
-          },
-          {
-            name: 'type',
-            type: 'string',
-          },
-          {
-            name: 'isRequired',
-            type: 'boolean',
-          },
-        ],
+        target: 'parameter',
       },
     ],
   }, {
@@ -134,30 +116,48 @@ const builtIns = fromJS([
       {
         name: 'fields',
         type: 'array',
-        fields: [
-          {
-            name: 'name',
-            type: 'string',
-          },
-          {
-            name: 'type',
-            type: 'string',
-          },
-        ],
+        target: 'field',
       },
       {
         name: 'parameters',
         type: 'array',
-        fields: [
-          {
-            name: 'name',
-            type: 'string',
-          },
-          {
-            name: 'type',
-            type: 'string',
-          },
-        ],
+        target: 'parameter',
+      },
+    ],
+  }, {
+    name: 'field',
+    fields: [
+      {
+        name: 'name',
+        type: 'string',
+      },
+      {
+        name: 'type',
+        type: 'string',
+      },
+      {
+        name: 'target',
+        type: 'string',
+      },
+      {
+        name: 'reverseName',
+        type: 'string',
+      },
+    ],
+  }, {
+    name: 'parameter',
+    fields: [
+      {
+        name: 'name',
+        type: 'string',
+      },
+      {
+        name: 'type',
+        type: 'string',
+      },
+      {
+        name: 'isRequired',
+        type: 'boolean',
       },
     ],
   },

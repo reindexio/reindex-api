@@ -10,6 +10,7 @@
     "no-new-object": 2,
     "no-array-constructor": 2,
     "quotes": [2, "single"],
+    "quote-props": [2, "as-needed"],
     "indent": [2, 2],
     "no-multi-str": 2,
     "no-multi-spaces": 2,

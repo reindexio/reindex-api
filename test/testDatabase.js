@@ -14,6 +14,25 @@ const TEST_DATA = fromJS({
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
       },
+      {
+        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+        createdAt: new Date('2015-04-11T10:24:52.163Z'),
+        text: 'Test text 2',
+      },
+      {
+        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+        createdAt: new Date('2015-04-12T10:24:52.163Z'),
+        text: 'Test text 3',
+      },
+      {
+        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
+        createdAt: new Date('2015-04-13T10:24:52.163Z'),
+        text: 'Test text 4',
+      },
+
     ],
     _types: [
       {

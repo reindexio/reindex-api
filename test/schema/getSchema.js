@@ -2,14 +2,10 @@ import {Set, Map} from 'immutable';
 import assert from '../assert';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
-import rootCalls from '../../query/rootCalls';
 import getSchema from '../../schema/getSchema';
-import {
-  SchemaType,
-  SchemaPrimitiveField,
-  SchemaReverseConnectionField,
-  SCHEMA_TYPES
-} from '../../schema/Fields';
+import SchemaType from '../../schema/SchemaType';
+import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
+import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
 describe('getSchema', () => {
@@ -25,26 +21,12 @@ describe('getSchema', () => {
     return await deleteTestDatabase(conn, dbName);
   });
 
-  it('Should contain root calls and basic types', async function() {
+  it('Should contain basic types', async function() {
     let conn = await RethinkDB.connect();
     let db = RethinkDB.db(dbName);
-
     let schema = await getSchema(db, conn);
 
-    assert.oequal(
-      schema
-        .calls
-        .valueSeq()
-        .map((call) => call.name)
-        .toSet(),
-      rootCalls
-        .valueSeq()
-        .map((call) => call.name)
-        .toSet()
-    );
-
     let typeNames = schema.types.keySeq().toSet();
-
     assert(typeNames.isSuperset(Set([
       'connection', 'edges',
     ])));
@@ -65,16 +47,16 @@ describe('getSchema', () => {
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
           handle: new SchemaPrimitiveField({
             name: 'handle',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
-          microposts: new SchemaReverseConnectionField({
+          microposts: new SchemaConnectionField({
             name: 'microposts',
             reverseName: 'author',
-            target: 'Micropost',
+            type: 'Micropost',
           }),
         }),
       })

@@ -11,13 +11,10 @@ import AddConnectionMutator from '../../query/mutators/AddConnectionMutator';
 import RemoveConnectionMutator
   from '../../query/mutators/RemoveConnectionMutator';
 import getSchema from '../../schema/getSchema';
-import {
-  SchemaType,
-  SchemaPrimitiveField,
-  SchemaConnectionField,
-  SchemaReverseConnectionField,
-  SCHEMA_TYPES
-} from '../../schema/Fields';
+import SchemaType from '../../schema/SchemaType';
+import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
+import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
+import SchemaNodeField from '../../schema/fields/SchemaNodeField';
 import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
 
 describe('Schema Updates', () => {
@@ -72,16 +69,16 @@ describe('Schema Updates', () => {
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
           handle: new SchemaPrimitiveField({
             name: 'handle',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
-          microposts: new SchemaReverseConnectionField({
+          microposts: new SchemaConnectionField({
             name: 'microposts',
             reverseName: 'author',
-            target: 'Micropost',
+            type: 'Micropost',
           }),
         }),
       }));
@@ -92,12 +89,12 @@ describe('Schema Updates', () => {
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
-          author: new SchemaConnectionField({
+          author: new SchemaNodeField({
             name: 'author',
             reverseName: 'microposts',
-            target: 'User',
+            type: 'User',
           }),
         }),
       }));
@@ -123,7 +120,7 @@ describe('Schema Updates', () => {
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
         }),
       }));
@@ -134,7 +131,7 @@ describe('Schema Updates', () => {
         fields: Map({
           id: new SchemaPrimitiveField({
             name: 'id',
-            type: SCHEMA_TYPES.string,
+            type: 'string',
           }),
         }),
       }));

@@ -1,39 +1,22 @@
 import Schema from './Schema';
-import {
-  SCHEMA_TYPES,
-  SchemaType,
-  SchemaPrimitiveField,
-  SchemaObjectField,
-  SchemaArrayField,
-  SchemaConnectionField,
-  SchemaReverseConnectionField,
-  SchemaCall,
-} from './Fields';
+import SchemaType from './SchemaType';
+import SchemaConnectionField from './fields/SchemaConnectionField';
+import SchemaNodeField from './fields/SchemaNodeField';
+import SchemaTypeField from './fields/SchemaTypeField';
+import SchemaCountField from './fields/SchemaCountField';
+import SchemaNodesField from './fields/SchemaNodesField';
+import SchemaObjectsField from './fields/SchemaObjectsField';
+import SchemaObjectField from './fields/SchemaObjectField';
+import SchemaArrayField from './fields/SchemaArrayField';
+import SchemaPrimitiveField from './fields/SchemaPrimitiveField';
 
 /**
  * Convert from database representation of schema to Schema.
  */
 export default function dbToSchema(dbSchema) {
   return new Schema({
-    calls: convertCalls(dbSchema.get('calls')),
     types: convertTypes(dbSchema.get('types')),
   });
-}
-
-function convertCalls(callList) {
-  return callList
-    .toKeyedSeq()
-    .mapEntries(([, call]) => {
-      return [
-        call.get('name'),
-        new SchemaCall({
-          name: call.get('name'),
-          parameters: call.get('parameters'),
-          returns: call.get('returns'),
-        }),
-      ];
-    })
-    .toMap();
 }
 
 function convertTypes(typeList) {
@@ -52,56 +35,70 @@ function convertTypes(typeList) {
 function convertType(type, types) {
   return new SchemaType({
     name: type.get('name'),
-    fields: convertFields(types, type.get('fields')),
+    fields: convertFields(type, types, type.get('fields')),
     isNode: type.get('isNode') || false,
   });
 }
 
-function convertFields(types, fields) {
+function convertFields(type, types, fields) {
   return fields
     .toKeyedSeq()
     .mapEntries(([, field]) => {
       return [
         field.get('name'),
-        convertField(field, types),
+        convertField(type, field, types),
       ];
     });
 }
 
-function convertField(field, types) {
+function convertField(type, field, types) {
   let fieldName = field.get('name');
   let fieldType = field.get('type');
-  if (fieldType === SCHEMA_TYPES.connection && field.get('target')) {
-    return new SchemaReverseConnectionField({
-      name: fieldName,
-      reverseName: field.get('reverseName'),
-      target: field.get('target'),
-    });
-  } else if (fieldType !== SCHEMA_TYPES.connection && types.get(fieldType)) {
+  let nodeType = types.get(fieldType);
+
+  if (fieldType === 'connection' && field.get('target')) {
     return new SchemaConnectionField({
       name: fieldName,
       reverseName: field.get('reverseName'),
-      target: fieldType,
+      type: field.get('target'),
     });
-  } else if (fieldType === SCHEMA_TYPES.object && field.get('fields')) {
+  } else if (fieldType === 'type') {
+    return new SchemaTypeField({
+      name: fieldName,
+      type: type,
+    });
+  } else if (fieldType === 'count') {
+    return new SchemaCountField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'nodes') {
+    return new SchemaNodesField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'connection') {
+    return new SchemaObjectsField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'object') {
     return new SchemaObjectField({
       name: fieldName,
-      fields: convertFields(types, field.get('fields')),
+      type: field.get('target'),
     });
-  } else if (fieldType === SCHEMA_TYPES.array && field.get('fields')) {
+  } else if (fieldType === 'array') {
     return new SchemaArrayField({
       name: fieldName,
-      fields: field.get('fields') && convertFields(types, field.get('fields')),
+      type: field.get('target'),
     });
-  } else if (fieldType === SCHEMA_TYPES.array && field.get('inlineType')) {
-    return new SchemaArrayField({
+  } else if (nodeType) {
+    return new SchemaNodeField({
       name: fieldName,
-      fields: convertType(types.get(field.get('inlineType')), types).fields,
+      reverseName: field.get('reverseName'),
+      type: field.get('type'),
     });
   } else {
     return new SchemaPrimitiveField({
-      type: fieldType,
       name: fieldName,
+      type: fieldType,
     });
   }
 }
