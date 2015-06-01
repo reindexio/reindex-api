@@ -1,4 +1,6 @@
 import {Record} from 'immutable';
+import isConnection from '../../schema/fields/isConnection';
+import isNode from '../../schema/fields/isNode';
 
 /**
  * Validator that checks that there is a non connection field with parameter's
@@ -15,7 +17,7 @@ export default class IsFieldValidator extends Record({
         throw new Error(
           `Type "${existingType.name}" does not have a field "${name}".`
         );
-      } else if (existingField.isConnection()) {
+      } else if (isConnection(existingField) || isNode(existingField)) {
         throw new Error(
           `Field "${name}" of "${existingType.name}" is a connection. ` +
           `Expected a non connection field.`

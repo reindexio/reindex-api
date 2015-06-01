@@ -34,18 +34,18 @@ describe('Integration Tests', () => {
       `node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
-        author {
-          handle
+        author as beautifulPerson {
+          handle as nickname
         }
       }`
     );
 
     assert.oequal(result, fromJS({
-       'author': {
-         'handle': 'freiksenet',
+       beautifulPerson: {
+         nickname: 'freiksenet',
        },
-       'createdAt': new Date('2015-04-10T10:24:52.163Z'),
-       'text': 'Test text',
+       createdAt: new Date('2015-04-10T10:24:52.163Z'),
+       text: 'Test text',
     }));
   });
 
@@ -53,27 +53,33 @@ describe('Integration Tests', () => {
     let result = await queryDB(
       `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
         handle,
-        microposts(orderBy: -text, first: 2) {
+        microposts(orderBy: createdAt, first: 1) as posts {
           count,
           nodes {
             createdAt,
             text
           }
+        },
+        microposts {
+          count
         }
       }`
     );
 
     assert.oequal(result, fromJS(
       {
-        'handle': 'freiksenet',
-        'microposts': {
-          'count': 1,
-          'nodes': [
+        handle: 'freiksenet',
+        posts: {
+          count: 4,
+          nodes: [
             {
-              'createdAt': new Date('2015-04-10T10:24:52.163Z'),
-              'text': 'Test text',
+              createdAt: new Date('2015-04-10T10:24:52.163Z'),
+              text: 'Test text',
             },
           ],
+        },
+        microposts: {
+          count: 4,
         },
       }
     ));
@@ -90,8 +96,8 @@ describe('Integration Tests', () => {
 
     assert.oequal(result, fromJS(
       {
-        'microposts': {
-          'count': 1,
+        microposts: {
+          count: 4,
         },
       }
     ));
@@ -106,8 +112,8 @@ describe('Integration Tests', () => {
 
     assert.oequal(result, fromJS(
       {
-        'objects': {
-          'count': 2,
+        objects: {
+          count: 2,
         },
       }
     ));
@@ -116,19 +122,32 @@ describe('Integration Tests', () => {
   it('Should return correct data for nodes(User)', async function () {
     let result = await queryDB(
       `nodes(type: User) {
-        objects(orderBy: handle, first: 1) {
+        objects(orderBy: handle, first: 1) as firstObject {
+          nodes as stuff {
+            handle as name
+          }
+        },
+        objects(orderBy: handle) {
           nodes {
-            handle
+            handle,
           }
         }
       }`
     );
 
-    assert.oequal(result.getIn(['objects', 'nodes']).toSet(), fromJS(
-      [
-        { 'handle': 'freiksenet'},
-      ]
-    ).toSet());
+    assert.oequal(result, fromJS({
+      firstObject: {
+        stuff: [
+          { name: 'freiksenet' },
+        ],
+      },
+      objects: {
+        nodes: [
+          { handle: 'freiksenet' },
+          { handle: 'fson' },
+        ],
+      },
+    }));
   });
 
   it('Should return type information', async function () {
@@ -139,7 +158,7 @@ describe('Integration Tests', () => {
             name
           }
         },
-        types {
+        types(orderBy: name) as stuff {
           nodes {
             name,
             isNode,
@@ -162,261 +181,313 @@ describe('Integration Tests', () => {
 
     assert.oequal(schemaResult.getIn(['calls', 'nodes']), fromJS([
       {
-        'name': 'addConnection',
+        name: 'addConnection',
       },
       {
-        'name': 'addField',
+        name: 'addField',
       },
       {
-        'name': 'addType',
+        name: 'addType',
       },
       {
-        'name': 'node',
+        name: 'node',
       },
       {
-        'name': 'nodes',
+        name: 'nodes',
       },
       {
-        'name': 'removeConnection',
+        name: 'removeConnection',
       },
       {
-        'name': 'removeField',
+        name: 'removeField',
       },
       {
-        'name': 'removeType',
+        name: 'removeType',
       },
       {
-        'name': 'schema',
+        name: 'schema',
       },
       {
-        'name': 'type',
+        name: 'type',
       },
     ]));
 
-    assert.oequal(schemaResult.getIn(['types', 'nodes']).toSet(), Set(fromJS([
+    assert.oequal(schemaResult.getIn(['stuff', 'nodes']).toSet(), Set(fromJS([
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'id',
-              'type': 'string',
+              name: 'id',
+              type: 'string',
             },
             {
-              'name': 'handle',
-              'type': 'string',
+              name: 'handle',
+              type: 'string',
             },
             {
-              'name': 'microposts',
-              'type': 'connection',
+              name: 'microposts',
+              type: 'connection',
             },
           ],
         },
-        'isNode': true,
-        'name': 'User',
-        'parameters': {
-          'nodes': [],
+        isNode: true,
+        name: 'User',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'id',
-              'type': 'string',
+              name: 'id',
+              type: 'string',
             },
             {
-              'name': 'text',
-              'type': 'string',
+              name: 'text',
+              type: 'string',
             },
             {
-              'name': 'createdAt',
-              'type': 'datetime',
+              name: 'createdAt',
+              type: 'datetime',
             },
             {
-              'name': 'author',
-              'type': 'User',
+              name: 'author',
+              type: 'User',
             },
           ],
         },
-        'isNode': true,
-        'name': 'Micropost',
-        'parameters': {
-          'nodes': [],
+        isNode: true,
+        name: 'Micropost',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'edges',
-              'type': 'edges',
+              name: 'edges',
+              type: 'edges',
             },
             {
-              'name': 'count',
-              'type': 'count',
+              name: 'count',
+              type: 'count',
             },
             {
-              'name': 'nodes',
-              'type': 'nodes',
+              name: 'nodes',
+              type: 'nodes',
             },
           ],
         },
-        'name': 'connection',
-        'parameters': {
-          'nodes': [{
-            'name': 'first',
-            'type': 'integer',
+        name: 'connection',
+        parameters: {
+          nodes: [{
+            name: 'first',
+            type: 'integer',
           }, {
-            'name': 'after',
-            'type': 'integer',
+            name: 'after',
+            type: 'integer',
           }, {
-            'name': 'orderBy',
-            'type': 'string',
+            name: 'orderBy',
+            type: 'string',
           }, ],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'cursor',
-              'type': 'cursor',
+              name: 'cursor',
+              type: 'cursor',
             },
             {
-              'name': 'node',
-              'type': 'object',
+              name: 'node',
+              type: 'object',
             },
           ],
         },
-        'name': 'edges',
-        'parameters': {
-          'nodes': [],
+        name: 'edges',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'node',
-              'type': 'object',
+              name: 'objects',
+              type: 'connection',
             },
           ],
         },
-        'name': 'nodes',
-        'parameters': {
-          'nodes': [],
+        name: 'nodesResult',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'objects',
-              'type': 'connection',
+              name: 'success',
+              type: 'boolean',
             },
           ],
         },
-        'name': 'nodesResult',
-        'parameters': {
-          'nodes': [],
+        name: 'schemaResult',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'success',
-              'type': 'boolean',
+              name: 'success',
+              type: 'boolean',
+            },
+            {
+              name: 'changes',
+              type: 'array',
             },
           ],
         },
-        'name': 'schemaResult',
-        'parameters': {
-          'nodes': [],
+        name: 'mutationResult',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'success',
-              'type': 'boolean',
+              name: 'calls',
+              type: 'array',
             },
             {
-              'name': 'changes',
-              'type': 'array',
+              name: 'types',
+              type: 'array',
             },
           ],
         },
-        'name': 'mutationResult',
-        'parameters': {
-          'nodes': [],
+        name: 'schema',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'calls',
-              'type': 'array',
+              name: 'name',
+              type: 'string',
             },
             {
-              'name': 'types',
-              'type': 'array',
+              name: 'returns',
+              type: 'string',
+            },
+            {
+              name: 'parameters',
+              type: 'array',
             },
           ],
         },
-        'name': 'schema',
-        'parameters': {
-          'nodes': [],
+        name: 'call',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        fields: {
+          nodes: [
             {
-              'name': 'name',
-              'type': 'string',
+              name: 'name',
+              type: 'string',
             },
             {
-              'name': 'returns',
-              'type': 'string',
+              name: 'isNode',
+              type: 'boolean',
             },
             {
-              'name': 'parameters',
-              'type': 'array',
+              name: 'fields',
+              type: 'array',
+            },
+            {
+              name: 'parameters',
+              type: 'array',
             },
           ],
         },
-        'name': 'call',
-        'parameters': {
-          'nodes': [],
+        name: 'type',
+        parameters: {
+          nodes: [],
         },
       },
       {
-        'fields': {
-          'nodes': [
+        name: 'changes',
+        fields: {
+          nodes: [
             {
-              'name': 'name',
-              'type': 'string',
+              name: 'oldValue',
+              type: 'object',
             },
             {
-              'name': 'isNode',
-              'type': 'boolean',
-            },
-            {
-              'name': 'fields',
-              'type': 'array',
-            },
-            {
-              'name': 'parameters',
-              'type': 'array',
+              name: 'newValue',
+              type: 'object',
             },
           ],
         },
-        'name': 'type',
-        'parameters': {
-          'nodes': [],
+        parameters: {
+          nodes: [],
+        },
+      },
+      {
+        name: 'field',
+        fields: {
+          nodes: [
+            {
+              name: 'name',
+              type: 'string',
+            },
+            {
+              name: 'type',
+              type: 'string',
+            },
+            {
+              name: 'target',
+              type: 'string',
+            },
+            {
+              name: 'reverseName',
+              type: 'string',
+            },
+          ],
+        },
+        parameters: {
+          nodes: [],
+        },
+      },
+      {
+        name: 'parameter',
+        fields: {
+          nodes: [
+            {
+              name: 'name',
+              type: 'string',
+            },
+            {
+              name: 'type',
+              type: 'string',
+            },
+            {
+              name: 'isRequired',
+              type: 'boolean',
+            },
+          ],
+        },
+        parameters: {
+          nodes: [],
         },
       },
     ])));
@@ -438,23 +509,23 @@ describe('Integration Tests', () => {
       fields: {
         nodes: [
           {
-            'name': 'id',
-            'type': 'string',
+            name: 'id',
+            type: 'string',
           },
           {
-            'name': 'handle',
-            'type': 'string',
+            name: 'handle',
+            type: 'string',
           },
           {
-            'name': 'microposts',
-            'type': 'connection',
+            name: 'microposts',
+            type: 'connection',
           },
         ],
       },
     }));
   });
 
-  it('Should create and delete type.', async function () {
+  it('Should create and delete type', async function () {
     assert.oequal(await queryDB(
       `addType(name: Test) { success }`
     ), Map({ success: true }));
@@ -463,7 +534,6 @@ describe('Integration Tests', () => {
       `addField(type: Test, fieldName: test, fieldType: string) {
         success,
         changes {
-          count,
           nodes {
             oldValue {
               name
@@ -477,7 +547,6 @@ describe('Integration Tests', () => {
     ), fromJS({
       success: true,
       changes: {
-        count: 1,
         nodes: [{
           oldValue: {
             name: 'Test',
@@ -492,8 +561,7 @@ describe('Integration Tests', () => {
     assert.oequal(await queryDB(
       `removeField(type: Test, fieldName: test) {
         success,
-        changes {
-          count,
+        changes as updates {
           nodes {
             oldValue {
               name
@@ -506,8 +574,7 @@ describe('Integration Tests', () => {
       }`
     ), fromJS({
       success: true,
-      changes: {
-        count: 1,
+      updates: {
         nodes: [{
           oldValue: {
             name: 'Test',

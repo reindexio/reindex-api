@@ -29,7 +29,13 @@ describe('POST /graphql', () => {
       method: 'POST',
       url: '/graphql',
       payload: {
-        query: `nodes(type: Micropost) { objects { nodes { text } } }`,
+        query: `nodes(type: Micropost) {
+          objects(orderBy: createdAt, first: 1) {
+            nodes {
+              text
+            }
+          }
+        }`,
       },
       headers: {
         host: `${dbName}.example.com`,

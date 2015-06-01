@@ -294,7 +294,7 @@ const removeConnection = new Call({
     return {
       query: new Query({
         selector: new RemoveConnectionMutator({
-          tableName: connection.target,
+          tableName: connection.type,
           targetName: type,
           name: connection.reverseName,
           reverseName: fieldName,

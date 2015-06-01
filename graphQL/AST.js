@@ -7,17 +7,10 @@ import {
   Record,
   Map,
 } from 'immutable';
-import {
-  TField,
-  TObject,
-  TConnectionRoot,
-  TConnection,
-  TReverseConnection,
-  TArray,
-  TCall,
-} from './Typed';
+import TConnectionRoot from './typed/TConnectionRoot';
+import TObjectRoot from './typed/TObjectRoot';
 import rootCalls from '../query/rootCalls';
-import methods from '../query/methods';
+
 
 /**
  * Root of the GraphQL query
@@ -49,29 +42,31 @@ export class GQLRoot extends Record({
   }
 
   toTyped(schema, typeName, rootCall) {
-    let returnType = rootCall.returns;
-    if (returnType === 'nodesResult') {
-      let nodesResult = this.children.find((c) => c.name === 'objects');
-      let rest = this.children.filterNot((c) => c.name === 'objects');
-      if (rest.count() > 0) {
-        let field = List.of('nodesResult').push(rest.first().name).join('.');
-        throw new Error(
-          `Nested field "${field}" does not exist. ` +
-          `Valid nested fields are: objects.`
-        );
-      }
+    let returnType = schema.types.get(rootCall.returns);
+    if (rootCall.returns === 'object') {
+      return new TObjectRoot({
+        children: this.children.map((child) => {
+          return child.toTyped(schema, List.of(typeName));
+        }),
+      });
+    } else if (returnType.name === 'nodesResult') {
       return new TConnectionRoot({
-        child: nodesResult.toTyped(schema, List.of(returnType), typeName),
+        children: this.children.map((child) => {
+          return child.toTyped(
+            schema,
+            List.of(returnType.name),
+            List.of(typeName)
+          );
+        }),
       });
     } else {
-      let type = returnType;
-      if (type === 'object') {
-        type = typeName;
-      }
-      return new TObject({
-        name: null,
+      return new TObjectRoot({
         children: this.children.map((child) => {
-          return child.toTyped(schema, List.of(type), typeName);
+          return child.toTyped(
+            schema,
+            List.of(returnType.name),
+            List.of(typeName)
+          );
         }),
       });
     }
@@ -84,96 +79,17 @@ export class GQLNode extends Record({
   parameters: Map(),
   children: List(),
 }) {
-  toTyped(schema, parents, dependantType) {
+  toTyped(schema, parents, actualType) {
     let type = getNestedSchema(schema, ...parents.push(this.name));
-
-    if (dependantType && type.type === 'object') {
-      return new TObject({
-        name: this.name,
-        call: processParameters(schema, 'object', this.parameters),
-        children: this.children.map((child) => {
-          return child.toTyped(schema, List.of(dependantType));
-        }),
-      });
-    } else if (dependantType && type.type === 'connection') {
-      let {count, nodes} = extractConnectionFields(this);
-      return new TArray({
-        name: this.name,
-        call: processParameters(schema, 'connection', this.parameters),
-        count: count !== undefined,
-        nodes: nodes && new TObject({
-          name: null,
-          children: nodes.children.map((child) => {
-            return child.toTyped(
-              schema,
-              List.of(dependantType),
-            );
-          }),
-        }),
-      });
-    } else if (type && type.isNestable()) {
-      if (type.isConnection() && type.isEdgeable()) {
-        let {count, nodes} = extractConnectionFields(this);
-        return new TReverseConnection({
-          name: this.name,
-          call: processParameters(schema, 'connection', this.parameters),
-          target: type.target,
-          reverseName: type.reverseName,
-          count: count !== undefined,
-          nodes: nodes && new TObject({
-            name: null,
-            children: nodes.children.map((child) => {
-              return child.toTyped(schema, List.of(type.target));
-            }),
-          }),
-        });
-      } else if (type.isConnection()) {
-        return new TConnection({
-          name: this.name,
-          call: processParameters(schema, type.target, this.parameters),
-          target: type.target,
-          reverseName: type.reverseName,
-          children: this.children.map((child) => {
-            return child.toTyped(schema, List.of(type.target));
-          }),
-        });
-      } else if (type.isEdgeable()) {
-        let {count, nodes} = extractConnectionFields(this);
-        return new TArray({
-          name: this.name,
-          call: processParameters(schema, 'connection', this.parameters),
-          count: count !== undefined,
-          nodes: nodes && new TObject({
-            name: null,
-            children: nodes.children.map((child) => {
-              return child.toTyped(
-                schema,
-                parents.push(this.name),
-                dependantType
-              );
-            }),
-          }),
-        });
-      } else {
-        return new TObject({
-          name: this.name,
-          call: processParameters(schema, this.name, this.parameters),
-          children: this.children.map((child) => {
-            return child.toTyped(
-              schema,
-              parents.push(this.name),
-              dependantType
-            );
-          }),
-        });
-      }
+    if (type && type.convertNode) {
+      return type.convertNode(schema, this, parents, actualType);
     } else {
       let field = parents.push(this.name).join('.');
       let validFields = getNestedSchema(schema, ...parents)
         .fields
         .valueSeq()
         .filter((f) => {
-          return f.isNestable();
+          return f.convertNode;
         })
         .map((f) => {
           return f.name;
@@ -200,20 +116,19 @@ export class GQLNode extends Record({
 export class GQLLeaf extends Record({
   name: undefined,
   alias: undefined,
+  parameters: Map(),
 }) {
   toTyped(schema, parents) {
     let type = getNestedSchema(schema, ...parents.push(this.name));
-    if (type && !type.isNestable()) {
-      return new TField({
-        name: this.name,
-      });
+    if (type && type.convertLeaf) {
+      return type.convertLeaf(schema, this, parents);
     } else {
       let field = parents.push(this.name).join('.');
       let validFields = getNestedSchema(schema, ...parents)
         .fields
         .valueSeq()
         .filter((f) => {
-          return !f.isNestable();
+          return f.convertLeaf;
         })
         .map((f) => {
           return f.name;
@@ -243,44 +158,5 @@ function getNestedSchema(schema, typeName, ...fields) {
         return currentType.fields.get(next);
       }
     }, type);
-  }
-}
-
-function extractConnectionFields(node) {
-  let count = node.children.find((child) => child.name === 'count');
-  let nodes = node.children.find((child) => child.name === 'nodes');
-  let rest = node.children.filter((child) => {
-    return (
-      child.name !== 'count' &&
-      child.name !== 'nodes'
-    );
-  });
-  if (rest.count() === 0) {
-    return {
-      count: count,
-      nodes: nodes,
-    };
-  } else {
-    let field = rest.first().name;
-    throw new Error(
-      `"${field}" is an invalid field for a connection. ` +
-      `Valid fields are nodes, count.`
-    );
-  }
-}
-
-function processParameters(schema, type, parameters) {
-  let method = methods.get(type);
-  if (!method && parameters.count() === 0) {
-    return undefined;
-  } else if (!method) {
-    throw new Error(
-      `"${type}" has no valid parameters, but was passed some.`
-    );
-  } else {
-    return new TCall({
-      call: method.call,
-      parameters: method.processParameters(schema, parameters),
-    });
   }
 }

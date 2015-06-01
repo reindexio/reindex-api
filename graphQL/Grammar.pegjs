@@ -70,6 +70,16 @@ simple_property
       });
     }
 
+simple_call_property
+  = name:identifier parameters:call_parameters alias:alias? ws*
+    {
+      return new AST.GQLLeaf({
+        name: name,
+        alias: alias === null ? undefined : alias,
+        parameters: parameters,
+      })
+    }
+
 object_property
   = name:identifier alias:alias? children:block
     {
@@ -81,7 +91,7 @@ object_property
     }
 
 call_property
-  = name:identifier parameters:call_parameters alias:alias? children:block?
+  = name:identifier parameters:call_parameters alias:alias? children:block
     {
       return new AST.GQLNode({
         name: name,
