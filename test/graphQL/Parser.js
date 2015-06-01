@@ -128,4 +128,45 @@ describe('Parser', () => {
     assert.oequal(result.children, expected);
     assert.oequal(result.alias, 'frobar');
   });
+
+  it('Should be able to parse escapes', () => {
+    let query = `
+      insert(type: Micropost,
+             data: \\{"data": "\\stuff\\\\f"\\},
+             otherData: \\[1\\, 2\\, 3\\],
+             thirdData: \\(randomStuffInsideBrackets\\)) {
+        changes {
+          count
+        }
+      }
+    `;
+    let expected = Map({
+      type: 'Micropost',
+      data: '{"data": "stuff\\f"}',
+      otherData: '[1, 2, 3]',
+      thirdData: '(randomStuffInsideBrackets)',
+    });
+    let result = Parser.parse(query).parameters;
+
+    assert.oequal(result, expected);
+  });
+
+  it('Should fail when special characters are not escaped', () => {
+    let queries = [
+      `curlyBrackets(fail: {"data": "stuff"}) { test }`,
+      `roundBrackets(fail: (erronneusStuff)) { test }`,
+      `squareBrackets(fail: [1, 2, 3]) {test}`,
+      `comma(fail: "some,StuffWithcomma", more: 123) { test }`,
+    ];
+
+    let parse = (query) => {
+      return () => {
+        Parser.parse(query);
+      };
+    };
+
+    for (let query of queries) {
+      assert.throws(parse(query));
+    }
+  });
 });
