@@ -128,4 +128,24 @@ describe('Parser', () => {
     assert.oequal(result.children, expected);
     assert.oequal(result.alias, 'frobar');
   });
+
+  it('Should be able to parse escape', () => {
+    let query = `
+      insert(type: Micropost,
+             data: \\{"data": "\\stuff\\\\f"\\},
+             otherData: \\[1\\, 2\\, 3\\]) {
+        changes {
+          count
+        }
+      }
+    `;
+    let expected = Map({
+      type: 'Micropost',
+      data: '{"data": "stuff\\f"}',
+      otherData: '[1, 2, 3]',
+    });
+    let result = Parser.parse(query).parameters;
+
+    assert.oequal(result, expected);
+  });
 });
