@@ -606,13 +606,39 @@ describe('Integration Tests', () => {
       `removeConnection(type: User, fieldName: reviewedPosts) {
          success,
          changes {
-           count
+           count,
+           nodes {
+             oldValue {
+               name
+             },
+             newValue {
+               name
+             }
+           }
          }
        }`
     ), fromJS({
       success: true,
       changes: {
         count: 2,
+        nodes: [
+          {
+            newValue: {
+              name: 'Micropost',
+            },
+            oldValue: {
+              name: 'Micropost',
+            },
+          },
+          {
+            newValue: {
+              name: 'User',
+            },
+            oldValue: {
+              name: 'User',
+            },
+          },
+        ],
       },
     }));
 

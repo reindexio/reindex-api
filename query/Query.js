@@ -1,5 +1,5 @@
 import {walkLeafs} from '../utils';
-import {Record, Map, OrderedMap, List} from 'immutable';
+import {Record, Map, List} from 'immutable';
 
 /**
  * Query class.
@@ -21,7 +21,7 @@ import {Record, Map, OrderedMap, List} from 'immutable';
 export default class Query extends Record({
   selector: undefined,
   pluck: Map(),
-  map: OrderedMap(),
+  map: Map(),
   converters: List(),
 }) {
   toReQL(db, obj) {
@@ -29,10 +29,9 @@ export default class Query extends Record({
       obj,
     });
 
-    let rqlMap = mappingtoReQL(db, this.map);
-    query = rqlMap.reduce((q, mapping) => {
-      return q.merge(mapping);
-    }, query);
+    if (this.map.count() > 0) {
+      query = query.merge(createReQLMerge(db, this.map));
+    }
 
     query = this.converters.reduce((q, converter) => {
       return converter.toReQL(db, q);
@@ -46,16 +45,17 @@ export default class Query extends Record({
   }
 }
 
-function mappingtoReQL(db, mapping) {
-  function mapper(leaf, key, keys) {
-    return function subQuery(obj) {
-      return Map()
-        .setIn(keys, leaf.toReQL(db, obj))
-        .toJS();
-    };
+function createReQLMerge(db, mapping) {
+  function mapper(obj, leaf, key, keys) {
+    return Map()
+      .setIn(keys, leaf.toReQL(db, obj));
   }
   function isLeaf(node) {
     return !node.toReQL;
   }
-  return walkLeafs(mapping, mapper, isLeaf);
+  return function subQuery(obj) {
+    return walkLeafs(mapping, (...args) => mapper(obj, ...args), isLeaf)
+      .reduce((acc, next) => acc.mergeDeep(next), Map())
+      .toJS();
+  };
 }
