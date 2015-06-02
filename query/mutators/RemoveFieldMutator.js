@@ -7,21 +7,21 @@ export default class RemoveFieldMutator extends Record({
 }) {
   toReQL(db) {
     return RethinkDB.do(
-      db.table('_types').get(this.tableName).update({
-        fields: RethinkDB.row('fields').difference(
-          RethinkDB.row('fields').filter({name: this.name})
+      db.table('_types').get(this.tableName).update((type) => ({
+        fields: type('fields').difference(
+          type('fields').filter({name: this.name})
         ),
-      }, {
+      }), {
         returnChanges: true,
-      }).merge({
-        success: RethinkDB.row('replaced').ne(0),
-        changes: RethinkDB.row('changes').merge((change) => {
+      }).merge((result) => ({
+        success: result('replaced').ne(0),
+        changes: result('changes').merge((change) => {
           return {
             oldValue: change('old_val'),
             newValue: change('new_val'),
           };
         }),
-      }),
+      })),
       db.table(this.tableName).replace((row) => {
         return row.without(this.name);
       }, {

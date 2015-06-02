@@ -1,4 +1,4 @@
-import {fromJS, Map, Set} from 'immutable';
+import {fromJS, Set} from 'immutable';
 import assert from './assert';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
@@ -41,11 +41,13 @@ describe('Integration Tests', () => {
     );
 
     assert.oequal(result, fromJS({
-       beautifulPerson: {
-         nickname: 'freiksenet',
-       },
-       createdAt: new Date('2015-04-10T10:24:52.163Z'),
-       text: 'Test text',
+      node: {
+        beautifulPerson: {
+          nickname: 'freiksenet',
+        },
+        createdAt: new Date('2015-04-10T10:24:52.163Z'),
+        text: 'Test text',
+      },
     }));
   });
 
@@ -66,8 +68,8 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(result, fromJS(
-      {
+    assert.oequal(result, fromJS({
+      node: {
         handle: 'freiksenet',
         posts: {
           count: 4,
@@ -81,26 +83,26 @@ describe('Integration Tests', () => {
         microposts: {
           count: 4,
         },
-      }
-    ));
+      },
+    }));
   });
 
   it('Should allow querying connections with only a count', async function () {
     let result = await queryDB(
-      `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
+      `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) as best {
         microposts {
           count
         }
       }`
     );
 
-    assert.oequal(result, fromJS(
-      {
+    assert.oequal(result, fromJS({
+      best: {
         microposts: {
           count: 4,
         },
-      }
-    ));
+      },
+    }));
 
     result = await queryDB(
       `nodes(type: User) {
@@ -110,13 +112,13 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(result, fromJS(
-      {
+    assert.oequal(result, fromJS({
+      nodes: {
         objects: {
           count: 2,
         },
-      }
-    ));
+      },
+    }));
   });
 
   it('Should return correct data for nodes(User)', async function () {
@@ -136,16 +138,18 @@ describe('Integration Tests', () => {
     );
 
     assert.oequal(result, fromJS({
-      firstObject: {
-        stuff: [
-          { name: 'freiksenet' },
-        ],
-      },
-      objects: {
-        nodes: [
-          { handle: 'freiksenet' },
-          { handle: 'fson' },
-        ],
+      nodes: {
+        firstObject: {
+          stuff: [
+            { name: 'freiksenet' },
+          ],
+        },
+        objects: {
+          nodes: [
+            { handle: 'freiksenet' },
+            { handle: 'fson' },
+          ],
+        },
       },
     }));
   });
@@ -181,36 +185,38 @@ describe('Integration Tests', () => {
     );
 
     assert.oequal(result, fromJS({
-      __type__: {
-        name: 'nodesResult',
-      },
-      objects: {
+      nodes: {
         __type__: {
-          name: 'connection',
-          parameters: {
-            nodes: [
-              { name: 'after' },
-              { name: 'first' },
-              { name: 'orderBy' },
-            ],
-          },
+          name: 'nodesResult',
         },
-        nodes: [
-          {
-            __type__: {
-              name: 'User',
-              fields: {
-                nodes: [
-                  { name: '__type__' },
-                  { name: 'handle' },
-                  { name: 'id' },
-                  { name: 'microposts' },
-                ],
-              },
+        objects: {
+          __type__: {
+            name: 'connection',
+            parameters: {
+              nodes: [
+                { name: 'after' },
+                { name: 'first' },
+                { name: 'orderBy' },
+              ],
             },
-            handle: 'freiksenet',
           },
-        ],
+          nodes: [
+            {
+              __type__: {
+                name: 'User',
+                fields: {
+                  nodes: [
+                    { name: '__type__' },
+                    { name: 'handle' },
+                    { name: 'id' },
+                    { name: 'microposts' },
+                  ],
+                },
+              },
+              handle: 'freiksenet',
+            },
+          ],
+        },
       },
     }));
 
@@ -233,20 +239,22 @@ describe('Integration Tests', () => {
     `);
 
     assert.oequal(result, fromJS({
-      __type__: {
-        name: 'nodesResult',
-      },
-      objects: {
+      nodes: {
         __type__: {
-          name: 'connection',
+          name: 'nodesResult',
         },
-        nodes: [
-          {
-            __type__: {
-              name: 'User',
-            },
+        objects: {
+          __type__: {
+            name: 'connection',
           },
-        ],
+          nodes: [
+            {
+              __type__: {
+                name: 'User',
+              },
+            },
+          ],
+        },
       },
     }));
   });
@@ -280,7 +288,7 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(schemaResult.getIn(['calls', 'nodes']), fromJS([
+    assert.oequal(schemaResult.getIn(['schema', 'calls', 'nodes']), fromJS([
       {
         name: 'addConnection',
       },
@@ -313,8 +321,358 @@ describe('Integration Tests', () => {
       },
     ]));
 
-    assert.oequal(schemaResult.getIn(['stuff', 'nodes']).toSet(), Set(fromJS([
-      {
+    assert.oequal(
+      schemaResult.getIn(['schema', 'stuff', 'nodes']).toSet(),
+      Set(fromJS([
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'id',
+                type: 'string',
+              },
+              {
+                name: 'handle',
+                type: 'string',
+              },
+              {
+                name: 'microposts',
+                type: 'connection',
+              },
+            ],
+          },
+          isNode: true,
+          name: 'User',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'id',
+                type: 'string',
+              },
+              {
+                name: 'text',
+                type: 'string',
+              },
+              {
+                name: 'createdAt',
+                type: 'datetime',
+              },
+              {
+                name: 'author',
+                type: 'User',
+              },
+            ],
+          },
+          isNode: true,
+          name: 'Micropost',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'edges',
+                type: 'edges',
+              },
+              {
+                name: 'count',
+                type: 'count',
+              },
+              {
+                name: 'nodes',
+                type: 'nodes',
+              },
+            ],
+          },
+          name: 'connection',
+          parameters: {
+            nodes: [
+              {
+                name: 'first',
+                type: 'integer',
+              }, {
+                name: 'after',
+                type: 'integer',
+              }, {
+                name: 'orderBy',
+                type: 'string',
+              },
+            ],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'cursor',
+                type: 'cursor',
+              },
+              {
+                name: 'node',
+                type: 'object',
+              },
+            ],
+          },
+          name: 'edges',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'objects',
+                type: 'connection',
+              },
+            ],
+          },
+          name: 'nodesResult',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'success',
+                type: 'boolean',
+              },
+            ],
+          },
+          name: 'schemaResult',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'success',
+                type: 'boolean',
+              },
+              {
+                name: 'changes',
+                type: 'array',
+              },
+            ],
+          },
+          name: 'mutationResult',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'calls',
+                type: 'array',
+              },
+              {
+                name: 'types',
+                type: 'array',
+              },
+            ],
+          },
+          name: 'schema',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'name',
+                type: 'string',
+              },
+              {
+                name: 'returns',
+                type: 'string',
+              },
+              {
+                name: 'parameters',
+                type: 'array',
+              },
+            ],
+          },
+          name: 'call',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'name',
+                type: 'string',
+              },
+              {
+                name: 'isNode',
+                type: 'boolean',
+              },
+              {
+                name: 'fields',
+                type: 'array',
+              },
+              {
+                name: 'parameters',
+                type: 'array',
+              },
+            ],
+          },
+          name: 'type',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          name: 'changes',
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'oldValue',
+                type: 'object',
+              },
+              {
+                name: 'newValue',
+                type: 'object',
+              },
+            ],
+          },
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          name: 'field',
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'name',
+                type: 'string',
+              },
+              {
+                name: 'type',
+                type: 'string',
+              },
+              {
+                name: 'target',
+                type: 'string',
+              },
+              {
+                name: 'reverseName',
+                type: 'string',
+              },
+            ],
+          },
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          name: 'parameter',
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'name',
+                type: 'string',
+              },
+              {
+                name: 'type',
+                type: 'string',
+              },
+              {
+                name: 'isRequired',
+                type: 'boolean',
+              },
+            ],
+          },
+          parameters: {
+            nodes: [],
+          },
+        },
+      ])
+    ));
+
+    assert.oequal(await queryDB(
+      `type(name: User) {
+        name,
+        isNode,
+        fields {
+          nodes {
+            name,
+            type
+          }
+        }
+      }`
+    ), fromJS({
+      type: {
+        name: 'User',
+        isNode: true,
         fields: {
           nodes: [
             {
@@ -335,349 +693,6 @@ describe('Integration Tests', () => {
             },
           ],
         },
-        isNode: true,
-        name: 'User',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'id',
-              type: 'string',
-            },
-            {
-              name: 'text',
-              type: 'string',
-            },
-            {
-              name: 'createdAt',
-              type: 'datetime',
-            },
-            {
-              name: 'author',
-              type: 'User',
-            },
-          ],
-        },
-        isNode: true,
-        name: 'Micropost',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'edges',
-              type: 'edges',
-            },
-            {
-              name: 'count',
-              type: 'count',
-            },
-            {
-              name: 'nodes',
-              type: 'nodes',
-            },
-          ],
-        },
-        name: 'connection',
-        parameters: {
-          nodes: [{
-            name: 'first',
-            type: 'integer',
-          }, {
-            name: 'after',
-            type: 'integer',
-          }, {
-            name: 'orderBy',
-            type: 'string',
-          }, ],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'cursor',
-              type: 'cursor',
-            },
-            {
-              name: 'node',
-              type: 'object',
-            },
-          ],
-        },
-        name: 'edges',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'objects',
-              type: 'connection',
-            },
-          ],
-        },
-        name: 'nodesResult',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'success',
-              type: 'boolean',
-            },
-          ],
-        },
-        name: 'schemaResult',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'success',
-              type: 'boolean',
-            },
-            {
-              name: 'changes',
-              type: 'array',
-            },
-          ],
-        },
-        name: 'mutationResult',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'calls',
-              type: 'array',
-            },
-            {
-              name: 'types',
-              type: 'array',
-            },
-          ],
-        },
-        name: 'schema',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'name',
-              type: 'string',
-            },
-            {
-              name: 'returns',
-              type: 'string',
-            },
-            {
-              name: 'parameters',
-              type: 'array',
-            },
-          ],
-        },
-        name: 'call',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'name',
-              type: 'string',
-            },
-            {
-              name: 'isNode',
-              type: 'boolean',
-            },
-            {
-              name: 'fields',
-              type: 'array',
-            },
-            {
-              name: 'parameters',
-              type: 'array',
-            },
-          ],
-        },
-        name: 'type',
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        name: 'changes',
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'oldValue',
-              type: 'object',
-            },
-            {
-              name: 'newValue',
-              type: 'object',
-            },
-          ],
-        },
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        name: 'field',
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'name',
-              type: 'string',
-            },
-            {
-              name: 'type',
-              type: 'string',
-            },
-            {
-              name: 'target',
-              type: 'string',
-            },
-            {
-              name: 'reverseName',
-              type: 'string',
-            },
-          ],
-        },
-        parameters: {
-          nodes: [],
-        },
-      },
-      {
-        name: 'parameter',
-        fields: {
-          nodes: [
-            {
-              name: '__type__',
-              type: 'type',
-            },
-            {
-              name: 'name',
-              type: 'string',
-            },
-            {
-              name: 'type',
-              type: 'string',
-            },
-            {
-              name: 'isRequired',
-              type: 'boolean',
-            },
-          ],
-        },
-        parameters: {
-          nodes: [],
-        },
-      },
-    ])));
-
-    assert.oequal(await queryDB(
-      `type(name: User) {
-        name,
-        isNode,
-        fields {
-          nodes {
-            name,
-            type
-          }
-        }
-      }`
-    ), fromJS({
-      name: 'User',
-      isNode: true,
-      fields: {
-        nodes: [
-          {
-            name: '__type__',
-            type: 'type',
-          },
-          {
-            name: 'id',
-            type: 'string',
-          },
-          {
-            name: 'handle',
-            type: 'string',
-          },
-          {
-            name: 'microposts',
-            type: 'connection',
-          },
-        ],
       },
     }));
   });
@@ -685,7 +700,11 @@ describe('Integration Tests', () => {
   it('Should create and delete type', async function () {
     assert.oequal(await queryDB(
       `addType(name: Test) { success }`
-    ), Map({ success: true }));
+    ), fromJS({
+      addType: {
+       success: true,
+      },
+    }));
 
     assert.oequal(await queryDB(
       `addField(type: Test, fieldName: test, fieldType: string) {
@@ -702,16 +721,20 @@ describe('Integration Tests', () => {
         }
       }`
     ), fromJS({
-      success: true,
-      changes: {
-        nodes: [{
-          oldValue: {
-            name: 'Test',
-          },
-          newValue: {
-            name: 'Test',
-          },
-        }, ],
+      addField: {
+        success: true,
+        changes: {
+          nodes: [
+            {
+              oldValue: {
+                name: 'Test',
+              },
+              newValue: {
+                name: 'Test',
+              },
+            },
+          ],
+        },
       },
     }));
 
@@ -730,16 +753,18 @@ describe('Integration Tests', () => {
         }
       }`
     ), fromJS({
-      success: true,
-      updates: {
-        nodes: [{
-          oldValue: {
-            name: 'Test',
-          },
-          newValue: {
-            name: 'Test',
-          },
-        }, ],
+      removeField: {
+        success: true,
+        updates: {
+          nodes: [{
+            oldValue: {
+              name: 'Test',
+            },
+            newValue: {
+              name: 'Test',
+            },
+          }, ],
+        },
       },
     }));
 
@@ -753,9 +778,11 @@ describe('Integration Tests', () => {
          }
        }`
     ), fromJS({
-      success: true,
-      changes: {
-        count: 2,
+      addConnection: {
+        success: true,
+        changes: {
+          count: 2,
+        },
       },
     }));
 
@@ -775,32 +802,38 @@ describe('Integration Tests', () => {
          }
        }`
     ), fromJS({
-      success: true,
-      changes: {
-        count: 2,
-        nodes: [
-          {
-            newValue: {
-              name: 'Micropost',
+      removeConnection: {
+        success: true,
+        changes: {
+          count: 2,
+          nodes: [
+            {
+              newValue: {
+                name: 'Micropost',
+              },
+              oldValue: {
+                name: 'Micropost',
+              },
             },
-            oldValue: {
-              name: 'Micropost',
+            {
+              newValue: {
+                name: 'User',
+              },
+              oldValue: {
+                name: 'User',
+              },
             },
-          },
-          {
-            newValue: {
-              name: 'User',
-            },
-            oldValue: {
-              name: 'User',
-            },
-          },
-        ],
+          ],
+        },
       },
     }));
 
     assert.oequal(await queryDB(
       `removeType(name: Test) { success }`
-    ), Map({ success: true }));
+    ), fromJS({
+      removeType: {
+        success: true,
+      },
+    }));
   });
 });
