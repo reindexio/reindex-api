@@ -43,12 +43,14 @@ describe('POST /graphql', () => {
     });
     assert.strictEqual(response.statusCode, 200);
     assert.deepEqual(response.result, {
-      objects: {
-        nodes: [
-          {
-            text: 'Test text',
-          },
-        ],
+      nodes: {
+        objects: {
+          nodes: [
+            {
+              text: 'Test text',
+            },
+          ],
+        },
       },
     });
   });
