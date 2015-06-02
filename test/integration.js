@@ -150,9 +150,110 @@ describe('Integration Tests', () => {
     }));
   });
 
+  it('Should return type information with __type__', async function() {
+    let result = await queryDB(
+      `nodes(type: User) {
+        __type__ {
+          name
+        },
+        objects(orderBy: handle, first: 1) {
+          __type__ {
+            name,
+            parameters(orderBy: name) {
+              nodes {
+                name
+              }
+            }
+          },
+          nodes {
+            __type__ {
+              name,
+              fields(orderBy: name) {
+                nodes {
+                  name
+                }
+              }
+            },
+            handle
+          }
+        }
+      }`
+    );
+
+    assert.oequal(result, fromJS({
+      __type__: {
+        name: 'nodesResult',
+      },
+      objects: {
+        __type__: {
+          name: 'connection',
+          parameters: {
+            nodes: [
+              { name: 'after' },
+              { name: 'first' },
+              { name: 'orderBy' },
+            ],
+          },
+        },
+        nodes: [
+          {
+            __type__: {
+              name: 'User',
+              fields: {
+                nodes: [
+                  { name: '__type__' },
+                  { name: 'handle' },
+                  { name: 'id' },
+                  { name: 'microposts' },
+                ],
+              },
+            },
+            handle: 'freiksenet',
+          },
+        ],
+      },
+    }));
+
+    result = await queryDB(`
+      nodes(type: User) {
+        __type__ {
+          name
+        },
+        objects(first: 1) {
+          __type__ {
+            name
+          },
+          nodes {
+            __type__ {
+              name
+            }
+          }
+        }
+      }
+    `);
+
+    assert.oequal(result, fromJS({
+      __type__: {
+        name: 'nodesResult',
+      },
+      objects: {
+        __type__: {
+          name: 'connection',
+        },
+        nodes: [
+          {
+            __type__: {
+              name: 'User',
+            },
+          },
+        ],
+      },
+    }));
+  });
+
   it('Should return type information', async function () {
-    let schemaResult = await queryDB(
-      `schema() {
+    let schemaResult = await queryDB(`
+      schema() {
         calls(orderBy: name) {
           nodes {
             name
@@ -217,6 +318,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'id',
               type: 'string',
             },
@@ -239,6 +344,10 @@ describe('Integration Tests', () => {
       {
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'id',
               type: 'string',
@@ -266,6 +375,10 @@ describe('Integration Tests', () => {
       {
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'edges',
               type: 'edges',
@@ -298,6 +411,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'cursor',
               type: 'cursor',
             },
@@ -316,6 +433,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'objects',
               type: 'connection',
             },
@@ -330,6 +451,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'success',
               type: 'boolean',
             },
@@ -343,6 +468,10 @@ describe('Integration Tests', () => {
       {
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'success',
               type: 'boolean',
@@ -362,6 +491,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'calls',
               type: 'array',
             },
@@ -379,6 +512,10 @@ describe('Integration Tests', () => {
       {
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'name',
               type: 'string',
@@ -401,6 +538,10 @@ describe('Integration Tests', () => {
       {
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'name',
               type: 'string',
@@ -429,6 +570,10 @@ describe('Integration Tests', () => {
         fields: {
           nodes: [
             {
+              name: '__type__',
+              type: 'type',
+            },
+            {
               name: 'oldValue',
               type: 'object',
             },
@@ -446,6 +591,10 @@ describe('Integration Tests', () => {
         name: 'field',
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'name',
               type: 'string',
@@ -472,6 +621,10 @@ describe('Integration Tests', () => {
         name: 'parameter',
         fields: {
           nodes: [
+            {
+              name: '__type__',
+              type: 'type',
+            },
             {
               name: 'name',
               type: 'string',
@@ -508,6 +661,10 @@ describe('Integration Tests', () => {
       isNode: true,
       fields: {
         nodes: [
+          {
+            name: '__type__',
+            type: 'type',
+          },
           {
             name: 'id',
             type: 'string',

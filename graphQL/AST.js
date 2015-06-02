@@ -6,6 +6,7 @@ import {
   List,
   Record,
   Map,
+  Stack,
 } from 'immutable';
 import TConnectionRoot from './typed/TConnectionRoot';
 import TObjectRoot from './typed/TObjectRoot';
@@ -55,7 +56,7 @@ export class GQLRoot extends Record({
           return child.toTyped(
             schema,
             List.of(returnType.name),
-            List.of(typeName)
+            Stack.of(typeName)
           );
         }),
       });
@@ -65,7 +66,7 @@ export class GQLRoot extends Record({
           return child.toTyped(
             schema,
             List.of(returnType.name),
-            List.of(typeName)
+            Stack.of(typeName)
           );
         }),
       });
@@ -79,10 +80,10 @@ export class GQLNode extends Record({
   parameters: Map(),
   children: List(),
 }) {
-  toTyped(schema, parents, actualType) {
+  toTyped(schema, parents, actualTypes) {
     let type = getNestedSchema(schema, ...parents.push(this.name));
     if (type && type.convertNode) {
-      return type.convertNode(schema, this, parents, actualType);
+      return type.convertNode(schema, this, parents, actualTypes);
     } else {
       let field = parents.push(this.name).join('.');
       let validFields = getNestedSchema(schema, ...parents)

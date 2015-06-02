@@ -12,6 +12,7 @@ import RemoveConnectionMutator
   from '../../query/mutators/RemoveConnectionMutator';
 import getSchema from '../../schema/getSchema';
 import SchemaType from '../../schema/SchemaType';
+import SchemaTypeField from '../../schema/fields/SchemaTypeField';
 import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
 import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
 import SchemaNodeField from '../../schema/fields/SchemaNodeField';
@@ -67,6 +68,34 @@ describe('Schema Updates', () => {
         name: 'User',
         isNode: true,
         fields: Map({
+          __type__: new SchemaTypeField({
+            name: '__type__',
+            type: fromJS({
+              fields: [
+                {
+                  name: '__type__',
+                  type: 'type',
+                },
+                {
+                  name: 'id',
+                  type: 'string',
+                },
+                {
+                  name: 'handle',
+                  type: 'string',
+                },
+                {
+                  name: 'microposts',
+                  reverseName: 'author',
+                  target: 'Micropost',
+                  type: 'connection',
+                },
+              ],
+              isNode: true,
+              name: 'User',
+              parameters: [],
+            }),
+          }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',
@@ -87,6 +116,29 @@ describe('Schema Updates', () => {
         name: 'Micropost',
         isNode: true,
         fields: Map({
+          __type__: new SchemaTypeField({
+            name: '__type__',
+            type: fromJS({
+              fields: [
+                {
+                  name: '__type__',
+                  type: 'type',
+                },
+                {
+                  name: 'id',
+                  type: 'string',
+                },
+                {
+                  name: 'author',
+                  reverseName: 'microposts',
+                  type: 'User',
+                },
+              ],
+              isNode: true,
+              name: 'Micropost',
+              parameters: [],
+            }),
+          }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',
@@ -118,6 +170,24 @@ describe('Schema Updates', () => {
         name: 'User',
         isNode: true,
         fields: Map({
+          __type__: new SchemaTypeField({
+            name: '__type__',
+            type: fromJS({
+              fields: [
+                {
+                  name: '__type__',
+                  type: 'type',
+                },
+                {
+                  name: 'id',
+                  type: 'string',
+                },
+              ],
+              isNode: true,
+              name: 'User',
+              parameters: [],
+            }),
+          }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',
@@ -129,6 +199,24 @@ describe('Schema Updates', () => {
         name: 'Micropost',
         isNode: true,
         fields: Map({
+          __type__: new SchemaTypeField({
+            name: '__type__',
+            type: fromJS({
+              fields: [
+                {
+                  name: '__type__',
+                  type: 'type',
+                },
+                {
+                  name: 'id',
+                  type: 'string',
+                },
+              ],
+              isNode: true,
+              name: 'Micropost',
+              parameters: [],
+            }),
+          }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',

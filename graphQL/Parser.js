@@ -108,8 +108,8 @@ module.exports = (function() {
            },
         peg$c29 = ",",
         peg$c30 = { type: "literal", value: ",", description: "\",\"" },
-        peg$c31 = /^[a-zA-Z$]/,
-        peg$c32 = { type: "class", value: "[a-zA-Z$]", description: "[a-zA-Z$]" },
+        peg$c31 = /^[a-zA-Z_$]/,
+        peg$c32 = { type: "class", value: "[a-zA-Z_$]", description: "[a-zA-Z_$]" },
         peg$c33 = /^[a-zA-z0-9_]/,
         peg$c34 = { type: "class", value: "[a-zA-z0-9_]", description: "[a-zA-z0-9_]" },
         peg$c35 = function(prefix, suffix) {

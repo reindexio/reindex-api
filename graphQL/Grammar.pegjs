@@ -111,7 +111,7 @@ property_separator
   = ','
 
 identifier
-  = prefix:[a-zA-Z\$] suffix:[a-zA-z0-9_]*
+  = prefix:[a-zA-Z_\$] suffix:[a-zA-z0-9_]*
     {
       return prefix + suffix.join('');
     }
