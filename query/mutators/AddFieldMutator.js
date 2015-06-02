@@ -17,12 +17,10 @@ export default class AddFieldMutator extends Record({
       returnChanges: true,
     }).merge((result) => ({
       success: result('replaced').ne(0),
-      changes: result('changes').merge((change) => {
-        return {
-          oldValue: change('old_val'),
-          newValue: change('new_val'),
-        };
-      }),
+      changes: result('changes').merge((change) => ({
+        oldValue: change('old_val'),
+        newValue: change('new_val'),
+      })),
     }));
   }
 }

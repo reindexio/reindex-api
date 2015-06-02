@@ -4,6 +4,9 @@
     "node": true,
     "mocha": true
   },
+  "plugins": [
+    "arrow-function"
+  ],
   "rules": {
     "strict": 0,
     "max-len": [2, 80, 2],
@@ -40,6 +43,7 @@
     "key-spacing": 2,
     "no-dupe-keys": 2,
     "no-use-before-define": [2, "nofunc"],
+    "valid-jsdoc": 0,
     "new-cap": [2, {
       "capIsNewExceptions": [
         "List",
@@ -64,6 +68,10 @@
         "IndexedCollection",
         "SetCollection"
       ]
-    }]
+    }],
+    "arrow-function/paren": 2,
+    "arrow-function/no-condition": 2,
+    "arrow-function/space": 2,
+    "arrow-function/return-shorthand": [2, "only-object"]
   }
 }
