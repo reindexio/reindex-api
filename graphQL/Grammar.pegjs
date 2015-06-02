@@ -33,9 +33,9 @@ parameter_list
     }
 
 parameter
-  = name:identifier ws* ':' ws* parameter:[a-zA-Z0-9_=-]+
+  = name:identifier ws* ':' ws* parameter:literal
     {
-      return Map().set(name, parameter.join(''));
+      return Map().set(name, parameter);
     }
 
 block
@@ -118,3 +118,15 @@ identifier
 
 ws 'whitespace'
   = [ \t\n\r]
+
+literal
+  = literal:([^\{\}\\\(\)\[\]\,] / escape)+
+  {
+    return literal.join('');
+  }
+
+escape
+  = '\\' escape:.
+  {
+    return escape;
+  }
