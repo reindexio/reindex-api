@@ -221,11 +221,11 @@ describe('Integration Tests', () => {
     }));
 
     result = await queryDB(`
-      nodes(type: User) {
+      node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
         __type__ {
           name
         },
-        objects(first: 1) {
+        microposts(first: 1) {
           __type__ {
             name
           },
@@ -239,18 +239,18 @@ describe('Integration Tests', () => {
     `);
 
     assert.oequal(result, fromJS({
-      nodes: {
+      node: {
         __type__: {
-          name: 'nodesResult',
+          name: 'User',
         },
-        objects: {
+        microposts: {
           __type__: {
             name: 'connection',
           },
           nodes: [
             {
               __type__: {
-                name: 'User',
+                name: 'Micropost',
               },
             },
           ],
