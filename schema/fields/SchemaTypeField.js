@@ -7,8 +7,7 @@ export default class SchemaTypeField extends Record({
 }) {
   convertNode(schema, node) {
     return new TType({
-      name: node.name,
-      alias: node.alias,
+      name: node.alias || node.name,
       type: this.type,
       children: node.children.map((child) => {
         return child.toTyped(

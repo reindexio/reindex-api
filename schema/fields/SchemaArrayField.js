@@ -1,4 +1,4 @@
-import {Record, List} from 'immutable';
+import {Record, List, Stack} from 'immutable';
 import TArray from '../../graphQL/typed/TArray';
 import processParameters from '../processParameters';
 
@@ -6,7 +6,7 @@ export default class SchemaArrayField extends Record({
   name: undefined,
   type: undefined,
 }) {
-  convertNode(schema, node, parents, actualType) {
+  convertNode(schema, node, parents, actualTypes = Stack()) {
     return new TArray({
       name: node.name,
       alias: node.alias,
@@ -15,7 +15,7 @@ export default class SchemaArrayField extends Record({
         return child.toTyped(
           schema,
           List.of('connection'),
-          actualType.push(this.type),
+          actualTypes.unshift(this.type),
         );
       }),
     });
