@@ -5,6 +5,9 @@ import SchemaNodeField from './fields/SchemaNodeField';
 import SchemaTypeField from './fields/SchemaTypeField';
 import SchemaCountField from './fields/SchemaCountField';
 import SchemaNodesField from './fields/SchemaNodesField';
+import SchemaEdgesField from './fields/SchemaEdgesField';
+import SchemaEdgesNodeField from './fields/SchemaEdgesNodeField';
+import SchemaCursorField from './fields/SchemaCursorField';
 import SchemaObjectsField from './fields/SchemaObjectsField';
 import SchemaObjectField from './fields/SchemaObjectField';
 import SchemaArrayField from './fields/SchemaArrayField';
@@ -73,6 +76,18 @@ function convertField(type, field, types) {
     });
   } else if (fieldType === 'nodes') {
     return new SchemaNodesField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'edges') {
+    return new SchemaEdgesField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'node') {
+    return new SchemaEdgesNodeField({
+      name: fieldName,
+    });
+  } else if (fieldType === 'cursor') {
+    return new SchemaCursorField({
       name: fieldName,
     });
   } else if (fieldType === 'connection') {

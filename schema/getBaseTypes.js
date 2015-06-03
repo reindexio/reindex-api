@@ -27,7 +27,7 @@ const builtIns = fromJS([
         type: 'cursor',
       }, {
         name: 'node',
-        type: 'object',
+        type: 'node',
       },
     ],
   }, {
