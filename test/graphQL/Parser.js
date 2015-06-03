@@ -18,7 +18,7 @@ describe('Parser', () => {
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
       }),
       children: List([
-        new GQLLeaf({ name: 'text'}),
+        new GQLLeaf({ name: 'text' }),
         new GQLLeaf({ name: 'createdAt' }),
         new GQLNode({
           name: 'author',
@@ -34,11 +34,13 @@ describe('Parser', () => {
   });
 
   it('Should be able to parse root calls without parameters', () => {
-    let query = 'schema() {}';
+    let query = 'schema() { types }';
     let expected = new GQLRoot({
       name: 'schema',
       parameters: Map(),
-      children: List(),
+      children: List([
+        new GQLLeaf({ name: 'types' }),
+      ]),
     });
 
     assert.oequal(Parser.parse(query), expected);
@@ -168,5 +170,16 @@ describe('Parser', () => {
     for (let query of queries) {
       assert.throws(parse(query));
     }
+  });
+
+  it('Should fail when empty block is passed', () => {
+    assert.throws(() => {
+      Parser.parse(`
+        nodes() {
+          foo {
+          }
+        }`
+      );
+    });
   });
 });

@@ -39,9 +39,9 @@ parameter
     }
 
 block
-  = ws* '{' ws* children:children? ws* '}' ws*
+  = ws* '{' ws* children:children ws* '}' ws*
     {
-      return children || [];
+      return children;
     }
 
 children
