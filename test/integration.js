@@ -154,6 +154,34 @@ describe('Integration Tests', () => {
     }));
   });
 
+  it('Should be able to use edges and cursor', async function () {
+    let result = await queryDB(
+      `nodes(type: User) {
+        objects(orderBy: handle, first: 1) {
+          edges as stuff {
+            node as data {
+              handle
+            }
+          }
+        }
+      }
+    `);
+
+    assert.oequal(result, fromJS({
+      nodes: {
+        objects: {
+          stuff: [
+            {
+              data: {
+                handle: 'freiksenet',
+              },
+            },
+          ],
+        },
+      },
+    }));
+  });
+
   it('Should return type information with __type__', async function() {
     let result = await queryDB(
       `nodes(type: User) {
@@ -432,7 +460,7 @@ describe('Integration Tests', () => {
               },
               {
                 name: 'node',
-                type: 'object',
+                type: 'node',
               },
             ],
           },
