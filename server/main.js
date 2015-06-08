@@ -1,16 +1,16 @@
-import Bassmaster from 'bassmaster';
 import {createLogger} from 'bunyan';
 
-import Server from './Server';
+import createServer from './createServer';
 
 const log = createLogger({name: 'server'});
 
 export default async function main() {
+  let server;
   try {
-    await Server.register(Bassmaster);
-    await Server.start();
+    server = await createServer();
+    await server.start();
   } catch (ex) {
     log.error(ex, 'Failed to start');
   }
-  log.info('Server started at ' + Server.info.uri);
+  log.info('Server started at ' + server.info.uri);
 }

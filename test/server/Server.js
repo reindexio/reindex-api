@@ -1,18 +1,27 @@
+import JSONWebToken from 'jsonwebtoken';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 
 import assert from '../assert';
-import Server from '../../server/Server';
+import createServer from '../../server/createServer';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
-function request(options) {
-  return new Promise((resolve) => Server.inject(options, resolve));
-}
 
-describe('POST /graphql', () => {
+describe('Server', () => {
   const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  const randomUserID = uuid.v4();
+  const randomSecret = 'secret';
 
   let conn;
+  let server;
+
+  function makeRequest(options) {
+    return new Promise((resolve) => server.inject(options, resolve));
+  }
+
+  before(async function () {
+    server = await createServer();
+  });
 
   before(async function () {
     conn = await RethinkDB.connect();
@@ -25,7 +34,10 @@ describe('POST /graphql', () => {
   });
 
   it('executes a GraphQL query', async function () {
-    const response = await request({
+    const token = JSONWebToken.sign({
+      sub: randomUserID,
+    }, randomSecret);
+    const response = await makeRequest({
       method: 'POST',
       url: '/graphql',
       payload: {
@@ -38,6 +50,7 @@ describe('POST /graphql', () => {
         }`,
       },
       headers: {
+        authorization: `Bearer ${token}`,
         host: `${dbName}.example.com`,
       },
     });
