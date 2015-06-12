@@ -1,13 +1,9 @@
-import RethinkDB from 'rethinkdb';
-
-import App from './App';
-import getSchema from '../schema/getSchema';
+import getApp from './getApp';
 
 const AppStore = {
   async getByHostname(conn, hostname) {
     const dbName = hostname.split('.')[0];
-    const schema = await getSchema(RethinkDB.db(dbName), conn);
-    return new App({dbName, schema});
+    return await getApp(dbName, conn);
   },
 };
 

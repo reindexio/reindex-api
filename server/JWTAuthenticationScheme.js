@@ -20,6 +20,7 @@ function verifyToken(token, secrets) {
 }
 
 function authenticate(request, reply) {
+  const { tenant } = request;
   const { req } = request.raw;
   const { authorization } = request.headers;
 
@@ -35,7 +36,7 @@ function authenticate(request, reply) {
 
   let verifiedToken;
   try {
-    verifiedToken = verifyToken(token, ['secret']);
+    verifiedToken = verifyToken(token, tenant.secrets);
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return reply(Boom.unauthorized('Token expired'));

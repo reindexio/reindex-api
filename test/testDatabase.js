@@ -34,6 +34,11 @@ const TEST_DATA = fromJS({
       },
 
     ],
+    _secrets: [
+      {
+        value: 'secret',
+      },
+    ],
     _types: [
       {
         name: 'User',

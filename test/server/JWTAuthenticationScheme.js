@@ -1,24 +1,32 @@
 import Hapi from 'hapi';
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import uuid from 'uuid';
+import {List} from 'immutable';
 
+import App from '../../apps/App';
 import assert from '../assert';
 import JWTAuthenticationScheme from '../../server/JWTAuthenticationScheme';
 
-describe('JWTAuthenticationScheme', () => {
-  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
 
+describe('JWTAuthenticationScheme', () => {
+  const secret = 'secret';
   let conn;
-  let Server;
+  let server;
 
   before(async function () {
-    Server = new Hapi.Server();
-    Server.connection();
-    const register = Promise.promisify(Server.register, Server);
+    server = new Hapi.Server();
+    server.connection();
+    const register = Promise.promisify(server.register, server);
+
     await register(JWTAuthenticationScheme);
-    Server.auth.strategy('token', 'jwt');
-    Server.route({
+    server.ext('onPreAuth', (request, reply) => {
+      request.tenant = new App({
+        secrets: List.of(secret),
+      });
+      reply.continue();
+    });
+    server.auth.strategy('token', 'jwt');
+    server.route({
       method: 'POST',
       path: '/',
       handler: function(request, reply) {
@@ -28,7 +36,6 @@ describe('JWTAuthenticationScheme', () => {
     });
   });
 
-  const secret = 'secret';
   const userID = '3c00d00d-e7d9-4cde-899f-e9c5d6400d87';
   const now = Math.floor(new Date() / 1000);
   const HOUR = 3600;
@@ -46,7 +53,7 @@ describe('JWTAuthenticationScheme', () => {
       payload: {},
       headers,
     };
-    return new Promise((resolve) => Server.inject(options, resolve));
+    return new Promise((resolve) => server.inject(options, resolve));
   }
 
   it('returns a reply on successful authentication', async function() {
