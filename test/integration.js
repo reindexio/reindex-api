@@ -324,6 +324,9 @@ describe('Integration Tests', () => {
         name: 'addField',
       },
       {
+        name: 'addSecret',
+      },
+      {
         name: 'addType',
       },
       {

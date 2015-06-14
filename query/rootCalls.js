@@ -1,4 +1,7 @@
+import Base64URL from 'base64-url';
+import crypto from 'crypto';
 import {Map, List} from 'immutable';
+
 import {Call, Parameter} from './calls';
 import Query from './Query';
 import IDSelector from './selectors/IDSelector';
@@ -9,6 +12,7 @@ import AddFieldMutator from './mutators/AddFieldMutator';
 import RemoveFieldMutator from './mutators/RemoveFieldMutator';
 import AddConnectionMutator from './mutators/AddConnectionMutator';
 import RemoveConnectionMutator from './mutators/RemoveConnectionMutator';
+import AddSecretMutator from './mutators/AddSecretMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
 import NoTypeValidator from './validators/NoTypeValidator';
@@ -305,17 +309,36 @@ const removeConnection = new Call({
   },
 });
 
+function generateSecret() {
+  return Base64URL.escape(crypto.randomBytes(30).toString('base64'));
+}
+
+const addSecret = new Call({
+  name: 'addSecret',
+  returns: 'mutationResult',
+  parameters: Map(),
+  call() {
+    const secret = generateSecret();
+    return {
+      query: new Query({
+        selector: new AddSecretMutator({ secret }),
+      }),
+    };
+  },
+});
+
 const rootCalls = Map({
   schema: schemaCall,
   type: typeCall,
-  nodes: nodes,
-  node: node,
-  addType: addType,
-  removeType: removeType,
-  addField: addField,
-  removeField: removeField,
-  addConnection: addConnection,
-  removeConnection: removeConnection,
+  nodes,
+  node,
+  addType,
+  removeType,
+  addField,
+  removeField,
+  addConnection,
+  removeConnection,
+  addSecret,
 });
 
 export default rootCalls;

@@ -4,6 +4,7 @@
   "repository": {},
   "dependencies": {
     "babel": "^5.4.7",
+    "base64-url": "^1.2.1",
     "bassmaster": "^1.7.0",
     "bluebird": "^2.9.25",
     "boom": "^2.7.2",
