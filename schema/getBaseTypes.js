@@ -72,6 +72,18 @@ const builtIns = fromJS([
       },
     ],
   }, {
+    name: 'secret',
+    fields: [
+      {
+        name: 'id',
+        type: 'string',
+      },
+      {
+        name: 'value',
+        type: 'string',
+      },
+    ],
+  }, {
     name: 'schema',
     fields: [
       {

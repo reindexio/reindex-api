@@ -315,13 +315,13 @@ function generateSecret() {
 
 const addSecret = new Call({
   name: 'addSecret',
-  returns: 'mutationResult',
+  returns: 'secret',
   parameters: Map(),
   call() {
-    const secret = generateSecret();
+    const value = generateSecret();
     return {
       query: new Query({
-        selector: new AddSecretMutator({ secret }),
+        selector: new AddSecretMutator({ value }),
       }),
     };
   },

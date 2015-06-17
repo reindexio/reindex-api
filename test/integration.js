@@ -538,6 +538,28 @@ describe('Integration Tests', () => {
                 type: 'type',
               },
               {
+                name: 'id',
+                type: 'string',
+              },
+              {
+                name: 'value',
+                type: 'string',
+              },
+            ],
+          },
+          name: 'secret',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
                 name: 'calls',
                 type: 'array',
               },

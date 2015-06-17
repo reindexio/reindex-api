@@ -1,5 +1,7 @@
 import {Record, Map} from 'immutable';
 
+import {TYPE_TABLE} from '../QueryConstants';
+
 export default class AddFieldMutator extends Record({
   tableName: undefined,
   name: undefined,
@@ -7,7 +9,7 @@ export default class AddFieldMutator extends Record({
   options: Map(),
 }) {
   toReQL(db) {
-    return db.table('_types').get(this.tableName).update((type) => ({
+    return db.table(TYPE_TABLE).get(this.tableName).update((type) => ({
       fields: type('fields').append({
         name: this.name,
         type: this.type,

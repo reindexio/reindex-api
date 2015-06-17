@@ -17,6 +17,7 @@ import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
 import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
 import SchemaNodeField from '../../schema/fields/SchemaNodeField';
 import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
+import {TYPE_TABLE} from '../../query/QueryConstants';
 
 describe('Schema Updates', () => {
   let dbName = 'testdb_schema_' + uuid.v4().replace(/-/g, '_');
@@ -37,7 +38,7 @@ describe('Schema Updates', () => {
        let db = RethinkDB.db(dbName);
        await createSchema(db).run(conn);
        let tables = fromJS(await db.tableList().run(conn));
-       assert(tables.contains('_types'));
+       assert(tables.contains(TYPE_TABLE));
      }
   );
 

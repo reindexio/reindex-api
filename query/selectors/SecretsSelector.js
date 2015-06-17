@@ -1,5 +1,7 @@
 import {Record} from 'immutable';
 
+import {SECRET_TABLE} from '../QueryConstants';
+
 /**
  * Selects an array of all secrets
  *
@@ -10,6 +12,6 @@ import {Record} from 'immutable';
 export default class SecretsSelector extends Record({
 }) {
   toReQL(db) {
-    return db.table('_secrets').coerceTo('array');
+    return db.table(SECRET_TABLE).coerceTo('array');
   }
 }

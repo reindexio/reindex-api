@@ -1,6 +1,8 @@
 import {Record, Map} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
+import {TYPE_TABLE} from '../QueryConstants';
+
 export default class AddConnectionMutator extends Record({
   tableName: undefined,
   targetName: undefined,
@@ -10,7 +12,7 @@ export default class AddConnectionMutator extends Record({
 }) {
   toReQL(db) {
     return RethinkDB.do(
-      db.table('_types').get(this.tableName).update((type) => ({
+      db.table(TYPE_TABLE).get(this.tableName).update((type) => ({
         fields: type('fields').append({
           name: this.name,
           type: this.targetName,
@@ -20,7 +22,7 @@ export default class AddConnectionMutator extends Record({
       }), {
         returnChanges: true,
       }),
-      db.table('_types').get(this.targetName).update((type) => ({
+      db.table(TYPE_TABLE).get(this.targetName).update((type) => ({
         fields: type('fields').append({
           name: this.reverseName,
           type: 'connection',
