@@ -1,11 +1,7 @@
-import {createLogger} from 'bunyan';
-
 import AppStore from '../../apps/AppStore';
 import GraphQLParser from '../../graphQL/Parser';
 import graphQLToQuery from '../../query/graphQLToQuery';
 import RethinkDBExecutor from '../../query/RethinkDBExecutor';
-
-const log = createLogger({name: 'server'});
 
 async function handler(request, reply) {
   const conn = request.rethinkDBConnection;
@@ -17,7 +13,6 @@ async function handler(request, reply) {
     reply(result);
   } catch (error) {
     // TODO(fson, 2015-04-13): Handle errors granularly.
-    log.error(error);
     reply(error);
   }
 }
