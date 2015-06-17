@@ -10,6 +10,10 @@ const testSchema = dbToSchema(
         isNode: true,
         fields: [
           {
+            name: 'id',
+            type: 'string',
+          },
+          {
             name: 'handle',
             type: 'string',
           }, {
@@ -24,6 +28,10 @@ const testSchema = dbToSchema(
         name: 'Micropost',
         isNode: true,
         fields: [
+          {
+            name: 'id',
+            type: 'string',
+          },
           {
             name: 'text',
             type: 'string',

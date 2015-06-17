@@ -3,8 +3,8 @@ import isConnection from '../../schema/fields/isConnection';
 import isNode from '../../schema/fields/isNode';
 
 /**
- * Validator that checks that there is a non connection field with parameter's
- * name, for a type with typeParameter's name.
+ * A validator that checks that the type `typeParameter` has a non-built-in
+ * scalar field with a name `value`.
  */
 export default class IsFieldValidator extends Record({
   typeParameter: undefined,
@@ -16,6 +16,11 @@ export default class IsFieldValidator extends Record({
       if (!existingField) {
         throw new Error(
           `Type "${existingType.name}" does not have a field "${value}".`
+        );
+      } else if (value === 'id' || value === '__type__') {
+        throw new Error(
+          `Field "${value}" of "${existingType.name}" is a built-in. ` +
+          ` Expected a non built-in field.`
         );
       } else if (isConnection(existingField) || isNode(existingField)) {
         throw new Error(
