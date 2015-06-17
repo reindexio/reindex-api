@@ -16,22 +16,46 @@ export class Call extends Record({
   }
 
   processParameters(schema, parameters) {
-    let missingRequired = this.parameters
+    let possibleParameters = this.parameters.keySeq().toSet();
+    let requiredParameters = this.parameters
       .filter((p) => p.isRequired)
       .keySeq()
-      .toSet()
-      .subtract(parameters.keySeq().toSet());
+      .toSet();
+    let givenParameters = parameters.keySeq().toSet();
+
+    let missingRequired = requiredParameters.subtract(givenParameters);
+    let invalidParameters = givenParameters.subtract(possibleParameters);
+
     if (missingRequired.count() > 0) {
       throw new Error(
         `Call "${this.name}" wasn't passed required parameter(s) ` +
         `${missingRequired.join(', ')}.`
       );
     }
-    return parameters.mapEntries(([parameter, value]) => {
-      let expectedParameter = this.parameters.get(parameter);
-      if (expectedParameter) {
+
+    if (invalidParameters.count() > 0) {
+      throw new Error(
+        `Call "${this.name}" was passed invalid parameter(s) ` +
+        `${invalidParameters.join(', ')}. Valid parameters are ` +
+        `${possibleParameters.join(', ')}.`
+      );
+    }
+
+    return parameters
+      .mapEntries(([parameter, value]) => {
+        let expectedParameter = this.parameters.get(parameter);
+        return [
+          parameter,
+          convertType(expectedParameter.type, value),
+        ];
+      })
+      .mapEntries(([parameter, value], _, convertedParameters) => {
+        let expectedParameter = this.parameters.get(parameter);
+        let newValue;
         try {
-          expectedParameter.validate(schema, value, parameters);
+          newValue = expectedParameter.validate(
+            schema, value, convertedParameters
+          );
         } catch (e) {
           throw new Error(
             e.message +
@@ -40,21 +64,10 @@ export class Call extends Record({
         }
         return [
           expectedParameter.name,
-          convertType(expectedParameter.type, value),
+          newValue,
         ];
-      } else {
-        let validParameters = this.parameters
-          .keySeq()
-          .toArray()
-          .join(', ');
-        throw new Error(
-          `Call "${this.name}" has no parameter "${parameter}". ` +
-          `Valid parameters are ${validParameters}.`
-        );
-      }
-    });
+      });
   }
-
 }
 
 export class Parameter extends Record({
@@ -63,9 +76,10 @@ export class Parameter extends Record({
   isRequired: true,
   validators: List(),
 }) {
-  validate(schema, parameter, parameters) {
+  validate(schema, value, parameters) {
     return this.validators
-      .map((v) => v.validate(schema, parameter, parameters))
-      .every((r) => r);
+      .reduce((nextValue, validator) => {
+        return validator.validate(schema, nextValue, parameters);
+      }, value);
   }
 }

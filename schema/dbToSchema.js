@@ -30,9 +30,10 @@ function convertTypes(typeList) {
         type.get('name'),
         type,
       ];
-    })
+    });
+  return typeMap
+    .map((type, key, types) => convertType(type, types))
     .toMap();
-  return typeMap.map((type, key, types) => convertType(type, types));
 }
 
 function convertType(type, types) {
@@ -51,7 +52,8 @@ function convertFields(type, types, fields) {
         field.get('name'),
         convertField(type, field, types),
       ];
-    });
+    })
+    .toMap();
 }
 
 function convertField(type, field, types) {

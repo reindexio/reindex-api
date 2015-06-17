@@ -4,6 +4,7 @@ import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 import Parser from '../graphQL/Parser';
 import graphQLToQuery from '../query/graphQLToQuery';
+import rootCalls from '../query/rootCalls';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
 import getSchema from '../schema/getSchema';
 
@@ -290,7 +291,7 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should return type information', async function () {
+  it('Should get type information with schema() and type()', async function () {
     let schemaResult = await queryDB(`
       schema() {
         calls(orderBy: name) {
@@ -319,41 +320,11 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(schemaResult.getIn(['schema', 'calls', 'nodes']), fromJS([
-      {
-        name: 'addConnection',
-      },
-      {
-        name: 'addField',
-      },
-      {
-        name: 'addSecret',
-      },
-      {
-        name: 'addType',
-      },
-      {
-        name: 'node',
-      },
-      {
-        name: 'nodes',
-      },
-      {
-        name: 'removeConnection',
-      },
-      {
-        name: 'removeField',
-      },
-      {
-        name: 'removeType',
-      },
-      {
-        name: 'schema',
-      },
-      {
-        name: 'type',
-      },
-    ]));
+    let callNames = schemaResult
+      .getIn(['schema', 'calls', 'nodes'])
+      .map((call) => call.get('name'))
+      .toSet();
+    assert.oequal(callNames, rootCalls.keySeq().toSet());
 
     assert.oequal(
       schemaResult.getIn(['schema', 'stuff', 'nodes']).toSet(),
@@ -753,17 +724,17 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should create and delete type', async function () {
+  it('Should do schema modifications', async function () {
     assert.oequal(await queryDB(
-      `addType(name: Test) { success }`
+      `createType(name: Test) { success }`
     ), fromJS({
-      addType: {
+      createType: {
        success: true,
       },
     }));
 
     assert.oequal(await queryDB(
-      `addField(type: Test, fieldName: test, fieldType: string) {
+      `createField(type: Test, fieldName: test, fieldType: string) {
         success,
         changes {
           nodes {
@@ -777,7 +748,7 @@ describe('Integration Tests', () => {
         }
       }`
     ), fromJS({
-      addField: {
+      createField: {
         success: true,
         changes: {
           nodes: [
@@ -795,7 +766,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `removeField(type: Test, fieldName: test) {
+      `deleteField(type: Test, fieldName: test) {
         success,
         changes as updates {
           nodes {
@@ -809,7 +780,7 @@ describe('Integration Tests', () => {
         }
       }`
     ), fromJS({
-      removeField: {
+      deleteField: {
         success: true,
         updates: {
           nodes: [{
@@ -825,7 +796,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `addConnection(type: User, targetType: Micropost,
+      `createConnection(type: User, targetType: Micropost,
                      fieldName: reviewedPosts,
                      targetFieldName: reviewedBy) {
          success,
@@ -834,7 +805,7 @@ describe('Integration Tests', () => {
          }
        }`
     ), fromJS({
-      addConnection: {
+      createConnection: {
         success: true,
         changes: {
           count: 2,
@@ -843,7 +814,7 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `removeConnection(type: User, fieldName: reviewedPosts) {
+      `deleteConnection(type: User, fieldName: reviewedPosts) {
          success,
          changes {
            count,
@@ -858,7 +829,7 @@ describe('Integration Tests', () => {
          }
        }`
     ), fromJS({
-      removeConnection: {
+      deleteConnection: {
         success: true,
         changes: {
           count: 2,
@@ -885,9 +856,9 @@ describe('Integration Tests', () => {
     }));
 
     assert.oequal(await queryDB(
-      `removeType(name: Test) { success }`
+      `deleteType(name: Test) { success }`
     ), fromJS({
-      removeType: {
+      deleteType: {
         success: true,
       },
     }));
@@ -896,5 +867,68 @@ describe('Integration Tests', () => {
   it('Should create a secret', async function () {
     const result = await runQuery(`addSecret() { value }`);
     assert.match(result.addSecret.value, /^[a-zA-Z0-9_-]{40}$/);
+  });
+
+  it('Should be able to do CRUD', async function() {
+    let createResult = await queryDB(
+      `create(type: User, data: \\{"handle":"newUser"\\}) {
+        id, handle
+      }`
+    );
+    let id = createResult.getIn(['create', 'id']);
+    assert.oequal((await queryDB(
+      `node(type: User, id: ${id}) {
+        id, handle
+      }`
+    )).get('node'), createResult.get('create'));
+
+    let micropostResult = await queryDB(
+      `create(type: Micropost, data:
+        \\{"author": "${id}"\\, "text": "text"\\,
+           "createdAt": "2014-05-07T18:00:00Z"\\}) {
+        id, text, createdAt, author {
+          handle
+        }
+      }`
+    );
+    let micropostId = micropostResult.getIn(['create', 'id']);
+    assert.oequal((await queryDB(
+      `node(type: Micropost, id: ${micropostId}) {
+        id, text, createdAt, author {
+          handle
+        }
+      }`
+    )).get('node'), micropostResult.get('create'));
+
+    let updateResult = await queryDB(
+      `update(type: User, id: ${id}, data:
+        \\{"handle": "mikhail"\\}) {
+        id, handle
+      }`
+    );
+    assert.oequal((await queryDB(
+      `node(type: User, id: ${id}) {
+        id, handle
+      }`
+    )).get('node'), updateResult.get('update'));
+
+    let deleteResult = await queryDB(
+      `delete(type: User, id: ${id}) {
+        id
+      }`
+    );
+    assert.equal(deleteResult.getIn(['delete', 'id']), id);
+
+    try {
+      await queryDB(
+        `node(type: User, id: ${id}) {
+          id, handle
+        }`
+      );
+    } catch(e) {
+      assert.ok(e);
+      return;
+    }
+    assert.fail('', '', 'Expected retrieval of deleted node to fail');
   });
 });
