@@ -11,6 +11,16 @@ describe('Server', () => {
   const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
   const randomUserID = uuid.v4();
   const randomSecret = 'secret';
+  const token = JSONWebToken.sign({
+    sub: randomUserID,
+  }, randomSecret);
+  const query = `nodes(type: Micropost) {
+    objects(orderBy: createdAt, first: 1) {
+      nodes {
+        text
+      }
+    }
+  }`;
 
   let conn;
   let server;
@@ -33,21 +43,14 @@ describe('Server', () => {
     await conn.close();
   });
 
+
+
   it('executes a GraphQL query', async function () {
-    const token = JSONWebToken.sign({
-      sub: randomUserID,
-    }, randomSecret);
     const response = await makeRequest({
       method: 'POST',
       url: '/graphql',
       payload: {
-        query: `nodes(type: Micropost) {
-          objects(orderBy: createdAt, first: 1) {
-            nodes {
-              text
-            }
-          }
-        }`,
+        query,
       },
       headers: {
         authorization: `Bearer ${token}`,
@@ -66,5 +69,27 @@ describe('Server', () => {
         },
       },
     });
+  });
+
+  it('returns 404 for non-existent apps or reserved names', async function () {
+    for (let appName of ['nonexistent', 'rethinkdb']) {
+      const nonExistentName = 'nonexistent';
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query,
+        },
+        headers: {
+          authorization: `Bearer ${token}`,
+          host: `${appName}.example.com`,
+        },
+      });
+      assert.strictEqual(response.statusCode, 404);
+      assert.deepEqual(response.result, {
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    }
   });
 });

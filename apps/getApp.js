@@ -1,3 +1,4 @@
+import Boom from 'boom';
 import RethinkDB from 'rethinkdb';
 import {fromJS, List, Map} from 'immutable';
 
@@ -16,12 +17,26 @@ const getAppQuery = new Query({
   }),
 });
 
+const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
+
 export default async function getApp(dbName, conn) {
-  const db = RethinkDB.db(dbName);
-  const {schema, secrets} = await getAppQuery.toReQL(db).run(conn);
-  return new App({
-    dbName,
-    schema: dbToSchema(fromJS(schema)),
-    secrets: List(secrets.map((secret) => secret.value)),
-  });
+  if (dbName === 'rethinkdb') {
+    throw Boom.notFound();
+  }
+  try {
+    const db = RethinkDB.db(dbName);
+    const {schema, secrets} = await getAppQuery.toReQL(db).run(conn);
+    return new App({
+      dbName,
+      schema: dbToSchema(fromJS(schema)),
+      secrets: List(secrets.map((secret) => secret.value)),
+    });
+  } catch (error) {
+    if (error.name === 'RqlRuntimeError' &&
+        databaseDoesNotExistRegExp.test(error.msg)) {
+      throw Boom.notFound();
+    } else {
+      throw error;
+    }
+  }
 }
