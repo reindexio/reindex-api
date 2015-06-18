@@ -25,7 +25,7 @@ const TYPE_CONVERTERS = {
     }
   },
   object(string) {
-    let result = fromJS(JSON.parse(string));
+    const result = fromJS(JSON.parse(string));
     if (Map.isMap(result)) {
       return result;
     } else {
@@ -33,7 +33,7 @@ const TYPE_CONVERTERS = {
     }
   },
   array(string) {
-    let result = fromJS(JSON.parse(string));
+    const result = fromJS(JSON.parse(string));
     if (List.isList(result)) {
       return result;
     } else {
@@ -44,7 +44,7 @@ const TYPE_CONVERTERS = {
 
 export default function convertType(type, object) {
   try {
-    let result = TYPE_CONVERTERS[type](object);
+    const result = TYPE_CONVERTERS[type](object);
     if ((type === 'number' || type === 'datetime' || type === 'integer')
         && isNaN(result)) {
       throw new Error();

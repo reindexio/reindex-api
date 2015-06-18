@@ -104,7 +104,7 @@ export function createEmptyDatabase(conn, dbName) {
 export async function createTestDatabase(conn, dbName) {
   await createEmptyDatabase(conn, dbName);
   await* TEST_DATA.get('tables').map(async function (data, table) {
-    let options = {};
+    const options = {};
     if (table === TYPE_TABLE) {
       options.primaryKey = 'name';
     }

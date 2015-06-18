@@ -26,7 +26,7 @@ const loggingOptions = {
 
 export default async function createServer() {
   const server = new Hapi.Server();
-  for (let method of ['register', 'start']) {
+  for (const method of ['register', 'start']) {
     server[method] = Promise.promisify(server[method], server);
   }
   server.connection(Config.get('connection'));

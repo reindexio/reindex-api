@@ -9,7 +9,7 @@ import {createTestDatabase, deleteTestDatabase} from './testDatabase';
 import getSchema from '../schema/getSchema';
 
 describe('Integration Tests', () => {
-  let dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
 
   before(async function () {
@@ -33,8 +33,8 @@ describe('Integration Tests', () => {
     return fromJS(await runQuery(graphQLQuery));
   }
 
-  it('Should return correct data for node(Micropost, <id>)', async function () {
-    let result = await queryDB(
+  it('queries with node(Micropost, <id>)', async function () {
+    const result = await queryDB(
       `node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
@@ -44,7 +44,7 @@ describe('Integration Tests', () => {
       }`
     );
 
-    assert.oequal(result, fromJS({
+    assert.oequal(result, fromJS( {
       node: {
         beautifulPerson: {
           nickname: 'freiksenet',
@@ -52,11 +52,11 @@ describe('Integration Tests', () => {
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
       },
-    }));
+    } ));
   });
 
-  it('Should return correct data for node(User, <id>)', async function () {
-    let result = await queryDB(
+  it('queries with node(User, <id>)', async function () {
+    const result = await queryDB(
       `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) {
         handle,
         microposts(orderBy: createdAt, first: 1) as posts {
@@ -91,7 +91,7 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should allow querying connections with only a count', async function () {
+  it('queries connections with only a count', async function () {
     let result = await queryDB(
       `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) as best {
         microposts {
@@ -125,8 +125,8 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should return correct data for nodes(User)', async function () {
-    let result = await queryDB(
+  it('queries with nodes(User)', async function () {
+    const result = await queryDB(
       `nodes(type: User) {
         objects(orderBy: handle, first: 1) as firstObject {
           nodes as stuff {
@@ -158,8 +158,8 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should be able to use edges and cursor', async function () {
-    let result = await queryDB(
+  it('works with edges and cursor', async function () {
+    const result = await queryDB(
       `nodes(type: User) {
         objects(orderBy: handle, first: 1) {
           edges as stuff {
@@ -186,7 +186,7 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should return type information with __type__', async function() {
+  it('returns type information with __type__', async function() {
     let result = await queryDB(
       `nodes(type: User) {
         __type__ {
@@ -291,8 +291,8 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should get type information with schema() and type()', async function () {
-    let schemaResult = await queryDB(`
+  it('queries type information with schema() and type()', async function () {
+    const schemaResult = await queryDB(`
       schema() {
         calls(orderBy: name) {
           nodes {
@@ -320,7 +320,7 @@ describe('Integration Tests', () => {
       }`
     );
 
-    let callNames = schemaResult
+    const callNames = schemaResult
       .getIn(['schema', 'calls', 'nodes'])
       .map((call) => call.get('name'))
       .toSet();
@@ -724,7 +724,7 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should do schema modifications', async function () {
+  it('does schema modifications', async function () {
     assert.oequal(await queryDB(
       `createType(name: Test) { success }`
     ), fromJS({
@@ -864,25 +864,25 @@ describe('Integration Tests', () => {
     }));
   });
 
-  it('Should create a secret', async function () {
+  it('creates a secret', async function () {
     const result = await runQuery(`addSecret() { value }`);
     assert.match(result.addSecret.value, /^[a-zA-Z0-9_-]{40}$/);
   });
 
-  it('Should be able to do CRUD', async function() {
-    let createResult = await queryDB(
+  it('does CRUD', async function() {
+    const createResult = await queryDB(
       `create(type: User, data: \\{"handle":"newUser"\\}) {
         id, handle
       }`
     );
-    let id = createResult.getIn(['create', 'id']);
+    const id = createResult.getIn(['create', 'id']);
     assert.oequal((await queryDB(
       `node(type: User, id: ${id}) {
         id, handle
       }`
     )).get('node'), createResult.get('create'));
 
-    let micropostResult = await queryDB(
+    const micropostResult = await queryDB(
       `create(type: Micropost, data:
         \\{"author": "${id}"\\, "text": "text"\\,
            "createdAt": "2014-05-07T18:00:00Z"\\}) {
@@ -891,7 +891,7 @@ describe('Integration Tests', () => {
         }
       }`
     );
-    let micropostId = micropostResult.getIn(['create', 'id']);
+    const micropostId = micropostResult.getIn(['create', 'id']);
     assert.oequal((await queryDB(
       `node(type: Micropost, id: ${micropostId}) {
         id, text, createdAt, author {
@@ -900,7 +900,7 @@ describe('Integration Tests', () => {
       }`
     )).get('node'), micropostResult.get('create'));
 
-    let updateResult = await queryDB(
+    const updateResult = await queryDB(
       `update(type: User, id: ${id}, data:
         \\{"handle": "mikhail"\\}) {
         id, handle
@@ -912,7 +912,7 @@ describe('Integration Tests', () => {
       }`
     )).get('node'), updateResult.get('update'));
 
-    let deleteResult = await queryDB(
+    const deleteResult = await queryDB(
       `delete(type: User, id: ${id}) {
         id
       }`

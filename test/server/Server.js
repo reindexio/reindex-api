@@ -72,7 +72,7 @@ describe('Server', () => {
   });
 
   it('returns 404 for non-existent apps or reserved names', async function () {
-    for (let appName of ['nonexistent', 'rethinkdb']) {
+    for (const appName of ['nonexistent', 'rethinkdb']) {
       const nonExistentName = 'nonexistent';
       const response = await makeRequest({
         method: 'POST',

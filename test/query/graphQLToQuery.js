@@ -5,8 +5,8 @@ import testSchema from '../testSchema';
 import assert from '../assert';
 
 describe('graphQLToQuery', () => {
-  it('Should convert valid AST to query', () => {
-    let root = new GQLRoot({
+  it('converts valid AST to query', () => {
+    const root = new GQLRoot({
       name: 'nodes',
       parameters: Map({type: 'Micropost'}),
       children: List([
@@ -39,8 +39,8 @@ describe('graphQLToQuery', () => {
 });
 
 describe('Type Checking', () => {
-  it('Should fail on non-existant root call', () => {
-    let root = new GQLRoot({
+  it('fails on non-existant root call', () => {
+    const root = new GQLRoot({
       name: 'bogus',
       parameters: Map(),
       children: List(),
@@ -51,8 +51,8 @@ describe('Type Checking', () => {
     }, /Root call "bogus" is invalid./);
   });
 
-  it('Should fail on invalid parameters', () => {
-    let root = new GQLRoot({
+  it('fails on invalid parameters', () => {
+    const root = new GQLRoot({
       name: 'nodes',
       parameters: Map({
         type: 'Micropost',
@@ -66,8 +66,8 @@ describe('Type Checking', () => {
     }, /Call "nodes" was passed invalid parameter\(s\) id/);
   });
 
-  it('Should fail on missing parameters', () => {
-    let root = new GQLRoot({
+  it('fails on missing parameters', () => {
+    const root = new GQLRoot({
       name: 'nodes',
       parameters: Map(),
       children: List(),
@@ -79,8 +79,8 @@ describe('Type Checking', () => {
 
   });
 
-  it('Should fail on non-existant scalar field', () => {
-    let root = new GQLRoot({
+  it('fails on non-existant scalar field', () => {
+    const root = new GQLRoot({
       name: 'node',
       parameters: Map({type: 'Micropost', id: 'uaeoou'}),
       children: List([
@@ -95,8 +95,8 @@ describe('Type Checking', () => {
     }, /Scalar field "Micropost.bogusField" does not exist/);
   });
 
-  it('Should fail on non-existant nested field', () => {
-    let root = new GQLRoot({
+  it('fails on non-existant nested field', () => {
+    const root = new GQLRoot({
       name: 'nodes',
       parameters: Map({type: 'Micropost'}),
       calls: List(),
@@ -127,7 +127,7 @@ describe('Type Checking', () => {
     }, /Nested field "Micropost.writer" does not exist/);
   });
 
-  it('Should fail when scalar and nested fields are mixed up', () => {
+  it('fails when scalar and nested fields are mixed up', () => {
     let root = new GQLRoot({
       name: 'node',
       parameters: Map({type: 'Micropost', id: 'ueou'}),
@@ -162,7 +162,7 @@ describe('Type Checking', () => {
     }, /"Micropost.author" is nested, but was not passed fields/);
   });
 
-  it('Should fail if invalid fields are passed to edgeables.', () => {
+  it('fails if invalid fields are passed to edgeables.', () => {
     let root = new GQLRoot({
       name: 'nodes',
       parameters: Map({type: 'Micropost'}),
@@ -197,8 +197,8 @@ describe('Type Checking', () => {
     }, /Scalar field "nodesResult.createdAt" does not exist/);
   });
 
-  it('Should fail on invalid parameter types', () => {
-    let root = new GQLRoot({
+  it('fails on invalid parameter types', () => {
+    const root = new GQLRoot({
       name: 'nodes',
       parameters: Map({type: 'Micropost'}),
       children: List([

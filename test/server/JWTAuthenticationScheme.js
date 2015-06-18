@@ -29,7 +29,7 @@ describe('JWTAuthenticationScheme', () => {
     server.route({
       method: 'POST',
       path: '/',
-      handler: function(request, reply) {
+      handler(request, reply) {
         return reply('ok');
       },
       config: { auth: 'token' },
@@ -75,7 +75,7 @@ describe('JWTAuthenticationScheme', () => {
 
 
   it('returns an error on missing or malformed header', async function() {
-    for (let authorization of [
+    for (const authorization of [
       null,
       '',
       validToken,

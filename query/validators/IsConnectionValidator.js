@@ -8,9 +8,9 @@ export default class IsConnectionValidator extends Record({
   typeParameter: undefined,
 }) {
   validate(schema, value, parameters) {
-    let existingType = schema.types.get(parameters.get(this.typeParameter));
+    const existingType = schema.types.get(parameters.get(this.typeParameter));
     if (existingType) {
-      let existingField = existingType.fields.get(value);
+      const existingField = existingType.fields.get(value);
       if (!existingField) {
         throw new Error(
           `Type "${existingType.name}" does not have a field "${value}".`

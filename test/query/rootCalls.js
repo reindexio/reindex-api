@@ -4,7 +4,7 @@ import rootCalls from '../../query/rootCalls';
 import testSchema from '../testSchema';
 
 function processAndCall(rootCall, parameters) {
-  let processedParameters = rootCall.processParameters(
+  const processedParameters = rootCall.processParameters(
     testSchema,
     parameters
   );
@@ -13,7 +13,7 @@ function processAndCall(rootCall, parameters) {
 
 describe('rootCalls', () => {
   describe('type', () => {
-    it('Should throw for a non-existant type', () => {
+    it('fails for a non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('type'), Map({
           name: 'FooBar',
@@ -23,7 +23,7 @@ describe('rootCalls', () => {
   });
 
   describe('nodes', () => {
-    it('Should throw for a non-existant type', () => {
+    it('fails for a non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('nodes'), Map({
           type: 'FooBar',
@@ -34,7 +34,7 @@ describe('rootCalls', () => {
   });
 
   describe('node', () => {
-    it('Should throw for a non-existant type', () => {
+    it('fails for a non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('node'), Map({
           type: 'FooBar',
@@ -45,7 +45,7 @@ describe('rootCalls', () => {
   });
 
   describe('createType', () => {
-    it('Should not create duplicate type', () => {
+    it('does not create duplicate type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createType'), Map({
           name: 'User',
@@ -53,7 +53,7 @@ describe('rootCalls', () => {
       }, /Type "User" already exists/);
     });
 
-    it('Should not create a type with an invalid name', () => {
+    it('does not create a type with an invalid name', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createType'), Map({
           name: 'edges',
@@ -63,7 +63,7 @@ describe('rootCalls', () => {
   });
 
   describe('deleteType', () => {
-    it('Should not delete non-existant type', () => {
+    it('does not delete non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteType'), Map({
           name: 'FooBar',
@@ -71,7 +71,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not delete a built-in type', () => {
+    it('does not delete a built-in type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteType'), Map({
           name: 'edges',
@@ -81,7 +81,7 @@ describe('rootCalls', () => {
   });
 
   describe('createField', () => {
-    it('Should not create field to non-existant type', () => {
+    it('does not create field to non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createField'), Map({
           type: 'FooBar',
@@ -91,7 +91,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not create duplicate field', () => {
+    it('does not create duplicate field', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createField'), Map({
           type: 'User',
@@ -101,7 +101,7 @@ describe('rootCalls', () => {
       }, /Type "User" already has a field "handle"/);
     });
 
-    it('Should not create fields to a built-in', () => {
+    it('does not create fields to a built-in', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createField'), Map({
           type: 'edges',
@@ -113,7 +113,7 @@ describe('rootCalls', () => {
   });
 
   describe('deleteField', () => {
-    it('Should not delete field from non-existant type', () => {
+    it('does not delete field from non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteField'), Map({
           type: 'FooBar',
@@ -122,7 +122,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not delete non-existant field', () => {
+    it('does not delete non-existant field', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteField'), Map({
           type: 'User',
@@ -131,7 +131,7 @@ describe('rootCalls', () => {
       }, /Type "User" does not have a field "unicornPowers"/);
     });
 
-    it('Should not delete field from a built-in', () => {
+    it('does not delete field from a built-in', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteField'), Map({
           type: 'edges',
@@ -140,7 +140,7 @@ describe('rootCalls', () => {
       }, /Type "edges" is not a node/);
     });
 
-    it('Should not delete a built-in field', () => {
+    it('does not delete a built-in field', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteField'), Map({
           type: 'User',
@@ -149,7 +149,7 @@ describe('rootCalls', () => {
       }, /Field "id" of "User" is a built-in/);
     });
 
-    it('Should not delete connection with deleteField', () => {
+    it('does not delete connection with deleteField', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteField'), Map({
           type: 'Micropost',
@@ -160,7 +160,7 @@ describe('rootCalls', () => {
   });
 
   describe('createConnection', () => {
-    it('Should not create connection to non-existant type', () => {
+    it('does not create connection to non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createConnection'), Map({
           type: 'FooBar',
@@ -180,7 +180,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not create duplicate connection', () => {
+    it('does not create duplicate connection', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createConnection'), Map({
           type: 'Micropost',
@@ -200,7 +200,7 @@ describe('rootCalls', () => {
       }, /Type "User" already has a field "microposts"/);
     });
 
-    it('Should not create connections to built-ins', () => {
+    it('does not create connections to built-ins', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createConnection'), Map({
           type: 'edges',
@@ -222,7 +222,7 @@ describe('rootCalls', () => {
   });
 
   describe('deleteConnection', () => {
-    it('Should not delete connection from non-existant type', () => {
+    it('does not delete connection from non-existant type', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteConnection'), Map({
           type: 'FooBar',
@@ -232,7 +232,7 @@ describe('rootCalls', () => {
 
     });
 
-    it('Should not delete non-existant connection', () => {
+    it('does not delete non-existant connection', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteConnection'), Map({
           type: 'User',
@@ -241,7 +241,7 @@ describe('rootCalls', () => {
       }, /Type "User" does not have a field "foo"/);
     });
 
-    it('Should not delete connection from a built-in', () => {
+    it('does not delete connection from a built-in', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteConnection'), Map({
           type: 'edges',
@@ -251,7 +251,7 @@ describe('rootCalls', () => {
 
     });
 
-    it('Should not delete non-connection with deleteConnection', () => {
+    it('does not delete non-connection with deleteConnection', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('deleteConnection'), Map({
           type: 'User',
@@ -262,7 +262,7 @@ describe('rootCalls', () => {
   });
 
   describe('create', () => {
-    it('Should not create to non existant types', () => {
+    it('does not create to non existant types', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('create'), Map({
           type: 'FooBar',
@@ -271,7 +271,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not create to built-ins', () => {
+    it('does not create to built-ins', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('create'), Map({
           type: 'edges',
@@ -280,7 +280,7 @@ describe('rootCalls', () => {
       }, /Type "edges" is not a node/);
     });
 
-    it('Should fail to create invalid data', () => {
+    it('fails when passed invalid data', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('create'), Map({
           type: 'Micropost',
@@ -317,7 +317,7 @@ describe('rootCalls', () => {
   });
 
   describe('update', () => {
-    it('Should not update non existant types', () => {
+    it('does not update non existant types', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('update'), Map({
           type: 'FooBar',
@@ -327,7 +327,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not update built-ins', () => {
+    it('does not update built-ins', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('update'), Map({
           type: 'edges',
@@ -337,7 +337,7 @@ describe('rootCalls', () => {
       }, /Type "edges" is not a node/);
     });
 
-    it('Should fail to update with invalid data', () => {
+    it('fails to update with invalid data', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('update'), Map({
           type: 'Micropost',
@@ -364,7 +364,7 @@ describe('rootCalls', () => {
       }, /Type "Micropost" does not have a field "texta"/);
     });
 
-    it('Should allow updating  partial data', () => {
+    it('alows updating with partial data', () => {
       assert.doesNotThrow(() => {
         processAndCall(rootCalls.get('update'), Map({
           type: 'Micropost',
@@ -379,7 +379,7 @@ describe('rootCalls', () => {
   });
 
   describe('delete', () => {
-    it('Should not delete in non-existent types', () => {
+    it('does not delete in non-existent types', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('delete'), Map({
           type: 'FooBar',
@@ -388,7 +388,7 @@ describe('rootCalls', () => {
       }, /Type "FooBar" does not exist/);
     });
 
-    it('Should not delete built-ins', () => {
+    it('does not delete built-ins', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('delete'), Map({
           type: 'edges',

@@ -14,8 +14,8 @@ export default class RelatedSelector extends Record({
   relatedField: undefined,
 }) {
   toReQL(db, {obj} = {}) {
-    let table = db.table(this.tableName);
-    let selector = obj || RethinkDB.row;
+    const table = db.table(this.tableName);
+    const selector = obj || RethinkDB.row;
     return table.get(selector(this.relatedField));
   }
 }

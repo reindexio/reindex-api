@@ -6,7 +6,7 @@ import {Record} from 'immutable';
 export default class NoTypeValidator extends Record({
 }) {
   validate(schema, value) {
-    let existingType = schema.types.get(value);
+    const existingType = schema.types.get(value);
     if (existingType) {
       if (existingType.isNode) {
         throw new Error(

@@ -14,7 +14,7 @@ export default class IDSelector extends Record({
   id: undefined,
 }) {
   toReQL(db) {
-    let table = db.table(this.tableName);
+    const table = db.table(this.tableName);
     return table.get(this.id);
   }
 }

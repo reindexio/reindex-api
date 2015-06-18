@@ -4,7 +4,7 @@ import JSONWebToken from 'jsonwebtoken';
 const authorizationRegExp = /^Bearer (.+)$/i;
 
 function verifyToken(token, secrets) {
-  for (let secret of secrets) {
+  for (const secret of secrets) {
     try {
       const result = JSONWebToken.verify(token, secret, {
         algorithms: ['HS256'],

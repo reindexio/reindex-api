@@ -3,7 +3,7 @@ import convertType from '../../schema/convertType';
 import assert from '../assert';
 
 describe('convertType', () => {
-  it('Should convert valid values', () => {
+  it('converts valid values', () => {
     assert.equal(convertType('number', '1'), 1);
     assert.equal(convertType('number', '1.0'), 1.0);
     assert.equal(convertType('integer', '1'), 1);
@@ -26,7 +26,7 @@ describe('convertType', () => {
     ]));
   });
 
-  it('Should throw on parse failure', () => {
+  it('fails on invalid values', () => {
     assert.throws(() => {
       convertType('number', 'bogus');
     });

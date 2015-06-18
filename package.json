@@ -23,7 +23,7 @@
     "chai": "^2.2.0",
     "chai-oequal": "0.0.1",
     "diff": "^1.4.0",
-    "eslint": "^0.22.1",
+    "eslint": "^0.23.0",
     "eslint-plugin-arrow-function": "git://github.com/freiksenet/eslint-plugin-arrow-function.git#return-shorthand",
     "jsdoc": "^3.3.0-beta3",
     "mocha": "^2.2.4",

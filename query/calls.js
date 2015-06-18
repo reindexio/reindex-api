@@ -16,15 +16,15 @@ export class Call extends Record({
   }
 
   processParameters(schema, parameters) {
-    let possibleParameters = this.parameters.keySeq().toSet();
-    let requiredParameters = this.parameters
+    const possibleParameters = this.parameters.keySeq().toSet();
+    const requiredParameters = this.parameters
       .filter((p) => p.isRequired)
       .keySeq()
       .toSet();
-    let givenParameters = parameters.keySeq().toSet();
+    const givenParameters = parameters.keySeq().toSet();
 
-    let missingRequired = requiredParameters.subtract(givenParameters);
-    let invalidParameters = givenParameters.subtract(possibleParameters);
+    const missingRequired = requiredParameters.subtract(givenParameters);
+    const invalidParameters = givenParameters.subtract(possibleParameters);
 
     if (missingRequired.count() > 0) {
       throw new Error(
@@ -43,14 +43,14 @@ export class Call extends Record({
 
     return parameters
       .mapEntries(([parameter, value]) => {
-        let expectedParameter = this.parameters.get(parameter);
+        const expectedParameter = this.parameters.get(parameter);
         return [
           parameter,
           convertType(expectedParameter.type, value),
         ];
       })
       .mapEntries(([parameter, value], _, convertedParameters) => {
-        let expectedParameter = this.parameters.get(parameter);
+        const expectedParameter = this.parameters.get(parameter);
         let newValue;
         try {
           newValue = expectedParameter.validate(

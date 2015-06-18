@@ -184,7 +184,7 @@ function getBaseTypes() {
     cachedTypes = Map({
       calls: rootCalls.valueSeq().toList(),
       types: builtIns.map((type) => {
-        let method = methods.get(type.get('name'));
+        const method = methods.get(type.get('name'));
         if (method) {
           return type.set('parameters', method.parameters.valueSeq());
         } else {

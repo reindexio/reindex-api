@@ -54,7 +54,7 @@ const typeCall = new Call({
     return {
       query: new Query({
         selector: new TypeSelector({
-          name: name,
+          name,
         }),
       }),
     };
@@ -127,7 +127,7 @@ const createType = new Call({
     return {
       query: new Query({
         selector: new AddTypeMutator({
-          name: name,
+          name,
         }),
       }),
     };
@@ -148,7 +148,7 @@ const deleteType = new Call({
     return {
       query: new Query({
         selector: new RemoveTypeMutator({
-          name: name,
+          name,
         }),
       }),
     };
@@ -300,8 +300,8 @@ const deleteConnection = new Call({
     }),
   }),
   call(schema, {type, fieldName}) {
-    let existingType = schema.types.get(type);
-    let connection = existingType.fields.get(fieldName);
+    const existingType = schema.types.get(type);
+    const connection = existingType.fields.get(fieldName);
 
     return {
       query: new Query({
@@ -339,7 +339,7 @@ const create = new Call({
       query: new Query({
         selector: new InsertMutator({
           tableName: type,
-          data: data,
+          data,
         }),
       }),
       typeName: type,
@@ -374,8 +374,8 @@ const update = new Call({
       query: new Query({
         selector: new UpdateMutator({
           tableName: type,
-          id: id,
-          data: data,
+          id,
+          data,
         }),
       }),
       typeName: type,
@@ -402,7 +402,7 @@ const deleteCall = new Call({
       query: new Query({
         selector: new DeleteMutator({
           tableName: type,
-          id: id,
+          id,
         }),
       }),
       typeName: type,
