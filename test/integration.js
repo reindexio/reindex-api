@@ -324,6 +324,9 @@ describe('Integration Tests', () => {
         name: 'addField',
       },
       {
+        name: 'addSecret',
+      },
+      {
         name: 'addType',
       },
       {
@@ -523,6 +526,28 @@ describe('Integration Tests', () => {
             ],
           },
           name: 'mutationResult',
+          parameters: {
+            nodes: [],
+          },
+        },
+        {
+          fields: {
+            nodes: [
+              {
+                name: '__type__',
+                type: 'type',
+              },
+              {
+                name: 'id',
+                type: 'string',
+              },
+              {
+                name: 'value',
+                type: 'string',
+              },
+            ],
+          },
+          name: 'secret',
           parameters: {
             nodes: [],
           },

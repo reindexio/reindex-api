@@ -1,11 +1,13 @@
 import RethinkDB from 'rethinkdb';
 import getBaseTypes from '../../schema/getBaseTypes';
 
+import {TYPE_TABLE} from '../QueryConstants';
+
 export default function getSchemaQuery(db) {
   let baseSchema = getBaseTypes().toJS();
   return RethinkDB.expr(baseSchema).merge((schema) => ({
     types: db
-      .table('_types')
+      .table(TYPE_TABLE)
       .without('id')
       .merge({
         parameters: [],

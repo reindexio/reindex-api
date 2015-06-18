@@ -1,6 +1,8 @@
 import {fromJS} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
+import {SECRET_TABLE, TYPE_TABLE} from '../query/QueryConstants';
+
 const TEST_DATA = fromJS({
   tables: {
     User: [
@@ -34,7 +36,12 @@ const TEST_DATA = fromJS({
       },
 
     ],
-    _types: [
+    [SECRET_TABLE]: [
+      {
+        value: 'secret',
+      },
+    ],
+    [TYPE_TABLE]: [
       {
         name: 'User',
         isNode: true,
@@ -98,7 +105,7 @@ export async function createTestDatabase(conn, dbName) {
   await createEmptyDatabase(conn, dbName);
   await* TEST_DATA.get('tables').map(async function (data, table) {
     let options = {};
-    if (table === '_types') {
+    if (table === TYPE_TABLE) {
       options.primaryKey = 'name';
     }
     await RethinkDB.db(dbName).tableCreate(table, options).run(conn);

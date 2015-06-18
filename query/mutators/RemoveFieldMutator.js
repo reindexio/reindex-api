@@ -1,13 +1,15 @@
 import {Record} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
+import {TYPE_TABLE} from '../QueryConstants';
+
 export default class RemoveFieldMutator extends Record({
   tableName: undefined,
   name: undefined,
 }) {
   toReQL(db) {
     return RethinkDB.do(
-      db.table('_types').get(this.tableName).update((type) => ({
+      db.table(TYPE_TABLE).get(this.tableName).update((type) => ({
         fields: type('fields').difference(
           type('fields').filter({name: this.name})
         ),

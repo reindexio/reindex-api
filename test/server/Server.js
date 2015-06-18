@@ -1,18 +1,37 @@
+import JSONWebToken from 'jsonwebtoken';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 
 import assert from '../assert';
-import Server from '../../server/Server';
+import createServer from '../../server/createServer';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
-function request(options) {
-  return new Promise((resolve) => Server.inject(options, resolve));
-}
 
-describe('POST /graphql', () => {
+describe('Server', () => {
   const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  const randomUserID = uuid.v4();
+  const randomSecret = 'secret';
+  const token = JSONWebToken.sign({
+    sub: randomUserID,
+  }, randomSecret);
+  const query = `nodes(type: Micropost) {
+    objects(orderBy: createdAt, first: 1) {
+      nodes {
+        text
+      }
+    }
+  }`;
 
   let conn;
+  let server;
+
+  function makeRequest(options) {
+    return new Promise((resolve) => server.inject(options, resolve));
+  }
+
+  before(async function () {
+    server = await createServer();
+  });
 
   before(async function () {
     conn = await RethinkDB.connect();
@@ -24,20 +43,17 @@ describe('POST /graphql', () => {
     await conn.close();
   });
 
+
+
   it('executes a GraphQL query', async function () {
-    const response = await request({
+    const response = await makeRequest({
       method: 'POST',
       url: '/graphql',
       payload: {
-        query: `nodes(type: Micropost) {
-          objects(orderBy: createdAt, first: 1) {
-            nodes {
-              text
-            }
-          }
-        }`,
+        query,
       },
       headers: {
+        authorization: `Bearer ${token}`,
         host: `${dbName}.example.com`,
       },
     });
@@ -53,5 +69,27 @@ describe('POST /graphql', () => {
         },
       },
     });
+  });
+
+  it('returns 404 for non-existent apps or reserved names', async function () {
+    for (let appName of ['nonexistent', 'rethinkdb']) {
+      const nonExistentName = 'nonexistent';
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query,
+        },
+        headers: {
+          authorization: `Bearer ${token}`,
+          host: `${appName}.example.com`,
+        },
+      });
+      assert.strictEqual(response.statusCode, 404);
+      assert.deepEqual(response.result, {
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    }
   });
 });

@@ -1,4 +1,6 @@
+import {TYPE_TABLE} from '../query/QueryConstants';
+
 export default function createSchema(db) {
   return db
-    .tableCreate('_types', {primaryKey: 'name'});
+    .tableCreate(TYPE_TABLE, {primaryKey: 'name'});
 }

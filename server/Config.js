@@ -9,6 +9,9 @@ const Config = convict({
       format: 'port',
     },
     routes: {
+      auth: {
+        strategy: 'token',
+      },
       cors: true,
       state: {
         parse: false,  // Do not parse cookies.
