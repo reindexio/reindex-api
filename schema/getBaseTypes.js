@@ -19,7 +19,8 @@ const builtIns = fromJS([
         type: 'nodes',
       },
     ],
-  }, {
+  },
+  {
     name: 'edges',
     fields: [
       {
@@ -30,7 +31,8 @@ const builtIns = fromJS([
         type: 'node',
       },
     ],
-  }, {
+  },
+  {
     name: 'nodesResult',
     fields: [
       {
@@ -38,7 +40,8 @@ const builtIns = fromJS([
         type: 'connection',
       },
     ],
-  }, {
+  },
+  {
     name: 'schemaResult',
     fields: [
       {
@@ -46,7 +49,8 @@ const builtIns = fromJS([
         type: 'boolean',
       },
     ],
-  }, {
+  },
+  {
     name: 'mutationResult',
     fields: [
       {
@@ -59,7 +63,8 @@ const builtIns = fromJS([
         target: 'changes',
       },
     ],
-  }, {
+  },
+  {
     name: 'changes',
     fields: [
       {
@@ -71,19 +76,8 @@ const builtIns = fromJS([
         type: 'object',
       },
     ],
-  }, {
-    name: 'secret',
-    fields: [
-      {
-        name: 'id',
-        type: 'string',
-      },
-      {
-        name: 'value',
-        type: 'string',
-      },
-    ],
-  }, {
+  },
+  {
     name: 'schema',
     fields: [
       {
@@ -97,7 +91,8 @@ const builtIns = fromJS([
         target: 'type',
       },
     ],
-  }, {
+  },
+  {
     name: 'call',
     fields: [
       {
@@ -114,7 +109,8 @@ const builtIns = fromJS([
         target: 'parameter',
       },
     ],
-  }, {
+  },
+  {
     name: 'type',
     fields: [
       {
@@ -136,7 +132,8 @@ const builtIns = fromJS([
         target: 'parameter',
       },
     ],
-  }, {
+  },
+  {
     name: 'field',
     fields: [
       {
@@ -156,7 +153,8 @@ const builtIns = fromJS([
         type: 'string',
       },
     ],
-  }, {
+  },
+  {
     name: 'parameter',
     fields: [
       {
@@ -172,6 +170,76 @@ const builtIns = fromJS([
         type: 'boolean',
       },
     ],
+  },
+  {
+    name: 'role',
+    fields: [
+      {
+        name: 'id',
+        type: 'string',
+      },
+      {
+        name: 'users',
+        reverseName: 'role',
+        target: 'userRole',
+        type: 'connection',
+      },
+    ],
+    isNode: true,
+  },
+  {
+    name: 'secret',
+    fields: [
+      {
+        name: 'id',
+        type: 'string',
+      },
+      {
+        name: 'value',
+        type: 'string',
+      },
+    ],
+    isNode: true,
+  },
+  {
+    name: 'user',
+    fields: [
+      {
+        name: 'id',
+        type: 'string',
+      },
+      {
+        name: 'username',
+        type: 'string',
+      },
+      {
+        name: 'roles',
+        reverseName: 'user',
+        target: 'userRole',
+        type: 'connection',
+      },
+    ],
+    isNode: true,
+  },
+  {
+    name: 'userRole',
+    fields: [
+      {
+        name: 'id',
+        type: 'string',
+      },
+      {
+        name: 'role',
+        reverseName: 'users',
+        type: 'role',
+      },
+      {
+        name: 'user',
+        reverseName: 'roles',
+        type: 'user',
+      },
+    ],
+    isNode: true,
   },
 ]);
 
