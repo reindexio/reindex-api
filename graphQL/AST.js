@@ -23,13 +23,13 @@ export class GQLRoot extends Record({
   children: List(),
 }) {
   getRootCall(schema) {
-    let name = this.name;
-    let rootCall = rootCalls.get(name);
+    const name = this.name;
+    const rootCall = rootCalls.get(name);
     if (rootCall) {
-      let parameters = rootCall.processParameters(schema, this.parameters);
+      const parameters = rootCall.processParameters(schema, this.parameters);
       return {rootCall, parameters};
     } else {
-      let validCalls = rootCalls
+      const validCalls = rootCalls
         .valueSeq()
         .map((rc) => {
           return rc.name;
@@ -43,7 +43,7 @@ export class GQLRoot extends Record({
   }
 
   toTyped(schema, typeName, rootCall) {
-    let returnType = schema.types.get(rootCall.returns);
+    const returnType = schema.types.get(rootCall.returns);
     if (rootCall.returns === 'object') {
       return new TObjectRoot({
         children: this.children.map((child) => {
@@ -81,12 +81,12 @@ export class GQLNode extends Record({
   children: List(),
 }) {
   toTyped(schema, parents, actualTypes) {
-    let type = getNestedSchema(schema, ...parents.push(this.name));
+    const type = getNestedSchema(schema, ...parents.push(this.name));
     if (type && type.convertNode) {
       return type.convertNode(schema, this, parents, actualTypes);
     } else {
-      let field = parents.push(this.name).join('.');
-      let validFields = getNestedSchema(schema, ...parents)
+      const field = parents.push(this.name).join('.');
+      const validFields = getNestedSchema(schema, ...parents)
         .fields
         .valueSeq()
         .filter((f) => {
@@ -120,12 +120,12 @@ export class GQLLeaf extends Record({
   parameters: Map(),
 }) {
   toTyped(schema, parents) {
-    let type = getNestedSchema(schema, ...parents.push(this.name));
+    const type = getNestedSchema(schema, ...parents.push(this.name));
     if (type && type.convertLeaf) {
       return type.convertLeaf(schema, this, parents);
     } else {
-      let field = parents.push(this.name).join('.');
-      let validFields = getNestedSchema(schema, ...parents)
+      const field = parents.push(this.name).join('.');
+      const validFields = getNestedSchema(schema, ...parents)
         .fields
         .valueSeq()
         .filter((f) => {
@@ -152,7 +152,7 @@ export class GQLLeaf extends Record({
 }
 
 function getNestedSchema(schema, typeName, ...fields) {
-  let type = schema.types.get(typeName);
+  const type = schema.types.get(typeName);
   if (type) {
     return fields.reduce((currentType, next) => {
       if (currentType && currentType.fields) {

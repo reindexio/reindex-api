@@ -20,32 +20,32 @@ import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
 import {TYPE_TABLE} from '../../query/QueryConstants';
 
 describe('Schema Updates', () => {
-  let dbName = 'testdb_schema_' + uuid.v4().replace(/-/g, '_');
+  const dbName = 'testdb_schema_' + uuid.v4().replace(/-/g, '_');
 
   before(async function () {
-    let conn = await RethinkDB.connect();
+    const conn = await RethinkDB.connect();
     return await createEmptyDatabase(conn, dbName);
   });
 
   after(async function () {
-    let conn = await RethinkDB.connect();
+    const conn = await RethinkDB.connect();
     return await deleteTestDatabase(conn, dbName);
   });
 
-  it('Should create appropriate tables when schema is created.',
+  it('creates appropriate tables when schema is created.',
      async function () {
-       let conn = await RethinkDB.connect();
-       let db = RethinkDB.db(dbName);
+       const conn = await RethinkDB.connect();
+       const db = RethinkDB.db(dbName);
        await createSchema(db).run(conn);
-       let tables = fromJS(await db.tableList().run(conn));
+       const tables = fromJS(await db.tableList().run(conn));
        assert(tables.contains(TYPE_TABLE));
      }
   );
 
-  it('Should create and delete tables, fields and relations.',
+  it('creates and deletes tables, fields and relations.',
     async function () {
-      let conn = await RethinkDB.connect();
-      let db = RethinkDB.db(dbName);
+      const conn = await RethinkDB.connect();
+      const db = RethinkDB.db(dbName);
       await (new AddTypeMutator({name: 'User'})).toReQL(db).run(conn);
       await (new AddTypeMutator({name: 'Micropost'})).toReQL(db).run(conn);
       await (new AddFieldMutator({

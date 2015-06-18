@@ -11,7 +11,7 @@ export default class IsTypeDataValidator extends Record({
   checkRequired: true,
 }) {
   validate(schema, data, parameters) {
-    let existingType = schema.types.get(parameters.get(this.typeParameter));
+    const existingType = schema.types.get(parameters.get(this.typeParameter));
     if (existingType) {
       return validateType(schema, data, existingType, this.checkRequired);
     }
@@ -20,7 +20,7 @@ export default class IsTypeDataValidator extends Record({
 }
 
 function validateType(schema, data, type, checkRequired) {
-  let fields = type.fields
+  const fields = type.fields
     .filter((field) => {
       return (
         field instanceof SchemaPrimitiveField ||
@@ -29,7 +29,7 @@ function validateType(schema, data, type, checkRequired) {
     });
 
   if (checkRequired) {
-    let missingRequired = fields
+    const missingRequired = fields
       .filterNot((p) => p.name === 'id')
       .keySeq()
       .toSet()
@@ -44,9 +44,9 @@ function validateType(schema, data, type, checkRequired) {
   }
 
   return data.map((value, key) => {
-    let field = fields.get(key);
+    const field = fields.get(key);
     if (field) {
-      let nestedType = schema.types.get(field.type);
+      const nestedType = schema.types.get(field.type);
       if (nestedType) {
         return value;
       } else {

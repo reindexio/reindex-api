@@ -7,7 +7,7 @@ export default class TConnectionRoot extends Record({
   children: List(),
 }) {
   toQuery(query, parents) {
-    let baseQuery = new Query({
+    const baseQuery = new Query({
       selector: new ObjectSelector({}),
     });
 

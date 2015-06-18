@@ -4,7 +4,7 @@ import getBaseTypes from '../../schema/getBaseTypes';
 import {TYPE_TABLE} from '../QueryConstants';
 
 export default function getSchemaQuery(db) {
-  let baseSchema = getBaseTypes().toJS();
+  const baseSchema = getBaseTypes().toJS();
   return RethinkDB.expr(baseSchema).merge((schema) => ({
     types: db
       .table(TYPE_TABLE)

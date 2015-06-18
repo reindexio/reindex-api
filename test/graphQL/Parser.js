@@ -4,14 +4,14 @@ import {GQLRoot, GQLNode, GQLLeaf} from '../../graphQL/AST';
 import Parser from '../../graphQL/Parser';
 
 describe('Parser', () => {
-  it('Should be able to parse', () => {
-    let query = `
+  it('parses arbitrary query', () => {
+    const query = `
       node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         text,
         createdAt,
         author { handle, }
     }`;
-    let expected = new GQLRoot({
+    const expected = new GQLRoot({
       name: 'node',
       parameters: Map({
         type: 'Micropost',
@@ -33,9 +33,9 @@ describe('Parser', () => {
     assert.oequal(Parser.parse(query), expected);
   });
 
-  it('Should be able to parse root calls without parameters', () => {
-    let query = 'schema() { types }';
-    let expected = new GQLRoot({
+  it('parses root calls without parameters', () => {
+    const query = 'schema() { types }';
+    const expected = new GQLRoot({
       name: 'schema',
       parameters: Map(),
       children: List([
@@ -46,9 +46,9 @@ describe('Parser', () => {
     assert.oequal(Parser.parse(query), expected);
   });
 
-  it('Should be able to parse root calls with parameters', () => {
-    let query = 'nodes(type: Micropost, after: 5, first: 10) { text, }';
-    let expected = new GQLRoot({
+  it('parses root calls with parameters', () => {
+    const query = 'nodes(type: Micropost, after: 5, first: 10) { text, }';
+    const expected = new GQLRoot({
       name: 'nodes',
       parameters: Map({
         type: 'Micropost',
@@ -63,15 +63,15 @@ describe('Parser', () => {
     assert.oequal(Parser.parse(query), expected);
   });
 
-  it('Should be able to parse calls in children', () => {
-    let query = `
+  it('parses calls in children', () => {
+    const query = `
       node(type: Micropost, id: f2f7fb49-3581-4caa-b84b-e9489eb47d84) {
         microposts(first: 10) {
           count
         }
       }
     `;
-    let expected = new GQLNode({
+    const expected = new GQLNode({
       name: 'microposts',
       parameters: Map({
         first: '10',
@@ -84,8 +84,8 @@ describe('Parser', () => {
     assert.oequal(Parser.parse(query).children.first(), expected);
   });
 
-  it('Should be able to parse aliases', () => {
-    let query = `
+  it('parses aliases', () => {
+    const query = `
       nodes(type: Micropost) as frobar {
         objects(first: 10) as foobar {
           nodes {
@@ -97,7 +97,7 @@ describe('Parser', () => {
         }
       }
     `;
-    let expected = List.of(new GQLNode({
+    const expected = List.of(new GQLNode({
       name: 'objects',
       alias: 'foobar',
       parameters: Map({
@@ -125,14 +125,14 @@ describe('Parser', () => {
         }),
       ]),
     }));
-    let result = Parser.parse(query);
+    const result = Parser.parse(query);
 
     assert.oequal(result.children, expected);
     assert.oequal(result.alias, 'frobar');
   });
 
-  it('Should be able to parse escapes', () => {
-    let query = `
+  it('parses escapes', () => {
+    const query = `
       insert(type: Micropost,
              data: \\{"data": "\\stuff\\\\f"\\},
              otherData: \\[1\\, 2\\, 3\\],
@@ -142,37 +142,37 @@ describe('Parser', () => {
         }
       }
     `;
-    let expected = Map({
+    const expected = Map({
       type: 'Micropost',
       data: '{"data": "stuff\\f"}',
       otherData: '[1, 2, 3]',
       thirdData: '(randomStuffInsideBrackets)',
     });
-    let result = Parser.parse(query).parameters;
+    const result = Parser.parse(query).parameters;
 
     assert.oequal(result, expected);
   });
 
-  it('Should fail when special characters are not escaped', () => {
-    let queries = [
+  it('fails when special characters are not escaped', () => {
+    const queries = [
       `curlyBrackets(fail: {"data": "stuff"}) { test }`,
       `roundBrackets(fail: (erronneusStuff)) { test }`,
       `squareBrackets(fail: [1, 2, 3]) {test}`,
       `comma(fail: "some,StuffWithcomma", more: 123) { test }`,
     ];
 
-    let parse = (query) => {
+    const parse = (query) => {
       return () => {
         Parser.parse(query);
       };
     };
 
-    for (let query of queries) {
+    for (const query of queries) {
       assert.throws(parse(query));
     }
   });
 
-  it('Should fail when empty block is passed', () => {
+  it('fails when empty block is passed', () => {
     assert.throws(() => {
       Parser.parse(`
         nodes() {

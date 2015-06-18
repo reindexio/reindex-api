@@ -10,35 +10,35 @@ import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
 describe('getSchema', () => {
-  let dbName = 'testdb_getSchema_' + uuid.v4().replace(/-/g, '_');
+  const dbName = 'testdb_getSchema_' + uuid.v4().replace(/-/g, '_');
 
   before(async function () {
-    let conn = await RethinkDB.connect();
+    const conn = await RethinkDB.connect();
     return await createTestDatabase(conn, dbName);
   });
 
   after(async function () {
-    let conn = await RethinkDB.connect();
+    const conn = await RethinkDB.connect();
     return await deleteTestDatabase(conn, dbName);
   });
 
-  it('Should contain basic types', async function() {
-    let conn = await RethinkDB.connect();
-    let db = RethinkDB.db(dbName);
-    let schema = await getSchema(db, conn);
+  it('contains basic types', async function() {
+    const conn = await RethinkDB.connect();
+    const db = RethinkDB.db(dbName);
+    const schema = await getSchema(db, conn);
 
-    let typeNames = schema.types.keySeq().toSet();
+    const typeNames = schema.types.keySeq().toSet();
     assert(typeNames.isSuperset(Set([
       'connection', 'edges',
     ])));
   });
 
-  it('Should contain custom types', async function() {
-    let conn = await RethinkDB.connect();
-    let db = RethinkDB.db(dbName);
+  it('contains custom types', async function() {
+    const conn = await RethinkDB.connect();
+    const db = RethinkDB.db(dbName);
 
-    let schema = await getSchema(db, conn);
-    let userSchema = schema.types.get('User');
+    const schema = await getSchema(db, conn);
+    const userSchema = schema.types.get('User');
 
     assert.oequal(
       userSchema,

@@ -12,7 +12,7 @@ export default class SliceConverter extends Record({
   to: undefined,
 }) {
   toReQL(db, query) {
-    let args = [this.from];
+    const args = [this.from];
     if (this.to) {
       args.push(this.to);
     }

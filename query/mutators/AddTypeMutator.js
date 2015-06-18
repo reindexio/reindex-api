@@ -7,7 +7,7 @@ export default class AddTypeMutator extends Record({
   name: undefined,
 }) {
   toReQL(db) {
-    let basicType = {
+    const basicType = {
       name: this.name,
       isNode: true,
       fields: [

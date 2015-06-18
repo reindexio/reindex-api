@@ -9,16 +9,16 @@ import ObjectSelector from './selectors/ObjectSelector';
  * @param graphQLRoot - root of GraphQL AST
  */
 export default function graphQLToQuery(schema, graphQLRoot) {
-  let {rootCall, parameters} = graphQLRoot.getRootCall(schema);
-  let {query, typeName} = rootCall.call(schema, parameters.toObject());
+  const {rootCall, parameters} = graphQLRoot.getRootCall(schema);
+  const {query, typeName} = rootCall.call(schema, parameters.toObject());
 
-  let typedRoot = graphQLRoot.toTyped(schema, typeName, rootCall);
-  query = typedRoot.toQuery(query, List());
+  const typedRoot = graphQLRoot.toTyped(schema, typeName, rootCall);
+  const resultQuery = typedRoot.toQuery(query, List());
 
-  let wrappedQuery = new Query({
+  const wrappedQuery = new Query({
     selector: new ObjectSelector({}),
     map: Map({
-      [graphQLRoot.alias || graphQLRoot.name]: query,
+      [graphQLRoot.alias || graphQLRoot.name]: resultQuery,
     }),
   });
 

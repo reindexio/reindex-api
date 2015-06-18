@@ -23,7 +23,7 @@ export default function dbToSchema(dbSchema) {
 }
 
 function convertTypes(typeList) {
-  let typeMap = typeList
+  const typeMap = typeList
     .toKeyedSeq()
     .mapEntries(([, type]) => {
       return [
@@ -57,9 +57,9 @@ function convertFields(type, types, fields) {
 }
 
 function convertField(type, field, types) {
-  let fieldName = field.get('name');
-  let fieldType = field.get('type');
-  let nodeType = types.get(fieldType);
+  const fieldName = field.get('name');
+  const fieldType = field.get('type');
+  const nodeType = types.get(fieldType);
 
   if (fieldType === 'connection' && field.get('target')) {
     return new SchemaConnectionField({
@@ -70,7 +70,7 @@ function convertField(type, field, types) {
   } else if (fieldType === 'type') {
     return new SchemaTypeField({
       name: fieldName,
-      type: type,
+      type,
     });
   } else if (fieldType === 'count') {
     return new SchemaCountField({

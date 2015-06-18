@@ -5,7 +5,7 @@ import chai from 'chai';
 import {diffJson} from 'diff';
 
 function oequal(result) {
-  let diff = diffJson(
+  const diff = diffJson(
     JSON.stringify(result, null, 2),
     JSON.stringify(this._obj, null, 2)
   );
@@ -41,7 +41,7 @@ function diffToString(header, diff) {
 
 chai.Assertion.addMethod('oequal', oequal);
 
-let assert = chai.assert;
+const assert = chai.assert;
 
 assert.oequal = function(act, exp, msg) {
   return new chai.Assertion(act, msg).to.be.oequal(exp);

@@ -27,14 +27,14 @@ const connectionMethod = new Call({
     if (orderBy) {
       query = query.updateIn(['converters'], (c) => {
         return c.push(new OrderByConverter({
-          orderBy: orderBy,
+          orderBy,
         }));
       });
     }
 
     if (first || after) {
       query = query.updateIn(['converters'], (c) => {
-        let from = after || 0;
+        const from = after || 0;
         let to;
         if (first) {
           to = from + first;

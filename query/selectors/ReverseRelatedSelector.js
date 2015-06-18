@@ -16,8 +16,8 @@ export default class ReverseRelatedSelector extends Record({
   relatedField: undefined,
 }) {
   toReQL(db, {obj}) {
-    let table = db.table(this.tableName);
-    let query = table.getAll(obj('id'), {index: this.relatedField});
+    const table = db.table(this.tableName);
+    const query = table.getAll(obj('id'), {index: this.relatedField});
     return query;
   }
 }

@@ -2,7 +2,7 @@ import TCall from '../graphQL/typed/TCall';
 import methods from '../query/methods';
 
 export default function processParameters(schema, type, parameters) {
-  let method = methods.get(type);
+  const method = methods.get(type);
   if (!method && parameters.count() === 0) {
     return undefined;
   } else if (!method) {
