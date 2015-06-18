@@ -20,4 +20,5 @@ register.attributes = {
   name: 'AppPlugin',
 };
 
-export default { register };
+const AppPlugin = { register };
+export default AppPlugin;
