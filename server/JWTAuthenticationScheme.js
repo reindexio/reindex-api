@@ -66,4 +66,5 @@ register.attributes = {
   name: 'JWTAuthenticationScheme',
 };
 
-export default { register };
+const JWTAuthenticationScheme = { register };
+export default JWTAuthenticationScheme;

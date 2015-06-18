@@ -25,4 +25,5 @@ register.attributes = {
   name: 'RethinkDBPlugin',
 };
 
-export default { register };
+const RethinkDBPlugin = { register };
+export default RethinkDBPlugin;
