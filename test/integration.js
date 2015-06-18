@@ -9,24 +9,27 @@ import getSchema from '../schema/getSchema';
 
 describe('Integration Tests', () => {
   let dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  let conn;
 
   before(async function () {
-    let conn = await RethinkDB.connect();
+    conn = await RethinkDB.connect();
     return await createTestDatabase(conn, dbName);
   });
 
   after(async function () {
-    let conn = await RethinkDB.connect();
-    return await deleteTestDatabase(conn, dbName);
+    await deleteTestDatabase(conn, dbName);
+    await conn.close();
   });
 
-  async function queryDB(rql) {
-    let conn = await RethinkDB.connect();
-    let schema = await getSchema(RethinkDB.db(dbName), conn);
-    let q = graphQLToQuery(schema, Parser.parse(rql));
-    q = q.toReQL(RethinkDB.db(dbName));
+  async function runQuery(graphQLQuery) {
+    const schema = await getSchema(RethinkDB.db(dbName), conn);
+    const query = graphQLToQuery(schema, Parser.parse(graphQLQuery));
+    const reQLQuery = query.toReQL(RethinkDB.db(dbName));
+    return await reQLQuery.run(conn);
+  }
 
-    return fromJS(await q.run(conn));
+  async function queryDB(graphQLQuery) {
+    return fromJS(await runQuery(graphQLQuery));
   }
 
   it('Should return correct data for node(Micropost, <id>)', async function () {
@@ -888,5 +891,10 @@ describe('Integration Tests', () => {
         success: true,
       },
     }));
+  });
+
+  it('Should create a secret', async function () {
+    const result = await runQuery(`addSecret() { value }`);
+    assert.match(result.addSecret.value, /^[a-zA-Z0-9_-]{40}$/);
   });
 });
