@@ -53,12 +53,12 @@ describe('rootCalls', () => {
       }, /Type "User" already exists/);
     });
 
-    it('Should not create a type with built-in name', () => {
+    it('Should not create a type with an invalid name', () => {
       assert.throws(() => {
         processAndCall(rootCalls.get('createType'), Map({
           name: 'edges',
         }));
-      }, /Type "edges" is a built-in non-node type/);
+      }, /Valid type name may only consist of ASCII letters or numbers/);
     });
   });
 
@@ -138,6 +138,15 @@ describe('rootCalls', () => {
           fieldName: 'foo',
         }));
       }, /Type "edges" is not a node/);
+    });
+
+    it('Should not delete a built-in field', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('deleteField'), Map({
+          type: 'User',
+          fieldName: 'id',
+        }));
+      }, /Field "id" of "User" is a built-in/);
     });
 
     it('Should not delete connection with deleteField', () => {

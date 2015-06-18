@@ -19,6 +19,7 @@ import AddSecretMutator from './mutators/AddSecretMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
 import NoTypeValidator from './validators/NoTypeValidator';
+import ValidNodeNameValidator from './validators/ValidNodeNameValidator';
 import IsTypeValidator from './validators/IsTypeValidator';
 import IsNodeValidator from './validators/IsNodeValidator';
 import NoFieldValidator from './validators/NoFieldValidator';
@@ -116,7 +117,10 @@ const createType = new Call({
     name: new Parameter({
       name: 'name',
       type: 'string',
-      validators: List.of(new NoTypeValidator()),
+      validators: List.of(
+        new ValidNodeNameValidator(),
+        new NoTypeValidator(),
+      ),
     }),
   }),
   call(schema, {name}) {
