@@ -5,19 +5,19 @@ import {Record} from 'immutable';
  */
 export default class NoTypeValidator extends Record({
 }) {
-  validate(schema, name) {
-    let existingType = schema.types.get(name);
+  validate(schema, value) {
+    let existingType = schema.types.get(value);
     if (existingType) {
       if (existingType.isNode) {
         throw new Error(
-          `Type "${name}" already exists.`
+          `Type "${value}" already exists.`
         );
       } else {
         throw new Error(
-          `Type "${name}" is a built-in non-node type.`
+          `Type "${value}" is a built-in non-node type.`
         );
       }
     }
-    return true;
+    return value;
   }
 }

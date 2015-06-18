@@ -5,13 +5,13 @@ import {Record} from 'immutable';
  */
 export default class IsTypeValidator extends Record({
 }) {
-  validate(schema, name) {
-    let existingType = schema.types.get(name);
+  validate(schema, value) {
+    let existingType = schema.types.get(value);
     if (!existingType) {
       throw new Error(
-        `Type "${name}" does not exist.`
+        `Type "${value}" does not exist.`
       );
     }
-    return true;
+    return value;
   }
 }

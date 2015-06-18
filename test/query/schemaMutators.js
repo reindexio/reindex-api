@@ -42,7 +42,7 @@ describe('Schema Updates', () => {
      }
   );
 
-  it('Should add and remove tables, fields and relations.',
+  it('Should create and delete tables, fields and relations.',
     async function () {
       let conn = await RethinkDB.connect();
       let db = RethinkDB.db(dbName);

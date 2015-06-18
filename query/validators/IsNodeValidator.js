@@ -5,17 +5,17 @@ import {Record} from 'immutable';
  */
 export default class IsNodeValidator extends Record({
 }) {
-  validate(schema, name) {
-    let existingType = schema.types.get(name);
+  validate(schema, value) {
+    let existingType = schema.types.get(value);
     if (!existingType) {
       throw new Error(
-        `Type "${name}" does not exist.`
+        `Type "${value}" does not exist.`
       );
     } else if (!existingType.isNode) {
       throw new Error(
-        `Type "${name}" is not a node. Expected node.`
+        `Type "${value}" is not a node. Expected node.`
       );
     }
-    return true;
+    return value;
   }
 }

@@ -12,6 +12,9 @@ import AddFieldMutator from './mutators/AddFieldMutator';
 import RemoveFieldMutator from './mutators/RemoveFieldMutator';
 import AddConnectionMutator from './mutators/AddConnectionMutator';
 import RemoveConnectionMutator from './mutators/RemoveConnectionMutator';
+import InsertMutator from './mutators/InsertMutator';
+import UpdateMutator from './mutators/UpdateMutator';
+import DeleteMutator from './mutators/DeleteMutator';
 import AddSecretMutator from './mutators/AddSecretMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
@@ -21,6 +24,7 @@ import IsNodeValidator from './validators/IsNodeValidator';
 import NoFieldValidator from './validators/NoFieldValidator';
 import IsFieldValidator from './validators/IsFieldValidator';
 import IsConnectionValidator from './validators/IsConnectionValidator';
+import IsTypeDataValidator from './validators/IsTypeDataValidator';
 
 const schemaCall = new Call({
   name: 'schema',
@@ -105,8 +109,8 @@ const node = new Call({
   },
 });
 
-const addType = new Call({
-  name: 'addType',
+const createType = new Call({
+  name: 'createType',
   returns: 'schemaResult',
   parameters: Map({
     name: new Parameter({
@@ -126,8 +130,8 @@ const addType = new Call({
   },
 });
 
-const removeType = new Call({
-  name: 'removeType',
+const deleteType = new Call({
+  name: 'deleteType',
   returns: 'schemaResult',
   parameters: Map({
     name: new Parameter({
@@ -147,8 +151,8 @@ const removeType = new Call({
   },
 });
 
-const addField = new Call({
-  name: 'addField',
+const createField = new Call({
+  name: 'createField',
   returns: 'mutationResult',
   parameters: Map({
     type: new Parameter({
@@ -188,8 +192,8 @@ const addField = new Call({
   },
 });
 
-const removeField = new Call({
-  name: 'removeField',
+const deleteField = new Call({
+  name: 'deleteField',
   returns: 'mutationResult',
   parameters: Map({
     type: new Parameter({
@@ -218,8 +222,8 @@ const removeField = new Call({
   },
 });
 
-const addConnection = new Call({
-  name: 'addConnection',
+const createConnection = new Call({
+  name: 'createConnection',
   returns: 'mutationResult',
   parameters: Map({
     type: new Parameter({
@@ -274,8 +278,8 @@ const addConnection = new Call({
   },
 });
 
-const removeConnection = new Call({
-  name: 'removeConnection',
+const deleteConnection = new Call({
+  name: 'deleteConnection',
   returns: 'mutationResult',
   parameters: Map({
     type: new Parameter({
@@ -309,6 +313,99 @@ const removeConnection = new Call({
   },
 });
 
+const create = new Call({
+  name: 'create',
+  returns: 'object',
+  parameters: Map({
+    type: new Parameter({
+      name: 'type',
+      type: 'string',
+      validators: List.of(new IsNodeValidator()),
+    }),
+    data: new Parameter({
+      name: 'data',
+      type: 'object',
+      validators: List.of(new IsTypeDataValidator({
+        typeParameter: 'type',
+      })),
+    }),
+  }),
+  call(schema, {type, data}) {
+    return {
+      query: new Query({
+        selector: new InsertMutator({
+          tableName: type,
+          data: data,
+        }),
+      }),
+      typeName: type,
+    };
+  },
+});
+
+const update = new Call({
+  name: 'update',
+  returns: 'object',
+  parameters: Map({
+    type: new Parameter({
+      name: 'type',
+      type: 'string',
+      validators: List.of(new IsNodeValidator()),
+    }),
+    id: new Parameter({
+      name: 'id',
+      type: 'string',
+    }),
+    data: new Parameter({
+      name: 'data',
+      type: 'object',
+      validators: List.of(new IsTypeDataValidator({
+        typeParameter: 'type',
+        checkRequired: false,
+      })),
+    }),
+  }),
+  call(schema, {type, id, data}) {
+    return {
+      query: new Query({
+        selector: new UpdateMutator({
+          tableName: type,
+          id: id,
+          data: data,
+        }),
+      }),
+      typeName: type,
+    };
+  },
+});
+
+const deleteCall = new Call({
+  name: 'delete',
+  returns: 'object',
+  parameters: Map({
+    type: new Parameter({
+      name: 'type',
+      type: 'string',
+      validators: List.of(new IsNodeValidator()),
+    }),
+    id: new Parameter({
+      name: 'id',
+      type: 'string',
+    }),
+  }),
+  call(schema, {type, id}) {
+    return {
+      query: new Query({
+        selector: new DeleteMutator({
+          tableName: type,
+          id: id,
+        }),
+      }),
+      typeName: type,
+    };
+  },
+});
+
 function generateSecret() {
   return Base64URL.escape(crypto.randomBytes(30).toString('base64'));
 }
@@ -332,12 +429,15 @@ const rootCalls = Map({
   type: typeCall,
   nodes,
   node,
-  addType,
-  removeType,
-  addField,
-  removeField,
-  addConnection,
-  removeConnection,
+  createType,
+  deleteType,
+  createField,
+  deleteField,
+  createConnection,
+  deleteConnection,
+  create,
+  update,
+  delete: deleteCall,
   addSecret,
 });
 

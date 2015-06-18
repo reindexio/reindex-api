@@ -7,16 +7,16 @@ import {Record} from 'immutable';
 export default class NoFieldValidator extends Record({
   typeParameter: undefined,
 }) {
-  validate(schema, name, parameters) {
+  validate(schema, value, parameters) {
     let existingType = schema.types.get(parameters.get(this.typeParameter));
     if (existingType) {
-      let existingField = existingType.fields.get(name);
+      let existingField = existingType.fields.get(value);
       if (existingField) {
         throw new Error(
-          `Type "${existingType.name}" already has a field "${name}".`
+          `Type "${existingType.name}" already has a field "${value}".`
         );
       }
     }
-    return true;
+    return value;
   }
 }
