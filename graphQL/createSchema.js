@@ -1,4 +1,4 @@
-import {Map, Record} from 'immutable';
+import {Map} from 'immutable';
 import {
   GraphQLSchema,
   GraphQLObjectType,
@@ -12,8 +12,15 @@ import {
   GraphQLList,
   GraphQLInputObjectType,
 } from 'graphql';
+import TypeSet from './TypeSet';
 import {getById, getAllByIndex, processConnectionQuery} from '../db/queries';
-import {DateTime, createInterfaces} from './builtIns';
+import DateTime from './builtins/DateTime';
+import createInterfaces from './builtins/createInterfaces';
+import createCommonTypes from './builtins/createCommonTypes';
+import CommonQueryFields from './builtins/CommonQueryFields';
+import CommonMutationFields from './builtins/CommonMutationFields';
+import TypeQueryFieldCreators from './builtins/TypeQueryFieldCreators';
+import TypeMutationFieldCreators from './builtins/TypeMutationFieldCreators';
 import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
@@ -24,22 +31,15 @@ import {
  * Given map of built-in types and database metadata about custom data,
  * construct GraphQL schema for them.
  */
-export default function createSchema({
-  commonTypes,
-  commonQueryFields,
-  commonMutationFields,
-  typeQueryFieldCreators,
-  typeMutationFieldCreators,
-}, dbMetadata) {
+export default function createSchema(dbMetadata) {
   const interfaces = createInterfaces();
-  let typeSets = commonTypes.map((type) => {
-    const typeSet = new TypeSet({type});
-    return typeSet.merge(Map({
+  let typeSets = createCommonTypes(interfaces).map((typeSet) => (
+    typeSet.merge(Map({
       connection: createConnection(typeSet, interfaces),
-      inputObject: createInputObject(typeSet),
+      inputObject: createInputObject(typeSet, interfaces),
       mutation: createMutation(typeSet, interfaces),
-    }));
-  });
+    }))
+  ));
 
   dbMetadata.forEach((typeMetadata) => {
     const typeName = typeMetadata.get('name');
@@ -58,21 +58,21 @@ export default function createSchema({
     });
   });
 
-  const queryFields = commonQueryFields.merge(
-    createRootFieldsForTypes(typeQueryFieldCreators, typeSets)
+  const queryFields = CommonQueryFields.merge(
+    createRootFieldsForTypes(TypeQueryFieldCreators, typeSets)
   );
 
-  const mutationFields = commonMutationFields.merge(
-    createRootFieldsForTypes(typeMutationFieldCreators, typeSets)
+  const mutationFields = CommonMutationFields.merge(
+    createRootFieldsForTypes(TypeMutationFieldCreators, typeSets)
   );
 
   const query = new GraphQLObjectType({
-    name: '_Query',
+    name: 'ReindexQuery',
     fields: queryFields.toObject(),
   });
 
   const mutation = new GraphQLObjectType({
-    name: '_Mutation',
+    name: 'ReindexMutation',
     fields: mutationFields.toObject(),
   });
 
@@ -81,13 +81,6 @@ export default function createSchema({
     mutation,
   });
 }
-
-class TypeSet extends Record({
-  type: undefined,
-  connection: undefined,
-  inputObject: undefined,
-  mutation: undefined,
-}) {}
 
 function createType(type, getTypeSet) {
   return new GraphQLObjectType({

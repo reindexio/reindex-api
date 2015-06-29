@@ -22,6 +22,9 @@ async function handler(request, reply) {
 }
 
 const GraphQLHandler = {
+  config: {
+    auth: 'token',
+  },
   handler,
   method: 'POST',
   path: '/graphql',

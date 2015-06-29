@@ -47,4 +47,7 @@ assert.oequal = function(act, exp, msg) {
   return new chai.Assertion(act, msg).to.be.oequal(exp);
 };
 
+assert.equal = assert.strictEqual;
+assert.notEqual = assert.notStrictEqual;
+
 export default assert;

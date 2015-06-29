@@ -12,7 +12,7 @@
     "arrow-function/paren": 2,
     "arrow-function/return-shorthand": [2, "only-object"],
     "brace-style": 2,
-    "camelcase": 2,
+    "camelcase": [2, {"properties": "never"}],
     "comma-dangle": [2, "always-multiline"],
     "comma-style": 2,
     "dot-notation": 2,

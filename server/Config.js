@@ -1,4 +1,7 @@
+import Path from 'path';
+
 import convict from 'convict';
+import Cryptiles from 'cryptiles';
 
 const Config = convict({
   connection: {
@@ -9,13 +12,18 @@ const Config = convict({
       format: 'port',
     },
     routes: {
-      auth: {
-        strategy: 'token',
-      },
       cors: true,
-      state: {
-        parse: false,  // Do not parse cookies.
+      files: {
+        relativeTo: Path.join(__dirname, '..', 'public'),
       },
+    },
+  },
+  SocialLoginPlugin: {
+    cookiePassword: {
+      default: Cryptiles.randomString(40),
+      doc: 'A random secret used for Iron cookie encoding',
+      env: 'COOKIE_PASSWORD',
+      format: '*',
     },
   },
 });

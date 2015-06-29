@@ -1,30 +1,29 @@
-import Base64URL from 'base64-url';
-import crypto from 'crypto';
+import Cryptiles from 'cryptiles';
 import RethinkDB from 'rethinkdb';
+import {Map} from 'immutable';
 
-import getBaseTypes from '../schema/getBaseTypes';
-import {SECRET_TABLE} from '../query/QueryConstants';
+import * as DBConstants from '../db/DBConstants';
 
 async function createDatabase(dbName) {
   const conn = await RethinkDB.connect();
   await RethinkDB.dbCreate(dbName).run(conn);
   conn.use(dbName);
-  await* getBaseTypes()
-    .get('types')
-    .filter((type) => type.get('isNode'))
-    .map((type) =>
-      RethinkDB.db(dbName).tableCreate(type.get('name')).run(conn)
+  await* Map(DBConstants)
+    .map((table) =>
+      RethinkDB.db(dbName).tableCreate(table).run(conn)
     );
   return conn;
 }
 
 function generateSecret() {
-  return Base64URL.escape(crypto.randomBytes(30).toString('base64'));
+  return Cryptiles.randomString(40);
 }
 
 async function createSecret(conn) {
   const secret = generateSecret();
-  await RethinkDB.table(SECRET_TABLE).insert({ value: secret }).run(conn);
+  await RethinkDB.table(DBConstants.SECRET_TABLE)
+    .insert({ value: secret })
+    .run(conn);
   return secret;
 }
 

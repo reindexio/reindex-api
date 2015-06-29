@@ -45,7 +45,7 @@ describe('Integration Tests', () => {
         beautifulPerson: {
           nickname: 'freiksenet',
         },
-        createdAt: '2015-04-10T10:24:52.163Z',
+        createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
       },
     });
@@ -75,7 +75,7 @@ describe('Integration Tests', () => {
           count: 4,
           nodes: [
             {
-              createdAt: '2015-04-10T10:24:52.163Z',
+              createdAt: new Date('2015-04-10T10:24:52.163Z'),
               text: 'Test text',
             },
           ],
