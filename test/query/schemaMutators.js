@@ -1,4 +1,4 @@
-import {fromJS, Map} from 'immutable';
+import {fromJS, Map, List} from 'immutable';
 import assert from '../assert';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
@@ -7,6 +7,8 @@ import AddTypeMutator from '../../query/mutators/AddTypeMutator';
 import RemoveTypeMutator from '../../query/mutators/RemoveTypeMutator';
 import AddFieldMutator from '../../query/mutators/AddFieldMutator';
 import RemoveFieldMutator from '../../query/mutators/RemoveFieldMutator';
+import AddIndexMutator from '../../query/mutators/AddIndexMutator';
+import RemoveIndexMutator from '../../query/mutators/RemoveIndexMutator';
 import AddConnectionMutator from '../../query/mutators/AddConnectionMutator';
 import RemoveConnectionMutator
   from '../../query/mutators/RemoveConnectionMutator';
@@ -16,6 +18,7 @@ import SchemaTypeField from '../../schema/fields/SchemaTypeField';
 import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
 import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
 import SchemaNodeField from '../../schema/fields/SchemaNodeField';
+import SchemaIndex from '../../schema/fields/SchemaIndex';
 import {createEmptyDatabase, deleteTestDatabase} from '../testDatabase';
 import {TYPE_TABLE} from '../../query/QueryConstants';
 
@@ -59,6 +62,11 @@ describe('Schema Updates', () => {
         name: 'author',
         reverseName: 'microposts',
       })).toReQL(db).run(conn);
+      await (new AddIndexMutator({
+        tableName: 'User',
+        name: 'handle',
+        fields: List(['handle']),
+      })).toReQL(db).run(conn);
 
       let schema = await getSchema(db, conn);
 
@@ -95,6 +103,24 @@ describe('Schema Updates', () => {
               isNode: true,
               name: 'User',
               parameters: [],
+              indexes: [
+                {
+                  name: 'id',
+                  fields: [
+                    {
+                      name: 'id',
+                    },
+                  ],
+                },
+                {
+                  name: 'handle',
+                  fields: [
+                    {
+                      name: 'handle',
+                    },
+                  ],
+                },
+              ],
             }),
           }),
           id: new SchemaPrimitiveField({
@@ -109,6 +135,24 @@ describe('Schema Updates', () => {
             name: 'microposts',
             reverseName: 'author',
             type: 'Micropost',
+          }),
+        }),
+        indexes: Map({
+          id: new SchemaIndex({
+            name: 'id',
+            fields: List([
+              Map({
+                name: 'id',
+              }),
+            ]),
+          }),
+          handle: new SchemaIndex({
+            name: 'handle',
+            fields: List([
+              Map({
+                name: 'handle',
+              }),
+            ]),
           }),
         }),
       }));
@@ -138,6 +182,24 @@ describe('Schema Updates', () => {
               isNode: true,
               name: 'Micropost',
               parameters: [],
+              indexes: [
+                {
+                  name: 'id',
+                  fields: [
+                    {
+                      name: 'id',
+                    },
+                  ],
+                },
+                {
+                  name: 'author',
+                  fields: [
+                    {
+                      name: 'author',
+                    },
+                  ],
+                },
+              ],
             }),
           }),
           id: new SchemaPrimitiveField({
@@ -150,9 +212,31 @@ describe('Schema Updates', () => {
             type: 'User',
           }),
         }),
+        indexes: Map({
+          id: new SchemaIndex({
+            name: 'id',
+            fields: List([
+              Map({
+                name: 'id',
+              }),
+            ]),
+          }),
+         author: new SchemaIndex({
+            name: 'author',
+            fields: List([
+              Map({
+                name: 'author',
+              }),
+            ]),
+          }),
+        }),
       }));
 
       await (new RemoveFieldMutator({
+        tableName: 'User',
+        name: 'handle',
+      })).toReQL(db).run(conn);
+      await (new RemoveIndexMutator({
         tableName: 'User',
         name: 'handle',
       })).toReQL(db).run(conn);
@@ -187,11 +271,31 @@ describe('Schema Updates', () => {
               isNode: true,
               name: 'User',
               parameters: [],
+              indexes: [
+                {
+                  name: 'id',
+                  fields: [
+                    {
+                      name: 'id',
+                    },
+                  ],
+                },
+              ],
             }),
           }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',
+          }),
+        }),
+        indexes: Map({
+          id: new SchemaIndex({
+            name: 'id',
+            fields: List([
+              Map({
+                name: 'id',
+              }),
+            ]),
           }),
         }),
       }));
@@ -216,11 +320,31 @@ describe('Schema Updates', () => {
               isNode: true,
               name: 'Micropost',
               parameters: [],
+              indexes: [
+                {
+                  name: 'id',
+                  fields: [
+                    {
+                      name: 'id',
+                    },
+                  ],
+                },
+              ],
             }),
           }),
           id: new SchemaPrimitiveField({
             name: 'id',
             type: 'string',
+          }),
+        }),
+        indexes: Map({
+          id: new SchemaIndex({
+            name: 'id',
+            fields: List([
+              Map({
+                name: 'id',
+              }),
+            ]),
           }),
         }),
       }));

@@ -1,5 +1,2 @@
-const QueryConstants = {
-  SECRET_TABLE: 'secret',
-  TYPE_TABLE: 'type',
-};
-export default QueryConstants;
+export const SECRET_TABLE = 'secret';
+export const TYPE_TABLE = 'type';

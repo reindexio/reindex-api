@@ -15,6 +15,9 @@ export default class RemoveConnectionMutator extends Record({
         fields: type('fields').difference(
           type('fields').filter({name: this.name})
         ),
+        indexes: type('indexes').difference(
+          type('indexes').filter({name: this.name})
+        ),
       }), {
         returnChanges: true,
       }),
@@ -25,6 +28,7 @@ export default class RemoveConnectionMutator extends Record({
       }), {
         returnChanges: true,
       }),
+      db.table(this.tableName).indexDrop(this.name),
       db.table(this.tableName).replace((row) => {
         return row.without(this.name);
       }, {
@@ -32,18 +36,8 @@ export default class RemoveConnectionMutator extends Record({
       }),
       /* eslint-disable no-unused-vars */
       // ReQL wants both arguments to the function in RethinkDB.do.
-      (l, r, ignored) => {
-        return l.merge({
-          changes: l('changes').union(r('changes')),
-        });
-      }
+      (l, r, ignoredIndex, ignoredDelete) => r('changes')(0)('new_val')
       /* eslint-enable */
-    ).merge((result) => ({
-      success: result('replaced').ne(0),
-      changes: result('changes').merge((change) => ({
-        oldValue: change('old_val'),
-        newValue: change('new_val'),
-      })),
-    }));
+    );
   }
 }

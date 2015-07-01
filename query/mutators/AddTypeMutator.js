@@ -17,13 +17,23 @@ export default class AddTypeMutator extends Record({
         },
       ],
       parameters: [],
+      indexes: [
+        {
+          name: 'id',
+          fields: [
+            {
+              name: 'id',
+            },
+          ],
+        },
+      ],
     };
 
-    return RethinkDB.do(db.tableCreate(this.name), (result) => {
-      return RethinkDB.do(db.table(TYPE_TABLE).insert(basicType), () => {
-        return RethinkDB.expr({}).merge({
-          success: result('tables_created').ne(0),
-        });
+    return RethinkDB.do(db.tableCreate(this.name), () => {
+      return RethinkDB.do(db.table(TYPE_TABLE).insert(basicType, {
+        returnChanges: true,
+      }), (result) => {
+        return result('changes')(0)('new_val');
       });
     });
   }

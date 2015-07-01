@@ -17,12 +17,6 @@ export default class AddFieldMutator extends Record({
       }),
     }), {
       returnChanges: true,
-    }).merge((result) => ({
-      success: result('replaced').ne(0),
-      changes: result('changes').merge((change) => ({
-        oldValue: change('old_val'),
-        newValue: change('new_val'),
-      })),
-    }));
+    }).do((result) => result('changes')(0)('new_val'));
   }
 }

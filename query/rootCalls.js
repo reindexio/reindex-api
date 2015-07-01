@@ -16,6 +16,8 @@ import InsertMutator from './mutators/InsertMutator';
 import UpdateMutator from './mutators/UpdateMutator';
 import DeleteMutator from './mutators/DeleteMutator';
 import AddSecretMutator from './mutators/AddSecretMutator';
+import AddIndexMutator from './mutators/AddIndexMutator';
+import RemoveIndexMutator from './mutators/RemoveIndexMutator';
 import SchemaSelector from './selectors/SchemaSelector';
 import TypeSelector from './selectors/TypeSelector';
 import NoTypeValidator from './validators/NoTypeValidator';
@@ -26,6 +28,9 @@ import NoFieldValidator from './validators/NoFieldValidator';
 import IsFieldValidator from './validators/IsFieldValidator';
 import IsConnectionValidator from './validators/IsConnectionValidator';
 import IsTypeDataValidator from './validators/IsTypeDataValidator';
+import NoIndexValidator from './validators/NoIndexValidator';
+import IsIndexValidator from './validators/IsIndexValidator';
+import ArrayValidator from './validators/ArrayValidator';
 
 const schemaCall = new Call({
   name: 'schema',
@@ -112,7 +117,7 @@ const node = new Call({
 
 const createType = new Call({
   name: 'createType',
-  returns: 'schemaResult',
+  returns: 'type',
   parameters: Map({
     name: new Parameter({
       name: 'name',
@@ -136,7 +141,7 @@ const createType = new Call({
 
 const deleteType = new Call({
   name: 'deleteType',
-  returns: 'schemaResult',
+  returns: 'type',
   parameters: Map({
     name: new Parameter({
       name: 'name',
@@ -157,7 +162,7 @@ const deleteType = new Call({
 
 const createField = new Call({
   name: 'createField',
-  returns: 'mutationResult',
+  returns: 'type',
   parameters: Map({
     type: new Parameter({
       name: 'type',
@@ -198,7 +203,7 @@ const createField = new Call({
 
 const deleteField = new Call({
   name: 'deleteField',
-  returns: 'mutationResult',
+  returns: 'type',
   parameters: Map({
     type: new Parameter({
       name: 'type',
@@ -228,7 +233,7 @@ const deleteField = new Call({
 
 const createConnection = new Call({
   name: 'createConnection',
-  returns: 'mutationResult',
+  returns: 'type',
   parameters: Map({
     type: new Parameter({
       name: 'type',
@@ -284,7 +289,7 @@ const createConnection = new Call({
 
 const deleteConnection = new Call({
   name: 'deleteConnection',
-  returns: 'mutationResult',
+  returns: 'type',
   parameters: Map({
     type: new Parameter({
       name: 'type',
@@ -414,8 +419,8 @@ function generateSecret() {
   return Base64URL.escape(crypto.randomBytes(30).toString('base64'));
 }
 
-const addSecret = new Call({
-  name: 'addSecret',
+const createSecret = new Call({
+  name: 'createSecret',
   returns: 'secret',
   parameters: Map(),
   call() {
@@ -428,21 +433,91 @@ const addSecret = new Call({
   },
 });
 
+const createIndex = new Call({
+  name: 'createIndex',
+  returns: 'type',
+  parameters: Map({
+    type: new Parameter({
+      name: 'type',
+      type: 'string',
+      validators: List.of(new IsNodeValidator()),
+    }),
+    name: new Parameter({
+      name: 'name',
+      type: 'string',
+      validators: List.of(new NoIndexValidator({
+        typeParameter: 'type',
+      })),
+    }),
+    fields: new Parameter({
+      name: 'fields',
+      type: 'array',
+      validators: List.of(new ArrayValidator({
+        validators: List.of(new IsFieldValidator({
+          typeParameter: 'type',
+        })),
+      })),
+    }),
+  }),
+  call(schema, {type, name, fields}) {
+    return {
+      query: new Query({
+        selector: new AddIndexMutator({
+          tableName: type,
+          name,
+          fields,
+        }),
+      }),
+    };
+  },
+});
+
+const deleteIndex = new Call({
+  name: 'deleteIndex',
+  returns: 'type',
+  parameters: Map({
+    type: new Parameter({
+      name: 'type',
+      type: 'string',
+      validators: List.of(new IsNodeValidator()),
+    }),
+    name: new Parameter({
+      name: 'name',
+      type: 'string',
+      validators: List.of(new IsIndexValidator({
+        typeParameter: 'type',
+      })),
+    }),
+  }),
+  call(schema, {type, name}) {
+    return {
+      query: new Query({
+        selector: new RemoveIndexMutator({
+          tableName: type,
+          name,
+        }),
+      }),
+    };
+  },
+});
+
 const rootCalls = Map({
+  create,
+  createConnection,
+  createField,
+  createIndex,
+  createSecret,
+  createType,
+  delete: deleteCall,
+  deleteConnection,
+  deleteField,
+  deleteIndex,
+  deleteType,
+  node,
+  nodes,
   schema: schemaCall,
   type: typeCall,
-  nodes,
-  node,
-  createType,
-  deleteType,
-  createField,
-  deleteField,
-  createConnection,
-  deleteConnection,
-  create,
   update,
-  delete: deleteCall,
-  addSecret,
 });
 
 export default rootCalls;

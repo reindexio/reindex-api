@@ -397,4 +397,55 @@ describe('rootCalls', () => {
       }, /Type "edges" is not a node/);
     });
   });
+
+  describe('createIndex', () => {
+    it('does not create index in non-existant types', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('createIndex'), Map({
+          type: 'FooBar',
+          name: 'foo',
+          fields: '["bar"]',
+        }));
+      }, /Type "FooBar" does not exist/);
+    });
+
+    it('does not create duplicate index', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('createIndex'), Map({
+          type: 'User',
+          name: 'id',
+          fields: '["id"]',
+        }));
+      }, /Type "User" already has an index "id"/);
+    });
+  });
+
+  describe('deleteIndex', () => {
+    it('does not delete index from non-existant types', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('deleteIndex'), Map({
+          type: 'FooBar',
+          name: 'foo',
+        }));
+      }, /Type "FooBar" does not exist/);
+    });
+
+    it('does not delete non-existant index', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('deleteIndex'), Map({
+          type: 'User',
+          name: 'foo',
+        }));
+      }, /Type "User" does not have an index "foo"/);
+    });
+
+    it('does not delete built-in indexes', () => {
+      assert.throws(() => {
+        processAndCall(rootCalls.get('deleteIndex'), Map({
+          type: 'User',
+          name: 'id',
+        }));
+      }, /Index "id" of "User" is a built-in/);
+    });
+  });
 });
