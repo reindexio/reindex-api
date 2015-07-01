@@ -19,6 +19,10 @@ export default class AddConnectionMutator extends Record({
           reverseName: this.reverseName,
           ...this.options.toJS(),
         }),
+        indexes: type('indexes').append({
+          name: this.name,
+          fields: [{name: this.name}],
+        }),
       }), {
         returnChanges: true,
       }),
@@ -32,17 +36,11 @@ export default class AddConnectionMutator extends Record({
       }), {
         returnChanges: true,
       }),
-      (l, r) => {
-        return l.merge({
-          changes: l('changes').union(r('changes')),
-        });
-      }
-    ).merge((result) => ({
-      success: result('replaced').ne(0),
-      changes: result('changes').merge((change) => ({
-        oldValue: change('old_val'),
-        newValue: change('new_val'),
-      })),
-    }));
+      db.table(this.tableName).indexCreate(this.name),
+      /* eslint-disable no-unused-vars */
+      // ReQL wants both arguments to the function in RethinkDB.do.
+      (l, r, ignored) => r('changes')(0)('new_val')
+      /* eslint-enable */
+    );
   }
 }

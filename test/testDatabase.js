@@ -62,6 +62,17 @@ const TEST_DATA = fromJS({
           },
         ],
         parameters: [],
+        indexes: [
+          {
+            name: 'id',
+            fields: [
+              {
+                name: 'id',
+              },
+            ],
+          },
+        ],
+
       },
       {
         name: 'Micropost',
@@ -86,15 +97,27 @@ const TEST_DATA = fromJS({
           },
         ],
         parameters: [],
+        indexes: [
+          {
+            name: 'id',
+            fields: [
+              {
+                name: 'id',
+              },
+            ],
+          },
+          {
+            name: 'author',
+            fields: [
+              {
+                name: 'author',
+              },
+            ],
+          },
+        ],
       },
     ],
   },
-  indexes: [
-    {
-      table: 'Micropost',
-      field: 'author',
-    },
-  ],
 });
 
 export function createEmptyDatabase(conn, dbName) {
@@ -114,19 +137,34 @@ export async function createTestDatabase(conn, dbName) {
       .insert(data.toJS())
       .run(conn);
   });
-  await* TEST_DATA.get('indexes').map(async function (index) {
-    const table = index.get('table');
-    const field = index.get('field');
-    await RethinkDB
-      .db(dbName)
-      .table(table)
-      .indexCreate(field)
-      .run(conn);
-    await RethinkDB
-      .db(dbName)
-      .table(table)
-      .indexWait(field)
-      .run(conn);
+  await* TEST_DATA.get('tables').get(TYPE_TABLE).map(async function (type) {
+    const table = type.get('name');
+    const indexes = type.get('indexes');
+    await* indexes.map(async function (index) {
+      const name = index.get('name');
+      if (name === 'id') {
+        return;
+      }
+      const fields = index.get('fields');
+      let indexFields;
+      if (fields.count() > 1) {
+        indexFields = fields.map((field) => (
+          RethinkDB.row(field.get('name'))
+        )).toArray();
+      } else {
+        indexFields = RethinkDB.row(fields.first().get('name'));
+      }
+      await RethinkDB
+        .db(dbName)
+        .table(table)
+        .indexCreate(name, indexFields)
+        .run(conn);
+      await RethinkDB
+        .db(dbName)
+        .table(table)
+        .indexWait(name)
+        .run(conn);
+    });
   });
 }
 

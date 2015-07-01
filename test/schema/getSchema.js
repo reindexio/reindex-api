@@ -1,4 +1,4 @@
-import {Set, Map, fromJS} from 'immutable';
+import {Set, Map, List, fromJS} from 'immutable';
 import assert from '../assert';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
@@ -7,6 +7,7 @@ import SchemaType from '../../schema/SchemaType';
 import SchemaTypeField from '../../schema/fields/SchemaTypeField';
 import SchemaPrimitiveField from '../../schema/fields/SchemaPrimitiveField';
 import SchemaConnectionField from '../../schema/fields/SchemaConnectionField';
+import SchemaIndex from '../../schema/fields/SchemaIndex';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
 describe('getSchema', () => {
@@ -72,6 +73,16 @@ describe('getSchema', () => {
               isNode: true,
               name: 'User',
               parameters: [],
+              indexes: [
+                {
+                  name: 'id',
+                  fields: [
+                    {
+                      name: 'id',
+                    },
+                  ],
+                },
+              ],
             }),
           }),
           id: new SchemaPrimitiveField({
@@ -88,7 +99,17 @@ describe('getSchema', () => {
             type: 'Micropost',
           }),
         }),
-      })
+        indexes: Map({
+          id: new SchemaIndex({
+            name: 'id',
+            fields: List([
+              Map({
+                name: 'id',
+              }),
+            ]),
+          }),
+        }),
+      }),
     );
   });
 });

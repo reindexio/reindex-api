@@ -12,6 +12,7 @@ import SchemaObjectsField from './fields/SchemaObjectsField';
 import SchemaObjectField from './fields/SchemaObjectField';
 import SchemaArrayField from './fields/SchemaArrayField';
 import SchemaPrimitiveField from './fields/SchemaPrimitiveField';
+import SchemaIndex from './fields/SchemaIndex';
 
 /**
  * Convert from database representation of schema to Schema.
@@ -40,6 +41,12 @@ function convertType(type, types) {
   return new SchemaType({
     name: type.get('name'),
     fields: convertFields(type, types, type.get('fields')),
+    indexes: type
+      .get('indexes')
+      .map(convertIndex)
+      .toKeyedSeq()
+      .mapEntries(([, index]) => [index.name, index])
+      .toMap(),
     isNode: type.get('isNode') || false,
   });
 }
@@ -118,4 +125,11 @@ function convertField(type, field, types) {
       type: fieldType,
     });
   }
+}
+
+function convertIndex(index) {
+  return new SchemaIndex({
+    name: index.get('name'),
+    fields: index.get('fields'),
+  });
 }

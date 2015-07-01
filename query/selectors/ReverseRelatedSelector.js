@@ -7,7 +7,7 @@ import {Record} from 'immutable';
  *
  * @implements Selector
  * @param tableName - table name to select from.
- * @param relatedField - field (and index) to filter through
+ * @param relatedField - field to filter through
  *
  * @method toReQL(db, {obj})
  */

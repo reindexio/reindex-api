@@ -30,7 +30,7 @@ export default class RemoveFieldMutator extends Record({
       /* eslint-disable no-unused-vars */
       // ReQL wants both arguments to the function in RethinkDB.do.
       (result, ignored) => {
-        return result;
+        return result('changes')(0)('new_val');
       }
       /* eslint-enable */
     );

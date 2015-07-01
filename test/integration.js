@@ -381,72 +381,30 @@ describe('Integration Tests', () => {
 
   it('does schema modifications', async function () {
     assert.oequal(await queryDB(
-      `createType(name: Test) { success }`
+      `createType(name: Test) { name }`
     ), fromJS({
       createType: {
-       success: true,
+        name: 'Test',
       },
     }));
 
     assert.oequal(await queryDB(
       `createField(type: Test, fieldName: test, fieldType: string) {
-        success,
-        changes {
-          nodes {
-            oldValue {
-              name
-            },
-            newValue {
-              name
-            }
-          }
-        }
+        name
       }`
     ), fromJS({
       createField: {
-        success: true,
-        changes: {
-          nodes: [
-            {
-              oldValue: {
-                name: 'Test',
-              },
-              newValue: {
-                name: 'Test',
-              },
-            },
-          ],
-        },
+        name: 'Test',
       },
     }));
 
     assert.oequal(await queryDB(
       `deleteField(type: Test, fieldName: test) {
-        success,
-        changes as updates {
-          nodes {
-            oldValue {
-              name
-            },
-            newValue {
-              name
-            }
-          }
-        }
+        name
       }`
     ), fromJS({
       deleteField: {
-        success: true,
-        updates: {
-          nodes: [{
-            oldValue: {
-              name: 'Test',
-            },
-            newValue: {
-              name: 'Test',
-            },
-          }, ],
-        },
+        name: 'Test',
       },
     }));
 
@@ -454,74 +412,56 @@ describe('Integration Tests', () => {
       `createConnection(type: User, targetType: Micropost,
                      fieldName: reviewedPosts,
                      targetFieldName: reviewedBy) {
-         success,
-         changes {
-           count
-         }
+         name,
        }`
     ), fromJS({
       createConnection: {
-        success: true,
-        changes: {
-          count: 2,
-        },
+        name: 'User',
       },
     }));
 
     assert.oequal(await queryDB(
       `deleteConnection(type: User, fieldName: reviewedPosts) {
-         success,
-         changes {
-           count,
-           nodes {
-             oldValue {
-               name
-             },
-             newValue {
-               name
-             }
-           }
-         }
-       }`
+        name,
+      }`
     ), fromJS({
       deleteConnection: {
-        success: true,
-        changes: {
-          count: 2,
-          nodes: [
-            {
-              newValue: {
-                name: 'Micropost',
-              },
-              oldValue: {
-                name: 'Micropost',
-              },
-            },
-            {
-              newValue: {
-                name: 'User',
-              },
-              oldValue: {
-                name: 'User',
-              },
-            },
-          ],
-        },
+        name: 'User',
       },
     }));
 
     assert.oequal(await queryDB(
-      `deleteType(name: Test) { success }`
+      `createIndex(type: User, name: handle, fields: \\[\\"handle\\"\\]) {
+        name,
+      }`
+    ), fromJS({
+      createIndex: {
+        name: 'User',
+      },
+    }));
+
+    assert.oequal(await queryDB(
+      `deleteIndex(type: User, name: handle) {
+        name,
+      }`
+    ), fromJS({
+      deleteIndex: {
+        name: 'User',
+      },
+    }));
+
+    assert.oequal(await queryDB(
+      `deleteType(name: Test) { name }`
     ), fromJS({
       deleteType: {
-        success: true,
+        name: 'Test',
       },
     }));
   });
 
   it('creates a secret', async function () {
-    const result = await runQuery(`addSecret() { value }`);
-    assert.match(result.addSecret.value, /^[a-zA-Z0-9_-]{40}$/);
+    const result = await runQuery(`createSecret() { value }`);
+    assert.match(result.createSecret.value, /^[a-zA-Z0-9_-]{40}$/);
   });
 
   it('does CRUD', async function() {

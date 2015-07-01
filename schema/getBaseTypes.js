@@ -131,6 +131,11 @@ const builtIns = fromJS([
         type: 'array',
         target: 'parameter',
       },
+      {
+        name: 'indexes',
+        type: 'array',
+        target: 'index',
+      },
     ],
   },
   {
@@ -168,6 +173,19 @@ const builtIns = fromJS([
       {
         name: 'isRequired',
         type: 'boolean',
+      },
+    ],
+  }, {
+    name: 'index',
+    fields: [
+      {
+        name: 'name',
+        type: 'string',
+      },
+      {
+        name: 'fields',
+        type: 'array',
+        target: 'field',
       },
     ],
   },
@@ -252,6 +270,7 @@ function getBaseTypes() {
     cachedTypes = Map({
       calls: rootCalls.valueSeq().toList(),
       types: builtIns.map((type) => {
+        type = type.set('indexes', List());
         const method = methods.get(type.get('name'));
         if (method) {
           return type.set('parameters', method.parameters.valueSeq());

@@ -24,6 +24,16 @@ const testSchema = dbToSchema(
           },
         ],
         parameters: [],
+        indexes: [
+          {
+            name: 'id',
+            fields: [
+              {
+                name: 'id',
+              },
+            ],
+          },
+        ],
       }, {
         name: 'Micropost',
         isNode: true,
@@ -45,6 +55,16 @@ const testSchema = dbToSchema(
           },
         ],
         parameters: [],
+        indexes: [
+          {
+            name: 'id',
+            fields: [
+              {
+                name: 'id',
+              },
+            ],
+          },
+        ],
       },
     ]));
   })
