@@ -10,7 +10,6 @@ import JWTAuthenticationScheme from '../../server/JWTAuthenticationScheme';
 
 describe('JWTAuthenticationScheme', () => {
   const secret = 'secret';
-  let conn;
   let server;
 
   before(async function () {

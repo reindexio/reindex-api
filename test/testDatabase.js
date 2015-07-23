@@ -1,9 +1,9 @@
 import {fromJS} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-import {SECRET_TABLE, TYPE_TABLE} from '../query/QueryConstants';
+import {SECRET_TABLE, TYPE_TABLE} from '../db/DBConstants';
 
-const TEST_DATA = fromJS({
+export const TEST_DATA = fromJS({
   tables: {
     User: [
       {id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408', handle: 'fson'},

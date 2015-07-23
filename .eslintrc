@@ -56,7 +56,7 @@
     "no-shadow-restricted-names": 2,
     "no-spaced-func": 2,
     "no-unused-vars": 2,
-    "no-use-before-define": [2, "nofunc"],
+    "no-use-before-define": 0,
     "no-var": 2,
     "no-wrap-func": 2,
     "object-shorthand": 2,

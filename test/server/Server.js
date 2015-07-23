@@ -14,8 +14,8 @@ describe('Server', () => {
   const token = JSONWebToken.sign({
     sub: randomUserID,
   }, randomSecret);
-  const query = `nodes(type: Micropost) {
-    objects(orderBy: createdAt, first: 1) {
+  const query = `query seacrh {
+    searchForMicropost(orderBy: "createdAt", first: 1) {
       nodes {
         text
       }
@@ -59,8 +59,8 @@ describe('Server', () => {
     });
     assert.strictEqual(response.statusCode, 200);
     assert.deepEqual(response.result, {
-      nodes: {
-        objects: {
+      data: {
+        searchForMicropost: {
           nodes: [
             {
               text: 'Test text',
@@ -73,7 +73,6 @@ describe('Server', () => {
 
   it('returns 404 for non-existent apps or reserved names', async function () {
     for (const appName of ['nonexistent', 'rethinkdb']) {
-      const nonExistentName = 'nonexistent';
       const response = await makeRequest({
         method: 'POST',
         url: '/graphql',

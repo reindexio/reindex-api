@@ -11,6 +11,7 @@
     "convict": "^0.6.1",
     "good": "^6.1.4",
     "good-console": "^5.0.2",
+    "graphql": "^0.1.12",
     "hapi": "^8.4.0",
     "immutable": "^3.7.2",
     "jsonwebtoken": "^5.0.1",
@@ -37,6 +38,6 @@
     "lint": "eslint ./",
     "mocha": "mocha --timeout 30000 --compilers js:babel/register --recursive",
     "start": "nodemon index.js",
-    "test": "npm run lint; npm run mocha ./test"
+    "test": "npm run lint && npm run mocha ./test"
   }
 }
