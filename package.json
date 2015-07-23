@@ -14,6 +14,7 @@
     "hapi": "^8.4.0",
     "immutable": "^3.7.2",
     "jsonwebtoken": "^5.0.1",
+    "minimist": "^1.1.2",
     "pegjs": "^0.8.0",
     "rethinkdb": "^1.16.2",
     "uuid": "^2.0.1"
@@ -31,6 +32,8 @@
   },
   "scripts": {
     "compile_grammar": "pegjs graphQL/Grammar.pegjs graphQL/Parser.js",
+    "create-app": "babel-node bin/create-app.js",
+    "create-token": "node bin/create-token.js",
     "lint": "eslint ./",
     "mocha": "mocha --timeout 30000 --compilers js:babel/register --recursive",
     "start": "nodemon index.js",
