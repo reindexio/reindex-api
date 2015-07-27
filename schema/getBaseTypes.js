@@ -137,6 +137,7 @@ const builtIns = fromJS([
         target: 'index',
       },
     ],
+    isNode: true,
   },
   {
     name: 'field',
@@ -175,7 +176,8 @@ const builtIns = fromJS([
         type: 'boolean',
       },
     ],
-  }, {
+  },
+  {
     name: 'index',
     fields: [
       {
