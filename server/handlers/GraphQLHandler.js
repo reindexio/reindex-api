@@ -1,6 +1,6 @@
-import AppStore from '../../apps/AppStore';
 import RethinkDB from 'rethinkdb';
-import runGraphQL from '../../graphQL/runGraphQL';
+import {graphql} from 'graphql';
+import AppStore from '../../apps/AppStore';
 import DBContext from '../../db/DBContext';
 
 async function handler(request, reply) {
@@ -13,7 +13,7 @@ async function handler(request, reply) {
     });
     const query = request.payload.query;
     const variables = request.payload.variables || {};
-    const result = await runGraphQL(app.schema, dbContext, query, variables);
+    const result = await graphql(app.schema, query, {dbContext}, variables);
     reply(result);
   } catch (error) {
     // TODO(fson, 2015-04-13): Handle errors granularly.

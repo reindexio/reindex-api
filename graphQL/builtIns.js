@@ -1,6 +1,7 @@
 import {
   GraphQLInterfaceType,
   GraphQLScalarType,
+  GraphQLID,
 } from 'graphql';
 import {Kind} from 'graphql/language';
 
@@ -26,14 +27,23 @@ export const DateTime = new GraphQLScalarType({
 export function createInterfaces() {
   return {
     Connection: new GraphQLInterfaceType({
-      name: 'Connection',
+      name: '_Connection',
       description: '',
       fields: {},
     }),
     Edge: new GraphQLInterfaceType({
-      name: 'Edge',
+      name: '_Edge',
       description: '',
       fields: {},
+    }),
+    Mutation: new GraphQLInterfaceType({
+      name: '_Mutation',
+      description: '',
+      fields: {
+        clientMutationId: {
+          type: GraphQLID,
+        },
+      },
     }),
   };
 }

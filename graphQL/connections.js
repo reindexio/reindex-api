@@ -7,7 +7,7 @@ import {
   GraphQLList,
 } from 'graphql';
 
-export function createConnection(type, {Edge, Connection}) {
+export function createConnection({type}, {Edge, Connection}) {
   const edge = new GraphQLObjectType({
     name: '_' + type.name + 'Edge',
     fields: {

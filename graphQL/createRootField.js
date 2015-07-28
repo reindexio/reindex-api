@@ -1,26 +1,26 @@
 import {Map, List} from 'immutable';
 
-export default function createOperation(
+export default function createRootField({
   name,
   returnType,
-  argDefinitions,
-  validators,
-  resolve
-) {
+  args = Map(),
+  validators = List(),
+  resolve,
+}) {
   return {
     name,
     type: returnType,
-    args: argDefinitions
+    args: args
       .map(({type, description}) => ({
         type,
         description,
       }))
       .toObject(),
-    resolve(parent, args, context, ...rest) {
+    resolve(parent, passedArgs, context, ...rest) {
       const processedArgs = runValidators(
         validators,
-        argDefinitions,
-        Map(args),
+        args,
+        Map(passedArgs),
         context
       );
       return resolve(parent, processedArgs.toObject(), context, ...rest);

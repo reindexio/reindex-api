@@ -1,10 +1,10 @@
 import assert from './assert';
 import uuid from 'uuid';
+import {graphql} from 'graphql';
 import RethinkDB from 'rethinkdb';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
 import getApp from '../apps/getApp';
 import DBContext from '../db/DBContext';
-import runGraphQL from '../graphQL/runGraphQL';
 
 describe('Integration Tests', () => {
   const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -21,10 +21,10 @@ describe('Integration Tests', () => {
     await conn.close();
   });
 
-  async function runQuery(graphQLQuery) {
+  async function runQuery(query, variables) {
     const app = await getApp(dbName, conn);
     const dbContext = new DBContext({db, conn});
-    return await runGraphQL(app.schema, dbContext, graphQLQuery);
+    return await graphql(app.schema, query, {dbContext}, variables);
   }
 
   it('queries by id', async function () {
@@ -132,6 +132,129 @@ describe('Integration Tests', () => {
         ],
       },
     });
+  });
+
+  it('does crud', async function() {
+    const clientMutationId = 'my-client-mutation-id';
+    const created = await runQuery(`
+      mutation createUser($User: _UserInputObject!, $cId: ID) {
+        createUser(User: $User, clientMutationId: $cId) {
+          clientMutationId,
+          User {
+            id,
+            handle,
+            email
+          }
+        }
+      }
+    `, {
+      cId: clientMutationId,
+      User: {
+        handle: 'immonenv',
+        email: 'immonenv@example.com',
+      },
+    });
+
+    const id = created.data.createUser.User.id;
+
+    assert.deepEqual(created.data.createUser, {
+      clientMutationId,
+      User: {
+        id,
+        handle: 'immonenv',
+        email: 'immonenv@example.com',
+      },
+    }, 'create works');
+
+    const updated = await runQuery(`
+      mutation updateUser($id: ID!, $User: _UserInputObject!,
+                          $cId: ID) {
+        updateUser(id: $id, User: $User, clientMutationId: $cId) {
+          clientMutationId,
+          User {
+            id,
+            handle,
+            email
+          }
+        }
+      }
+    `, {
+      id,
+      cId: clientMutationId,
+      User: {
+        handle: 'villeimmonen',
+      },
+    });
+
+    assert.deepEqual(updated.data.updateUser, {
+      clientMutationId,
+      User: {
+        id,
+        handle: 'villeimmonen',
+        email: 'immonenv@example.com',
+      },
+    }, 'update works');
+
+    const replaced = await runQuery(`
+      mutation replaceUser($id: ID!, $User: _UserInputObject!,
+                           $cId: ID) {
+        replaceUser(id: $id, User: $User, clientMutationId: $cId) {
+          clientMutationId,
+          User {
+            id,
+            handle,
+            email
+          }
+        }
+      }
+    `, {
+      id,
+      cId: clientMutationId,
+      User: {
+        handle: 'immonenv',
+      },
+    });
+
+    assert.deepEqual(replaced.data.replaceUser, {
+      clientMutationId,
+      User: {
+        id,
+        handle: 'immonenv',
+        email: null,
+      },
+    }, 'replace works');
+
+    const deleted = await runQuery(`
+      mutation deleteUser($id: ID!, $cId: ID) {
+        deleteUser(id: $id, clientMutationId: $cId) {
+          clientMutationId,
+          User {
+            id,
+            handle,
+            email
+          }
+        }
+      }
+    `, {
+      id,
+      cId: clientMutationId,
+    });
+
+    assert.deepEqual(deleted.data.deleteUser, replaced.data.replaceUser,
+      'delete returns deleted data');
+
+    const afterDeleted = await runQuery(`
+      query getUser($id: ID!) {
+        getUser(id: $id) {
+          id,
+          handle,
+          email
+        }
+      }
+    `, { id });
+
+    assert.isNull(afterDeleted.data.getUser,
+      'delete really deletes data');
   });
 
   // it('queries connections with only a count', async function () {

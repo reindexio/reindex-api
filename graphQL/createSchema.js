@@ -14,7 +14,7 @@ import {
 } from 'graphql';
 import {getById, getAllByIndex, processConnectionQuery} from '../db/queries';
 import {DateTime, createInterfaces} from './builtIns';
-import createTypesOperations from './createTypesOperations';
+import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
   createConnectionArguments
@@ -25,49 +25,54 @@ import {
  * construct GraphQL schema for them.
  */
 export default function createSchema({
-  builtIns,
-  genericQueries,
-  genericMutations,
-  typeQueries,
-  typeMutations,
+  commonTypes,
+  commonQueryFields,
+  commonMutationFields,
+  typeQueryFieldCreators,
+  typeMutationFieldCreators,
 }, dbMetadata) {
   const interfaces = createInterfaces();
-  let types = builtIns.map((builtIn) => new TypeSet({
-    type: builtIn,
-    connection: createConnection(builtIn),
-    inputObject: createInputObject(builtIn),
-  }));
+  let typeSets = commonTypes.map((type) => {
+    const typeSet = new TypeSet({type});
+    return typeSet.merge(Map({
+      connection: createConnection(typeSet, interfaces),
+      inputObject: createInputObject(typeSet),
+      mutation: createMutation(typeSet, interfaces),
+    }));
+  });
 
   dbMetadata.forEach((typeMetadata) => {
     const typeName = typeMetadata.get('name');
     const type = createType(typeMetadata, (name) => {
-      return types.get(name);
+      return typeSets.get(name);
     }, interfaces);
-    const connection = createConnection(type, interfaces);
-    types = types.set(typeName, new TypeSet({
-      type, connection,
-    }));
+    const typeSet = new TypeSet({type});
+    const connection = createConnection(typeSet, interfaces);
+    typeSets = typeSets.set(typeName, typeSet.set('connection', connection));
   });
 
-  types = types.map((type) => {
-    return type.set('inputObject', createInputObject(type, interfaces));
+  typeSets = typeSets.map((typeSet) => {
+    return typeSet.merge({
+      inputObject: createInputObject(typeSet, interfaces),
+      mutation: createMutation(typeSet, interfaces),
+    });
   });
 
-  const queryFields = genericQueries.merge(
-    createTypesOperations(typeQueries, types)
+  const queryFields = commonQueryFields.merge(
+    createRootFieldsForTypes(typeQueryFieldCreators, typeSets)
   );
 
-  const mutationFields = genericMutations.merge(
-    createTypesOperations(typeMutations, types)
+  const mutationFields = commonMutationFields.merge(
+    createRootFieldsForTypes(typeMutationFieldCreators, typeSets)
   );
 
   const query = new GraphQLObjectType({
-    name: 'Query',
+    name: '_Query',
     fields: queryFields.toObject(),
   });
 
   const mutation = new GraphQLObjectType({
-    name: 'Mutation',
+    name: '_Mutation',
     fields: mutationFields.toObject(),
   });
 
@@ -81,9 +86,10 @@ class TypeSet extends Record({
   type: undefined,
   connection: undefined,
   inputObject: undefined,
+  mutation: undefined,
 }) {}
 
-function createType(type, getType) {
+function createType(type, getTypeSet) {
   return new GraphQLObjectType({
     name: type.get('name'),
     fields: () => type
@@ -91,7 +97,7 @@ function createType(type, getType) {
       .toKeyedSeq()
       .mapEntries(([, field]) => [
         field.get('name'),
-        createField(field, getType),
+        createField(field, getTypeSet),
       ])
       .toObject(),
   });
@@ -106,7 +112,7 @@ const PRIMITIVE_TYPE_MAP = Map({
   datetime: DateTime,
 });
 
-function createField(field, getType) {
+function createField(field, getTypeSet) {
   const fieldName = field.get('name');
   const fieldType = field.get('type');
   let type;
@@ -114,7 +120,7 @@ function createField(field, getType) {
   let argDef = Map();
   if (fieldType === 'connection' && field.has('target')) {
     const target = field.get('target');
-    type = getType(target).connection;
+    type = getTypeSet(target).connection;
     argDef = createConnectionArguments();
     resolve = (parent, args, {dbContext}) => {
       return processConnectionQuery(
@@ -125,7 +131,7 @@ function createField(field, getType) {
   } else if (PRIMITIVE_TYPE_MAP.has(fieldType)) {
     type = PRIMITIVE_TYPE_MAP.get(fieldType);
   } else {
-    type = getType(fieldType).type;
+    type = getTypeSet(fieldType).type;
     resolve = (parent, args, {dbContext}) => {
       return getById(dbContext, fieldType, parent[fieldName])
         .run(dbContext.conn);
@@ -149,10 +155,11 @@ function createInputObject({type}, {Connection}) {
   return new GraphQLInputObjectType({
     name: '_' + type.name + 'InputObject',
     fields: Map(type.getFields())
-      .filter((field) => {
+      .filter((field, name) => {
         return (
-          !field.getInterfaces ||
-          field.getInterfaces().indexOf(Connection) < 0
+          name !== 'id' &&
+          (!field.type.getInterfaces ||
+           !field.type.getInterfaces().includes(Connection))
         );
       })
       .map((field) => {
@@ -165,8 +172,8 @@ function createInputObject({type}, {Connection}) {
           fieldType = parentType.ofType;
         }
 
-        if (type instanceof GraphQLInputObjectType ||
-            type instanceof GraphQLScalarType) {
+        if (fieldType instanceof GraphQLInputObjectType ||
+            fieldType instanceof GraphQLScalarType) {
           return {
             type: field.type,
           };
@@ -181,6 +188,22 @@ function createInputObject({type}, {Connection}) {
             };
           }
         }
-      }),
+      })
+      .toObject(),
+  });
+}
+
+function createMutation({type}, {Mutation}) {
+  return new GraphQLObjectType({
+    name: '_' + type.name + 'Mutation',
+    fields: {
+      clientMutationId: {
+        type: GraphQLID,
+      },
+      [type.name]: {
+        type,
+      },
+    },
+    interfaces: [Mutation],
   });
 }

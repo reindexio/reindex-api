@@ -48,10 +48,14 @@ export const TEST_DATA = fromJS({
         fields: [
           {
             name: 'id',
-            type: 'string',
+            type: 'id',
           },
           {
             name: 'handle',
+            type: 'string',
+          },
+          {
+            name: 'email',
             type: 'string',
           },
           {
@@ -80,17 +84,17 @@ export const TEST_DATA = fromJS({
         fields: [
           {
             name: 'id',
-            type: 'string',
+            type: 'id',
           },
           {
             name: 'text',
             type: 'string',
           },
-           {
+          {
             name: 'createdAt',
             type: 'datetime',
           },
-           {
+          {
             name: 'author',
             type: 'User',
             reverseName: 'microposts',
