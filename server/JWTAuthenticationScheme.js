@@ -21,7 +21,6 @@ function verifyToken(token, secrets) {
 
 function authenticate(request, reply) {
   const { tenant } = request;
-  const { req } = request.raw;
   const { authorization } = request.headers;
 
   if (!authorization) {

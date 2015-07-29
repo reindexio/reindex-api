@@ -1,0 +1,219 @@
+import {fromJS, Map} from 'immutable';
+import assert from '../assert';
+import uuid from 'uuid';
+import RethinkDB from 'rethinkdb';
+import {
+  createTestDatabase,
+  deleteTestDatabase,
+  TEST_DATA,
+} from '../testDatabase';
+import DBContext from '../../db/DBContext';
+import * as queries from '../../db/queries';
+
+describe('Database tests', () => {
+  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  const db = RethinkDB.db(dbName);
+  let conn;
+  let dbContext;
+
+  before(async function () {
+    conn = await RethinkDB.connect();
+    dbContext = new DBContext({
+      conn, db,
+    });
+    return await createTestDatabase(conn, dbName);
+  });
+
+  after(async function () {
+    await deleteTestDatabase(conn, dbName);
+    await conn.close();
+  });
+
+  describe('Database access functions return correct data', () => {
+    it('getApp', async function() {
+      const result = fromJS(await queries.getApp(dbContext).run(conn));
+      assert.oequal(
+        result.getIn(['secrets', 0, 'value']),
+        TEST_DATA.getIn(['tables', 'secret', 0, 'value'])
+      );
+      assert.oequal(
+        result.get('schema').toSet(),
+        TEST_DATA.getIn(['tables', 'type']).toSet(),
+      );
+    });
+
+    it('getSecrets', async function() {
+      assert.deepEqual(
+        (await queries.getSecrets(dbContext).run(conn))[0].value,
+        TEST_DATA.getIn(['tables', 'secret', 0, 'value'])
+      );
+    });
+
+    it('getTypes', async function() {
+      assert.oequal(
+        fromJS(await queries.getTypes(dbContext).run(conn)).toSet(),
+        TEST_DATA.getIn(['tables', 'type']).toSet(),
+      );
+    });
+
+    it('getAll', async function() {
+      assert.oequal(
+        fromJS(await queries
+          .getAll(dbContext, 'Micropost')
+          .coerceTo('array')
+          .run(conn)
+        ).toSet(),
+        TEST_DATA.getIn(['tables', 'Micropost']).toSet()
+      );
+    });
+
+    it('getById', async function() {
+      assert.deepEqual(
+        await queries.getById(
+          dbContext,
+          'User',
+          '94b90d89-22b6-4abf-b6ad-2780bf9d0408'
+        ).run(conn),
+        {
+          id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+          handle: 'fson',
+        }
+      );
+    });
+
+    it('getAllByIndex', async function() {
+      assert.oequal(
+        fromJS(await queries
+          .getAllByIndex(
+            dbContext,
+            'Micropost',
+            'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+            'author'
+          )
+          .coerceTo('array')
+          .run(conn)
+        ).toSet(),
+        TEST_DATA.getIn(['tables', 'Micropost']).toSet(),
+      );
+    });
+
+    it('getCount', async function() {
+      const base = queries.getAll(dbContext, 'Micropost');
+      assert.equal(
+        await queries.getCount(base).run(conn),
+        4
+      );
+    });
+
+    it('getNodes', async function() {
+      const base = queries.getAll(dbContext, 'Micropost');
+      assert.oequal(
+        fromJS(await queries.getNodes(base).run(conn)).toSet(),
+        TEST_DATA.getIn(['tables', 'Micropost']).toSet(),
+      );
+    });
+
+    it('getEdges', async function () {
+      const base = queries.getAll(dbContext, 'Micropost');
+      assert.oequal(
+        fromJS(await queries.getEdges(base).run(conn)).toSet(),
+        TEST_DATA.getIn(['tables', 'Micropost']).map((node) => Map({
+          node,
+        })).toSet(),
+      );
+    });
+  });
+
+  describe('processConnectionQuery', () => {
+    async function runAndGiveIds(table, args, queryType = 'paginatedQuery') {
+      return fromJS(await queries
+        .processConnectionQuery(
+          queries.getAll(dbContext, table),
+          args
+        )[queryType]
+        .map((item) => item('id'))
+        .coerceTo('array')
+        .run(conn)
+      );
+    }
+
+    it('orders query', async function() {
+      assert.oequal(
+        await runAndGiveIds('Micropost', {orderBy: 'createdAt'}),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
+        ]),
+      );
+    });
+
+    it('orders query descendingly', async function() {
+      assert.oequal(
+        await runAndGiveIds('Micropost', {orderBy: '-createdAt'}),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+        ]),
+      );
+    });
+
+    it('limits query', async function() {
+      assert.oequal(
+        await runAndGiveIds('Micropost', {first: 2, orderBy: 'createdAt'}),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+        ]),
+      );
+
+      assert.oequal(
+        await runAndGiveIds('Micropost', {after: 2, orderBy: 'createdAt'}),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
+        ]),
+      );
+
+      assert.oequal(
+        await runAndGiveIds('Micropost', {
+          first: 2,
+          after: 1,
+          orderBy: 'createdAt',
+        }),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+        ]),
+      );
+    });
+
+    it('returns both sliced and unsliced query', async function() {
+      assert.oequal(
+        await runAndGiveIds('Micropost', {
+          first: 1,
+          orderBy: 'createdAt',
+        }, 'query'),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
+        ]),
+      );
+
+      assert.oequal(
+        await runAndGiveIds('Micropost', {
+          first: 1,
+          orderBy: 'createdAt',
+        }, 'paginatedQuery'),
+        fromJS([
+          'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+        ]),
+      );
+    });
+  });
+});
