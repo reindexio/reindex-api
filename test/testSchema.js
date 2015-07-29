@@ -1,9 +1,9 @@
 import {fromJS} from 'immutable';
-import defaultSetup from '../graphQL/defaultSetup';
+import DefaultSetup from '../graphQL/DefaultSetup';
 import createSchema from '../graphQL/createSchema';
 
 const testSchema = createSchema(
-  defaultSetup,
+  DefaultSetup,
   fromJS([
     {
       name: 'User',

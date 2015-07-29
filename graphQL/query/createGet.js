@@ -1,22 +1,21 @@
-import {Map, List} from 'immutable';
-import {GraphQLNonNull, GraphQLString} from 'graphql';
+import {Map} from 'immutable';
+import {GraphQLNonNull, GraphQLID} from 'graphql';
 import {getById} from '../../db/queries';
-import createOperation from '../createOperation';
+import createRootField from '../createRootField';
 
 export default function createGet({type}) {
-  return createOperation(
-    'get' + type.name,
-    type,
-    Map({
+  return createRootField({
+    name: 'get' + type.name,
+    returnType: type,
+    args: Map({
       id: {
         name: 'id',
         description: `id of ${type.name}`,
-        type: new GraphQLNonNull(GraphQLString),
+        type: new GraphQLNonNull(GraphQLID),
       },
     }),
-    List(),
-    (parent, {id}, {dbContext}) => (
+    resolve: (parent, {id}, {dbContext}) => (
       getById(dbContext, type.name, id).run(dbContext.conn)
     ),
-  );
+  });
 }

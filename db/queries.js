@@ -8,24 +8,24 @@ export function getApp(context) {
   });
 }
 
-export function getSecrets(context) {
-  return context.db.table(SECRET_TABLE).coerceTo('array');
+export function getSecrets({db}) {
+  return db.table(SECRET_TABLE).coerceTo('array');
 }
 
-export function getTypes(context) {
-  return context.db.table(TYPE_TABLE).coerceTo('array');
+export function getTypes({db}) {
+  return db.table(TYPE_TABLE).coerceTo('array');
 }
 
-export function getAll(context, table) {
-  return context.db.table(table);
+export function getAll({db}, table) {
+  return db.table(table);
 }
 
-export function getById(context, table, id) {
-  return context.db.table(table).get(id);
+export function getById({db}, table, id) {
+  return db.table(table).get(id);
 }
 
-export function getAllByIndex(context, table, indexValue, index) {
-  return context.db.table(table).getAll(indexValue, {
+export function getAllByIndex({db}, table, indexValue, index) {
+  return db.table(table).getAll(indexValue, {
     index,
   });
 }
@@ -67,4 +67,40 @@ export function processConnectionQuery(query, {
     query,
     paginatedQuery: paginatedQuery || query,
   };
+}
+
+function compactObject(object) {
+  const result = {};
+  for (const key of Object.keys(object)) {
+    if (object[key] !== undefined) {
+      result[key] = object[key];
+    }
+  }
+  return result;
+}
+
+export function create({db}, table, data) {
+  return db.table(table).insert(compactObject(data), {
+    returnChanges: true,
+  })('changes')(0)('new_val');
+}
+
+export function update({db}, table, id, data) {
+  return db.table(table).get(id).update(compactObject(data), {
+    returnChanges: true,
+  })('changes')(0)('new_val');
+}
+
+export function replace({db}, table, id, data) {
+  const cleanData = compactObject(data);
+  cleanData.id = id;
+  return db.table(table).get(id).replace(cleanData, {
+    returnChanges: true,
+  })('changes')(0)('new_val');
+}
+
+export function deleteQuery({db}, table, id) {
+  return db.table(table).get(id).delete({
+    returnChanges: true,
+  })('changes')(0)('old_val');
 }

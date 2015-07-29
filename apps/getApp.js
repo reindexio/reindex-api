@@ -6,7 +6,7 @@ import App from './App';
 import DBContext from '../db/DBContext';
 import {getApp as getAppQuery} from '../db/queries';
 import createSchema from '../graphQL/createSchema';
-import defaultSetup from '../graphQL/defaultSetup';
+import DefaultSetup from '../graphQL/DefaultSetup';
 
 const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
 
@@ -22,7 +22,7 @@ export default async function getApp(dbName, conn) {
     const {schema, secrets} = await getAppQuery(dbContext).run(conn);
     return new App({
       dbName,
-      schema: createSchema(defaultSetup, fromJS(schema)),
+      schema: createSchema(DefaultSetup, fromJS(schema)),
       secrets: List(secrets.map((secret) => secret.value)),
     });
   } catch (error) {

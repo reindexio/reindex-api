@@ -11,12 +11,12 @@ import {
   GraphQLList,
 } from 'graphql';
 import {DateTime} from '../../graphQL/builtIns';
-import defaultSetup from '../../graphQL/defaultSetup';
+import DefaultSetup from '../../graphQL/DefaultSetup';
 import createSchema from '../../graphQL/createSchema';
 
 describe('createSchema', () => {
   it('creates types with appropriate scalar fields', () => {
-    const schema = createSchema(defaultSetup, fromJS([
+    const schema = createSchema(DefaultSetup, fromJS([
       {
         name: 'User',
         fields: [
@@ -69,7 +69,7 @@ describe('createSchema', () => {
   });
 
   it('respects non-nullness', () => {
-    const schema = createSchema(defaultSetup, fromJS([
+    const schema = createSchema(DefaultSetup, fromJS([
       {
         name: 'User',
         fields: [
@@ -88,7 +88,7 @@ describe('createSchema', () => {
   });
 
   it('creates appropriate connections', () => {
-    const schema = createSchema(defaultSetup, fromJS([
+    const schema = createSchema(DefaultSetup, fromJS([
       {
         name: 'User',
         fields: [

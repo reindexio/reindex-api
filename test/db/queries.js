@@ -113,7 +113,7 @@ describe('Database tests', () => {
       );
     });
 
-    it('getEdges', async function () {
+    it('getEdges', async function() {
       const base = queries.getAll(dbContext, 'Micropost');
       assert.oequal(
         fromJS(await queries.getEdges(base).run(conn)).toSet(),
@@ -121,6 +121,76 @@ describe('Database tests', () => {
           node,
         })).toSet(),
       );
+    });
+
+    describe('CRUD', () => {
+      let id;
+
+      it('create', async function() {
+        const result = await queries.create(dbContext, 'User', {
+          handle: 'villeimmonen',
+        }).run(dbContext.conn);
+        id = result.id;
+        const resultInDb = await queries.getById(dbContext, 'User', id)
+          .run(dbContext.conn);
+        assert.deepEqual(
+          result,
+          resultInDb
+        );
+        assert.deepEqual(resultInDb, {
+          id,
+          handle: 'villeimmonen',
+        });
+      });
+
+      it('update', async function() {
+        const result = await queries.update(dbContext, 'User', id, {
+          handle: 'immonenville',
+          email: 'immonenv@example.com',
+        }).run(dbContext.conn);
+        const resultInDb = await queries.getById(dbContext, 'User', id)
+          .run(dbContext.conn);
+        assert.deepEqual(
+          result,
+          resultInDb
+        );
+        assert.deepEqual(resultInDb, {
+          id,
+          handle: 'immonenville',
+          email: 'immonenv@example.com',
+        });
+      });
+
+      it('replace', async function() {
+        const result = await queries.replace(dbContext, 'User', id, {
+          handle: 'villeimmonen',
+        }).run(dbContext.conn);
+        const resultInDb = await queries.getById(dbContext, 'User', id)
+          .run(dbContext.conn);
+        assert.deepEqual(
+          result,
+          resultInDb
+        );
+        assert.deepEqual(resultInDb, {
+          id,
+          handle: 'villeimmonen',
+        });
+      });
+
+      it('delete', async function() {
+        const result = await queries.deleteQuery(dbContext, 'User', id, {
+          handle: 'villeimmonen',
+        }).run(dbContext.conn);
+        const resultInDb = await queries.getById(dbContext, 'User', id)
+          .run(dbContext.conn);
+        assert.isNull(
+          resultInDb
+        );
+        assert.deepEqual(result, {
+          id,
+          handle: 'villeimmonen',
+        });
+      });
     });
   });
 
