@@ -17,10 +17,12 @@ import {getById, getAllByIndex, processConnectionQuery} from '../db/queries';
 import DateTime from './builtins/DateTime';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
-import CommonQueryFields from './builtins/CommonQueryFields';
-import CommonMutationFields from './builtins/CommonMutationFields';
+import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
+import CommonMutationFieldCreators
+  from './builtins/CommonMutationFieldCreators';
 import TypeQueryFieldCreators from './builtins/TypeQueryFieldCreators';
 import TypeMutationFieldCreators from './builtins/TypeMutationFieldCreators';
+import createCommonRootFields from './createCommonRootFields';
 import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
@@ -58,13 +60,15 @@ export default function createSchema(dbMetadata) {
     });
   });
 
-  const queryFields = CommonQueryFields.merge(
-    createRootFieldsForTypes(TypeQueryFieldCreators, typeSets)
-  );
+  const queryFields = createCommonRootFields(
+    CommonQueryFieldCreators,
+    typeSets
+  ).merge(createRootFieldsForTypes(TypeQueryFieldCreators, typeSets));
 
-  const mutationFields = CommonMutationFields.merge(
-    createRootFieldsForTypes(TypeMutationFieldCreators, typeSets)
-  );
+  const mutationFields = createCommonRootFields(
+    CommonMutationFieldCreators,
+    typeSets
+  ).merge(createRootFieldsForTypes(TypeMutationFieldCreators, typeSets));
 
   const query = new GraphQLObjectType({
     name: 'ReindexQuery',

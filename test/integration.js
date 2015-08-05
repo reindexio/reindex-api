@@ -257,6 +257,22 @@ describe('Integration Tests', () => {
       'delete really deletes data');
   });
 
+  it('creates a secret', async function () {
+    const result = await runQuery(`
+      mutation secret {
+        createReindexSecret {
+          ReindexSecret {
+            value
+          }
+        }
+      }
+    `);
+    assert.match(
+      result.data.createReindexSecret.ReindexSecret.value,
+      /^[a-zA-Z0-9_-]{40}$/
+    );
+  });
+
   // it('queries connections with only a count', async function () {
   //   let result = await queryDB(
   //     `node(type: User, id: bbd1db98-4ac4-40a7-b514-968059c3dbac) as best {
