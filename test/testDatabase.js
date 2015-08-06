@@ -1,7 +1,12 @@
 import {fromJS} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
-import {SECRET_TABLE, TYPE_TABLE} from '../db/DBConstants';
+import {
+  AUTHENTICATION_PROVIDER_TABLE,
+  SECRET_TABLE,
+  TYPE_TABLE,
+  USER_TABLE
+} from '../db/DBConstants';
 
 export const TEST_DATA = fromJS({
   tables: {
@@ -36,6 +41,15 @@ export const TEST_DATA = fromJS({
       },
 
     ],
+    [AUTHENTICATION_PROVIDER_TABLE]: [
+      {
+        id: 'github',
+        clientID: 'fakeClientId',
+        clientSecret: 'fakeClientSecret',
+        isEnabled: true,
+      },
+    ],
+    [USER_TABLE]: [],
     [SECRET_TABLE]: [
       {
         value: 'secret',
@@ -76,7 +90,6 @@ export const TEST_DATA = fromJS({
             ],
           },
         ],
-
       },
       {
         name: 'Micropost',

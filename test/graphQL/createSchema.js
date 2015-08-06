@@ -10,13 +10,14 @@ import {
   GraphQLBoolean,
   GraphQLList,
 } from 'graphql';
-import {DateTime} from '../../graphQL/builtIns';
-import DefaultSetup from '../../graphQL/DefaultSetup';
+import DateTime from '../../graphQL/builtins/DateTime';
 import createSchema from '../../graphQL/createSchema';
+import createInterfaces from '../../graphQL/builtins/createInterfaces';
+import createUser from '../../graphQL/builtins/createUser';
 
 describe('createSchema', () => {
   it('creates types with appropriate scalar fields', () => {
-    const schema = createSchema(DefaultSetup, fromJS([
+    const schema = createSchema(fromJS([
       {
         name: 'User',
         fields: [
@@ -69,7 +70,7 @@ describe('createSchema', () => {
   });
 
   it('respects non-nullness', () => {
-    const schema = createSchema(DefaultSetup, fromJS([
+    const schema = createSchema(fromJS([
       {
         name: 'User',
         fields: [
@@ -88,7 +89,7 @@ describe('createSchema', () => {
   });
 
   it('creates appropriate connections', () => {
-    const schema = createSchema(DefaultSetup, fromJS([
+    const schema = createSchema(fromJS([
       {
         name: 'User',
         fields: [
@@ -156,11 +157,70 @@ describe('createSchema', () => {
     // TODO: when input objects are in use
   });
 
-  it('creates valid types for editable types', () => {
-    // TODO: when types are editable
+  it('creates builtin types', () => {
+    const schema = createSchema(fromJS([]));
+
+    const reindexUser = schema.getType('ReindexUser');
+    const reindexUserFields = reindexUser.getFields();
+    assert.isDefined(reindexUser);
+
+    const testUser = createUser(createInterfaces()).type;
+    const testUserFields = testUser.getFields();
+
+    for (const fieldName of Object.keys(testUserFields)) {
+      assert.equal(
+        testUserFields[fieldName].type.name,
+        reindexUserFields[fieldName].type.name
+      );
+    }
   });
 
-  it('creates valid types for editable fields', () => {
-    // TODO: when fields are editable
+  it('creates root fields', () => {
+    const schema = createSchema(fromJS([
+      {
+        name: 'User',
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+            isRequired: true,
+          },
+          {
+            name: 'microposts',
+            type: 'connection',
+            target: 'Micropost',
+            reverseName: 'author',
+          },
+        ],
+      },
+      {
+        name: 'Micropost',
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+            isRequired: true,
+          },
+          {
+            name: 'author',
+            type: 'User',
+            reverseName: 'microposts',
+          },
+        ],
+      },
+    ]));
+
+    const query = schema.getType('ReindexQuery');
+    const queryFields = query.getFields();
+    const mutation = schema.getType('ReindexMutation');
+    const mutationFields = mutation.getFields();
+
+    assert.isDefined(queryFields.getUser);
+    assert.isDefined(queryFields.searchForMicropost);
+    assert.isDefined(mutationFields.createUser);
+    assert.isDefined(mutationFields.deleteMicropost);
+
+    assert.isUndefined(queryFields.createReindexUser,
+      'blacklisted root fields are not created');
   });
 });

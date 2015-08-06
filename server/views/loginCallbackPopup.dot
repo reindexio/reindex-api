@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <body>
+    <script src="/static/winchan.js"></script>
+    <script>
+      WinChan.onOpen(function(origin, args, cb) {
+        cb({{= it.payload}});
+      });
+    </script>
+  </body>
+</html>

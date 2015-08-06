@@ -7,6 +7,11 @@ import {
   deleteTestDatabase,
   TEST_DATA,
 } from '../testDatabase';
+import {
+  AUTHENTICATION_PROVIDER_TABLE,
+  SECRET_TABLE,
+  TYPE_TABLE,
+} from '../../db/DBConstants';
 import DBContext from '../../db/DBContext';
 import * as queries from '../../db/queries';
 
@@ -34,25 +39,34 @@ describe('Database tests', () => {
       const result = fromJS(await queries.getApp(dbContext).run(conn));
       assert.oequal(
         result.getIn(['secrets', 0, 'value']),
-        TEST_DATA.getIn(['tables', 'secret', 0, 'value'])
+        TEST_DATA.getIn(['tables', SECRET_TABLE, 0, 'value'])
       );
       assert.oequal(
         result.get('schema').toSet(),
-        TEST_DATA.getIn(['tables', 'type']).toSet(),
+        TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
       );
     });
 
     it('getSecrets', async function() {
       assert.deepEqual(
         (await queries.getSecrets(dbContext).run(conn))[0].value,
-        TEST_DATA.getIn(['tables', 'secret', 0, 'value'])
+        TEST_DATA.getIn(['tables', SECRET_TABLE, 0, 'value'])
       );
     });
 
     it('getTypes', async function() {
       assert.oequal(
         fromJS(await queries.getTypes(dbContext).run(conn)).toSet(),
-        TEST_DATA.getIn(['tables', 'type']).toSet(),
+        TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
+      );
+    });
+
+    it('getAuthenticationProvider', async function() {
+      assert.deepEqual(
+        await queries
+          .getAuthenticationProvider(dbContext, 'github')
+          .run(conn),
+        TEST_DATA.getIn(['tables', AUTHENTICATION_PROVIDER_TABLE, 0]).toJS(),
       );
     });
 
@@ -191,6 +205,28 @@ describe('Database tests', () => {
           handle: 'villeimmonen',
         });
       });
+    });
+
+    it('getOrCreateUser', async function() {
+      const credentials = {
+        accessToken: 'fakeAccessToken',
+        displayName: 'Mikhail Novikov',
+        email: 'freiksenet@example.com',
+        id: 1,
+        username: 'freiksenet',
+      };
+      const user = await queries.getOrCreateUser(
+        dbContext,
+        'github',
+        credentials
+      );
+      assert.deepEqual(user.credentials.github, credentials);
+      const newUser = await queries.getOrCreateUser(
+        dbContext,
+        'github',
+        credentials
+      );
+      assert.equal(user.id, newUser.id);
     });
   });
 

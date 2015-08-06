@@ -9,6 +9,7 @@ import GoodConsole from 'good-console';
 import GraphQLHandler from './handlers/GraphQLHandler';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import RethinkDBPlugin from './RethinkDBPlugin';
+import SocialLoginPlugin from './SocialLoginPlugin';
 
 Config.load({}).validate();
 
@@ -33,10 +34,23 @@ export default async function createServer() {
 
   await server.register(RethinkDBPlugin);
   await server.register(AppPlugin);
+  await server.register({
+    register: SocialLoginPlugin,
+    options: Config.get('SocialLoginPlugin'),
+  });
   await server.register(JWTAuthenticationScheme);
   server.auth.strategy('token', 'jwt');
 
   server.route(GraphQLHandler);
+  server.route({
+    handler: {
+      directory: {
+        path: 'static',
+      },
+    },
+    method: 'GET',
+    path: '/static/{param*}',
+  });
 
   await server.register(Bassmaster);
   await server.register({

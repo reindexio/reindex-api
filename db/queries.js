@@ -1,5 +1,10 @@
 import RethinkDB from 'rethinkdb';
-import {TYPE_TABLE, SECRET_TABLE} from './DBConstants';
+import {
+  AUTHENTICATION_PROVIDER_TABLE,
+  TYPE_TABLE,
+  SECRET_TABLE,
+  USER_TABLE
+} from './DBConstants';
 
 export function getApp(context) {
   return RethinkDB.expr({}).merge({
@@ -14,6 +19,39 @@ export function getSecrets({db}) {
 
 export function getTypes({db}) {
   return db.table(TYPE_TABLE).coerceTo('array');
+}
+
+export function getAuthenticationProvider({db}, id) {
+  return db
+    .table(AUTHENTICATION_PROVIDER_TABLE)
+    .get(id);
+}
+
+export async function getOrCreateUser(
+  {db, conn},
+  providerName,
+  credential,
+) {
+  const table = db.table(USER_TABLE);
+
+  const cursor = await table.filter((user) =>
+    user('credentials')(providerName)('id').eq(credential.id)
+  ).run(conn);
+
+  const users = await cursor.toArray();
+
+  if (users.length) {
+    return users[0];
+  }
+
+  return table.insert(
+    {
+      credentials: {
+        [providerName]: credential,
+      },
+    },
+    { returnChanges: true },
+  )('changes')(0)('new_val').run(conn);
 }
 
 export function getAll({db}, table) {

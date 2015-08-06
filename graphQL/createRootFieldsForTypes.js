@@ -16,6 +16,9 @@ export default function createRootFieldsForTypes(
 
 function createRootFieldsForType(creators, typeSet) {
   return creators
+    .filter((creator) => {
+      return !typeSet.blacklistedRootFields.contains(creator);
+    })
     .map((creator) => creator(typeSet))
     .toKeyedSeq()
     .mapEntries(([, query]) => [query.name, query]);
