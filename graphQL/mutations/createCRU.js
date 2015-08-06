@@ -1,6 +1,7 @@
 import {Map} from 'immutable';
-import {GraphQLID, GraphQLNonNull} from 'graphql';
+import {GraphQLString, GraphQLNonNull} from 'graphql';
 import * as queries from '../../db/queries';
+import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 
 export default function createCRU(operation, getById, {
@@ -11,7 +12,7 @@ export default function createCRU(operation, getById, {
   let opArgs = Map({
     clientMutationId: {
       name: 'clientMutationId',
-      type: GraphQLID,
+      type: GraphQLString,
     },
     [type.name]: {
       name: type.name,
@@ -22,7 +23,7 @@ export default function createCRU(operation, getById, {
   if (getById) {
     opArgs = opArgs.set('id', {
       name: 'id',
-      type: new GraphQLNonNull(GraphQLID),
+      type: new GraphQLNonNull(ReindexID),
     });
   }
 

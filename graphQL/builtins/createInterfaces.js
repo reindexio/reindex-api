@@ -1,10 +1,20 @@
 import {
   GraphQLInterfaceType,
-  GraphQLID,
+  GraphQLString,
 } from 'graphql';
+import ReindexID from './ReindexID';
 
 export default function createInterfaces() {
   return {
+    Node: new GraphQLInterfaceType({
+      name: 'Node',
+      description: {},
+      fields: {
+        id: {
+          type: ReindexID,
+        },
+      },
+    }),
     Connection: new GraphQLInterfaceType({
       name: 'ReindexConnection',
       description: '',
@@ -20,7 +30,7 @@ export default function createInterfaces() {
       description: '',
       fields: {
         clientMutationId: {
-          type: GraphQLID,
+          type: GraphQLString,
         },
       },
     }),

@@ -2,9 +2,9 @@ import {List} from 'immutable';
 import {
   GraphQLObjectType,
   GraphQLInterfaceType,
-  GraphQLID,
   GraphQLString,
 } from 'graphql';
+import ReindexID from './ReindexID';
 import createCreate from '../mutations/createCreate';
 import TypeSet from '../TypeSet';
 
@@ -16,7 +16,7 @@ const baseCredentialFields = {
     type: GraphQLString,
   },
   id: {
-    type: GraphQLID,
+    type: GraphQLString,
   },
 };
 
@@ -90,13 +90,20 @@ export default function createUser(interfaces) {
       name: 'ReindexUser',
       fields: {
         id: {
-          type: GraphQLID,
+          type: ReindexID,
         },
         credentials: {
           type: CredentialCollection,
         },
       },
-      interfaces: [interfaces.Builtin, interfaces.ExtendableBuiltin],
+      interfaces: [
+        interfaces.Node,
+        interfaces.Builtin,
+        interfaces.ExtendableBuiltin,
+      ],
+      isTypeOf(obj) {
+        return obj.id.type === 'ReindexUser';
+      },
     }),
     blacklistedRootFields: List([
       createCreate,

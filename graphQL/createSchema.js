@@ -4,7 +4,6 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLID,
   GraphQLInt,
   GraphQLFloat,
   GraphQLBoolean,
@@ -15,6 +14,7 @@ import {
 import TypeSet from './TypeSet';
 import {getById, getAllByIndex, processConnectionQuery} from '../db/queries';
 import DateTime from './builtins/DateTime';
+import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
@@ -62,13 +62,23 @@ export default function createSchema(dbMetadata) {
 
   const queryFields = createCommonRootFields(
     CommonQueryFieldCreators,
-    typeSets
-  ).merge(createRootFieldsForTypes(TypeQueryFieldCreators, typeSets));
+    typeSets,
+    interfaces
+  ).merge(createRootFieldsForTypes(
+    TypeQueryFieldCreators,
+    typeSets,
+    interfaces
+  ));
 
   const mutationFields = createCommonRootFields(
     CommonMutationFieldCreators,
-    typeSets
-  ).merge(createRootFieldsForTypes(TypeMutationFieldCreators, typeSets));
+    typeSets,
+    interfaces
+  ).merge(createRootFieldsForTypes(
+    TypeMutationFieldCreators,
+    typeSets,
+    interfaces
+  ));
 
   const query = new GraphQLObjectType({
     name: 'ReindexQuery',
@@ -86,7 +96,7 @@ export default function createSchema(dbMetadata) {
   });
 }
 
-function createType(type, getTypeSet) {
+function createType(type, getTypeSet, {Node}) {
   return new GraphQLObjectType({
     name: type.get('name'),
     fields: () => type
@@ -97,11 +107,15 @@ function createType(type, getTypeSet) {
         createField(field, getTypeSet),
       ])
       .toObject(),
+    interfaces: [Node],
+    isTypeOf(value) {
+      return value.id.type === type.get('name');
+    },
   });
 }
 
 const PRIMITIVE_TYPE_MAP = Map({
-  id: GraphQLID,
+  id: ReindexID,
   string: GraphQLString,
   integer: GraphQLInt,
   number: GraphQLFloat,
@@ -121,7 +135,12 @@ function createField(field, getTypeSet) {
     argDef = createConnectionArguments();
     resolve = (parent, args, {dbContext}) => {
       return processConnectionQuery(
-        getAllByIndex(dbContext, target, parent.id, field.get('reverseName')),
+        getAllByIndex(
+          dbContext,
+          target,
+          parent.id.value,
+          field.get('reverseName')
+        ),
         args
       );
     };
@@ -177,11 +196,11 @@ function createInputObject({type}, {Connection}) {
         } else {
           if (parentType) {
             return {
-              type: new parentType.constructor(GraphQLString),
+              type: new parentType.constructor(ReindexID),
             };
           } else {
             return {
-              type: GraphQLString,
+              type: ReindexID,
             };
           }
         }
@@ -195,7 +214,7 @@ function createMutation({type}, {Mutation}) {
     name: '_' + type.name + 'Mutation',
     fields: {
       clientMutationId: {
-        type: GraphQLID,
+        type: GraphQLString,
       },
       [type.name]: {
         type,

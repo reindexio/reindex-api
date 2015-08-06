@@ -66,7 +66,10 @@ describe('Database tests', () => {
         await queries
           .getAuthenticationProvider(dbContext, 'github')
           .run(conn),
-        TEST_DATA.getIn(['tables', AUTHENTICATION_PROVIDER_TABLE, 0]).toJS(),
+        processIds(
+          AUTHENTICATION_PROVIDER_TABLE,
+          TEST_DATA.getIn(['tables', AUTHENTICATION_PROVIDER_TABLE])
+        ).toJS()[0],
       );
     });
 
@@ -77,7 +80,10 @@ describe('Database tests', () => {
           .coerceTo('array')
           .run(conn)
         ).toSet(),
-        TEST_DATA.getIn(['tables', 'Micropost']).toSet()
+        processIds(
+          'Micropost',
+          TEST_DATA.getIn(['tables', 'Micropost']).toSet()
+        )
       );
     });
 
@@ -86,10 +92,16 @@ describe('Database tests', () => {
         await queries.getById(
           dbContext,
           'User',
-          '94b90d89-22b6-4abf-b6ad-2780bf9d0408'
+          {
+            value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+            type: 'User',
+          }
         ).run(conn),
         {
-          id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+          id: {
+            value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+            type: 'User',
+          },
           handle: 'fson',
         }
       );
@@ -107,7 +119,10 @@ describe('Database tests', () => {
           .coerceTo('array')
           .run(conn)
         ).toSet(),
-        TEST_DATA.getIn(['tables', 'Micropost']).toSet(),
+        processIds(
+          'Micropost',
+           TEST_DATA.getIn(['tables', 'Micropost']).toSet()
+        ),
       );
     });
 
@@ -123,7 +138,10 @@ describe('Database tests', () => {
       const base = queries.getAll(dbContext, 'Micropost');
       assert.oequal(
         fromJS(await queries.getNodes(base).run(conn)).toSet(),
-        TEST_DATA.getIn(['tables', 'Micropost']).toSet(),
+        processIds(
+          'Micropost',
+          TEST_DATA.getIn(['tables', 'Micropost']
+        )).toSet(),
       );
     });
 
@@ -131,7 +149,10 @@ describe('Database tests', () => {
       const base = queries.getAll(dbContext, 'Micropost');
       assert.oequal(
         fromJS(await queries.getEdges(base).run(conn)).toSet(),
-        TEST_DATA.getIn(['tables', 'Micropost']).map((node) => Map({
+        processIds(
+          'Micropost',
+          TEST_DATA.getIn(['tables', 'Micropost'])
+        ).map((node) => Map({
           node,
         })).toSet(),
       );
@@ -226,7 +247,7 @@ describe('Database tests', () => {
         'github',
         credentials
       );
-      assert.equal(user.id, newUser.id);
+      assert.equal(user.id.value, newUser.id.value);
     });
   });
 
@@ -237,7 +258,7 @@ describe('Database tests', () => {
           queries.getAll(dbContext, table),
           args
         )[queryType]
-        .map((item) => item('id'))
+        .map((item) => item('id')('value'))
         .coerceTo('array')
         .run(conn)
       );
@@ -323,3 +344,12 @@ describe('Database tests', () => {
     });
   });
 });
+
+function processIds(type, iterable) {
+  return iterable.map((obj) => (
+    obj.set('id', Map({
+      type,
+      value: obj.get('id'),
+    }))
+  ));
+}
