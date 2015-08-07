@@ -6,7 +6,7 @@ import DateTime from '../../../graphQL/builtins/DateTime';
 const dateISOString = '2015-08-06T10:03:50.052Z';
 
 describe('DateTime', () => {
-  it('coerces output dates', () => {
+  it('coerces javascript dates', () => {
     const date = new Date(dateISOString);
     assert.equal(DateTime.coerce(date), date);
     assert.equal(DateTime.coerce(new Date('invalid')), null);
@@ -15,7 +15,8 @@ describe('DateTime', () => {
     assert.equal(DateTime.coerce(null), null);
     assert.equal(DateTime.coerce(undefined), null);
   });
-  it('coerces input dates', () => {
+
+  it('coerces literal dates', () => {
     const ast = {
       kind: Kind.STRING,
       value: dateISOString,

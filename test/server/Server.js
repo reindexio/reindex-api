@@ -17,7 +17,8 @@ describe('Server', () => {
   const query = `query seacrh {
     searchForMicropost(orderBy: "createdAt", first: 1) {
       nodes {
-        text
+        text,
+        createdAt
       }
     }
   }`;
@@ -58,12 +59,13 @@ describe('Server', () => {
       },
     });
     assert.strictEqual(response.statusCode, 200);
-    assert.deepEqual(response.result, {
+    assert.deepEqual(JSON.parse(response.result), {
       data: {
         searchForMicropost: {
           nodes: [
             {
               text: 'Test text',
+              createdAt: '2015-04-10T10:24:52.163Z',
             },
           ],
         },
