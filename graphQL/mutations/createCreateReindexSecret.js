@@ -19,13 +19,12 @@ export default function createCreateReindexSecret(typeSets) {
       },
     }),
     returnType: secretMutation,
-    resolve: (parent, {clientMutationId}, {dbContext}) => (
-      create(dbContext, 'ReindexSecret', {
-        value: generateSecret(),
-      }).run(dbContext.conn).then((result) => ({
-        clientMutationId,
-        ReindexSecret: result,
-      }))
+    resolve: (parent, {clientMutationId}, {conn}) => (
+      create(conn, 'ReindexSecret', { value: generateSecret()})
+        .then((result) => ({
+          clientMutationId,
+          ReindexSecret: result,
+        }))
     ),
   });
 }

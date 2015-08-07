@@ -18,12 +18,26 @@ const Config = convict({
       },
     },
   },
+  RethinkDBPlugin: {
+    host: {
+      default: 'localhost',
+      doc: 'The host of RethinkDB to connect to.',
+      env: 'RETHINKDB_HOST',
+      format: String,
+    },
+    port: {
+      default: 28015,
+      doc: 'The port of RethinkDB to connect to.',
+      env: 'RETHINKDB_PORT',
+      format: 'port',
+    },
+  },
   SocialLoginPlugin: {
     cookiePassword: {
       default: Cryptiles.randomString(40),
       doc: 'A random secret used for Iron cookie encoding',
       env: 'COOKIE_PASSWORD',
-      format: '*',
+      format: String,
     },
   },
 });

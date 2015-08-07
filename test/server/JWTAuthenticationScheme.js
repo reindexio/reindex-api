@@ -1,15 +1,20 @@
 import Hapi from 'hapi';
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import {List} from 'immutable';
+import RethinkDB from 'rethinkdb';
+import {randomString} from 'cryptiles';
 
-import App from '../../apps/App';
 import assert from '../assert';
+import databaseNameFromHostname from '../../server/databaseNameFromHostname';
 import JWTAuthenticationScheme from '../../server/JWTAuthenticationScheme';
-
+import RethinkDBPlugin from '../../server/RethinkDBPlugin';
+import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
 describe('JWTAuthenticationScheme', () => {
+  const host = randomString(10) + '.example.com';
+  const db = databaseNameFromHostname(host);
   const secret = 'secret';
+  let conn;
   let server;
 
   before(async function () {
@@ -17,13 +22,8 @@ describe('JWTAuthenticationScheme', () => {
     server.connection();
     const register = Promise.promisify(server.register, server);
 
+    await register(RethinkDBPlugin);
     await register(JWTAuthenticationScheme);
-    server.ext('onPreAuth', (request, reply) => {
-      request.tenant = new App({
-        secrets: List.of(secret),
-      });
-      reply.continue();
-    });
     server.auth.strategy('token', 'jwt');
     server.route({
       method: 'POST',
@@ -33,6 +33,16 @@ describe('JWTAuthenticationScheme', () => {
       },
       config: { auth: 'token' },
     });
+  });
+
+  before(async function () {
+    conn = await RethinkDB.connect({ db });
+    await createTestDatabase(conn, db);
+  });
+
+  after(async function () {
+    await deleteTestDatabase(conn, db);
+    await conn.close();
   });
 
   const userID = '3c00d00d-e7d9-4cde-899f-e9c5d6400d87';
@@ -58,6 +68,7 @@ describe('JWTAuthenticationScheme', () => {
   it('returns a reply on successful authentication', async function() {
     const response = await makeRequest({
       authorization: `Bearer ${validToken}`,
+      host,
     });
     assert.strictEqual(response.statusCode, 200);
   });
@@ -65,6 +76,7 @@ describe('JWTAuthenticationScheme', () => {
   it('adds credentials to the request object', async function() {
     const response = await makeRequest({
       authorization: `Bearer ${validToken}`,
+      host,
     });
     assert.deepEqual(response.request.auth.credentials, {
       userID,
@@ -94,6 +106,7 @@ describe('JWTAuthenticationScheme', () => {
     }, secret);
     const response = await makeRequest({
       authorization: `Bearer ${expiredToken}`,
+      host,
     });
     assert.strictEqual(response.statusCode, 401);
     assert.deepEqual(response.result, {

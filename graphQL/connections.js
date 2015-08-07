@@ -32,22 +32,22 @@ export function createConnection({type}, {Edge, Connection}) {
       count: {
         name: 'count',
         type: GraphQLInt,
-        resolve({query}, args, {dbContext}) {
-          return getCount(query).run(dbContext.conn);
+        resolve({query}, args, {conn}) {
+          return getCount(conn, query);
         },
       },
       nodes: {
         name: 'nodes',
         type: new GraphQLList(type),
-        resolve({paginatedQuery}, args, {dbContext}) {
-          return getNodes(paginatedQuery).run(dbContext.conn);
+        resolve({paginatedQuery}, args, {conn}) {
+          return getNodes(conn, paginatedQuery);
         },
       },
       edges: {
         name: 'edges',
         type: new GraphQLList(edge),
-        resolve({paginatedQuery}, args, {dbContext}) {
-          return getEdges(paginatedQuery).run(dbContext.conn);
+        resolve({paginatedQuery}, args, {conn}) {
+          return getEdges(conn, paginatedQuery);
         },
       },
     },

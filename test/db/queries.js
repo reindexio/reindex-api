@@ -12,60 +12,40 @@ import {
   SECRET_TABLE,
   TYPE_TABLE,
 } from '../../db/DBConstants';
-import DBContext from '../../db/DBContext';
 import * as queries from '../../db/queries';
 
 describe('Database tests', () => {
-  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
-  const db = RethinkDB.db(dbName);
+  const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
-  let dbContext;
 
   before(async function () {
-    conn = await RethinkDB.connect();
-    dbContext = new DBContext({
-      conn, db,
-    });
-    return await createTestDatabase(conn, dbName);
+    conn = await RethinkDB.connect({ db });
+    await createTestDatabase(conn, db);
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, dbName);
+    await deleteTestDatabase(conn, db);
     await conn.close();
   });
 
   describe('Database access functions return correct data', () => {
-    it('getApp', async function() {
-      const result = fromJS(await queries.getApp(dbContext).run(conn));
-      assert.oequal(
-        result.getIn(['secrets', 0, 'value']),
-        TEST_DATA.getIn(['tables', SECRET_TABLE, 0, 'value'])
-      );
-      assert.oequal(
-        result.get('schema').toSet(),
-        TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
-      );
-    });
-
     it('getSecrets', async function() {
       assert.deepEqual(
-        (await queries.getSecrets(dbContext).run(conn))[0].value,
+        (await queries.getSecrets(conn))[0],
         TEST_DATA.getIn(['tables', SECRET_TABLE, 0, 'value'])
       );
     });
 
     it('getTypes', async function() {
       assert.oequal(
-        fromJS(await queries.getTypes(dbContext).run(conn)).toSet(),
+        fromJS(await queries.getTypes(conn)).toSet(),
         TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
       );
     });
 
     it('getAuthenticationProvider', async function() {
       assert.deepEqual(
-        await queries
-          .getAuthenticationProvider(dbContext, 'github')
-          .run(conn),
+        await queries.getAuthenticationProvider(conn, 'github'),
         processIds(
           AUTHENTICATION_PROVIDER_TABLE,
           TEST_DATA.getIn(['tables', AUTHENTICATION_PROVIDER_TABLE])
@@ -76,7 +56,7 @@ describe('Database tests', () => {
     it('getAll', async function() {
       assert.oequal(
         fromJS(await queries
-          .getAll(dbContext, 'Micropost')
+          .getAllQuery('Micropost')
           .coerceTo('array')
           .run(conn)
         ).toSet(),
@@ -87,16 +67,15 @@ describe('Database tests', () => {
       );
     });
 
-    it('getById', async function() {
+    it('getByID', async function() {
       assert.deepEqual(
-        await queries.getById(
-          dbContext,
-          'User',
+        await queries.getByID(
+          conn,
           {
             value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
             type: 'User',
           }
-        ).run(conn),
+        ),
         {
           id: {
             value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
@@ -107,11 +86,10 @@ describe('Database tests', () => {
       );
     });
 
-    it('getAllByIndex', async function() {
+    it('getAllByIndexQuery', async function() {
       assert.oequal(
         fromJS(await queries
-          .getAllByIndex(
-            dbContext,
+          .getAllByIndexQuery(
             'Micropost',
             'bbd1db98-4ac4-40a7-b514-968059c3dbac',
             'author'
@@ -127,17 +105,14 @@ describe('Database tests', () => {
     });
 
     it('getCount', async function() {
-      const base = queries.getAll(dbContext, 'Micropost');
-      assert.equal(
-        await queries.getCount(base).run(conn),
-        4
-      );
+      const base = queries.getAllQuery('Micropost');
+      assert.equal(await queries.getCount(conn, base), 4);
     });
 
     it('getNodes', async function() {
-      const base = queries.getAll(dbContext, 'Micropost');
+      const base = queries.getAllQuery('Micropost');
       assert.oequal(
-        fromJS(await queries.getNodes(base).run(conn)).toSet(),
+        fromJS(await queries.getNodes(conn, base)).toSet(),
         processIds(
           'Micropost',
           TEST_DATA.getIn(['tables', 'Micropost']
@@ -146,9 +121,9 @@ describe('Database tests', () => {
     });
 
     it('getEdges', async function() {
-      const base = queries.getAll(dbContext, 'Micropost');
+      const base = queries.getAllQuery('Micropost');
       assert.oequal(
-        fromJS(await queries.getEdges(base).run(conn)).toSet(),
+        fromJS(await queries.getEdges(conn, base)).toSet(),
         processIds(
           'Micropost',
           TEST_DATA.getIn(['tables', 'Micropost'])
@@ -162,12 +137,11 @@ describe('Database tests', () => {
       let id;
 
       it('create', async function() {
-        const result = await queries.create(dbContext, 'User', {
+        const result = await queries.create(conn, 'User', {
           handle: 'villeimmonen',
-        }).run(dbContext.conn);
+        });
         id = result.id;
-        const resultInDb = await queries.getById(dbContext, 'User', id)
-          .run(dbContext.conn);
+        const resultInDb = await queries.getByID(conn, id);
         assert.deepEqual(
           result,
           resultInDb
@@ -179,12 +153,11 @@ describe('Database tests', () => {
       });
 
       it('update', async function() {
-        const result = await queries.update(dbContext, 'User', id, {
+        const result = await queries.update(conn, 'User', id, {
           handle: 'immonenville',
           email: 'immonenv@example.com',
-        }).run(dbContext.conn);
-        const resultInDb = await queries.getById(dbContext, 'User', id)
-          .run(dbContext.conn);
+        });
+        const resultInDb = await queries.getByID(conn, id);
         assert.deepEqual(
           result,
           resultInDb
@@ -197,11 +170,10 @@ describe('Database tests', () => {
       });
 
       it('replace', async function() {
-        const result = await queries.replace(dbContext, 'User', id, {
+        const result = await queries.replace(conn, 'User', id, {
           handle: 'villeimmonen',
-        }).run(dbContext.conn);
-        const resultInDb = await queries.getById(dbContext, 'User', id)
-          .run(dbContext.conn);
+        });
+        const resultInDb = await queries.getByID(conn, id);
         assert.deepEqual(
           result,
           resultInDb
@@ -213,11 +185,10 @@ describe('Database tests', () => {
       });
 
       it('delete', async function() {
-        const result = await queries.deleteQuery(dbContext, 'User', id, {
+        const result = await queries.deleteQuery(conn, 'User', id, {
           handle: 'villeimmonen',
-        }).run(dbContext.conn);
-        const resultInDb = await queries.getById(dbContext, 'User', id)
-          .run(dbContext.conn);
+        });
+        const resultInDb = await queries.getByID(conn, id);
         assert.isNull(
           resultInDb
         );
@@ -237,13 +208,13 @@ describe('Database tests', () => {
         username: 'freiksenet',
       };
       const user = await queries.getOrCreateUser(
-        dbContext,
+        conn,
         'github',
         credentials
       );
       assert.deepEqual(user.credentials.github, credentials);
       const newUser = await queries.getOrCreateUser(
-        dbContext,
+        conn,
         'github',
         credentials
       );
@@ -255,7 +226,7 @@ describe('Database tests', () => {
     async function runAndGiveIds(table, args, queryType = 'paginatedQuery') {
       return fromJS(await queries
         .processConnectionQuery(
-          queries.getAll(dbContext, table),
+          queries.getAllQuery(table),
           args
         )[queryType]
         .map((item) => item('id')('value'))

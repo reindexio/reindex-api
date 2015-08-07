@@ -1,5 +1,5 @@
 import createRootField from '../createRootField';
-import {getAll, processConnectionQuery} from '../../db/queries';
+import {getAllQuery, processConnectionQuery} from '../../db/queries';
 import {
   createConnectionArguments,
 } from '../connections';
@@ -9,8 +9,8 @@ export default function createSearch({type, connection}) {
     name: 'searchFor' + type.name,
     returnType: connection,
     args: createConnectionArguments(),
-    resolve: (parent, args, {dbContext}) => (
-      processConnectionQuery(getAll(dbContext, type.name), args)
+    resolve: (parent, args) => (
+      processConnectionQuery(getAllQuery(type.name), args)
     ),
   });
 }

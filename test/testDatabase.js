@@ -18,7 +18,7 @@ export const TEST_DATA = fromJS({
       {
         author: {
           value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-          table: 'User',
+          type: 'User',
         },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
@@ -27,7 +27,7 @@ export const TEST_DATA = fromJS({
       {
         author: {
           value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-          table: 'User',
+          type: 'User',
         },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
         createdAt: new Date('2015-04-11T10:24:52.163Z'),
@@ -36,7 +36,7 @@ export const TEST_DATA = fromJS({
       {
         author: {
           value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-          table: 'User',
+          type: 'User',
         },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
         createdAt: new Date('2015-04-12T10:24:52.163Z'),
@@ -45,7 +45,7 @@ export const TEST_DATA = fromJS({
       {
         author: {
           value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-          table: 'User',
+          type: 'User',
         },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
         createdAt: new Date('2015-04-13T10:24:52.163Z'),

@@ -31,17 +31,16 @@ export default function createCRU(operation, getById, {
     name: operation + type.name,
     returnType: mutation,
     args: opArgs,
-    resolve(parent, args, {dbContext}) {
+    resolve(parent, args, {conn}) {
       const clientMutationId = args.clientMutationId;
       const object = args[type.name];
       let queryArgs;
       if (getById) {
-        queryArgs = [dbContext, type.name, args.id, object];
+        queryArgs = [conn, type.name, args.id, object];
       } else {
-        queryArgs = [dbContext, type.name, object];
+        queryArgs = [conn, type.name, object];
       }
       return queries[operation](...queryArgs)
-        .run(dbContext.conn)
         .then((result) => ({
           clientMutationId,
           [type.name]: result,
