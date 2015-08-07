@@ -40,7 +40,7 @@
     "create-app": "babel-node bin/create-app.js",
     "create-token": "node bin/create-token.js",
     "lint": "eslint ./",
-    "mocha": "mocha --timeout 30000 --compilers js:babel/register --recursive",
+    "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive",
     "start": "nodemon index.js",
     "test": "npm run lint && npm run mocha ./test"
   }
