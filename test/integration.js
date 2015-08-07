@@ -5,6 +5,7 @@ import RethinkDB from 'rethinkdb';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
 import getApp from '../apps/getApp';
 import DBContext from '../db/DBContext';
+import {toReindexID} from '../graphQL/builtins/ReindexID';
 
 describe('Integration Tests', () => {
   const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -27,18 +28,70 @@ describe('Integration Tests', () => {
     return await graphql(app.schema, query, {dbContext}, variables);
   }
 
-  it('queries by id', async function () {
-    const micropostResult = await runQuery(`
-      {
-        getMicropost(id: "f2f7fb49-3581-4caa-b84b-e9489eb47d84") {
-          text,
-          createdAt,
-          beautifulPerson: author {
-            nickname: handle
+  it('queries with node', async function() {
+    const id = {
+      type: 'Micropost',
+      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+    };
+
+    const result = await runQuery(`
+      query nodetest($id: ID!) {
+        node(id: $id) {
+          ... on Micropost {
+            text
           }
         }
       }
-    `);
+    `, {
+      id,
+    });
+
+    assert.deepEqual(result.data, {
+      node: {
+        text: 'Test text',
+      },
+    });
+
+    const builtinId = {
+      type: 'ReindexAuthenticationProvider',
+      value: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',
+    };
+
+    const builtinResult = await runQuery(`
+      query nodetest($id: ID!) {
+        node(id: $id) {
+          ... on ReindexAuthenticationProvider {
+            type,
+            isEnabled
+          }
+        }
+      }
+    `, {
+      id: builtinId,
+    });
+
+    assert.deepEqual(builtinResult.data, {
+      node: {
+        type: 'github',
+        isEnabled: true,
+      },
+    });
+  });
+
+  it('queries by id', async function() {
+    const micropostId = toReindexID({
+      type: 'Micropost',
+      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+    });
+    const micropostResult = await runQuery(`{
+      getMicropost(id: "${micropostId}") {
+        text,
+        createdAt,
+        beautifulPerson: author {
+          nickname: handle
+        }
+      }
+    }`);
 
     assert.deepEqual(micropostResult.data, {
       getMicropost: {
@@ -50,9 +103,13 @@ describe('Integration Tests', () => {
       },
     });
 
+    const userId = {
+      type: 'User',
+      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+    };
     const userResult = await runQuery(`
-      {
-        getUser(id: "bbd1db98-4ac4-40a7-b514-968059c3dbac") {
+      query getUser($id: ID!) {
+        getUser(id: $id) {
           handle,
           posts: microposts(orderBy: "createdAt", first: 1) {
             count,
@@ -66,7 +123,9 @@ describe('Integration Tests', () => {
           }
         }
       }
-    `);
+    `, {
+      id: userId,
+    });
 
     assert.deepEqual(userResult.data, {
       getUser: {
@@ -137,8 +196,8 @@ describe('Integration Tests', () => {
   it('does crud', async function() {
     const clientMutationId = 'my-client-mutation-id';
     const created = await runQuery(`
-      mutation createUser($User: _UserInputObject!, $cId: ID) {
-        createUser(User: $User, clientMutationId: $cId) {
+      mutation createUser($User: _UserInputObject!, $clientMutationId: String) {
+        createUser(User: $User, clientMutationId: $clientMutationId) {
           clientMutationId,
           User {
             id,
@@ -148,7 +207,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      cId: clientMutationId,
+      clientMutationId,
       User: {
         handle: 'immonenv',
         email: 'immonenv@example.com',
@@ -168,8 +227,8 @@ describe('Integration Tests', () => {
 
     const updated = await runQuery(`
       mutation updateUser($id: ID!, $User: _UserInputObject!,
-                          $cId: ID) {
-        updateUser(id: $id, User: $User, clientMutationId: $cId) {
+                          $clientMutationId: String) {
+        updateUser(id: $id, User: $User, clientMutationId: $clientMutationId) {
           clientMutationId,
           User {
             id,
@@ -180,7 +239,7 @@ describe('Integration Tests', () => {
       }
     `, {
       id,
-      cId: clientMutationId,
+      clientMutationId,
       User: {
         handle: 'villeimmonen',
       },
@@ -197,8 +256,8 @@ describe('Integration Tests', () => {
 
     const replaced = await runQuery(`
       mutation replaceUser($id: ID!, $User: _UserInputObject!,
-                           $cId: ID) {
-        replaceUser(id: $id, User: $User, clientMutationId: $cId) {
+                           $clientMutationId: String) {
+        replaceUser(id: $id, User: $User, clientMutationId: $clientMutationId) {
           clientMutationId,
           User {
             id,
@@ -209,7 +268,7 @@ describe('Integration Tests', () => {
       }
     `, {
       id,
-      cId: clientMutationId,
+      clientMutationId,
       User: {
         handle: 'immonenv',
       },
@@ -225,8 +284,8 @@ describe('Integration Tests', () => {
     }, 'replace works');
 
     const deleted = await runQuery(`
-      mutation deleteUser($id: ID!, $cId: ID) {
-        deleteUser(id: $id, clientMutationId: $cId) {
+      mutation deleteUser($id: ID!, $clientMutationId: String) {
+        deleteUser(id: $id, clientMutationId: $clientMutationId) {
           clientMutationId,
           User {
             id,
@@ -237,7 +296,7 @@ describe('Integration Tests', () => {
       }
     `, {
       id,
-      cId: clientMutationId,
+      clientMutationId,
     });
 
     assert.deepEqual(deleted.data.deleteUser, replaced.data.replaceUser,

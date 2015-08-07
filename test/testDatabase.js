@@ -1,4 +1,4 @@
-import {fromJS} from 'immutable';
+import {fromJS, List} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import {
@@ -16,34 +16,46 @@ export const TEST_DATA = fromJS({
     ],
     Micropost: [
       {
-        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          table: 'User',
+        },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
       },
       {
-        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          table: 'User',
+        },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
         createdAt: new Date('2015-04-11T10:24:52.163Z'),
         text: 'Test text 2',
       },
       {
-        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          table: 'User',
+        },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
         createdAt: new Date('2015-04-12T10:24:52.163Z'),
         text: 'Test text 3',
       },
       {
-        author: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          table: 'User',
+        },
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
         createdAt: new Date('2015-04-13T10:24:52.163Z'),
         text: 'Test text 4',
       },
-
     ],
     [AUTHENTICATION_PROVIDER_TABLE]: [
       {
-        id: 'github',
+        id: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',
+        type: 'github',
         clientID: 'fakeClientId',
         clientSecret: 'fakeClientSecret',
         isEnabled: true,
@@ -80,16 +92,6 @@ export const TEST_DATA = fromJS({
           },
         ],
         parameters: [],
-        indexes: [
-          {
-            name: 'id',
-            fields: [
-              {
-                name: 'id',
-              },
-            ],
-          },
-        ],
       },
       {
         name: 'Micropost',
@@ -116,20 +118,8 @@ export const TEST_DATA = fromJS({
         parameters: [],
         indexes: [
           {
-            name: 'id',
-            fields: [
-              {
-                name: 'id',
-              },
-            ],
-          },
-          {
             name: 'author',
-            fields: [
-              {
-                name: 'author',
-              },
-            ],
+            fields: ['author', 'value'],
           },
         ],
       },
@@ -156,25 +146,18 @@ export async function createTestDatabase(conn, dbName) {
   });
   await* TEST_DATA.get('tables').get(TYPE_TABLE).map(async function (type) {
     const table = type.get('name');
-    const indexes = type.get('indexes');
+    const indexes = type.get('indexes') || List();
     await* indexes.map(async function (index) {
       const name = index.get('name');
-      if (name === 'id') {
-        return;
-      }
       const fields = index.get('fields');
-      let indexFields;
-      if (fields.count() > 1) {
-        indexFields = fields.map((field) => (
-          RethinkDB.row(field.get('name'))
-        )).toArray();
-      } else {
-        indexFields = RethinkDB.row(fields.first().get('name'));
-      }
+      const indexDefinition = fields.rest().reduce(
+        (acc, field) => acc(field),
+        RethinkDB.row(fields.first())
+      );
       await RethinkDB
         .db(dbName)
         .table(table)
-        .indexCreate(name, indexFields)
+        .indexCreate(name, indexDefinition)
         .run(conn);
       await RethinkDB
         .db(dbName)

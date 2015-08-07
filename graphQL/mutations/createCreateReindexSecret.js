@@ -1,6 +1,6 @@
 import Cryptiles from 'cryptiles';
 import {Map} from 'immutable';
-import {GraphQLID} from 'graphql';
+import {GraphQLString} from 'graphql';
 import createRootField from '../createRootField';
 import {create} from '../../db/queries';
 
@@ -15,7 +15,7 @@ export default function createCreateReindexSecret(typeSets) {
     args: Map({
       clientMutationId: {
         name: 'clientMutationId',
-        type: GraphQLID,
+        type: GraphQLString,
       },
     }),
     returnType: secretMutation,

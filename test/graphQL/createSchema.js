@@ -4,12 +4,12 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLID,
   GraphQLInt,
   GraphQLFloat,
   GraphQLBoolean,
   GraphQLList,
 } from 'graphql';
+import ReindexID from '../../graphQL/builtins/ReindexID';
 import DateTime from '../../graphQL/builtins/DateTime';
 import createSchema from '../../graphQL/createSchema';
 import createInterfaces from '../../graphQL/builtins/createInterfaces';
@@ -55,7 +55,7 @@ describe('createSchema', () => {
       'type is created');
 
     const fields = userType.getFields();
-    assert.equal(fields.id.type, GraphQLID,
+    assert.equal(fields.id.type, ReindexID,
       'id is converted');
     assert.equal(fields.string.type, GraphQLString,
       'string is converted');
@@ -85,7 +85,7 @@ describe('createSchema', () => {
 
     const fields = schema.getType('User').getFields();
     assert.instanceOf(fields.id.type, GraphQLNonNull);
-    assert.equal(fields.id.type.ofType, GraphQLID);
+    assert.equal(fields.id.type.ofType, ReindexID);
   });
 
   it('creates appropriate connections', () => {
