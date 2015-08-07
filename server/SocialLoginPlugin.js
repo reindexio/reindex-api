@@ -6,11 +6,12 @@ import JSONWebToken from 'jsonwebtoken';
 import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
 import RethinkDB from 'rethinkdb';
-import {jsObj} from 'secure-filters';
 import {Set} from 'immutable';
 
 import DBContext from '../db/DBContext';
 import {getAuthenticationProvider, getOrCreateUser} from '../db/queries';
+import toJSON from './toJSON';
+import escapeScriptJSON from './escapeScriptJSON';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
@@ -49,7 +50,7 @@ function getBellProviderParams(providerName) {
 
 function renderCallbackPopup(reply, payload) {
   const html = templates.loginCallbackPopup({
-    payload: jsObj(payload),
+    payload: escapeScriptJSON(toJSON(payload)),
   });
   return reply(html).type('text/html');
 }

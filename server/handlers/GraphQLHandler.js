@@ -1,7 +1,8 @@
 import RethinkDB from 'rethinkdb';
-import {graphql} from 'graphql';
 import AppStore from '../../apps/AppStore';
 import DBContext from '../../db/DBContext';
+import graphql from '../../graphQL/graphql';
+import toJSON from '../toJSON';
 
 async function handler(request, reply) {
   const conn = request.rethinkDBConnection;
@@ -14,7 +15,8 @@ async function handler(request, reply) {
     const query = request.payload.query;
     const variables = request.payload.variables || {};
     const result = await graphql(app.schema, query, {dbContext}, variables);
-    reply(result);
+    reply(toJSON(result))
+      .type('application/json');
   } catch (error) {
     // TODO(fson, 2015-04-13): Handle errors granularly.
     reply(error);

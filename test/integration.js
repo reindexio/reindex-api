@@ -1,8 +1,8 @@
 import assert from './assert';
 import uuid from 'uuid';
-import {graphql} from 'graphql';
 import RethinkDB from 'rethinkdb';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
+import graphql from '../graphQL/graphql';
 import getApp from '../apps/getApp';
 import DBContext from '../db/DBContext';
 import {toReindexID} from '../graphQL/builtins/ReindexID';
@@ -29,10 +29,10 @@ describe('Integration Tests', () => {
   }
 
   it('queries with node', async function() {
-    const id = {
+    const id = toReindexID({
       type: 'Micropost',
       value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    };
+    });
 
     const result = await runQuery(`
       query nodetest($id: ID!) {
@@ -52,10 +52,10 @@ describe('Integration Tests', () => {
       },
     });
 
-    const builtinId = {
+    const builtinID = toReindexID({
       type: 'ReindexAuthenticationProvider',
       value: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',
-    };
+    });
 
     const builtinResult = await runQuery(`
       query nodetest($id: ID!) {
@@ -67,7 +67,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id: builtinId,
+      id: builtinID,
     });
 
     assert.deepEqual(builtinResult.data, {
@@ -103,10 +103,10 @@ describe('Integration Tests', () => {
       },
     });
 
-    const userId = {
+    const userId = toReindexID({
       type: 'User',
       value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    };
+    });
     const userResult = await runQuery(`
       query getUser($id: ID!) {
         getUser(id: $id) {
@@ -215,6 +215,7 @@ describe('Integration Tests', () => {
     });
 
     const id = created.data.createUser.User.id;
+    const reindexID = toReindexID(id);
 
     assert.deepEqual(created.data.createUser, {
       clientMutationId,
@@ -238,7 +239,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
+      id: reindexID,
       clientMutationId,
       User: {
         handle: 'villeimmonen',
@@ -267,7 +268,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
+      id: reindexID,
       clientMutationId,
       User: {
         handle: 'immonenv',
@@ -295,7 +296,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
+      id: reindexID,
       clientMutationId,
     });
 
@@ -310,13 +311,50 @@ describe('Integration Tests', () => {
           email
         }
       }
-    `, { id });
+    `, {
+      id: reindexID,
+    });
 
     assert.isNull(afterDeleted.data.getUser,
       'delete really deletes data');
   });
 
-  it('creates a secret', async function () {
+  it('saves connections correctly', async function() {
+    const authorID = {
+      type: 'User',
+      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+    };
+    const micropost = {
+      text: 'Sample text',
+      createdAt: '2014-05-12T18:00:00Z',
+      author: toReindexID(authorID),
+    };
+    const result = await runQuery(`
+      mutation postMicropost($Micropost: _MicropostInputObject!) {
+        createMicropost(Micropost: $Micropost) {
+          Micropost {
+            text,
+            createdAt,
+            author {
+              id
+            }
+          }
+        }
+      }
+    `, {
+      Micropost: micropost,
+    });
+
+    assert.deepEqual(result.data.createMicropost.Micropost, {
+      ...micropost,
+      createdAt: new Date(micropost.createdAt),
+      author: {
+        id: authorID,
+      },
+    });
+  });
+
+  it('creates a secret', async function() {
     const result = await runQuery(`
       mutation secret {
         createReindexSecret {
