@@ -32,6 +32,9 @@ function createCredentials({Builtin}) {
     name: 'ReindexGithubCredential',
     fields: {
       ...baseCredentialFields,
+      email: {
+        type: GraphQLString,
+      },
       username: {
         type: GraphQLString,
       },
@@ -56,6 +59,9 @@ function createCredentials({Builtin}) {
     name: 'ReindexTwitterCredential',
     fields: {
       ...baseCredentialFields,
+      accessTokenSecret: {
+        type: GraphQLString,
+      },
       username: {
         type: GraphQLString,
       },
