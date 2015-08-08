@@ -90,7 +90,8 @@ describe('Integration Tests', () => {
         createdAt,
         beautifulPerson: author {
           nickname: handle
-        }
+        },
+        tags
       }
     }`);
 
@@ -101,6 +102,7 @@ describe('Integration Tests', () => {
         },
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
+        tags: [],
       },
     });
 
@@ -353,6 +355,42 @@ describe('Integration Tests', () => {
         id: authorID,
       },
     });
+  });
+
+  it('saves arrays and embedded objects correctly', async function() {
+    const micropost = {
+      text: 'GraphQL is awesome',
+      tags: [
+        'graphql',
+      ],
+      categories: [
+        {
+          name: 'Programming',
+        },
+        {
+          name: 'Art',
+        },
+      ],
+      mainCategory: {
+        name: 'Programming',
+      },
+    };
+    const result = await runQuery(`
+      mutation postMicropost($Micropost: _MicropostInputObject!) {
+        createMicropost(Micropost: $Micropost) {
+          Micropost {
+            text,
+            tags,
+            categories { name },
+            mainCategory { name }
+          }
+        }
+      }
+    `, {
+      Micropost: micropost,
+    });
+
+    assert.deepEqual(result.data.createMicropost.Micropost, micropost);
   });
 
   it('creates a secret', async function() {

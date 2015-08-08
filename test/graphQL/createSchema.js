@@ -19,7 +19,9 @@ describe('createSchema', () => {
   it('creates types with appropriate scalar fields', () => {
     const schema = createSchema(fromJS([
       {
+        kind: 'OBJECT',
         name: 'User',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -53,6 +55,8 @@ describe('createSchema', () => {
     assert.equal(userType.name, 'User');
     assert.instanceOf(userType, GraphQLObjectType,
       'type is created');
+    assert.include(userType.getInterfaces(), schema.getType('Node'),
+      'type implements Node interface');
 
     const fields = userType.getFields();
     assert.equal(fields.id.type, ReindexID,
@@ -69,10 +73,60 @@ describe('createSchema', () => {
       'datetime is converted');
   });
 
+  it('creates list and object fields', () => {
+    const schema = createSchema(fromJS([
+      {
+        kind: 'OBJECT',
+        name: 'Address',
+        interfaces: [],
+        fields: [
+          {
+            name: 'street',
+            type: 'string',
+          },
+        ],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'User',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+          },
+          {
+            name: 'addresses',
+            type: 'list',
+            ofType: 'Address',
+          },
+          {
+            name: 'homeAddress',
+            type: 'Address',
+          },
+          {
+            name: 'nicknames',
+            type: 'list',
+            ofType: 'string',
+          },
+        ],
+      },
+    ]));
+    const userType = schema.getType('User');
+    const fields = userType.getFields();
+    assert.equal(fields.id.type.toString(), 'ID');
+    assert.equal(fields.addresses.type.toString(), '[Address]');
+    assert.equal(fields.homeAddress.type.toString(), 'Address');
+    assert.equal(fields.nicknames.type.toString(), '[String]');
+
+  });
+
   it('respects non-nullness', () => {
     const schema = createSchema(fromJS([
       {
+        kind: 'OBJECT',
         name: 'User',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -91,7 +145,9 @@ describe('createSchema', () => {
   it('creates appropriate connections', () => {
     const schema = createSchema(fromJS([
       {
+        kind: 'OBJECT',
         name: 'User',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -101,13 +157,15 @@ describe('createSchema', () => {
           {
             name: 'microposts',
             type: 'connection',
-            target: 'Micropost',
+            ofType: 'Micropost',
             reverseName: 'author',
           },
         ],
       },
       {
+        kind: 'OBJECT',
         name: 'Micropost',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -139,18 +197,18 @@ describe('createSchema', () => {
     assert.instanceOf(micropostConnectionFields.nodes.type, GraphQLList,
       'connection type has nodes field that is a list');
     assert.equal(micropostConnectionFields.nodes.type.ofType, micropostType,
-      'connection type nodes field is a list of target type');
+      'connection type nodes field is a list of inner type');
     assert.instanceOf(micropostConnectionFields.edges.type, GraphQLList,
       'connection type has edges field that is a list');
     assert.equal(micropostConnectionFields.edges.type.ofType, micropostEdge,
       'connection type edges field is a list of edges');
     assert.equal(micropostEdgeFields.node.type, micropostType,
-      'edges type has node field that is target type');
+      'edges type has node field that is of inner type');
 
     // TODO: cursor
 
     assert.equal(micropostFields.author.type, userType,
-      'target type is used on *-1 side');
+      'inner type is used on *-1 side');
   });
 
   it('creates valid inputObjects', () => {
@@ -178,7 +236,9 @@ describe('createSchema', () => {
   it('creates root fields', () => {
     const schema = createSchema(fromJS([
       {
+        kind: 'OBJECT',
         name: 'User',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -188,13 +248,15 @@ describe('createSchema', () => {
           {
             name: 'microposts',
             type: 'connection',
-            target: 'Micropost',
+            ofType: 'Micropost',
             reverseName: 'author',
           },
         ],
       },
       {
+        kind: 'OBJECT',
         name: 'Micropost',
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -205,6 +267,17 @@ describe('createSchema', () => {
             name: 'author',
             type: 'User',
             reverseName: 'microposts',
+          },
+        ],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'Comment',
+        interfaces: [],
+        fields: [
+          {
+            name: 'text',
+            type: 'string',
           },
         ],
       },
@@ -219,6 +292,11 @@ describe('createSchema', () => {
     assert.isDefined(queryFields.searchForMicropost);
     assert.isDefined(mutationFields.createUser);
     assert.isDefined(mutationFields.deleteMicropost);
+
+    assert.isUndefined(queryFields.getComment,
+      'root fields are only created for Node types');
+    assert.isUndefined(queryFields.createComment,
+      'root fields are only created for Node types');
 
     assert.isUndefined(queryFields.createReindexUser,
       'blacklisted root fields are not created');
