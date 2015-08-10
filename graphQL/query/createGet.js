@@ -1,6 +1,6 @@
 import {Map} from 'immutable';
 import {GraphQLNonNull} from 'graphql';
-import {getById} from '../../db/queries';
+import {getByID} from '../../db/queries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 
@@ -15,8 +15,8 @@ export default function createGet({type}) {
         type: new GraphQLNonNull(ReindexID),
       },
     }),
-    resolve: (parent, {id}, {dbContext}) => (
-      getById(dbContext, type.name, id).run(dbContext.conn)
+    resolve: (parent, {id}, {conn}) => (
+      getByID(conn, id)
     ),
   });
 }

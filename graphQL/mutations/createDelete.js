@@ -18,9 +18,8 @@ export default function createDelete({type, mutation}) {
         type: new GraphQLNonNull(ReindexID),
       },
     }),
-    resolve(parent, {clientMutationId, id}, {dbContext}) {
-      return deleteQuery(dbContext, type.name, id)
-        .run(dbContext.conn)
+    resolve(parent, {clientMutationId, id}, {conn}) {
+      return deleteQuery(conn, type.name, id)
         .then((result) => ({
           clientMutationId,
           [type.name]: result,

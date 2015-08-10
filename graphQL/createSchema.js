@@ -1,4 +1,3 @@
-import {Map} from 'immutable';
 import {
   GraphQLSchema,
   GraphQLObjectType,
@@ -11,8 +10,14 @@ import {
   GraphQLList,
   GraphQLInputObjectType,
 } from 'graphql';
+import {Map} from 'immutable';
+
 import TypeSet from './TypeSet';
-import {getById, getAllByIndex, processConnectionQuery} from '../db/queries';
+import {
+  getByID,
+  getAllByIndexQuery,
+  processConnectionQuery,
+} from '../db/queries';
 import DateTime from './builtins/DateTime';
 import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';
@@ -133,10 +138,9 @@ function createField(field, getTypeSet) {
     const target = field.get('target');
     type = getTypeSet(target).connection;
     argDef = createConnectionArguments();
-    resolve = (parent, args, {dbContext}) => {
+    resolve = (parent, args) => {
       return processConnectionQuery(
-        getAllByIndex(
-          dbContext,
+        getAllByIndexQuery(
           target,
           parent.id.value,
           field.get('reverseName')
@@ -148,9 +152,8 @@ function createField(field, getTypeSet) {
     type = PRIMITIVE_TYPE_MAP.get(fieldType);
   } else {
     type = getTypeSet(fieldType).type;
-    resolve = (parent, args, {dbContext}) => {
-      return getById(dbContext, fieldType, parent[fieldName])
-        .run(dbContext.conn);
+    resolve = (parent, args, {conn}) => {
+      return getByID(conn, parent[fieldName]);
     };
   }
 

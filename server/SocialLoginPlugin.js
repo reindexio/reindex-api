@@ -5,13 +5,15 @@ import DoT from 'dot';
 import JSONWebToken from 'jsonwebtoken';
 import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
-import RethinkDB from 'rethinkdb';
 import {Set} from 'immutable';
 
-import DBContext from '../db/DBContext';
-import {getAuthenticationProvider, getOrCreateUser} from '../db/queries';
-import toJSON from './toJSON';
 import escapeScriptJSON from './escapeScriptJSON';
+import toJSON from './toJSON';
+import {
+  getAuthenticationProvider,
+  getOrCreateUser,
+  getSecrets,
+} from '../db/queries';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
@@ -58,12 +60,7 @@ function renderCallbackPopup(reply, payload) {
 async function authenticate(request, reply) {
   request.isSocialLoginRequest = true;
   try {
-    const conn = request.rethinkDBConnection;
-    const app = request.tenant;
-    const dbContext = new DBContext({
-      conn,
-      db: RethinkDB.db(app.dbName),
-    });
+    const conn = await request.rethinkDBConnection;
     const providerName = request.params.provider;
     const bellProvider = getBellProvider(providerName);
     if (!bellProvider) {
@@ -75,9 +72,9 @@ async function authenticate(request, reply) {
     }
 
     const authenticationProvider = await getAuthenticationProvider(
-      dbContext,
+      conn,
       providerName,
-    ).run(conn);
+    );
 
     if (!authenticationProvider || !authenticationProvider.isEnabled) {
       return reply(
@@ -149,25 +146,25 @@ function normalizeCredentials(credentials) {
 
 async function handler(request, reply) {
   try {
-    const {rethinkDBConnection, tenant} = request;
+    const conn = await request.rethinkDBConnection;
     const {credentials} = request.auth;
 
     const {provider} = credentials;
     const credential = normalizeCredentials(credentials);
-    const dbContext = new DBContext({
-      conn: rethinkDBConnection,
-      db: RethinkDB.db(tenant.dbName),
-    });
     const user = await getOrCreateUser(
-      dbContext,
+      conn,
       provider,
       credential,
     );
 
-    const secret = tenant.secrets.first();
+    const secrets = await getSecrets(conn);
+    if (!secrets.length) {
+      throw new Error('We are trying to sign a token but we have no secrets!');
+    }
+
     const token = JSONWebToken.sign(
       { provider },
-      secret,
+      secrets[0],
       { subject: user.id },
     );
     return renderCallbackPopup(reply, { token, provider, user });

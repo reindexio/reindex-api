@@ -1,14 +1,17 @@
 import JSONWebToken from 'jsonwebtoken';
+import Promise from 'bluebird';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
+import {randomString} from 'cryptiles';
 
 import assert from '../assert';
 import createServer from '../../server/createServer';
+import databaseNameFromHostname from '../../server/databaseNameFromHostname';
 import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
 
-
 describe('Server', () => {
-  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
+  const host = randomString(10) + '.example.com';
+  const db = databaseNameFromHostname(host);
   const randomUserID = uuid.v4();
   const randomSecret = 'secret';
   const token = JSONWebToken.sign({
@@ -35,16 +38,14 @@ describe('Server', () => {
   });
 
   before(async function () {
-    conn = await RethinkDB.connect();
-    await createTestDatabase(conn, dbName);
+    conn = await RethinkDB.connect({ db });
+    await createTestDatabase(conn, db);
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, dbName);
+    await deleteTestDatabase(conn, db);
     await conn.close();
   });
-
-
 
   it('executes a GraphQL query', async function () {
     const response = await makeRequest({
@@ -55,7 +56,7 @@ describe('Server', () => {
       },
       headers: {
         authorization: `Bearer ${token}`,
-        host: `${dbName}.example.com`,
+        host,
       },
     });
     assert.strictEqual(response.statusCode, 200);
@@ -74,7 +75,7 @@ describe('Server', () => {
   });
 
   it('returns 404 for non-existent apps or reserved names', async function () {
-    for (const appName of ['nonexistent', 'rethinkdb']) {
+    for (const invalidHost of ['nonexistent.example.com', 'rethinkdb.com']) {
       const response = await makeRequest({
         method: 'POST',
         url: '/graphql',
@@ -83,7 +84,7 @@ describe('Server', () => {
         },
         headers: {
           authorization: `Bearer ${token}`,
-          host: `${appName}.example.com`,
+          host: invalidHost,
         },
       });
       assert.strictEqual(response.statusCode, 404);

@@ -1,7 +1,10 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
+import {getSecrets} from '../db/queries';
+
 const authorizationRegExp = /^Bearer (.+)$/i;
+const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
 
 function verifyToken(token, secrets) {
   for (const secret of secrets) {
@@ -19,33 +22,46 @@ function verifyToken(token, secrets) {
   return null;
 }
 
-function authenticate(request, reply) {
-  const { tenant } = request;
-  const { authorization } = request.headers;
+async function authenticateAsync(request) {
+  const {authorization} = request.headers;
 
   if (!authorization) {
-    return reply(Boom.unauthorized());
+    throw Boom.unauthorized();
   }
 
   const match = authorizationRegExp.exec(authorization);
   if (!match) {
-    return reply(Boom.unauthorized());
+    throw Boom.unauthorized();
   }
   const token = match[1];
 
+  const conn = await request.rethinkDBConnection;
+
+  let secrets;
+  try {
+    secrets = await getSecrets(conn);
+  } catch (error) {
+    if (error.name === 'RqlRuntimeError' &&
+        databaseDoesNotExistRegExp.test(error.msg)) {
+      throw Boom.notFound();
+    } else {
+      throw error;
+    }
+  }
+
   let verifiedToken;
   try {
-    verifiedToken = verifyToken(token, tenant.secrets);
+    verifiedToken = verifyToken(token, secrets);
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      return reply(Boom.unauthorized('Token expired'));
+      throw Boom.unauthorized('Token expired');
     } else {
-      return reply(Boom.unauthorized());
+      throw Boom.unauthorized();
     }
   }
 
   if (!verifiedToken) {
-    return reply(Boom.unauthorized());
+    throw Boom.unauthorized();
   }
 
   const credentials = {
@@ -53,7 +69,13 @@ function authenticate(request, reply) {
     userID: verifiedToken.sub,
   };
 
-  return reply.continue({ credentials });
+  return credentials;
+}
+
+function authenticate(request, reply) {
+  authenticateAsync(request)
+    .then((credentials) => reply.continue({ credentials }))
+    .catch((error) => reply(error));
 }
 
 function register(server, options, next) {

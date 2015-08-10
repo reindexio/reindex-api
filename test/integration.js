@@ -1,31 +1,32 @@
-import assert from './assert';
-import uuid from 'uuid';
+import Immutable from 'immutable';
 import RethinkDB from 'rethinkdb';
-import {createTestDatabase, deleteTestDatabase} from './testDatabase';
+import uuid from 'uuid';
+
+import assert from './assert';
+import createSchema from '../graphQL/createSchema';
 import graphql from '../graphQL/graphql';
-import getApp from '../apps/getApp';
-import DBContext from '../db/DBContext';
+import {createTestDatabase, deleteTestDatabase} from './testDatabase';
+import {getTypes} from '../db/queries';
 import {toReindexID} from '../graphQL/builtins/ReindexID';
 
 describe('Integration Tests', () => {
-  const dbName = 'testdb' + uuid.v4().replace(/-/g, '_');
-  const db = RethinkDB.db(dbName);
+  const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
 
   before(async function () {
-    conn = await RethinkDB.connect();
-    return await createTestDatabase(conn, dbName);
+    conn = await RethinkDB.connect({ db });
+    return await createTestDatabase(conn, db);
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, dbName);
+    await deleteTestDatabase(conn, db);
     await conn.close();
   });
 
   async function runQuery(query, variables) {
-    const app = await getApp(dbName, conn);
-    const dbContext = new DBContext({db, conn});
-    return await graphql(app.schema, query, {dbContext}, variables);
+    const types = await getTypes(conn);
+    const schema = createSchema(Immutable.fromJS(types));
+    return await graphql(schema, query, { conn }, variables);
   }
 
   it('queries with node', async function() {

@@ -2,7 +2,6 @@ import Bassmaster from 'bassmaster';
 import Hapi from 'hapi';
 import Promise from 'bluebird';
 
-import AppPlugin from './AppPlugin';
 import Config from './Config';
 import Good from 'good';
 import GoodConsole from 'good-console';
@@ -33,7 +32,6 @@ export default async function createServer() {
   server.connection(Config.get('connection'));
 
   await server.register(RethinkDBPlugin);
-  await server.register(AppPlugin);
   await server.register({
     register: SocialLoginPlugin,
     options: Config.get('SocialLoginPlugin'),
