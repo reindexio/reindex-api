@@ -41,6 +41,7 @@
     "create-token": "node bin/create-token.js",
     "lint": "eslint ./",
     "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive",
+    "print-schema": "babel-node bin/print-schema.js",
     "start": "nodemon index.js",
     "test": "npm run lint && npm run mocha ./test"
   }
