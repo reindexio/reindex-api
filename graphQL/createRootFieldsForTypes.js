@@ -19,7 +19,7 @@ export default function createRootFieldsForTypes(
 function createRootFieldsForType(creators, typeSet, interfaces) {
   return creators
     .filter((creator) =>
-      typeSet.type.getInterfaces().includes(interfaces.Node) &&
+      typeSet.type.getInterfaces().includes(interfaces.ReindexNode) &&
       !typeSet.blacklistedRootFields.contains(creator)
     )
     .map((creator) => creator(typeSet, interfaces))

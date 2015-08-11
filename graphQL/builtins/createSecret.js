@@ -9,7 +9,7 @@ import createUpdate from '../mutations/createUpdate';
 import createReplace from '../mutations/createReplace';
 import TypeSet from '../TypeSet';
 
-export default function createSecret({Node, Builtin}) {
+export default function createSecret(interfaces) {
   return new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexSecret',
@@ -21,7 +21,9 @@ export default function createSecret({Node, Builtin}) {
           type: GraphQLString,
         },
       },
-      interfaces: [Node, Builtin],
+      interfaces: [
+        interfaces.ReindexNode,
+      ],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexSecret';
       },

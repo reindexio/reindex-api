@@ -87,7 +87,7 @@ export const TEST_DATA = fromJS({
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['Node'],
+        interfaces: ['ReindexNode'],
         fields: [
           {
             name: 'id',
@@ -113,7 +113,7 @@ export const TEST_DATA = fromJS({
       {
         kind: 'OBJECT',
         name: 'Micropost',
-        interfaces: ['Node'],
+        interfaces: ['ReindexNode'],
         fields: [
           {
             name: 'id',

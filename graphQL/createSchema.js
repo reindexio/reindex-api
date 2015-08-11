@@ -41,13 +41,7 @@ import {
  */
 export default function createSchema(dbMetadata) {
   const interfaces = createInterfaces();
-  let typeSets = createCommonTypes(interfaces).map((typeSet) => (
-    typeSet.merge(Map({
-      connection: createConnection(typeSet, interfaces),
-      inputObject: createInputObjectType(typeSet, getTypeSet, interfaces),
-      mutation: createMutation(typeSet, interfaces),
-    }))
-  ));
+  let typeSets = createCommonTypes(interfaces);
 
   function getTypeSet(name) {
     return typeSets.get(name);
@@ -57,7 +51,7 @@ export default function createSchema(dbMetadata) {
     if (typeMetadata.get('kind') === 'OBJECT') {
       const type = createObjectType(typeMetadata, getTypeSet, interfaces);
       let typeSet = new TypeSet({ type });
-      if (type.getInterfaces().includes(interfaces.Node)) {
+      if (type.getInterfaces().includes(interfaces.ReindexNode)) {
         typeSet = typeSet.set(
           'connection',
           createConnection(typeSet, interfaces),
@@ -72,11 +66,20 @@ export default function createSchema(dbMetadata) {
       'inputObject',
       createInputObjectType(typeSet, getTypeSet, interfaces),
     );
-    if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
-      return typeSet.set('mutation', createMutation(typeSet, interfaces));
-    } else {
-      return typeSet;
+    if (typeSet.type.getInterfaces().includes(interfaces.ReindexNode)) {
+      typeSet = typeSet.set(
+        'mutation',
+        createMutation(typeSet, interfaces)
+      );
+      if (!typeSet.connection) {
+        typeSet = typeSet.set(
+          'connection',
+          createConnection(typeSet, interfaces)
+        );
+      }
     }
+    return typeSet;
+
   });
 
   const queryFields = createCommonRootFields(
@@ -168,7 +171,7 @@ function createField(field, getTypeSet, interfaces) {
     type = PRIMITIVE_TYPE_MAP.get(fieldType);
   } else {
     type = getTypeSet(fieldType).type;
-    if (type.getInterfaces().includes(interfaces.Node)) {
+    if (type.getInterfaces().includes(interfaces.ReindexNode)) {
       resolve = (parent, args, {conn}) => getByID(conn, parent[fieldName]);
     }
   }
@@ -186,7 +189,11 @@ function createField(field, getTypeSet, interfaces) {
   };
 }
 
-function createInputObjectType({type}, getTypeSet, interfaces) {
+function createInputObjectType(
+  {type},
+  getTypeSet,
+  {ReindexNode, ReindexConnection}
+) {
   return new GraphQLInputObjectType({
     name: '_' + type.name + 'InputObject',
     fields: () => Map(type.getFields())
@@ -194,7 +201,7 @@ function createInputObjectType({type}, getTypeSet, interfaces) {
         return (
           field.type !== ReindexID &&
           (!field.type.getInterfaces ||
-           !field.type.getInterfaces().includes(interfaces.Connection))
+           !field.type.getInterfaces().includes(ReindexConnection))
         );
       })
       .map((field) => {
@@ -213,7 +220,7 @@ function createInputObjectType({type}, getTypeSet, interfaces) {
             type: field.type,
           };
         } else {
-          fieldType = fieldType.getInterfaces().includes(interfaces.Node) ?
+          fieldType = fieldType.getInterfaces().includes(ReindexNode) ?
             ReindexID :
             getTypeSet(fieldType.name).inputObject;
           if (parentType) {
@@ -231,7 +238,7 @@ function createInputObjectType({type}, getTypeSet, interfaces) {
   });
 }
 
-function createMutation({type}, {Mutation}) {
+function createMutation({type}, interfaces) {
   return new GraphQLObjectType({
     name: '_' + type.name + 'Mutation',
     fields: {
@@ -242,6 +249,8 @@ function createMutation({type}, {Mutation}) {
         type,
       },
     },
-    interfaces: [Mutation],
+    interfaces: [
+      interfaces.ReindexMutation,
+    ],
   });
 }
