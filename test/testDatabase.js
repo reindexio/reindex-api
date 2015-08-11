@@ -23,6 +23,7 @@ export const TEST_DATA = fromJS({
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
         createdAt: new Date('2015-04-10T10:24:52.163Z'),
         text: 'Test text',
+        tags: [],
       },
       {
         author: {
@@ -32,6 +33,7 @@ export const TEST_DATA = fromJS({
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
         createdAt: new Date('2015-04-11T10:24:52.163Z'),
         text: 'Test text 2',
+        tags: ['test', 'two'],
       },
       {
         author: {
@@ -41,6 +43,7 @@ export const TEST_DATA = fromJS({
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d83',
         createdAt: new Date('2015-04-12T10:24:52.163Z'),
         text: 'Test text 3',
+        tags: ['test', 'three'],
       },
       {
         author: {
@@ -50,6 +53,7 @@ export const TEST_DATA = fromJS({
         id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d80',
         createdAt: new Date('2015-04-13T10:24:52.163Z'),
         text: 'Test text 4',
+        tags: ['test', 'four'],
       },
     ],
     [AUTHENTICATION_PROVIDER_TABLE]: [
@@ -69,8 +73,21 @@ export const TEST_DATA = fromJS({
     ],
     [TYPE_TABLE]: [
       {
+        kind: 'OBJECT',
+        name: 'Category',
+        interfaces: [],
+        fields: [
+          {
+            name: 'name',
+            type: 'string',
+          },
+        ],
+        indexes: [],
+      },
+      {
+        kind: 'OBJECT',
         name: 'User',
-        isNode: true,
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -87,15 +104,16 @@ export const TEST_DATA = fromJS({
           {
             name: 'microposts',
             type: 'connection',
-            target: 'Micropost',
+            ofType: 'Micropost',
             reverseName: 'author',
           },
         ],
-        parameters: [],
+        indexes: [],
       },
       {
+        kind: 'OBJECT',
         name: 'Micropost',
-        isNode: true,
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -114,8 +132,21 @@ export const TEST_DATA = fromJS({
             type: 'User',
             reverseName: 'microposts',
           },
+          {
+            name: 'tags',
+            type: 'list',
+            ofType: 'string',
+          },
+          {
+            name: 'categories',
+            type: 'list',
+            ofType: 'Category',
+          },
+          {
+            name: 'mainCategory',
+            type: 'Category',
+          },
         ],
-        parameters: [],
         indexes: [
           {
             name: 'author',
