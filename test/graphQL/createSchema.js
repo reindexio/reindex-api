@@ -1,6 +1,7 @@
-import {fromJS} from 'immutable';
+import {fromJS, List} from 'immutable';
 import assert from '../assert';
 import {
+  GraphQLInterfaceType,
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
@@ -216,7 +217,7 @@ describe('createSchema', () => {
   });
 
   it('creates builtin types', () => {
-    const schema = createSchema(fromJS([]));
+    const schema = createSchema(List());
 
     const reindexUser = schema.getType('ReindexUser');
     const reindexUserFields = reindexUser.getFields();
@@ -231,6 +232,14 @@ describe('createSchema', () => {
         reindexUserFields[fieldName].type.name
       );
     }
+  });
+
+  it('creates builtin interfaces', () => {
+    const schema = createSchema(List());
+    const interfaces = Object.keys(createInterfaces());
+    interfaces.forEach((name) => {
+      assert.instanceOf(schema.getType(name), GraphQLInterfaceType);
+    });
   });
 
   it('creates root fields', () => {
@@ -283,9 +292,9 @@ describe('createSchema', () => {
       },
     ]));
 
-    const query = schema.getType('ReindexQuery');
+    const query = schema.getType('ReindexQueryRoot');
     const queryFields = query.getFields();
-    const mutation = schema.getType('ReindexMutation');
+    const mutation = schema.getType('ReindexMutationRoot');
     const mutationFields = mutation.getFields();
 
     assert.isDefined(queryFields.getUser);

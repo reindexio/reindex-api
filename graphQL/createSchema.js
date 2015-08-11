@@ -103,12 +103,12 @@ export default function createSchema(dbMetadata) {
   ));
 
   const query = new GraphQLObjectType({
-    name: 'ReindexQuery',
+    name: 'ReindexQueryRoot',
     fields: queryFields.toObject(),
   });
 
   const mutation = new GraphQLObjectType({
-    name: 'ReindexMutation',
+    name: 'ReindexMutationRoot',
     fields: mutationFields.toObject(),
   });
 
