@@ -8,7 +8,7 @@ import {getTypes} from '../db/queries';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 
 function usage() {
-  process.stdout.write(`Usage: ${process.argv[1]} HOSTNAME\n`);
+  console.log(`Usage: ${process.argv[1]} HOSTNAME\n`);
 }
 
 async function main() {
@@ -22,11 +22,11 @@ async function main() {
 
   const conn = await RethinkDB.connect({ db });
   try {
-
-
     const types = await getTypes(conn);
     const schema = createSchema(Immutable.fromJS(types));
-    process.stdout.write(printSchema(schema));
+    console.log(printSchema(schema));
+  } catch (e) {
+    console.error(e.stack);
   } finally {
     await conn.close();
   }
