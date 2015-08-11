@@ -7,7 +7,7 @@ import TypeSet from '../TypeSet';
 import ReindexID from './ReindexID';
 import ProviderType from './ProviderType';
 
-export default function createAuthenticationProvider({Node, Builtin}) {
+export default function createAuthenticationProvider(interfaces) {
   return new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexAuthenticationProvider',
@@ -28,7 +28,9 @@ export default function createAuthenticationProvider({Node, Builtin}) {
           type: GraphQLBoolean,
         },
       },
-      interfaces: [Node, Builtin],
+      interfaces: [
+        interfaces.ReindexNode,
+      ],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexAuthenticationProvider';
       },

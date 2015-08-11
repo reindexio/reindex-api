@@ -4,10 +4,10 @@ import {getByID} from '../../db/queries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 
-export default function createNode(typeSets, {Node}) {
+export default function createNode(typeSets, interfaces) {
   return createRootField({
     name: 'node',
-    returnType: Node,
+    returnType: interfaces.ReindexNode,
     args: Map({
       id: {
         name: 'id',

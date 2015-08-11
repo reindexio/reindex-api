@@ -6,8 +6,8 @@ import ReindexID from './ReindexID';
 
 export default function createInterfaces() {
   return {
-    Node: new GraphQLInterfaceType({
-      name: 'Node',
+    ReindexNode: new GraphQLInterfaceType({
+      name: 'ReindexNode',
       description: {},
       fields: {
         id: {
@@ -15,17 +15,17 @@ export default function createInterfaces() {
         },
       },
     }),
-    Connection: new GraphQLInterfaceType({
+    ReindexConnection: new GraphQLInterfaceType({
       name: 'ReindexConnection',
       description: '',
       fields: {},
     }),
-    Edge: new GraphQLInterfaceType({
+    ReindexEdge: new GraphQLInterfaceType({
       name: 'ReindexEdge',
       description: '',
       fields: {},
     }),
-    Mutation: new GraphQLInterfaceType({
+    ReindexMutation: new GraphQLInterfaceType({
       name: 'ReindexMutation',
       description: '',
       fields: {
@@ -33,16 +33,6 @@ export default function createInterfaces() {
           type: GraphQLString,
         },
       },
-    }),
-    Builtin: new GraphQLInterfaceType({
-      name: 'ReindexBuiltin',
-      description: '',
-      fields: {},
-    }),
-    ExtendableBuiltin: new GraphQLInterfaceType({
-      name: 'ReindexExtendableBuiltin',
-      description: '',
-      fields: {},
     }),
   };
 }

@@ -7,7 +7,7 @@ import {
   GraphQLList,
 } from 'graphql';
 
-export function createConnection({type}, {Edge, Connection}) {
+export function createConnection({type}, interfaces) {
   const edge = new GraphQLObjectType({
     name: '_' + type.name + 'Edge',
     fields: {
@@ -24,7 +24,9 @@ export function createConnection({type}, {Edge, Connection}) {
         type,
       },
     },
-    interfaces: [Edge],
+    interfaces: [
+      interfaces.ReindexEdge,
+    ],
   });
   return new GraphQLObjectType({
     name: '_' + type.name + 'Connection',
@@ -51,7 +53,9 @@ export function createConnection({type}, {Edge, Connection}) {
         },
       },
     },
-    interfaces: [Connection],
+    interfaces: [
+      interfaces.ReindexConnection,
+    ],
   });
 }
 

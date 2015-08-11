@@ -1,11 +1,11 @@
 import {Map} from 'immutable';
 import createAuthenticationProvider from './createAuthenticationProvider';
-import createUser from './createUser';
+import createUserTypes from './createUserTypes';
 import createSecret from './createSecret';
 
 export default function createCommonTypes(interfaces) {
   return Map({
-    ReindexUser: createUser(interfaces),
+    ...createUserTypes(interfaces),
     ReindexSecret: createSecret(interfaces),
     ReindexAuthethenticationProvider: createAuthenticationProvider(interfaces),
   });
