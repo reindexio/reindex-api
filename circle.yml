@@ -1,9 +1,9 @@
 machine:
   node:
-    version: 0.12.2
+    version: iojs-v3.0.0
 checkout:
   post:
-    - git config --global user.email "circleci@reindex.com"
+    - git config --global user.email "hello+circleci@reindex.io"
     - git config --global user.name "CirceCI Runner"
     - git merge -m "Master merge" origin/master
 dependencies:
