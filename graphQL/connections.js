@@ -1,11 +1,16 @@
 import {Map} from 'immutable';
-import {getCount, getNodes, getEdges} from '../db/queries';
 import {
   GraphQLObjectType,
-  GraphQLString,
+  GraphQLInputObjectType,
+  GraphQLBoolean,
   GraphQLInt,
+  GraphQLString,
+  GraphQLNonNull,
   GraphQLList,
+  GraphQLEnumType,
 } from 'graphql';
+import {getNodes, getEdges, getCount, getPageInfo} from '../db/queries/simple';
+import Cursor from './builtins/Cursor';
 
 export function createConnection({type}, interfaces) {
   const edge = new GraphQLObjectType({
@@ -13,11 +18,7 @@ export function createConnection({type}, interfaces) {
     fields: {
       cursor: {
         name: 'cursor',
-        type: GraphQLString,
-        resolve() {
-          // TODO
-          return '';
-        },
+        type: Cursor,
       },
       node: {
         name: 'node',
@@ -48,8 +49,15 @@ export function createConnection({type}, interfaces) {
       edges: {
         name: 'edges',
         type: new GraphQLList(edge),
-        resolve({paginatedQuery}, args, {conn}) {
-          return getEdges(conn, paginatedQuery);
+        resolve({paginatedQuery, cursorFn}, args, {conn}) {
+          return getEdges(conn, paginatedQuery, cursorFn);
+        },
+      },
+      pageInfo: {
+        name: 'pageInfo',
+        type: new GraphQLNonNull(PageInfo),
+        resolve({pageInfo}, args, {conn}) {
+          return getPageInfo(conn, pageInfo);
         },
       },
     },
@@ -59,19 +67,63 @@ export function createConnection({type}, interfaces) {
   });
 }
 
+const PageInfo = new GraphQLObjectType({
+  name: 'PageInfo',
+  fields: {
+    hasPrevPage: {
+      type: GraphQLBoolean,
+    },
+    hasNextPage: {
+      type: GraphQLBoolean,
+    },
+  },
+});
+
+const OrderByOrderEnum = new GraphQLEnumType({
+  name: 'ReindexOrderByOrder',
+  values: {
+    ASC: {
+      value: 'ASC',
+    },
+    DESC: {
+      value: 'DESC',
+    },
+  },
+});
+
+const OrderByInputType = new GraphQLInputObjectType({
+  name: 'ReindexOrderBy',
+  fields: {
+    order: {
+      type: OrderByOrderEnum,
+    },
+    field: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+  },
+});
+
 export function createConnectionArguments() {
   return Map({
     first: {
       name: 'first',
       type: GraphQLInt,
     },
+    last: {
+      name: 'last',
+      type: GraphQLInt,
+    },
+    before: {
+      name: 'before',
+      type: Cursor,
+    },
     after: {
       name: 'after',
-      type: GraphQLInt,
+      type: Cursor,
     },
     orderBy: {
       name: 'orderBy',
-      type: GraphQLString,
+      type: OrderByInputType,
     },
   });
 }

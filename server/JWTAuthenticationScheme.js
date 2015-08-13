@@ -1,7 +1,7 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
-import {getSecrets} from '../db/queries';
+import {getSecrets} from '../db/queries/simple';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
 const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;

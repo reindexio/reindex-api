@@ -9,11 +9,8 @@ import {Set} from 'immutable';
 
 import escapeScriptJSON from './escapeScriptJSON';
 import toJSON from './toJSON';
-import {
-  getAuthenticationProvider,
-  getOrCreateUser,
-  getSecrets,
-} from '../db/queries';
+import {getAuthenticationProvider, getSecrets} from '../db/queries/simple';
+import {getOrCreateUser} from '../db/queries/mutations';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
