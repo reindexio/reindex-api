@@ -174,7 +174,7 @@ export async function createTestDatabase(conn, dbName) {
       .table(table)
       .insert(data.toJS())
       .run(conn);
-  });
+  }).toArray();
   await* TEST_DATA.get('tables').get(TYPE_TABLE).map(async function (type) {
     const table = type.get('name');
     const indexes = type.get('indexes') || List();

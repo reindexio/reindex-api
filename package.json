@@ -18,6 +18,7 @@
     "hapi": "^8.4.0",
     "immutable": "^3.7.2",
     "jsonwebtoken": "^5.0.1",
+    "lodash.values": "^3.0.0",
     "minimist": "^1.1.2",
     "pegjs": "^0.8.0",
     "rethinkdb": "^1.16.2",

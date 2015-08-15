@@ -1,6 +1,6 @@
 import Cryptiles from 'cryptiles';
 import RethinkDB from 'rethinkdb';
-import {Map} from 'immutable';
+import values from 'lodash.values';
 
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 import * as DBConstants from '../db/DBConstants';
@@ -9,10 +9,9 @@ async function createDatabase(dbName) {
   const conn = await RethinkDB.connect();
   await RethinkDB.dbCreate(dbName).run(conn);
   conn.use(dbName);
-  await* Map(DBConstants)
-    .map((table) =>
-      RethinkDB.db(dbName).tableCreate(table).run(conn)
-    );
+  await* values(DBConstants).map((tableName) =>
+    RethinkDB.db(dbName).tableCreate(tableName).run(conn)
+  );
   return conn;
 }
 
