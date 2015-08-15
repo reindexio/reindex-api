@@ -41,7 +41,7 @@ async function authenticateAsync(request) {
   try {
     secrets = await getSecrets(conn);
   } catch (error) {
-    if (error.name === 'RqlRuntimeError' &&
+    if (error.name === 'ReqlOpFailedError' &&
         databaseDoesNotExistRegExp.test(error.msg)) {
       throw Boom.notFound();
     } else {

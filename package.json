@@ -21,7 +21,7 @@
     "lodash.values": "^3.0.0",
     "minimist": "^1.1.2",
     "pegjs": "^0.8.0",
-    "rethinkdb": "^1.16.2",
+    "rethinkdb": "^2.1.0",
     "secure-filters": "^1.0.5",
     "uuid": "^2.0.1",
     "winchan": "^0.1.1"
