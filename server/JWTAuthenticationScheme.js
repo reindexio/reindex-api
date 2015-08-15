@@ -26,7 +26,10 @@ async function authenticateAsync(request) {
   const {authorization} = request.headers;
 
   if (!authorization) {
-    throw Boom.unauthorized();
+    return {
+      isAdmin: false,
+      userID: null,
+    };
   }
 
   const match = authorizationRegExp.exec(authorization);
