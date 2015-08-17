@@ -14,10 +14,6 @@ export default function createCRU(operation, getById, {
       name: 'clientMutationId',
       type: GraphQLString,
     },
-    [type.name]: {
-      name: type.name,
-      type: new GraphQLNonNull(inputObject),
-    },
   });
 
   if (getById) {
@@ -27,13 +23,20 @@ export default function createCRU(operation, getById, {
     });
   }
 
+  if (inputObject) {
+    opArgs = opArgs.set(type.name, {
+      name: type.name,
+      type: new GraphQLNonNull(inputObject),
+    });
+  }
+
   return createRootField({
     name: operation + type.name,
     returnType: mutation,
     args: opArgs,
-    resolve(parent, args, {conn}) {
+    resolve(parent, args, {rootValue: {conn}}) {
       const clientMutationId = args.clientMutationId;
-      const object = args[type.name];
+      const object = args[type.name] || {};
       let queryArgs;
       if (getById) {
         queryArgs = [conn, type.name, args.id, object];

@@ -2,6 +2,7 @@ import {List} from 'immutable';
 import {
   GraphQLObjectType,
   GraphQLString,
+  GraphQLNonNull,
 } from 'graphql';
 import ReindexID from '../builtins/ReindexID';
 import createCreate from '../mutations/createCreate';
@@ -15,7 +16,7 @@ export default function createSecret(interfaces) {
       name: 'ReindexSecret',
       fields: {
         id: {
-          type: ReindexID,
+          type: new GraphQLNonNull(ReindexID),
         },
         value: {
           type: GraphQLString,

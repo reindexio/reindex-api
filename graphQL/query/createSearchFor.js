@@ -9,12 +9,18 @@ export default function createSearch({type, connection}) {
     name: 'searchFor' + type.name,
     returnType: connection,
     args: createConnectionArguments(),
-    resolve: (parent, args, {conn, indexes}) => getConnectionQueries(
-      conn,
-      type.name,
-      indexes.get(type.name),
-      {},
-      args
-    ),
+    resolve(
+      parent,
+      args,
+      {rootValue: {conn, indexes}}
+    ) {
+      return getConnectionQueries(
+        conn,
+        type.name,
+        indexes.get(type.name),
+        {},
+        args
+      );
+    },
   });
 }

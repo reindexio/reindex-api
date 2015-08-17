@@ -6,31 +6,31 @@ import DateTime from '../../../graphQL/builtins/DateTime';
 const dateISOString = '2015-08-06T10:03:50.052Z';
 
 describe('DateTime', () => {
-  it('coerces javascript dates', () => {
+  it('serializes javascript dates', () => {
     const date = new Date(dateISOString);
-    assert.equal(DateTime.coerce(date), date);
-    assert.equal(DateTime.coerce(new Date('invalid')), null);
-    assert.equal(DateTime.coerce(dateISOString), null);
-    assert.equal(DateTime.coerce('some string'), null);
-    assert.equal(DateTime.coerce(null), null);
-    assert.equal(DateTime.coerce(undefined), null);
+    assert.equal(DateTime.serialize(date), date.toISOString());
+    assert.equal(DateTime.serialize(new Date('invalid')), null);
+    assert.equal(DateTime.serialize(dateISOString), null);
+    assert.equal(DateTime.serialize('some string'), null);
+    assert.equal(DateTime.serialize(null), null);
+    assert.equal(DateTime.serialize(undefined), null);
   });
 
-  it('coerces literal dates', () => {
+  it('parses literal dates', () => {
     const ast = {
       kind: Kind.STRING,
       value: dateISOString,
     };
-    assert.instanceOf(DateTime.coerceLiteral(ast), Date);
+    assert.instanceOf(DateTime.parseLiteral(ast), Date);
     assert.equal(
-      DateTime.coerceLiteral(ast).getTime(),
+      DateTime.parseLiteral(ast).getTime(),
       Date.parse(dateISOString)
     );
-    assert.equal(DateTime.coerceLiteral({
+    assert.equal(DateTime.parseLiteral({
       kind: Kind.STRING,
       value: '2015-13-13',
     }), null);
-    assert.equal(DateTime.coerceLiteral({
+    assert.equal(DateTime.parseLiteral({
       kind: Kind.STRING,
       value: 'mistake',
     }), null);

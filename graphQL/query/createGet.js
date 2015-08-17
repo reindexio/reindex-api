@@ -15,7 +15,7 @@ export default function createGet({type}) {
         type: new GraphQLNonNull(ReindexID),
       },
     }),
-    resolve: (parent, {id}, {conn}) => (
+    resolve: (parent, {id}, {rootValue: {conn}}) => (
       getByID(conn, id)
     ),
   });
