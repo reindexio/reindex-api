@@ -22,7 +22,7 @@ export default function createSecret(interfaces) {
         },
       },
       interfaces: [
-        interfaces.ReindexNode,
+        interfaces.Node,
       ],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexSecret';

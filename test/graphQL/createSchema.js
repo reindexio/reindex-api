@@ -22,7 +22,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -56,8 +56,8 @@ describe('createSchema', () => {
     assert.equal(userType.name, 'User');
     assert.instanceOf(userType, GraphQLObjectType,
       'type is created');
-    assert.include(userType.getInterfaces(), schema.getType('ReindexNode'),
-      'type implements ReindexNode interface');
+    assert.include(userType.getInterfaces(), schema.getType('Node'),
+      'type implements Node interface');
 
     const fields = userType.getFields();
     assert.equal(fields.id.type, ReindexID,
@@ -90,7 +90,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -127,7 +127,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -148,7 +148,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -166,7 +166,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'Micropost',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -247,7 +247,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'User',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -265,7 +265,7 @@ describe('createSchema', () => {
       {
         kind: 'OBJECT',
         name: 'Micropost',
-        interfaces: ['ReindexNode'],
+        interfaces: ['Node'],
         fields: [
           {
             name: 'id',
@@ -303,9 +303,9 @@ describe('createSchema', () => {
     assert.isDefined(mutationFields.deleteMicropost);
 
     assert.isUndefined(queryFields.getComment,
-      'root fields are only created for ReindexNode types');
+      'root fields are only created for Node types');
     assert.isUndefined(queryFields.createComment,
-      'root fields are only created for ReindexNode types');
+      'root fields are only created for Node types');
 
     assert.isUndefined(queryFields.createReindexUser,
       'blacklisted root fields are not created');

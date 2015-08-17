@@ -2,7 +2,7 @@ import Index from './Index';
 
 export default function extractIndexes(types) {
   return types
-    .filter((type) => type.get('interfaces').includes('ReindexNode'))
+    .filter((type) => type.get('interfaces').includes('Node'))
     .toKeyedSeq()
     .mapEntries(([, type]) => [
       type.get('name'),

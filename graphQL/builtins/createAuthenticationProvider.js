@@ -29,7 +29,7 @@ export default function createAuthenticationProvider(interfaces) {
         },
       },
       interfaces: [
-        interfaces.ReindexNode,
+        interfaces.Node,
       ],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexAuthenticationProvider';
