@@ -70,11 +70,11 @@ export function createConnection({type}, interfaces) {
 const PageInfo = new GraphQLObjectType({
   name: 'PageInfo',
   fields: {
-    hasPrevPage: {
-      type: GraphQLBoolean,
-    },
     hasNextPage: {
-      type: GraphQLBoolean,
+      type: new GraphQLNonNull(GraphQLBoolean),
+    },
+    hasPreviousPage: {
+      type: new GraphQLNonNull(GraphQLBoolean),
     },
   },
 });

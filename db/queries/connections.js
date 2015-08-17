@@ -158,7 +158,7 @@ function paginateQuery(conn, type, index, query, {
   }
 
   let pageInfo = {
-    hasPrevPage: false,
+    hasPreviousPage: false,
     hasNextPage: false,
   };
   if (first || last) {
@@ -166,7 +166,7 @@ function paginateQuery(conn, type, index, query, {
       query.count(),
       (count) => ({
         hasNextPage: first ? count.gt(first) : false,
-        hasPrevPage: last ? count.gt(last) : false,
+        hasPreviousPage: last ? count.gt(last) : false,
       }),
     );
   }

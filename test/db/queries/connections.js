@@ -259,7 +259,7 @@ describe('Connection database queries', () => {
             after: cursors.get(2),
           }),
           {
-            hasPrevPage: false,
+            hasPreviousPage: false,
             hasNextPage: false,
           },
           'no first or last'
@@ -272,7 +272,7 @@ describe('Connection database queries', () => {
             first: 2,
           }),
           {
-            hasPrevPage: false,
+            hasPreviousPage: false,
             hasNextPage: true,
           },
           'first has enough stuff'
@@ -285,7 +285,7 @@ describe('Connection database queries', () => {
             first: 7,
           }),
           {
-            hasPrevPage: false,
+            hasPreviousPage: false,
             hasNextPage: false,
           },
           'first has not enough stuff'
@@ -298,7 +298,7 @@ describe('Connection database queries', () => {
             last: 2,
           }),
           {
-            hasPrevPage: true,
+            hasPreviousPage: true,
             hasNextPage: false,
           },
           'last has enough stuff'
@@ -311,7 +311,7 @@ describe('Connection database queries', () => {
             last: 7,
           }),
           {
-            hasPrevPage: false,
+            hasPreviousPage: false,
             hasNextPage: false,
           },
           'last has not enough stuff'
@@ -325,7 +325,7 @@ describe('Connection database queries', () => {
             last: 3,
           }),
           {
-            hasPrevPage: true,
+            hasPreviousPage: true,
             hasNextPage: true,
           },
           'confusing first and last combo behaviour'
