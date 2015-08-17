@@ -70,7 +70,7 @@ describe('JWTAuthenticationScheme', () => {
       authorization: `Bearer ${validToken}`,
       host,
     });
-    assert.strictEqual(response.statusCode, 200);
+    assert.equal(response.statusCode, 200);
   });
 
   it('adds credentials to the request object', async function() {
@@ -79,26 +79,32 @@ describe('JWTAuthenticationScheme', () => {
       host,
     });
     assert.deepEqual(response.request.auth.credentials, {
-      userID,
       isAdmin: false,
+      userID,
     });
   });
 
+  it('uses anonymous credentials when header not given', async function() {
+    const response = await makeRequest({});
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.request.auth.credentials, {
+      isAdmin: false,
+      userID: null,
+    });
+  });
 
-  it('returns an error on missing or malformed header', async function() {
+  it('returns an error for a malformed header', async function() {
     for (const authorization of [
-      null,
-      '',
       validToken,
       'Bearer',
       `Basic ${validToken}`,
     ]) {
       const response = await makeRequest({ authorization });
-      assert.strictEqual(response.statusCode, 401);
+      assert.equal(response.statusCode, 401);
     }
   });
 
-  it('returns an error on expired token', async function () {
+  it('returns an error for an expired token', async function () {
     const expiredToken = JSONWebToken.sign({
       sub: userID,
       iat: now - 48 * HOUR,
@@ -108,7 +114,7 @@ describe('JWTAuthenticationScheme', () => {
       authorization: `Bearer ${expiredToken}`,
       host,
     });
-    assert.strictEqual(response.statusCode, 401);
+    assert.equal(response.statusCode, 401);
     assert.deepEqual(response.result, {
       error: 'Unauthorized',
       message: 'Token expired',
