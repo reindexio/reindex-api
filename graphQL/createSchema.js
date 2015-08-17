@@ -11,14 +11,11 @@ import {
   GraphQLInputObjectType,
   GraphQLEnumType,
 } from 'graphql';
-import {Map} from 'immutable';
+import {Map, List, fromJS} from 'immutable';
 
 import TypeSet from './TypeSet';
-import {
-  getByID,
-  getAllByIndexQuery,
-  processConnectionQuery,
-} from '../db/queries';
+import {getByID} from '../db/queries/simple';
+import {getConnectionQueries} from '../db/queries/connections';
 import DateTime from './builtins/DateTime';
 import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';
@@ -157,10 +154,16 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments();
-    resolve = (parent, args) => {
-      return processConnectionQuery(
-        getAllByIndexQuery(ofType, parent.id.value, reverseName),
-        args,
+    resolve = (parent, args, {conn, indexes}) => {
+      return getConnectionQueries(
+        conn,
+        ofType,
+        indexes.get(ofType),
+        {
+          keyPrefixFields: fromJS([[reverseName, 'value']]),
+          keyPrefix: List.of(parent.id.value),
+        },
+        args
       );
     };
   } else if (fieldType === 'list') {

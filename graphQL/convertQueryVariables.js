@@ -7,6 +7,7 @@ import {
 import {Kind} from 'graphql/language';
 import {typeFromAST} from 'graphql/utilities/typeFromAST';
 import {fromReindexID} from '../graphQL/builtins/ReindexID';
+import {fromCursor} from '../graphQL/builtins/Cursor';
 
 export function convertQueryVariables(
   schema,
@@ -74,6 +75,8 @@ function convertInputObject(type, value) {
 function convertScalar(type, value) {
   if (type.name === 'ID') {
     return fromReindexID(value);
+  } else if (type.name === 'Cursor') {
+    return fromCursor(value);
   } else if (type.name === 'DateTime') {
     // DateTime coerce actually  checks for date validity
     return new Date(value);

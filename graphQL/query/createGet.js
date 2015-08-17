@@ -1,6 +1,6 @@
 import {Map} from 'immutable';
 import {GraphQLNonNull} from 'graphql';
-import {getByID} from '../../db/queries';
+import {getByID} from '../../db/queries/simple';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 

@@ -18,7 +18,7 @@ describe('Server', () => {
     sub: randomUserID,
   }, randomSecret);
   const query = `query seacrh {
-    searchForMicropost(orderBy: "createdAt", first: 1) {
+    searchForMicropost(orderBy: {field: "createdAt"}, first: 1) {
       nodes {
         text,
         createdAt

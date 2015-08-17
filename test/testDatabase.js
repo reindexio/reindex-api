@@ -1,4 +1,4 @@
-import {fromJS, List} from 'immutable';
+import {fromJS} from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import {
@@ -54,6 +54,33 @@ export const TEST_DATA = fromJS({
         createdAt: new Date('2015-04-13T10:24:52.163Z'),
         text: 'Test text 4',
         tags: ['test', 'four'],
+      },
+      {
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          type: 'User',
+        },
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d85',
+        createdAt: new Date('2015-04-15T10:24:52.163Z'),
+        text: 'Test text 5',
+      },
+      {
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          type: 'User',
+        },
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d86',
+        createdAt: new Date('2015-04-16T10:24:52.163Z'),
+        text: 'Test text 6',
+      },
+      {
+        author: {
+          value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+          type: 'User',
+        },
+        id: 'f2f7fb49-3581-4caa-b84b-e9489eb47d87',
+        createdAt: new Date('2015-04-17T10:24:52.163Z'),
+        text: 'Test text 7',
       },
     ],
     [AUTHENTICATION_PROVIDER_TABLE]: [
@@ -147,12 +174,7 @@ export const TEST_DATA = fromJS({
             type: 'Category',
           },
         ],
-        indexes: [
-          {
-            name: 'author',
-            fields: ['author', 'value'],
-          },
-        ],
+        indexes: [],
       },
     ],
   },
@@ -165,38 +187,12 @@ export function createEmptyDatabase(conn, dbName) {
 export async function createTestDatabase(conn, dbName) {
   await createEmptyDatabase(conn, dbName);
   await* TEST_DATA.get('tables').map(async function (data, table) {
-    const options = {};
-    if (table === TYPE_TABLE) {
-      options.primaryKey = 'name';
-    }
-    await RethinkDB.db(dbName).tableCreate(table, options).run(conn);
+    await RethinkDB.db(dbName).tableCreate(table).run(conn);
     await RethinkDB.db(dbName)
       .table(table)
       .insert(data.toJS())
       .run(conn);
   }).toArray();
-  await* TEST_DATA.get('tables').get(TYPE_TABLE).map(async function (type) {
-    const table = type.get('name');
-    const indexes = type.get('indexes') || List();
-    await* indexes.map(async function (index) {
-      const name = index.get('name');
-      const fields = index.get('fields');
-      const indexDefinition = fields.rest().reduce(
-        (acc, field) => acc(field),
-        RethinkDB.row(fields.first())
-      );
-      await RethinkDB
-        .db(dbName)
-        .table(table)
-        .indexCreate(name, indexDefinition)
-        .run(conn);
-      await RethinkDB
-        .db(dbName)
-        .table(table)
-        .indexWait(name)
-        .run(conn);
-    });
-  });
 }
 
 export async function deleteTestDatabase(conn, dbName) {

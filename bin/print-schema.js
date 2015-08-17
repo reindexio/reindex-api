@@ -3,7 +3,7 @@ import RethinkDB from 'rethinkdb';
 import {printSchema} from 'graphql/utilities';
 
 import createSchema from '../graphQL/createSchema';
-import {getTypes} from '../db/queries';
+import {getTypes} from '../db/queries/simple';
 
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 
