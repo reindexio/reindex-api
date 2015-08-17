@@ -6,8 +6,8 @@ import ReindexID from './ReindexID';
 
 export default function createInterfaces() {
   return {
-    ReindexNode: new GraphQLInterfaceType({
-      name: 'ReindexNode',
+    Node: new GraphQLInterfaceType({
+      name: 'Node',
       description: {},
       fields: {
         id: {

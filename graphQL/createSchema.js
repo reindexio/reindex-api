@@ -48,7 +48,7 @@ export default function createSchema(dbMetadata) {
     if (typeMetadata.get('kind') === 'OBJECT') {
       const type = createObjectType(typeMetadata, getTypeSet, interfaces);
       let typeSet = new TypeSet({ type });
-      if (type.getInterfaces().includes(interfaces.ReindexNode)) {
+      if (type.getInterfaces().includes(interfaces.Node)) {
         typeSet = typeSet.set(
           'connection',
           createConnection(typeSet, interfaces),
@@ -63,7 +63,7 @@ export default function createSchema(dbMetadata) {
       'inputObject',
       createInputObjectType(typeSet, getTypeSet, interfaces),
     );
-    if (typeSet.type.getInterfaces().includes(interfaces.ReindexNode)) {
+    if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
       typeSet = typeSet.set(
         'mutation',
         createMutation(typeSet, interfaces)
@@ -174,7 +174,7 @@ function createField(field, getTypeSet, interfaces) {
     type = PRIMITIVE_TYPE_MAP.get(fieldType);
   } else {
     type = getTypeSet(fieldType).type;
-    if (type.getInterfaces().includes(interfaces.ReindexNode)) {
+    if (type.getInterfaces().includes(interfaces.Node)) {
       resolve = (parent, args, {conn}) => getByID(conn, parent[fieldName]);
     }
   }
@@ -195,7 +195,7 @@ function createField(field, getTypeSet, interfaces) {
 function createInputObjectType(
   {type},
   getTypeSet,
-  {ReindexNode, ReindexConnection}
+  {Node, ReindexConnection}
 ) {
   return new GraphQLInputObjectType({
     name: '_' + type.name + 'InputObject',
@@ -223,7 +223,7 @@ function createInputObjectType(
             type: field.type,
           };
         } else {
-          fieldType = fieldType.getInterfaces().includes(ReindexNode) ?
+          fieldType = fieldType.getInterfaces().includes(Node) ?
             ReindexID :
             getTypeSet(fieldType.name).inputObject;
           if (parentType) {

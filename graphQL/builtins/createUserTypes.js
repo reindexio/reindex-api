@@ -104,7 +104,7 @@ export default function createUserTypes(interfaces) {
       },
     },
     interfaces: [
-      interfaces.ReindexNode,
+      interfaces.Node,
     ],
     isTypeOf(obj) {
       return obj.id.type === 'ReindexUser';

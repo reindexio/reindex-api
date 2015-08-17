@@ -7,7 +7,7 @@ import createRootField from '../createRootField';
 export default function createNode(typeSets, interfaces) {
   return createRootField({
     name: 'node',
-    returnType: interfaces.ReindexNode,
+    returnType: interfaces.Node,
     args: Map({
       id: {
         name: 'id',
