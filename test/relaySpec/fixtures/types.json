@@ -1,0 +1,45 @@
+[
+  {
+    "fields": [
+      {
+        "isRequired": true,
+        "name": "id",
+        "type": "id"
+      },
+      {
+        "name": "movie",
+        "reverseName": "examples",
+        "type": "Movie"
+      }
+    ],
+    "id": "ed06cf59-b4ff-48ba-94c0-c6db4d24a0d3",
+    "indexes": [],
+    "interfaces": [
+      "Node"
+    ],
+    "kind": "OBJECT",
+    "name": "Example"
+  },
+  {
+    "fields": [
+      {
+        "name": "examples",
+        "ofType": "Example",
+        "reverseName": "movie",
+        "type": "connection"
+      },
+      {
+        "isRequired": true,
+        "name": "id",
+        "type": "id"
+      }
+    ],
+    "id": "6c1d1b37-4162-4714-9756-47281a90ca2b",
+    "indexes": [],
+    "interfaces": [
+      "Node"
+    ],
+    "kind": "OBJECT",
+    "name": "Movie"
+  }
+]

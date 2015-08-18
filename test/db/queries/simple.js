@@ -116,7 +116,7 @@ describe('Simple database queries', () => {
   it('getPageInfo', async function() {
     const data = {
       hasNextPage: false,
-      hasPrevPage: true,
+      hasPreviousPage: true,
     };
     assert.deepEqual(
       await queries.getPageInfo(conn, RethinkDB.expr(data)),
