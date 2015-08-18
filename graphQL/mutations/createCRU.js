@@ -1,5 +1,5 @@
 import {Map} from 'immutable';
-import {GraphQLString, GraphQLNonNull} from 'graphql';
+import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
 import * as queries from '../../db/queries/mutations';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
@@ -7,39 +7,52 @@ import createRootField from '../createRootField';
 export default function createCRU(operation, getById, {
   type,
   inputObject,
-  mutation,
+  payload,
 }) {
-  let opArgs = Map({
+  let inputFields = Map({
     clientMutationId: {
       name: 'clientMutationId',
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
   });
 
   if (getById) {
-    opArgs = opArgs.set('id', {
+    inputFields = inputFields.set('id', {
       name: 'id',
       type: new GraphQLNonNull(ReindexID),
     });
   }
 
   if (inputObject) {
-    opArgs = opArgs.set(type.name, {
+    inputFields = inputFields.set(type.name, {
       name: type.name,
       type: new GraphQLNonNull(inputObject),
     });
   }
 
+  const input = new GraphQLInputObjectType({
+    name: (
+      '_' +
+      operation.charAt(0).toUpperCase() + operation.substr(1) +
+      type.name + 'Input'
+    ),
+    fields: inputFields.toObject(),
+  });
+
   return createRootField({
     name: operation + type.name,
-    returnType: mutation,
-    args: opArgs,
-    resolve(parent, args, {rootValue: {conn}}) {
-      const clientMutationId = args.clientMutationId;
-      const object = args[type.name] || {};
+    returnType: payload,
+    args: Map({
+      input: {
+        type: input,
+      },
+    }),
+    resolve(parent, {input}, {rootValue: {conn}}) {
+      const clientMutationId = input.clientMutationId;
+      const object = input[type.name] || {};
       let queryArgs;
       if (getById) {
-        queryArgs = [conn, type.name, args.id, object];
+        queryArgs = [conn, type.name, input.id, object];
       } else {
         queryArgs = [conn, type.name, object];
       }

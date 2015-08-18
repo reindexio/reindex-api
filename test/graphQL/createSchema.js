@@ -310,6 +310,7 @@ describe('createSchema', () => {
     assert.isDefined(mutationFields.createUser);
     assert.isDefined(mutationFields.deleteMicropost);
 
+
     assert.isUndefined(queryFields.getComment,
       'root fields are only created for ReindexNode types');
     assert.isUndefined(queryFields.createComment,
@@ -317,14 +318,104 @@ describe('createSchema', () => {
 
     assert.isUndefined(queryFields.createReindexUser,
       'blacklisted root fields are not created');
+  });
 
+  it('creates Relay-compliant mutations', () => {
+    const schema = createSchema(fromJS([
+      {
+        kind: 'OBJECT',
+        name: 'User',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+            isRequired: true,
+          },
+          {
+            name: 'name',
+            type: 'string',
+          },
+        ],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'EmptyType',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+            isRequired: true,
+          },
+        ],
+      },
+    ]));
+
+
+    const mutation = schema.getType('ReindexMutationRoot');
+    const mutationFields = mutation.getFields();
+
+    const createUserInput = schema.getType('_CreateUserInput');
     assert.deepEqual(mutationFields.createUser.args, [
       {
-        name: 'clientMutationId',
+        name: 'input',
+        type: createUserInput,
         description: null,
-        type: GraphQLString,
         defaultValue: null,
       },
-    ], 'objects with no fields do not get input object argument');
+    ], 'create mutation has one argument input');
+    const createUserInputFields = createUserInput.getFields();
+    assert.instanceOf(
+      createUserInputFields.clientMutationId.type,
+      GraphQLNonNull,
+      'create input has required clientMutationId'
+    );
+    assert.equal(
+      createUserInputFields.clientMutationId.type.ofType,
+      GraphQLString,
+      'create input clientMutationId field is string'
+    );
+    assert.isUndefined(createUserInputFields.id,
+      'create input has no field id');
+    assert.equal(
+      createUserInputFields.User.type.ofType,
+      schema.getType('_UserInput'),
+      'create input has a corresponding input object field'
+    );
+
+    const updateUserInput = schema.getType('_UpdateUserInput');
+    assert.deepEqual(mutationFields.updateUser.args, [
+      {
+        name: 'input',
+        type: updateUserInput,
+        description: null,
+        defaultValue: null,
+      },
+    ], 'update mutation has one argument input');
+    const updateUserInputFields = updateUserInput.getFields();
+    assert.instanceOf(
+      updateUserInputFields.clientMutationId.type,
+      GraphQLNonNull,
+      'update input has required clientMutationId'
+    );
+    assert.equal(
+      updateUserInputFields.clientMutationId.type.ofType,
+      GraphQLString,
+      'update input clientMutationId field is string'
+    );
+    assert.instanceOf(updateUserInputFields.id.type, GraphQLNonNull,
+      'update input has required field id');
+    assert.equal(updateUserInputFields.id.type.ofType, ReindexID,
+      'update input id field is a ID');
+    assert.equal(
+      updateUserInputFields.User.type.ofType,
+      schema.getType('_UserInput'),
+      'update input has a corresponding input object field'
+    );
+
+    const createEmptyTypeInput = schema.getType('_CreateEmptyTypeInput');
+    assert.isUndefined(createEmptyTypeInput.getFields().EmptyType,
+      'objects with no fields do not get input object in their input');
   });
 });

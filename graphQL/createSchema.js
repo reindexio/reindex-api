@@ -65,8 +65,8 @@ export default function createSchema(dbMetadata) {
     );
     if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
       typeSet = typeSet.set(
-        'mutation',
-        createMutation(typeSet, interfaces)
+        'payload',
+        createPayload(typeSet, interfaces)
       );
       if (!typeSet.connection) {
         typeSet = typeSet.set(
@@ -213,7 +213,7 @@ function createInputObjectType(
     });
   if (filteredFields.count() > 0) {
     return new GraphQLInputObjectType({
-      name: '_' + type.name + 'InputObject',
+      name: '_' + type.name + 'Input',
       fields: () => filteredFields
       .map((field) => {
         let fieldType = field.type;
@@ -253,9 +253,9 @@ function createInputObjectType(
   }
 }
 
-function createMutation({type}) {
+function createPayload({type}) {
   return new GraphQLObjectType({
-    name: '_' + type.name + 'Mutation',
+    name: '_' + type.name + 'Payload',
     fields: {
       clientMutationId: {
         type: GraphQLString,
