@@ -14,8 +14,8 @@ import {
 import {Map, List, fromJS} from 'immutable';
 
 import TypeSet from './TypeSet';
-import {getByID} from '../db/queries/simple';
-import {getConnectionQueries} from '../db/queries/connections';
+import {getByID} from '../db/queries/simpleQueries';
+import {getConnectionQueries} from '../db/queries/connectionQueries';
 import DateTime from './builtins/DateTime';
 import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';

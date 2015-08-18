@@ -2,7 +2,7 @@ import Cryptiles from 'cryptiles';
 import {Map} from 'immutable';
 import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
 import createRootField from '../createRootField';
-import {create} from '../../db/queries/mutations';
+import {create} from '../../db/queries/mutationQueries';
 
 function generateSecret() {
   return Cryptiles.randomString(40);

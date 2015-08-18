@@ -1,14 +1,15 @@
 import {fromJS, List, Range} from 'immutable';
-import assert from '../../assert';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
+
+import assert from '../../../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
-} from '../../testDatabase';
-import extractIndexes from '../../../db/extractIndexes';
-import {getTypes, getPageInfo} from '../../../db/queries/simple';
-import {getConnectionQueries} from '../../../db/queries/connections';
+} from '../../../test/testDatabase';
+import extractIndexes from '../../extractIndexes';
+import {getTypes, getPageInfo} from '../simpleQueries';
+import {getConnectionQueries} from '../connectionQueries';
 
 describe('Connection database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');

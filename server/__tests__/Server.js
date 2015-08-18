@@ -4,10 +4,10 @@ import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import {randomString} from 'cryptiles';
 
-import assert from '../assert';
-import createServer from '../../server/createServer';
-import databaseNameFromHostname from '../../server/databaseNameFromHostname';
-import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
+import assert from '../../test/assert';
+import {createTestDatabase, deleteTestDatabase} from '../../test/testDatabase';
+import createServer from '../createServer';
+import databaseNameFromHostname from '../databaseNameFromHostname';
 
 describe('Server', () => {
   const host = randomString(10) + '.example.com';

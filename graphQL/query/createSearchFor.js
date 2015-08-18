@@ -1,5 +1,5 @@
 import createRootField from '../createRootField';
-import {getConnectionQueries} from '../../db/queries/connections';
+import {getConnectionQueries} from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
 } from '../connections';

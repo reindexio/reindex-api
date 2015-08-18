@@ -1,5 +1,4 @@
 import {fromJS, List} from 'immutable';
-import assert from '../assert';
 import {
   GraphQLInterfaceType,
   GraphQLObjectType,
@@ -10,12 +9,14 @@ import {
   GraphQLBoolean,
   GraphQLList,
 } from 'graphql';
-import ReindexID from '../../graphQL/builtins/ReindexID';
-import DateTime from '../../graphQL/builtins/DateTime';
-import Cursor from '../../graphQL/builtins/Cursor';
-import createSchema from '../../graphQL/createSchema';
-import createInterfaces from '../../graphQL/builtins/createInterfaces';
-import createUserTypes from '../../graphQL/builtins/createUserTypes';
+
+import ReindexID from '../builtins/ReindexID';
+import DateTime from '../builtins/DateTime';
+import Cursor from '../builtins/Cursor';
+import createInterfaces from '../builtins/createInterfaces';
+import createUserTypes from '../builtins/createUserTypes';
+import createSchema from '../createSchema';
+import assert from '../../test/assert';
 
 describe('createSchema', () => {
   it('creates types with appropriate scalar fields', () => {

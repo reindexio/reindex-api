@@ -1,12 +1,13 @@
-import assert from '../../assert';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
+
+import assert from '../../../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
-} from '../../testDatabase';
-import {getByID} from '../../../db/queries/simple';
-import * as queries from '../../../db/queries/mutations';
+} from '../../../test/testDatabase';
+import {getByID} from '../simpleQueries';
+import * as queries from '../mutationQueries';
 
 describe('Mutatative database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
