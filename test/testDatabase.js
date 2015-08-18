@@ -119,6 +119,7 @@ export const TEST_DATA = fromJS({
           {
             name: 'id',
             type: 'id',
+            isRequired: true,
           },
           {
             name: 'handle',
@@ -145,6 +146,7 @@ export const TEST_DATA = fromJS({
           {
             name: 'id',
             type: 'id',
+            isRequired: true,
           },
           {
             name: 'text',

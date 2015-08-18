@@ -19,7 +19,7 @@ export default function createCreateReindexSecret(typeSets) {
       },
     }),
     returnType: secretMutation,
-    resolve: (parent, {clientMutationId}, {conn}) => (
+    resolve: (parent, {clientMutationId}, {rootValue: {conn}}) => (
       create(conn, 'ReindexSecret', { value: generateSecret()})
         .then((result) => ({
           clientMutationId,

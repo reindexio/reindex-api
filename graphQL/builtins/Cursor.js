@@ -27,19 +27,22 @@ export class Cursor {
 
 const CursorType = new GraphQLScalarType({
   name: 'Cursor',
-  coerce(value) {
-    if (value.value && value.index) {
-      return new Cursor(value);
+  serialize(value) {
+    if (value.index && value.value) {
+      return toCursor(value);
     } else {
       return null;
     }
   },
-  coerceLiteral(ast) {
+  parseLiteral(ast) {
     if (ast.kind === Kind.STRING) {
       return fromCursor(ast.value);
     } else {
       return null;
     }
+  },
+  parseValue(value) {
+    return fromCursor(value);
   },
 });
 

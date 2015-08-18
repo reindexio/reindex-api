@@ -116,7 +116,7 @@ export default function createSchema(dbMetadata) {
 }
 
 function createObjectType(type, getTypeSet, interfaces) {
-  return new GraphQLObjectType({
+  const config = {
     name: type.get('name'),
     fields: () => type
       .get('fields')
@@ -127,10 +127,14 @@ function createObjectType(type, getTypeSet, interfaces) {
       ])
       .toObject(),
     interfaces: [...type.get('interfaces').map((name) => interfaces[name])],
-    isTypeOf(value) {
+  };
+  if (config.interfaces.includes(interfaces.Node)) {
+    config.isTypeOf = (value) => {
       return value.id.type === type.get('name');
-    },
-  });
+    };
+  }
+
+  return new GraphQLObjectType(config);
 }
 
 const PRIMITIVE_TYPE_MAP = Map({
@@ -154,7 +158,7 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments();
-    resolve = (parent, args, {conn, indexes}) => {
+    resolve = (parent, args, {rootValue: {conn, indexes}}) => {
       return getConnectionQueries(
         conn,
         ofType,
@@ -175,7 +179,9 @@ function createField(field, getTypeSet, interfaces) {
   } else {
     type = getTypeSet(fieldType).type;
     if (type.getInterfaces().includes(interfaces.Node)) {
-      resolve = (parent, args, {conn}) => getByID(conn, parent[fieldName]);
+      resolve = (parent, args, {rootValue: {conn}}) => (
+        getByID(conn, parent[fieldName])
+      );
     }
   }
 
@@ -195,18 +201,20 @@ function createField(field, getTypeSet, interfaces) {
 function createInputObjectType(
   {type},
   getTypeSet,
-  {Node, ReindexConnection}
+  {Node}
 ) {
-  return new GraphQLInputObjectType({
-    name: '_' + type.name + 'InputObject',
-    fields: () => Map(type.getFields())
-      .filter((field) => {
-        return (
-          field.type !== ReindexID &&
-          (!field.type.getInterfaces ||
-           !field.type.getInterfaces().includes(ReindexConnection))
-        );
-      })
+  const filteredFields = Map(type.getFields())
+    .filter((field) => {
+      const type = field.type.ofType ? field.type.ofType : field.type;
+      return (
+        type !== ReindexID &&
+        !type.name.endsWith('Connection')
+      );
+    });
+  if (filteredFields.count() > 0) {
+    return new GraphQLInputObjectType({
+      name: '_' + type.name + 'InputObject',
+      fields: () => filteredFields
       .map((field) => {
         let fieldType = field.type;
         let parentType;
@@ -216,6 +224,7 @@ function createInputObjectType(
           parentType = fieldType;
           fieldType = parentType.ofType;
         }
+
         if (fieldType instanceof GraphQLInputObjectType ||
             fieldType instanceof GraphQLScalarType ||
             fieldType instanceof GraphQLEnumType) {
@@ -238,10 +247,13 @@ function createInputObjectType(
         }
       })
       .toObject(),
-  });
+    });
+  } else {
+    return null;
+  }
 }
 
-function createMutation({type}, interfaces) {
+function createMutation({type}) {
   return new GraphQLObjectType({
     name: '_' + type.name + 'Mutation',
     fields: {
@@ -252,8 +264,5 @@ function createMutation({type}, interfaces) {
         type,
       },
     },
-    interfaces: [
-      interfaces.ReindexMutation,
-    ],
   });
 }

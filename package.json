@@ -16,7 +16,7 @@
     "dot": "^1.0.3",
     "good": "^6.1.4",
     "good-console": "^5.0.2",
-    "graphql": "^0.2.4",
+    "graphql": "^0.4.2",
     "hapi": "^8.4.0",
     "immutable": "^3.7.2",
     "jsonwebtoken": "^5.0.1",

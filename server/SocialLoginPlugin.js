@@ -8,7 +8,6 @@ import Providers from 'bell/lib/providers';
 import {Set} from 'immutable';
 
 import escapeScriptJSON from './escapeScriptJSON';
-import toJSON from './toJSON';
 import {getAuthenticationProvider, getSecrets} from '../db/queries/simple';
 import {getOrCreateUser} from '../db/queries/mutations';
 
@@ -49,7 +48,7 @@ function getBellProviderParams(providerName) {
 
 function renderCallbackPopup(reply, payload) {
   const html = templates.loginCallbackPopup({
-    payload: escapeScriptJSON(toJSON(payload)),
+    payload: escapeScriptJSON(JSON.stringify(payload)),
   });
   return reply(html).type('text/html');
 }

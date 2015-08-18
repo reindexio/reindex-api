@@ -2,6 +2,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
   GraphQLBoolean,
+  GraphQLNonNull,
 } from 'graphql';
 import TypeSet from '../TypeSet';
 import ReindexID from './ReindexID';
@@ -13,7 +14,7 @@ export default function createAuthenticationProvider(interfaces) {
       name: 'ReindexAuthenticationProvider',
       fields: {
         id: {
-          type: ReindexID,
+          type: new GraphQLNonNull(ReindexID),
         },
         type: {
           type: ProviderType,

@@ -12,7 +12,7 @@ import {
 import {getNodes, getEdges, getCount, getPageInfo} from '../db/queries/simple';
 import Cursor from './builtins/Cursor';
 
-export function createConnection({type}, interfaces) {
+export function createConnection({type}) {
   const edge = new GraphQLObjectType({
     name: '_' + type.name + 'Edge',
     fields: {
@@ -25,9 +25,6 @@ export function createConnection({type}, interfaces) {
         type,
       },
     },
-    interfaces: [
-      interfaces.ReindexEdge,
-    ],
   });
   return new GraphQLObjectType({
     name: '_' + type.name + 'Connection',
@@ -35,35 +32,32 @@ export function createConnection({type}, interfaces) {
       count: {
         name: 'count',
         type: GraphQLInt,
-        resolve({query}, args, {conn}) {
+        resolve({query}, args, {rootValue: {conn}}) {
           return getCount(conn, query);
         },
       },
       nodes: {
         name: 'nodes',
         type: new GraphQLList(type),
-        resolve({paginatedQuery}, args, {conn}) {
+        resolve({paginatedQuery}, args, {rootValue: {conn}}) {
           return getNodes(conn, paginatedQuery);
         },
       },
       edges: {
         name: 'edges',
         type: new GraphQLList(edge),
-        resolve({paginatedQuery, cursorFn}, args, {conn}) {
+        resolve({paginatedQuery, cursorFn}, args, {rootValue: {conn}}) {
           return getEdges(conn, paginatedQuery, cursorFn);
         },
       },
       pageInfo: {
         name: 'pageInfo',
         type: new GraphQLNonNull(PageInfo),
-        resolve({pageInfo}, args, {conn}) {
+        resolve({pageInfo}, args, {rootValue: {conn}}) {
           return getPageInfo(conn, pageInfo);
         },
       },
     },
-    interfaces: [
-      interfaces.ReindexConnection,
-    ],
   });
 }
 

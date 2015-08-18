@@ -4,7 +4,7 @@ import uuid from 'uuid';
 
 import assert from './assert';
 import createSchema from '../graphQL/createSchema';
-import graphql from '../graphQL/graphql';
+import {graphql} from 'graphql';
 import {createTestDatabase, deleteTestDatabase} from './testDatabase';
 import {getTypes} from '../db/queries/simple';
 import {toReindexID} from '../graphQL/builtins/ReindexID';
@@ -102,7 +102,7 @@ describe('Integration Tests', () => {
         beautifulPerson: {
           nickname: 'freiksenet',
         },
-        createdAt: new Date('2015-04-10T10:24:52.163Z'),
+        createdAt: '2015-04-10T10:24:52.163Z',
         text: 'Test text',
         tags: [],
       },
@@ -177,7 +177,7 @@ describe('Integration Tests', () => {
           count: 7,
           nodes: [
             {
-              createdAt: new Date('2015-04-10T10:24:52.163Z'),
+              createdAt: '2015-04-10T10:24:52.163Z',
               text: 'Test text',
             },
           ],
@@ -255,7 +255,6 @@ describe('Integration Tests', () => {
     });
 
     const id = created.data.createUser.User.id;
-    const reindexID = toReindexID(id);
 
     assert.deepEqual(created.data.createUser, {
       clientMutationId,
@@ -279,7 +278,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id: reindexID,
+      id,
       clientMutationId,
       User: {
         handle: 'villeimmonen',
@@ -308,7 +307,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id: reindexID,
+      id,
       clientMutationId,
       User: {
         handle: 'immonenv',
@@ -336,7 +335,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id: reindexID,
+      id,
       clientMutationId,
     });
 
@@ -352,7 +351,7 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id: reindexID,
+      id,
     });
 
     assert.isNull(afterDeleted.data.getUser,
@@ -360,14 +359,14 @@ describe('Integration Tests', () => {
   });
 
   it('saves connections correctly', async function() {
-    const authorID = {
+    const authorID = toReindexID({
       type: 'User',
       value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    };
+    });
     const micropost = {
       text: 'Sample text',
-      createdAt: '2014-05-12T18:00:00Z',
-      author: toReindexID(authorID),
+      createdAt: '2014-05-12T18:00:00.000Z',
+      author: authorID,
     };
     const result = await runQuery(`
       mutation postMicropost($Micropost: _MicropostInputObject!) {
@@ -387,7 +386,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result.data.createMicropost.Micropost, {
       ...micropost,
-      createdAt: new Date(micropost.createdAt),
+      createdAt: micropost.createdAt,
       author: {
         id: authorID,
       },

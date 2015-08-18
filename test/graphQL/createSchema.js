@@ -12,6 +12,7 @@ import {
 } from 'graphql';
 import ReindexID from '../../graphQL/builtins/ReindexID';
 import DateTime from '../../graphQL/builtins/DateTime';
+import Cursor from '../../graphQL/builtins/Cursor';
 import createSchema from '../../graphQL/createSchema';
 import createInterfaces from '../../graphQL/builtins/createInterfaces';
 import createUserTypes from '../../graphQL/builtins/createUserTypes';
@@ -27,6 +28,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
+            isRequired: true,
           },
           {
             name: 'string',
@@ -60,7 +62,7 @@ describe('createSchema', () => {
       'type implements Node interface');
 
     const fields = userType.getFields();
-    assert.equal(fields.id.type, ReindexID,
+    assert.equal(fields.id.type.ofType, ReindexID,
       'id is converted');
     assert.equal(fields.string.type, GraphQLString,
       'string is converted');
@@ -95,6 +97,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
+            isRequired: true,
           },
           {
             name: 'addresses',
@@ -115,7 +118,7 @@ describe('createSchema', () => {
     ]));
     const userType = schema.getType('User');
     const fields = userType.getFields();
-    assert.equal(fields.id.type.toString(), 'ID');
+    assert.equal(fields.id.type.ofType.toString(), 'ID');
     assert.equal(fields.addresses.type.toString(), '[Address]');
     assert.equal(fields.homeAddress.type.toString(), 'Address');
     assert.equal(fields.nicknames.type.toString(), '[String]');
@@ -134,13 +137,18 @@ describe('createSchema', () => {
             type: 'id',
             isRequired: true,
           },
+          {
+            name: 'test',
+            type: 'string',
+            isRequired: true,
+          },
         ],
       },
     ]));
 
     const fields = schema.getType('User').getFields();
-    assert.instanceOf(fields.id.type, GraphQLNonNull);
-    assert.equal(fields.id.type.ofType, ReindexID);
+    assert.instanceOf(fields.test.type, GraphQLNonNull);
+    assert.equal(fields.test.type.ofType, GraphQLString);
   });
 
   it('creates appropriate connections', () => {
@@ -205,8 +213,8 @@ describe('createSchema', () => {
       'connection type edges field is a list of edges');
     assert.equal(micropostEdgeFields.node.type, micropostType,
       'edges type has node field that is of inner type');
-
-    // TODO: cursor
+    assert.equal(micropostEdgeFields.cursor.type, Cursor,
+      'edges types has cursor field that is of a Cursor type');
 
     assert.equal(micropostFields.author.type, userType,
       'inner type is used on *-1 side');
@@ -303,11 +311,20 @@ describe('createSchema', () => {
     assert.isDefined(mutationFields.deleteMicropost);
 
     assert.isUndefined(queryFields.getComment,
-      'root fields are only created for Node types');
+      'root fields are only created for ReindexNode types');
     assert.isUndefined(queryFields.createComment,
-      'root fields are only created for Node types');
+      'root fields are only created for ReindexNode types');
 
     assert.isUndefined(queryFields.createReindexUser,
       'blacklisted root fields are not created');
+
+    assert.deepEqual(mutationFields.createUser.args, [
+      {
+        name: 'clientMutationId',
+        description: null,
+        type: GraphQLString,
+        defaultValue: null,
+      },
+    ], 'objects with no fields do not get input object argument');
   });
 });

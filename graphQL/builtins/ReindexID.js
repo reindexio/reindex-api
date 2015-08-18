@@ -27,19 +27,22 @@ export class ID {
 
 const ReindexID = new GraphQLScalarType({
   name: 'ID',
-  coerce(value) {
-    if (value.value && value.type) {
-      return new ID(value);
+  serialize(value) {
+    if (value.type && value.value) {
+      return toReindexID(value);
     } else {
       return null;
     }
   },
-  coerceLiteral(ast) {
+  parseLiteral(ast) {
     if (ast.kind === Kind.STRING) {
       return fromReindexID(ast.value);
     } else {
       return null;
     }
+  },
+  parseValue(value) {
+    return fromReindexID(value);
   },
 });
 

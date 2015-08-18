@@ -1,37 +1,32 @@
 import {List} from 'immutable';
 import {
   GraphQLObjectType,
-  GraphQLInterfaceType,
   GraphQLString,
+  GraphQLNonNull,
 } from 'graphql';
 import ReindexID from './ReindexID';
 import createCreate from '../mutations/createCreate';
 import TypeSet from '../TypeSet';
 
-const baseCredentialFields = {
-  accessToken: {
-    type: GraphQLString,
-  },
-  displayName: {
-    type: GraphQLString,
-  },
-  id: {
-    type: GraphQLString,
-  },
-};
+function getBaseCredentialFields() {
+  return {
+    accessToken: {
+      type: GraphQLString,
+    },
+    displayName: {
+      type: GraphQLString,
+    },
+    id: {
+      type: GraphQLString,
+    },
+  };
+}
 
 export default function createUserTypes(interfaces) {
-  const ReindexCredential = new GraphQLInterfaceType({
-    name: 'ReindexCredential',
-    description: '',
-    fields: {
-      ...baseCredentialFields,
-    },
-  });
   const ReindexGithubCredential = new GraphQLObjectType({
     name: 'ReindexGithubCredential',
     fields: {
-      ...baseCredentialFields,
+      ...getBaseCredentialFields(),
       email: {
         type: GraphQLString,
       },
@@ -39,32 +34,23 @@ export default function createUserTypes(interfaces) {
         type: GraphQLString,
       },
     },
-    interfaces: [
-      ReindexCredential,
-    ],
   });
   const ReindexFacebookCredential = new GraphQLObjectType({
     name: 'ReindexFacebookCredential',
     fields: {
-      ...baseCredentialFields,
+      ...getBaseCredentialFields(),
     },
-    interfaces: [
-      ReindexCredential,
-    ],
   });
   const ReindexGoogleCredential = new GraphQLObjectType({
     name: 'ReindexGoogleCredential',
     fields: {
-      ...baseCredentialFields,
+      ...getBaseCredentialFields(),
     },
-    interfaces: [
-      ReindexCredential,
-    ],
   });
   const ReindexTwitterCredential = new GraphQLObjectType({
     name: 'ReindexTwitterCredential',
     fields: {
-      ...baseCredentialFields,
+      ...getBaseCredentialFields(),
       accessTokenSecret: {
         type: GraphQLString,
       },
@@ -72,9 +58,6 @@ export default function createUserTypes(interfaces) {
         type: GraphQLString,
       },
     },
-    interfaces: [
-      ReindexCredential,
-    ],
   });
   const ReindexCredentialCollection = new GraphQLObjectType({
     name: 'ReindexCredentialCollection',
@@ -97,7 +80,7 @@ export default function createUserTypes(interfaces) {
     name: 'ReindexUser',
     fields: {
       id: {
-        type: ReindexID,
+        type: new GraphQLNonNull(ReindexID),
       },
       credentials: {
         type: ReindexCredentialCollection,

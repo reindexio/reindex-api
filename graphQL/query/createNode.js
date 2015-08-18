@@ -14,7 +14,7 @@ export default function createNode(typeSets, interfaces) {
         type: new GraphQLNonNull(ReindexID),
       },
     }),
-    resolve: (parent, {id}, {conn}) => (
+    resolve: (parent, {id}, {rootValue: {conn}}) => (
       getByID(conn, id)
     ),
   });

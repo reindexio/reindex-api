@@ -1,8 +1,7 @@
-import graphql from '../../graphQL/graphql';
+import {graphql} from 'graphql';
 import Immutable from 'immutable';
 
 import createSchema from '../../graphQL/createSchema';
-import toJSON from '../toJSON';
 import {getTypes} from '../../db/queries/simple';
 import extractIndexes from '../../db/extractIndexes';
 
@@ -19,7 +18,7 @@ async function handler(request, reply) {
       conn,
       indexes,
     }, variables);
-    reply(toJSON(result)).type('application/json');
+    reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
     // TODO(fson, 2015-04-13): Handle errors granularly.
     reply(error);
