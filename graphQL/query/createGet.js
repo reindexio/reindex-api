@@ -1,10 +1,10 @@
-import {Map} from 'immutable';
-import {GraphQLNonNull} from 'graphql';
-import {getByID} from '../../db/queries/simpleQueries';
+import { Map } from 'immutable';
+import { GraphQLNonNull } from 'graphql';
+import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 
-export default function createGet({type}) {
+export default function createGet({ type }) {
   return createRootField({
     name: 'get' + type.name,
     returnType: type,
@@ -15,7 +15,7 @@ export default function createGet({type}) {
         type: new GraphQLNonNull(ReindexID),
       },
     }),
-    resolve: (parent, {id}, {rootValue: {conn}}) => (
+    resolve: (parent, { id }, { rootValue: { conn } }) => (
       getByID(conn, id)
     ),
   });

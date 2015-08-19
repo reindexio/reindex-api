@@ -1,9 +1,9 @@
 import Immutable from 'immutable';
 import RethinkDB from 'rethinkdb';
-import {printSchema} from 'graphql/utilities';
+import { printSchema } from 'graphql/utilities';
 
 import createSchema from '../graphQL/createSchema';
-import {getTypes} from '../db/queries/simpleQueries';
+import { getTypes } from '../db/queries/simpleQueries';
 
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 

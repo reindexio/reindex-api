@@ -1,8 +1,8 @@
 import Base64URL from 'base64-url';
-import {GraphQLScalarType} from 'graphql';
-import {Kind} from 'graphql/language';
+import { GraphQLScalarType } from 'graphql';
+import { Kind } from 'graphql/language';
 
-export function toReindexID({type, value}) {
+export function toReindexID({ type, value }) {
   return Base64URL.encode(type + ':' + value);
 }
 
@@ -19,7 +19,7 @@ export function fromReindexID(string) {
 }
 
 export class ID {
-  constructor({value, type}) {
+  constructor({ value, type }) {
     this.value = value;
     this.type = type;
   }

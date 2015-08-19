@@ -1,4 +1,4 @@
-import {fromJS, List, Range} from 'immutable';
+import { fromJS, List, Range } from 'immutable';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
@@ -8,8 +8,8 @@ import {
   deleteTestDatabase,
 } from '../../../test/testDatabase';
 import extractIndexes from '../../extractIndexes';
-import {getTypes, getPageInfo} from '../simpleQueries';
-import {getConnectionQueries} from '../connectionQueries';
+import { getTypes, getPageInfo } from '../simpleQueries';
+import { getConnectionQueries } from '../connectionQueries';
 
 describe('Connection database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -52,9 +52,7 @@ describe('Connection database queries', () => {
         .map((item) => item('id')('value'))
         .coerceTo('array')
         .run(conn)
-      ).map((id) => {
-        return orderedIds.indexOf(id);
-      });
+      ).map((id) => orderedIds.indexOf(id));
     }
 
     it('creates index on demand and once', async function() {
@@ -66,7 +64,7 @@ describe('Connection database queries', () => {
 
       await runAndGivePositions(
         indexes,
-        {orderBy: {field: 'createdAt'}},
+        { orderBy: { field: 'createdAt' } },
       );
       const newIndexList = await RethinkDB
         .table('Micropost')
@@ -80,7 +78,7 @@ describe('Connection database queries', () => {
 
       await runAndGivePositions(
         newIndexes,
-        {orderBy: {field: 'createdAt'}},
+        { orderBy: { field: 'createdAt' } },
       );
       const newestIndexList = await RethinkDB
         .table('Micropost')
@@ -95,12 +93,12 @@ describe('Connection database queries', () => {
     it('orders query', async function() {
       const indexes = await getIndexes('Micropost');
       assert.oequal(
-        await runAndGivePositions(indexes, {orderBy: {field: 'createdAt'}}),
+        await runAndGivePositions(indexes, { orderBy: { field: 'createdAt' } }),
         Range(0, 7)
       );
       assert.oequal(
         await runAndGivePositions(indexes, {
-          orderBy: {field: 'createdAt', order: 'DESC'},
+          orderBy: { field: 'createdAt', order: 'DESC' },
         }),
         Range(6, -1)
       );
@@ -116,7 +114,7 @@ describe('Connection database queries', () => {
           'Micropost',
           indexes,
           {},
-          {orderBy: {field: 'createdAt'}}
+          { orderBy: { field: 'createdAt' } }
         );
         cursors = List(await result.paginatedQuery
           .map(result.cursorFn)
@@ -141,7 +139,7 @@ describe('Connection database queries', () => {
       it('excludes at cursor and all before/after them', async function() {
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(1),
           }),
           Range(2, 7),
@@ -150,7 +148,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             before: cursors.get(2),
           }),
           Range(0, 2),
@@ -159,7 +157,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(1),
             before: cursors.get(5),
           }),
@@ -172,7 +170,7 @@ describe('Connection database queries', () => {
         // disjoint.
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             before: cursors.get(1),
             after: cursors.get(5),
           }),
@@ -184,7 +182,7 @@ describe('Connection database queries', () => {
       it('slices with first and last', async function() {
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             first: 4,
             last: 2,
           }),
@@ -194,7 +192,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             first: 2,
             last: 3,
           }),
@@ -204,7 +202,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             first: 2,
           }),
@@ -214,7 +212,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             last: 2,
           }),
@@ -224,7 +222,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             before: cursors.get(4),
             first: 2,
           }),
@@ -234,7 +232,7 @@ describe('Connection database queries', () => {
 
         assert.oequal(
           await runAndGivePositions(indexes, {
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             before: cursors.get(4),
             last: 2,
           }),
@@ -256,7 +254,7 @@ describe('Connection database queries', () => {
         }
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
           }),
           {
@@ -268,7 +266,7 @@ describe('Connection database queries', () => {
 
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             first: 2,
           }),
@@ -281,7 +279,7 @@ describe('Connection database queries', () => {
 
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             first: 7,
           }),
@@ -294,7 +292,7 @@ describe('Connection database queries', () => {
 
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             last: 2,
           }),
@@ -307,7 +305,7 @@ describe('Connection database queries', () => {
 
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             last: 7,
           }),
@@ -320,7 +318,7 @@ describe('Connection database queries', () => {
 
         assert.deepEqual(
           await runAndGetPageInfo({
-            orderBy: {field: 'createdAt'},
+            orderBy: { field: 'createdAt' },
             after: cursors.get(2),
             first: 3,
             last: 3,
@@ -339,7 +337,7 @@ describe('Connection database queries', () => {
       assert.oequal(
         await runAndGivePositions(indexes, {
           first: 1,
-          orderBy: {field: 'createdAt'},
+          orderBy: { field: 'createdAt' },
         }, 'query'),
         Range(0, 7)
       );
@@ -347,7 +345,7 @@ describe('Connection database queries', () => {
       assert.oequal(
         await runAndGivePositions(indexes, {
           first: 1,
-          orderBy: {field: 'createdAt'},
+          orderBy: { field: 'createdAt' },
         }, 'paginatedQuery'),
         Range(0, 1)
       );
@@ -357,7 +355,7 @@ describe('Connection database queries', () => {
       let indexes = await getIndexes('Micropost');
       assert.oequal(
         await runAndGivePositions(indexes, {
-          orderBy: {field: 'createdAt'},
+          orderBy: { field: 'createdAt' },
         }, 'paginatedQuery', {
           keyPrefixFields: fromJS([['author', 'value']]),
           keyPrefix: List.of('bbd1db98-4ac4-40a7-b514-968059c3dbac'),
@@ -374,7 +372,7 @@ describe('Connection database queries', () => {
           keyPrefixFields: fromJS([['author', 'value']]),
           keyPrefix: List.of('bbd1db98-4ac4-40a7-b514-968059c3dbac'),
         },
-        {orderBy: {field: 'createdAt'}}
+        { orderBy: { field: 'createdAt' } }
       );
       const cursors = List(await result.paginatedQuery
         .map(result.cursorFn)
@@ -384,7 +382,7 @@ describe('Connection database queries', () => {
 
       assert.oequal(
         await runAndGivePositions(indexes, {
-          orderBy: {field: 'createdAt'},
+          orderBy: { field: 'createdAt' },
           after: cursors.get(2),
           before: cursors.get(5),
         }, 'paginatedQuery', {

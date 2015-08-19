@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import {fromJS, Map} from 'immutable';
+import { fromJS, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import assert from '../../../test/assert';

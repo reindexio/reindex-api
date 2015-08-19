@@ -1,4 +1,4 @@
-import {fromJS, List} from 'immutable';
+import { fromJS, List } from 'immutable';
 import {
   GraphQLInterfaceType,
   GraphQLObjectType,

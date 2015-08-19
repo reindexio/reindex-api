@@ -33,7 +33,7 @@
     "chai": "^2.2.0",
     "chai-oequal": "0.0.1",
     "diff": "^1.4.0",
-    "eslint": "^1.1.0",
+    "eslint": "^1.2.0",
     "eslint-plugin-arrow-function": "git://github.com/freiksenet/eslint-plugin-arrow-function.git#return-shorthand",
     "jsdoc": "^3.3.0-beta3",
     "mocha": "^2.2.4",
@@ -41,12 +41,10 @@
   },
   "scripts": {
     "start": "nodemon index.js",
-
     "lint": "eslint ./",
     "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive",
     "testonly": "npm run mocha $(find ./ -name __tests__)",
     "test": "npm run lint && npm run testonly",
-
     "create-app": "babel-node bin/create-app.js",
     "create-token": "node bin/create-token.js",
     "print-schema": "babel-node bin/print-schema.js"

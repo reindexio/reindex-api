@@ -2,10 +2,13 @@ import Hapi from 'hapi';
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
 import RethinkDB from 'rethinkdb';
-import {randomString} from 'cryptiles';
+import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
-import {createTestDatabase, deleteTestDatabase} from '../../test/testDatabase';
+import {
+  createTestDatabase,
+  deleteTestDatabase,
+} from '../../test/testDatabase';
 import databaseNameFromHostname from '../databaseNameFromHostname';
 import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
 import RethinkDBPlugin from '../RethinkDBPlugin';

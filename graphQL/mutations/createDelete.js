@@ -1,11 +1,11 @@
-import {Map} from 'immutable';
-import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
-import {deleteQuery} from '../../db/queries/mutationQueries';
+import { Map } from 'immutable';
+import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
+import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 
-export default function createDelete({type, payload}) {
-  const input = new GraphQLInputObjectType({
+export default function createDelete({ type, payload }) {
+  const inputType = new GraphQLInputObjectType({
     name: '_Delete' + type.name + 'Input',
     fields: {
       clientMutationId: {
@@ -23,10 +23,10 @@ export default function createDelete({type, payload}) {
     returnType: payload,
     args: Map({
       input: {
-        type: input,
+        type: inputType,
       },
     }),
-    resolve(parent, {input}, {rootValue: {conn}}) {
+    resolve(parent, { input }, { rootValue: { conn } }) {
       return deleteQuery(conn, type.name, input.id)
         .then((result) => ({
           clientMutationId: input.clientMutationId,

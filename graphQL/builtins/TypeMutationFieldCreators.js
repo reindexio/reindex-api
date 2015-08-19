@@ -1,4 +1,4 @@
-import {List} from 'immutable';
+import { List } from 'immutable';
 import createCreate from '../mutations/createCreate';
 import createUpdate from '../mutations/createUpdate';
 import createReplace from '../mutations/createReplace';

@@ -1,4 +1,4 @@
-import {List, Record} from 'immutable';
+import { List, Record } from 'immutable';
 
 const TypeSet = new Record({
   type: undefined,

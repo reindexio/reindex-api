@@ -5,7 +5,7 @@ import {
   TYPE_TABLE,
   SECRET_TABLE,
 } from '../DBConstants';
-import {getFirstOrNullQuery, queryWithIDs} from './queryUtils';
+import { getFirstOrNullQuery, queryWithIDs } from './queryUtils';
 
 export function getSecrets(conn) {
   return RethinkDB.table(SECRET_TABLE)
@@ -23,7 +23,9 @@ export function getTypes(conn) {
 
 export function getAuthenticationProvider(conn, providerType) {
   return getFirstOrNullQuery(queryWithIDs(AUTHENTICATION_PROVIDER_TABLE,
-    RethinkDB.table(AUTHENTICATION_PROVIDER_TABLE).filter({type: providerType})
+    RethinkDB.table(AUTHENTICATION_PROVIDER_TABLE).filter({
+      type: providerType,
+    })
   )).run(conn);
 }
 
@@ -52,10 +54,10 @@ export function getEdges(conn, query, cursorFn) {
   })).coerceTo('array').run(conn);
 }
 
-export async function getPageInfo(conn, query) {
+export function getPageInfo(conn, query) {
   if (query.run) {
     return query.run(conn);
   } else {
-    return query;
+    return Promise.resolve(query);
   }
 }

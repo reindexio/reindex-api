@@ -1,10 +1,10 @@
 import createRootField from '../createRootField';
-import {getConnectionQueries} from '../../db/queries/connectionQueries';
+import { getConnectionQueries } from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
-} from '../connections';
+ } from '../connections';
 
-export default function createSearch({type, connection}) {
+export default function createSearch({ type, connection }) {
   return createRootField({
     name: 'searchFor' + type.name,
     returnType: connection,
@@ -12,7 +12,7 @@ export default function createSearch({type, connection}) {
     resolve(
       parent,
       args,
-      {rootValue: {conn, indexes}}
+      { rootValue: { conn, indexes } }
     ) {
       return getConnectionQueries(
         conn,

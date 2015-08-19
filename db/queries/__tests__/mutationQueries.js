@@ -6,7 +6,7 @@ import {
   createTestDatabase,
   deleteTestDatabase,
 } from '../../../test/testDatabase';
-import {getByID} from '../simpleQueries';
+import { getByID } from '../simpleQueries';
 import * as queries from '../mutationQueries';
 
 describe('Mutatative database queries', () => {

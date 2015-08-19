@@ -5,14 +5,14 @@ import DoT from 'dot';
 import JSONWebToken from 'jsonwebtoken';
 import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
-import {Set} from 'immutable';
+import { Set } from 'immutable';
 
 import escapeScriptJSON from './escapeScriptJSON';
 import {
   getAuthenticationProvider,
   getSecrets
 } from '../db/queries/simpleQueries';
-import {getOrCreateUser} from '../db/queries/mutationQueries';
+import { getOrCreateUser } from '../db/queries/mutationQueries';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
@@ -83,7 +83,7 @@ async function authenticate(request, reply) {
       );
     }
 
-    const {clientID, clientSecret} = authenticationProvider;
+    const { clientID, clientSecret } = authenticationProvider;
 
     if (!clientID || !clientSecret) {
       return reply(
@@ -123,7 +123,7 @@ async function authenticate(request, reply) {
 }
 
 function normalizeCredentials(credentials) {
-  const {profile} = credentials;
+  const { profile } = credentials;
   const result = {
     accessToken: credentials.token,
     displayName: profile.displayName,
@@ -146,9 +146,9 @@ function normalizeCredentials(credentials) {
 async function handler(request, reply) {
   try {
     const conn = await request.rethinkDBConnection;
-    const {credentials} = request.auth;
+    const { credentials } = request.auth;
 
-    const {provider} = credentials;
+    const { provider } = credentials;
     const credential = normalizeCredentials(credentials);
     const user = await getOrCreateUser(
       conn,
@@ -173,7 +173,7 @@ async function handler(request, reply) {
 }
 
 function onPreResponse(request, reply) {
-  const {response} = request;
+  const { response } = request;
   if (request.isSocialLoginRequest && response.isBoom) {
     const code = !response.isServer && response.data && response.data.code;
     const error = code ?
