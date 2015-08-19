@@ -4,7 +4,7 @@ const TypeSet = new Record({
   type: undefined,
   connection: undefined,
   inputObject: undefined,
-  mutation: undefined,
+  payload: undefined,
   blacklistedRootFields: List(),
 });
 

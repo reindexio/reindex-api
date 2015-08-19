@@ -236,8 +236,8 @@ describe('Integration Tests', () => {
   it('does crud', async function() {
     const clientMutationId = 'my-client-mutation-id';
     const created = await runQuery(`
-      mutation createUser($User: _UserInputObject!, $clientMutationId: String) {
-        createUser(User: $User, clientMutationId: $clientMutationId) {
+      mutation createUser($input: _CreateUserInput) {
+        createUser(input: $input) {
           clientMutationId,
           User {
             id,
@@ -247,10 +247,12 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      clientMutationId,
-      User: {
-        handle: 'immonenv',
-        email: 'immonenv@example.com',
+      input: {
+        clientMutationId,
+        User: {
+          handle: 'immonenv',
+          email: 'immonenv@example.com',
+        },
       },
     });
 
@@ -266,9 +268,8 @@ describe('Integration Tests', () => {
     }, 'create works');
 
     const updated = await runQuery(`
-      mutation updateUser($id: ID!, $User: _UserInputObject!,
-                          $clientMutationId: String) {
-        updateUser(id: $id, User: $User, clientMutationId: $clientMutationId) {
+      mutation updateUser($input: _UpdateUserInput) {
+        updateUser(input: $input) {
           clientMutationId,
           User {
             id,
@@ -278,10 +279,12 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
-      clientMutationId,
-      User: {
-        handle: 'villeimmonen',
+      input: {
+        id,
+        clientMutationId,
+        User: {
+          handle: 'villeimmonen',
+        },
       },
     });
 
@@ -295,9 +298,8 @@ describe('Integration Tests', () => {
     }, 'update works');
 
     const replaced = await runQuery(`
-      mutation replaceUser($id: ID!, $User: _UserInputObject!,
-                           $clientMutationId: String) {
-        replaceUser(id: $id, User: $User, clientMutationId: $clientMutationId) {
+      mutation replaceUser($input: _ReplaceUserInput) {
+        replaceUser(input: $input) {
           clientMutationId,
           User {
             id,
@@ -307,10 +309,12 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
-      clientMutationId,
-      User: {
-        handle: 'immonenv',
+      input: {
+        id,
+        clientMutationId,
+        User: {
+          handle: 'immonenv',
+        },
       },
     });
 
@@ -324,8 +328,8 @@ describe('Integration Tests', () => {
     }, 'replace works');
 
     const deleted = await runQuery(`
-      mutation deleteUser($id: ID!, $clientMutationId: String) {
-        deleteUser(id: $id, clientMutationId: $clientMutationId) {
+      mutation deleteUser($input: _DeleteUserInput) {
+        deleteUser(input: $input) {
           clientMutationId,
           User {
             id,
@@ -335,8 +339,10 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      id,
-      clientMutationId,
+      input: {
+        id,
+        clientMutationId,
+      },
     });
 
     assert.deepEqual(deleted.data.deleteUser, replaced.data.replaceUser,
@@ -369,8 +375,8 @@ describe('Integration Tests', () => {
       author: authorID,
     };
     const result = await runQuery(`
-      mutation postMicropost($Micropost: _MicropostInputObject!) {
-        createMicropost(Micropost: $Micropost) {
+      mutation postMicropost($input: _CreateMicropostInput) {
+        createMicropost(input: $input) {
           Micropost {
             text,
             createdAt,
@@ -381,7 +387,10 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      Micropost: micropost,
+      input: {
+        clientMutationId: '1',
+        Micropost: micropost,
+      },
     });
 
     assert.deepEqual(result.data.createMicropost.Micropost, {
@@ -412,8 +421,8 @@ describe('Integration Tests', () => {
       },
     };
     const result = await runQuery(`
-      mutation postMicropost($Micropost: _MicropostInputObject!) {
-        createMicropost(Micropost: $Micropost) {
+      mutation postMicropost($input: _CreateMicropostInput) {
+        createMicropost(input: $input) {
           Micropost {
             text,
             tags,
@@ -423,7 +432,10 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      Micropost: micropost,
+      input: {
+        clientMutationId: '1',
+        Micropost: micropost,
+      },
     });
 
     assert.deepEqual(result.data.createMicropost.Micropost, micropost);

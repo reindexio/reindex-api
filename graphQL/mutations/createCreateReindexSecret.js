@@ -1,6 +1,6 @@
 import Cryptiles from 'cryptiles';
 import {Map} from 'immutable';
-import {GraphQLString} from 'graphql';
+import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
 import createRootField from '../createRootField';
 import {create} from '../../db/queries/mutations';
 
@@ -9,16 +9,24 @@ function generateSecret() {
 }
 
 export default function createCreateReindexSecret(typeSets) {
-  const secretMutation = typeSets.get('ReindexSecret').mutation;
+  const secretPayload = typeSets.get('ReindexSecret').payload;
+  const input = new GraphQLInputObjectType({
+    name: '_CreateReindexSecretInput',
+    fields: {
+      clientMutationId: {
+        name: 'clientMutationId',
+        type: new GraphQLNonNull(GraphQLString),
+      },
+    },
+  });
   return createRootField({
     name: 'createReindexSecret',
     args: Map({
-      clientMutationId: {
-        name: 'clientMutationId',
-        type: GraphQLString,
+      input: {
+        type: input,
       },
     }),
-    returnType: secretMutation,
+    returnType: secretPayload,
     resolve: (parent, {clientMutationId}, {rootValue: {conn}}) => (
       create(conn, 'ReindexSecret', { value: generateSecret()})
         .then((result) => ({
