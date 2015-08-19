@@ -9,7 +9,12 @@ import {
   GraphQLList,
   GraphQLEnumType,
 } from 'graphql';
-import {getNodes, getEdges, getCount, getPageInfo} from '../db/queries/simple';
+import {
+  getNodes,
+  getEdges,
+  getCount,
+  getPageInfo
+} from '../db/queries/simpleQueries';
 import Cursor from './builtins/Cursor';
 
 export function createConnection({type}) {

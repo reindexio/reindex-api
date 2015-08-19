@@ -5,7 +5,7 @@ import {
   TYPE_TABLE,
   SECRET_TABLE,
 } from '../DBConstants';
-import {getFirstOrNullQuery, queryWithIDs} from './utils';
+import {getFirstOrNullQuery, queryWithIDs} from './queryUtils';
 
 export function getSecrets(conn) {
   return RethinkDB.table(SECRET_TABLE)

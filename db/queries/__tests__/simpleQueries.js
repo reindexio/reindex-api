@@ -1,18 +1,19 @@
-import assert from '../../assert';
 import uuid from 'uuid';
 import {fromJS, Map} from 'immutable';
 import RethinkDB from 'rethinkdb';
+
+import assert from '../../../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
   TEST_DATA,
-} from '../../testDatabase';
+} from '../../../test/testDatabase';
 import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
-} from '../../../db/DBConstants';
-import * as queries from '../../../db/queries/simple';
+} from '../../DBConstants';
+import * as queries from '../simpleQueries';
 
 
 describe('Simple database queries', () => {

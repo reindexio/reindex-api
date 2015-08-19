@@ -1,7 +1,7 @@
 import {Kind} from 'graphql/language';
 
-import assert from '../../assert';
-import DateTime from '../../../graphQL/builtins/DateTime';
+import assert from '../../../test/assert';
+import DateTime from '../DateTime';
 
 const dateISOString = '2015-08-06T10:03:50.052Z';
 

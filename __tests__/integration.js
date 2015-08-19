@@ -1,14 +1,14 @@
 import Immutable from 'immutable';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
-
-import assert from './assert';
-import createSchema from '../graphQL/createSchema';
 import {graphql} from 'graphql';
-import {createTestDatabase, deleteTestDatabase} from './testDatabase';
-import {getTypes} from '../db/queries/simple';
+
+import createSchema from '../graphQL/createSchema';
+import {getTypes} from '../db/queries/simpleQueries';
 import {toReindexID} from '../graphQL/builtins/ReindexID';
 import extractIndexes from '../db/extractIndexes';
+import assert from '../test/assert';
+import {createTestDatabase, deleteTestDatabase} from '../test/testDatabase';
 
 describe('Integration Tests', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');

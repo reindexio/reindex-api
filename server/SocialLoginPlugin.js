@@ -8,8 +8,11 @@ import Providers from 'bell/lib/providers';
 import {Set} from 'immutable';
 
 import escapeScriptJSON from './escapeScriptJSON';
-import {getAuthenticationProvider, getSecrets} from '../db/queries/simple';
-import {getOrCreateUser} from '../db/queries/mutations';
+import {
+  getAuthenticationProvider,
+  getSecrets
+} from '../db/queries/simpleQueries';
+import {getOrCreateUser} from '../db/queries/mutationQueries';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),

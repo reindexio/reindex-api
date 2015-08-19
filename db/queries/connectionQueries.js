@@ -6,8 +6,8 @@ import Index from '../Index';
 import {
   TYPE_TABLE,
 } from '../DBConstants';
-import {getAllQuery} from './simple';
-import {queryWithIDs} from './utils';
+import {getAllQuery} from './simpleQueries';
+import {queryWithIDs} from './queryUtils';
 
 // Produce queries required to handle connection.
 //

@@ -1,9 +1,10 @@
 /* eslint comma-dangle: 0, quotes: 0, quote-props: 0 */
-import assert from '../assert';
-import createSchema from '../../graphQL/createSchema';
-import extractIndexes from '../../db/extractIndexes';
 import Immutable from 'immutable';
 import {graphql} from 'graphql';
+
+import assert from '../../test/assert';
+import createSchema from '../../graphQL/createSchema';
+import extractIndexes from '../../db/extractIndexes';
 
 const types = Immutable.fromJS(require('./fixtures/types.json'));
 const CONNECTION_TYPE_NAME = '_ExampleConnection';

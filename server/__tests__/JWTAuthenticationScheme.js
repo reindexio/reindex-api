@@ -4,11 +4,11 @@ import Promise from 'bluebird';
 import RethinkDB from 'rethinkdb';
 import {randomString} from 'cryptiles';
 
-import assert from '../assert';
-import databaseNameFromHostname from '../../server/databaseNameFromHostname';
-import JWTAuthenticationScheme from '../../server/JWTAuthenticationScheme';
-import RethinkDBPlugin from '../../server/RethinkDBPlugin';
-import {createTestDatabase, deleteTestDatabase} from '../testDatabase';
+import assert from '../../test/assert';
+import {createTestDatabase, deleteTestDatabase} from '../../test/testDatabase';
+import databaseNameFromHostname from '../databaseNameFromHostname';
+import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
+import RethinkDBPlugin from '../RethinkDBPlugin';
 
 describe('JWTAuthenticationScheme', () => {
   const host = randomString(10) + '.example.com';
