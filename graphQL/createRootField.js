@@ -1,4 +1,4 @@
-import {Map, List} from 'immutable';
+import { Map, List } from 'immutable';
 
 export default function createRootField({
   name,
@@ -11,7 +11,7 @@ export default function createRootField({
     name,
     type: returnType,
     args: args
-      .map(({type, description}) => ({
+      .map(({ type, description }) => ({
         type,
         description,
       }))
@@ -35,8 +35,8 @@ function runValidators(globalValidators, argDefinitions, args, context) {
     ), args)
     .map((arg, key, all) => {
       const validators = argDefinitions.get(key).validators || List();
-      return validators.reduce((newArg, validator) => {
-        return validator(newArg, all, context);
-      }, arg);
+      return validators.reduce((newArg, validator) => (
+        validator(newArg, all, context)
+      ), arg);
     });
 }

@@ -1,13 +1,13 @@
 import uuid from 'uuid';
-import {List, Range} from 'immutable';
+import { List, Range } from 'immutable';
 import RethinkDB from 'rethinkdb';
 import Index from '../Index';
 
 import {
   TYPE_TABLE,
 } from '../DBConstants';
-import {getAllQuery} from './simpleQueries';
-import {queryWithIDs} from './queryUtils';
+import { getAllQuery } from './simpleQueries';
+import { queryWithIDs } from './queryUtils';
 
 // Produce queries required to handle connection.
 //
@@ -143,7 +143,7 @@ function paginateQuery(conn, type, index, query, {
     op = RethinkDB.desc;
   }
 
-  query = query.orderBy({index: op(index.name)});
+  query = query.orderBy({ index: op(index.name) });
 
   if (before || after) {
     query = RethinkDB.do(
@@ -227,7 +227,7 @@ async function ensureIndex(conn, type, fields) {
   )).run(conn);
   await* [
     RethinkDB.table(type).indexWait(name).run(conn),
-    RethinkDB.table(TYPE_TABLE).filter({name: type}).nth(0).update((obj) => ({
+    RethinkDB.table(TYPE_TABLE).filter({ name: type }).nth(0).update((obj) => ({
       indexes: obj('indexes').append({
         name,
         fields: fields.toJS(),

@@ -1,8 +1,8 @@
 import Base64URL from 'base64-url';
-import {GraphQLScalarType} from 'graphql';
-import {Kind} from 'graphql/language';
+import { GraphQLScalarType } from 'graphql';
+import { Kind } from 'graphql/language';
 
-export function toCursor({index, value}) {
+export function toCursor({ index, value }) {
   return Base64URL.encode(index + ':' + value);
 }
 
@@ -19,7 +19,7 @@ export function fromCursor(string) {
 }
 
 export class Cursor {
-  constructor({index, value}) {
+  constructor({ index, value }) {
     this.index = index;
     this.value = value;
   }

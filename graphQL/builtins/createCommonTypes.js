@@ -1,4 +1,4 @@
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 import createAuthenticationProvider from './createAuthenticationProvider';
 import createUserTypes from './createUserTypes';
 import createSecret from './createSecret';

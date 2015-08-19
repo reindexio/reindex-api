@@ -1,4 +1,4 @@
-import {fromJS} from 'immutable';
+import { fromJS } from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import {
@@ -11,8 +11,8 @@ import {
 export const TEST_DATA = fromJS({
   tables: {
     User: [
-      {id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408', handle: 'fson'},
-      {id: 'bbd1db98-4ac4-40a7-b514-968059c3dbac', handle: 'freiksenet'},
+      { id: '94b90d89-22b6-4abf-b6ad-2780bf9d0408', handle: 'fson' },
+      { id: 'bbd1db98-4ac4-40a7-b514-968059c3dbac', handle: 'freiksenet' },
     ],
     Micropost: [
       {

@@ -1,8 +1,8 @@
 /* eslint "no-underscore-dangle": 0 */
 
-import {is} from 'immutable';
+import { is } from 'immutable';
 import chai from 'chai';
-import {diffJson} from 'diff';
+import { diffJson } from 'diff';
 
 function oequal(result) {
   const diff = diffJson(

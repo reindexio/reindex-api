@@ -1,4 +1,4 @@
-import {Kind} from 'graphql/language';
+import { Kind } from 'graphql/language';
 
 import assert from '../../../test/assert';
 import DateTime from '../DateTime';

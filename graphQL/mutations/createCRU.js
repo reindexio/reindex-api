@@ -1,5 +1,5 @@
-import {Map} from 'immutable';
-import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
+import { Map } from 'immutable';
+import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import * as queries from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
@@ -30,7 +30,7 @@ export default function createCRU(operation, getById, {
     });
   }
 
-  const input = new GraphQLInputObjectType({
+  const inputType = new GraphQLInputObjectType({
     name: (
       '_' +
       operation.charAt(0).toUpperCase() + operation.substr(1) +
@@ -44,10 +44,10 @@ export default function createCRU(operation, getById, {
     returnType: payload,
     args: Map({
       input: {
-        type: input,
+        type: inputType,
       },
     }),
-    resolve(parent, {input}, {rootValue: {conn}}) {
+    resolve(parent, { input }, { rootValue: { conn } }) {
       const clientMutationId = input.clientMutationId;
       const object = input[type.name] || {};
       let queryArgs;

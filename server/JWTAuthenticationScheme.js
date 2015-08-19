@@ -1,7 +1,7 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
-import {getSecrets} from '../db/queries/simpleQueries';
+import { getSecrets } from '../db/queries/simpleQueries';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
 const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
@@ -23,7 +23,7 @@ function verifyToken(token, secrets) {
 }
 
 async function authenticateAsync(request) {
-  const {authorization} = request.headers;
+  const { authorization } = request.headers;
 
   if (!authorization) {
     return {

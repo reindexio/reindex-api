@@ -2,10 +2,13 @@ import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
-import {randomString} from 'cryptiles';
+import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
-import {createTestDatabase, deleteTestDatabase} from '../../test/testDatabase';
+import {
+  createTestDatabase,
+  deleteTestDatabase,
+} from '../../test/testDatabase';
 import createServer from '../createServer';
 import databaseNameFromHostname from '../databaseNameFromHostname';
 

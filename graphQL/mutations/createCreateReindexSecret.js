@@ -1,8 +1,8 @@
 import Cryptiles from 'cryptiles';
-import {Map} from 'immutable';
-import {GraphQLString, GraphQLNonNull, GraphQLInputObjectType} from 'graphql';
+import { Map } from 'immutable';
+import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import createRootField from '../createRootField';
-import {create} from '../../db/queries/mutationQueries';
+import { create } from '../../db/queries/mutationQueries';
 
 function generateSecret() {
   return Cryptiles.randomString(40);
@@ -27,8 +27,8 @@ export default function createCreateReindexSecret(typeSets) {
       },
     }),
     returnType: secretPayload,
-    resolve: (parent, {clientMutationId}, {rootValue: {conn}}) => (
-      create(conn, 'ReindexSecret', { value: generateSecret()})
+    resolve: (parent, { clientMutationId }, { rootValue: { conn } }) => (
+      create(conn, 'ReindexSecret', { value: generateSecret() })
         .then((result) => ({
           clientMutationId,
           ReindexSecret: result,

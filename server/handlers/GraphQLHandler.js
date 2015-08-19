@@ -1,8 +1,8 @@
-import {graphql} from 'graphql';
+import { graphql } from 'graphql';
 import Immutable from 'immutable';
 
 import createSchema from '../../graphQL/createSchema';
-import {getTypes} from '../../db/queries/simpleQueries';
+import { getTypes } from '../../db/queries/simpleQueries';
 import extractIndexes from '../../db/extractIndexes';
 
 async function handler(request, reply) {

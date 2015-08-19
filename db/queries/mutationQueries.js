@@ -3,7 +3,7 @@ import RethinkDB from 'rethinkdb';
 import {
   USER_TABLE,
 } from '../DBConstants';
-import {queryWithIDs} from './queryUtils';
+import { queryWithIDs } from './queryUtils';
 
 
 export async function getOrCreateUser(conn, providerName, credential) {
