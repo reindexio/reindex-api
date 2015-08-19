@@ -1,4 +1,4 @@
-import { fromJS, List, Range } from 'immutable';
+import { fromJS, List, Range, Map } from 'immutable';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
@@ -8,7 +8,7 @@ import {
   deleteTestDatabase,
 } from '../../../test/testDatabase';
 import extractIndexes from '../../extractIndexes';
-import { getTypes, getPageInfo } from '../simpleQueries';
+import { getIndexes, getPageInfo } from '../simpleQueries';
 import { getConnectionQueries } from '../connectionQueries';
 
 describe('Connection database queries', () => {
@@ -25,8 +25,8 @@ describe('Connection database queries', () => {
     await conn.close();
   });
 
-  async function getIndexes(table) {
-    return extractIndexes(fromJS(await getTypes(conn))).get(table);
+  async function getDBIndexes(table) {
+    return extractIndexes(fromJS(await getIndexes(conn))).get(table, Map());
   }
 
   describe('getConnectionQueries', () => {
@@ -60,7 +60,7 @@ describe('Connection database queries', () => {
         .table('Micropost')
         .indexList()
         .run(conn);
-      const indexes = await getIndexes('Micropost');
+      const indexes = await getDBIndexes('Micropost');
 
       await runAndGivePositions(
         indexes,
@@ -70,7 +70,7 @@ describe('Connection database queries', () => {
         .table('Micropost')
         .indexList()
         .run(conn);
-      const newIndexes = await getIndexes('Micropost');
+      const newIndexes = await getDBIndexes('Micropost');
 
       assert.equal(newIndexList.length, indexList.length + 1,
         'one index is created');
@@ -84,14 +84,14 @@ describe('Connection database queries', () => {
         .table('Micropost')
         .indexList()
         .run(conn);
-      const newestIndexes = await getIndexes('Micropost');
+      const newestIndexes = await getDBIndexes('Micropost');
 
       assert.deepEqual(newestIndexList, newIndexList, 'index created once');
       assert.oequal(newestIndexes, newIndexes, 'index stored in metadata once');
     });
 
     it('orders query', async function() {
-      const indexes = await getIndexes('Micropost');
+      const indexes = await getDBIndexes('Micropost');
       assert.oequal(
         await runAndGivePositions(indexes, { orderBy: { field: 'createdAt' } }),
         Range(0, 7)
@@ -108,7 +108,7 @@ describe('Connection database queries', () => {
       let cursors;
       let indexes;
       it('creates cursors', async function() {
-        indexes = await getIndexes('Micropost');
+        indexes = await getDBIndexes('Micropost');
         const result = await getConnectionQueries(
           conn,
           'Micropost',
@@ -333,7 +333,7 @@ describe('Connection database queries', () => {
     });
 
     it('returns both sliced and unsliced query', async function() {
-      const indexes = await getIndexes('Micropost');
+      const indexes = await getDBIndexes('Micropost');
       assert.oequal(
         await runAndGivePositions(indexes, {
           first: 1,
@@ -352,7 +352,7 @@ describe('Connection database queries', () => {
     });
 
     it('works with indexOptions', async function() {
-      let indexes = await getIndexes('Micropost');
+      let indexes = await getDBIndexes('Micropost');
       assert.oequal(
         await runAndGivePositions(indexes, {
           orderBy: { field: 'createdAt' },
@@ -363,7 +363,7 @@ describe('Connection database queries', () => {
         Range(0, 7),
       );
 
-      indexes = await getIndexes('Micropost');
+      indexes = await getDBIndexes('Micropost');
       const result = await getConnectionQueries(
         conn,
         'Micropost',

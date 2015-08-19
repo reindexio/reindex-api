@@ -1,8 +1,8 @@
 import { graphql } from 'graphql';
-import Immutable from 'immutable';
+import { fromJS } from 'immutable';
 
 import createSchema from '../../graphQL/createSchema';
-import { getTypes } from '../../db/queries/simpleQueries';
+import { getTypes, getIndexes } from '../../db/queries/simpleQueries';
 import extractIndexes from '../../db/extractIndexes';
 
 async function handler(request, reply) {
@@ -11,9 +11,10 @@ async function handler(request, reply) {
     const variables = request.payload.variables || {};
 
     const conn = await request.rethinkDBConnection;
-    const types = Immutable.fromJS(await getTypes(conn));
-    const indexes = extractIndexes(types);
-    const schema = createSchema(types);
+    const typePromise = getTypes(conn);
+    const indexPromise = getIndexes(conn);
+    const indexes = extractIndexes(fromJS(await indexPromise));
+    const schema = createSchema(fromJS(await typePromise));
     const result = await graphql(schema, query, {
       conn,
       indexes,

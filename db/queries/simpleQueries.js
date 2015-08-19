@@ -4,6 +4,7 @@ import {
   AUTHENTICATION_PROVIDER_TABLE,
   TYPE_TABLE,
   SECRET_TABLE,
+  INDEX_TABLE,
 } from '../DBConstants';
 import { getFirstOrNullQuery, queryWithIDs } from './queryUtils';
 
@@ -17,6 +18,12 @@ export function getSecrets(conn) {
 
 export function getTypes(conn) {
   return RethinkDB.table(TYPE_TABLE)
+    .coerceTo('array')
+    .run(conn);
+}
+
+export function getIndexes(conn) {
+  return RethinkDB.table(INDEX_TABLE)
     .coerceTo('array')
     .run(conn);
 }

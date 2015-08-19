@@ -1,6 +1,7 @@
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
+import { TYPE_TABLE } from '../../DBConstants';
 import assert from '../../../test/assert';
 import {
   createTestDatabase,
@@ -8,6 +9,7 @@ import {
 } from '../../../test/testDatabase';
 import { getByID } from '../simpleQueries';
 import * as queries from '../mutationQueries';
+import { queryWithIDs } from '../queryUtils';
 
 describe('Mutatative database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -109,5 +111,64 @@ describe('Mutatative database queries', () => {
       credentials
     );
     assert.equal(user.id.value, newUser.id.value);
+  });
+
+  it('create and delete type', async function() {
+    const newNodeType = {
+      name: 'NewNodeType',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'id',
+          nonNull: true,
+        },
+      ],
+    };
+    const newType = {
+      name: 'NewType',
+      kind: 'OBJECT',
+      interfaces: [],
+      fields: [],
+    };
+
+    const nodeResult = await queries.createType(conn, newNodeType);
+    const result = await queries.createType(conn, newType);
+    const tables = await RethinkDB.tableList().run(conn);
+
+    assert(tables.includes('NewNodeType'),
+      'Node type is created as table');
+    assert(!tables.includes('NewType'),
+      'non-Node type is not created as table');
+
+    assert.deepEqual(nodeResult, await queryWithIDs(
+      'ReindexType',
+      RethinkDB.table(TYPE_TABLE).filter({
+        name: 'NewNodeType',
+      })(0)).run(conn)
+    );
+    assert.deepEqual(result, await queryWithIDs(
+      'ReindexType',
+      RethinkDB.table(TYPE_TABLE).filter({
+        name: 'NewType',
+      })(0)).run(conn)
+    );
+
+    await queries.deleteType(conn, nodeResult.id);
+    await queries.deleteType(conn, result.id);
+    const afterDeleteTables = await RethinkDB.tableList().run(conn);
+
+    assert(!afterDeleteTables.includes('NewNodeType'),
+      'Node type is delete as table');
+    assert(!afterDeleteTables.includes('NewType'),
+      'non-Node type is still not a table');
+
+    assert.equal(0, await RethinkDB.table(TYPE_TABLE).filter({
+      name: 'NewNodeType',
+    }).count().run(conn));
+    assert.equal(0, await RethinkDB.table(TYPE_TABLE).filter({
+      name: 'NewType',
+    }).count().run(conn));
   });
 });

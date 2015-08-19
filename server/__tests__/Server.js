@@ -21,11 +21,9 @@ describe('Server', () => {
     sub: randomUserID,
   }, randomSecret);
   const query = `query seacrh {
-    searchForMicropost(orderBy: {field: "createdAt"}, first: 1) {
-      nodes {
-        text,
-        createdAt
-      }
+    getUser(id: "VXNlcjpiYmQxZGI5OC00YWM0LTQwYTctYjUxNC05NjgwNTljM2RiYWM") {
+      id,
+      handle,
     }
   }`;
 
@@ -65,13 +63,9 @@ describe('Server', () => {
     assert.strictEqual(response.statusCode, 200);
     assert.deepEqual(JSON.parse(response.result), {
       data: {
-        searchForMicropost: {
-          nodes: [
-            {
-              text: 'Test text',
-              createdAt: '2015-04-10T10:24:52.163Z',
-            },
-          ],
+        getUser: {
+          id: 'VXNlcjpiYmQxZGI5OC00YWM0LTQwYTctYjUxNC05NjgwNTljM2RiYWM',
+          handle: 'freiksenet',
         },
       },
     });

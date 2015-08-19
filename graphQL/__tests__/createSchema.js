@@ -29,7 +29,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'string',
@@ -98,7 +98,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'addresses',
@@ -136,12 +136,12 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'test',
             type: 'string',
-            isRequired: true,
+            nonNull: true,
           },
         ],
       },
@@ -162,7 +162,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'microposts',
@@ -180,7 +180,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'author',
@@ -261,7 +261,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'microposts',
@@ -279,7 +279,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'author',
@@ -307,7 +307,6 @@ describe('createSchema', () => {
     const mutationFields = mutation.getFields();
 
     assert.isDefined(queryFields.getUser);
-    assert.isDefined(queryFields.searchForMicropost);
     assert.isDefined(mutationFields.createUser);
     assert.isDefined(mutationFields.deleteMicropost);
 
@@ -331,7 +330,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'name',
@@ -347,7 +346,7 @@ describe('createSchema', () => {
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
         ],
       },

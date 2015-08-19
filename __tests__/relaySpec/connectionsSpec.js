@@ -4,7 +4,6 @@ import { graphql } from 'graphql';
 
 import assert from '../../test/assert';
 import createSchema from '../../graphQL/createSchema';
-import extractIndexes from '../../db/extractIndexes';
 
 const types = Immutable.fromJS(require('./fixtures/types.json'));
 const CONNECTION_TYPE_NAME = '_ExampleConnection';
@@ -20,7 +19,7 @@ describe('Relay Cursor Connections Specification', () => {
   const schema = createSchema(types);
   const rootValue = {
     conn: new MockConnection(),
-    indexes: extractIndexes(types),
+    indexes: Immutable.Map(),
   };
 
   function runQuery(query, variables) {

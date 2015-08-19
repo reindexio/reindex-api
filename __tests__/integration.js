@@ -1,14 +1,19 @@
-import Immutable from 'immutable';
+import { fromJS, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
 import createSchema from '../graphQL/createSchema';
-import { getTypes } from '../db/queries/simpleQueries';
+import { TYPE_TABLE } from '../db/DBConstants';
+import { getTypes, getIndexes } from '../db/queries/simpleQueries';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 import extractIndexes from '../db/extractIndexes';
 import assert from '../test/assert';
-import { createTestDatabase, deleteTestDatabase } from '../test/testDatabase';
+import {
+  createTestDatabase,
+  deleteTestDatabase,
+  TEST_DATA
+} from '../test/testDatabase';
 
 describe('Integration Tests', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
@@ -25,9 +30,10 @@ describe('Integration Tests', () => {
   });
 
   async function runQuery(query, variables) {
-    const types = Immutable.fromJS(await getTypes(conn));
-    const schema = createSchema(types);
-    const indexes = extractIndexes(types);
+    const typePromise = getTypes(conn);
+    const indexPromise = getIndexes(conn);
+    const indexes = extractIndexes(fromJS(await indexPromise));
+    const schema = createSchema(fromJS(await typePromise));
     return await graphql(schema, query, { conn, indexes }, variables);
   }
 
@@ -186,34 +192,20 @@ describe('Integration Tests', () => {
     });
   });
 
-  it('performs search', async function() {
-    const result = await runQuery(`
-      {
-        searchForUser(orderBy: {field: "handle"}) {
-          nodes {
-            handle
-          }
-        }
-      }
-    `);
-
-    assert.deepEqual(result.data, {
-      searchForUser: {
-        nodes: [
-          { handle: 'freiksenet' },
-          { handle: 'fson' },
-        ],
-      },
-    });
-  });
-
   it('works with edges and cursor', async function () {
+    const userId = toReindexID({
+      type: 'User',
+      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+    });
+
     const result = await runQuery(`
       {
-        searchForUser(orderBy: {field: "handle"}, first: 1) {
-          edges {
-            node {
-              handle
+        getUser(id: "${userId}") {
+          microposts(orderBy: {field: "createdAt"}, first: 1) {
+            edges {
+              node {
+                text
+              }
             }
           }
         }
@@ -221,14 +213,16 @@ describe('Integration Tests', () => {
     `);
 
     assert.deepEqual(result.data, {
-      searchForUser: {
-        edges: [
-          {
-            node: {
-              handle: 'freiksenet',
+      getUser: {
+        microposts: {
+          edges: [
+            {
+              node: {
+                text: 'Test text',
+              },
             },
-          },
-        ],
+          ],
+        },
       },
     });
   });
@@ -444,7 +438,7 @@ describe('Integration Tests', () => {
   it('creates a secret', async function() {
     const result = await runQuery(`
       mutation secret {
-        createReindexSecret {
+        createReindexSecret(input: {clientMutationId: "mutation"}) {
           ReindexSecret {
             value
           }
@@ -455,5 +449,135 @@ describe('Integration Tests', () => {
       result.data.createReindexSecret.ReindexSecret.value,
       /^[a-zA-Z0-9_-]{40}$/
     );
+  });
+
+  it('works with types', async function() {
+    const result = await runQuery(`{
+      schema {
+        types(orderBy: {field: "name"}) {
+          nodes {
+            name,
+            kind,
+            interfaces,
+            fields {
+              name,
+              type,
+              nonNull,
+              ofType,
+              reverseName,
+              isDeprecated,
+            }
+          }
+        }
+      }
+    }`);
+
+    assert.deepEqual(result, {
+      data: {
+        schema: {
+          types: {
+            nodes: TEST_DATA.getIn(['tables', TYPE_TABLE])
+              .map((type) => type.set(
+                'fields',
+                type.get('fields').map((field) => Map({
+                  name: null,
+                  type: null,
+                  nonNull: null,
+                  isDeprecated: null,
+                  ofType: null,
+                  reverseName: null,
+                }).merge(field)))).toJS(),
+          },
+        },
+      },
+    });
+
+    const newType = {
+      name: 'NewType',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'id',
+          nonNull: true,
+        },
+        {
+          name: 'name',
+          type: 'string',
+          nonNull: false,
+        },
+      ],
+    };
+
+    const newTypeResult = await runQuery(`
+      mutation createType($input: _CreateReindexTypeInput!) {
+        createReindexType(input: $input) {
+          ReindexType {
+            id,
+            name,
+            kind,
+            interfaces,
+            fields {
+              name,
+              type,
+              nonNull,
+            }
+          }
+        }
+      }
+    `, {
+      input: {
+        clientMutationId: 'mutation',
+        ReindexType: newType,
+      },
+    });
+
+    const id = newTypeResult.data.createReindexType.ReindexType.id;
+
+    assert.deepEqual(newTypeResult, {
+      data: {
+        createReindexType: {
+          ReindexType: {
+            ...newType,
+            id,
+          },
+        },
+      },
+    });
+
+    const deleteTypeResult = await runQuery(`
+      mutation deleteType($input: _DeleteReindexTypeInput!) {
+        deleteReindexType(input: $input) {
+          ReindexType {
+            id,
+            name,
+            kind,
+            interfaces,
+            fields {
+              name,
+              type,
+              nonNull,
+            }
+          }
+        }
+      }
+    `, {
+      input: {
+        clientMutationId: 'mutation',
+        id,
+      },
+    });
+
+    assert.deepEqual(deleteTypeResult, {
+      data: {
+        deleteReindexType: {
+          ReindexType: {
+            ...newType,
+            id,
+          },
+        },
+      },
+    });
   });
 });
