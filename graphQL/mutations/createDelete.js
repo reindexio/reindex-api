@@ -26,12 +26,12 @@ export default function createDelete({ type, payload }) {
         type: inputType,
       },
     }),
-    resolve(parent, { input }, { rootValue: { conn } }) {
-      return deleteQuery(conn, type.name, input.id)
-        .then((result) => ({
-          clientMutationId: input.clientMutationId,
-          [type.name]: result,
-        }));
+    async resolve(parent, { input }, { rootValue: { conn } }) {
+      const result = await deleteQuery(conn, type.name, input.id);
+      return {
+        clientMutationId: input.clientMutationId,
+        [type.name]: result,
+      };
     },
   });
 }

@@ -12,10 +12,9 @@ function makeRequestHandler(options) {
   };
 }
 
-function closeConnection(request) {
-  request.rethinkDBConnection.then(function(conn) {
-    conn.close();
-  });
+async function closeConnection(request) {
+  const conn = await request.rethinkDBConnection;
+  conn.close();
 }
 
 function register(server, options, next) {

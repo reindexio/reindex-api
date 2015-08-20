@@ -8,12 +8,12 @@ import {
 } from '../DBConstants';
 import { getFirstOrNullQuery, queryWithIDs } from './queryUtils';
 
-export function getSecrets(conn) {
-  return RethinkDB.table(SECRET_TABLE)
+export async function getSecrets(conn) {
+  const objects = await RethinkDB.table(SECRET_TABLE)
     .pluck('value')
     .coerceTo('array')
-    .run(conn)
-    .then((objects) => objects.map((object) => object.value));
+    .run(conn);
+  return objects.map((object) => object.value);
 }
 
 export function getTypes(conn) {

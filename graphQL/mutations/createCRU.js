@@ -47,7 +47,7 @@ export default function createCRU(operation, getById, {
         type: inputType,
       },
     }),
-    resolve(parent, { input }, { rootValue: { conn } }) {
+    async resolve(parent, { input }, { rootValue: { conn } }) {
       const clientMutationId = input.clientMutationId;
       const object = input[type.name] || {};
       let queryArgs;
@@ -56,11 +56,11 @@ export default function createCRU(operation, getById, {
       } else {
         queryArgs = [conn, type.name, object];
       }
-      return queries[operation](...queryArgs)
-        .then((result) => ({
-          clientMutationId,
-          [type.name]: result,
-        }));
+      const result = await queries[operation](...queryArgs);
+      return {
+        clientMutationId,
+        [type.name]: result,
+      };
     },
   });
 }

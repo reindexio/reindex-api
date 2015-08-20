@@ -24,12 +24,16 @@ export default function createCreateReindexType(typeSets) {
       },
     }),
     returnType: ReindexTypeSet.payload,
-    resolve: (parent, { input: { clientMutationId, ReindexType: type } }, {
-      rootValue: { conn },
-    }) => createType(conn, type)
-      .then((result) => ({
+    async resolve(
+      parent,
+      { input: { clientMutationId, ReindexType: type } },
+      { rootValue: { conn } }
+    ) {
+      const result = await createType(conn, type);
+      return {
         clientMutationId,
         ReindexType: result,
-      })),
+      };
+    },
   });
 }
