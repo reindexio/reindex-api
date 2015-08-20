@@ -75,10 +75,13 @@ async function authenticateAsync(request) {
   return credentials;
 }
 
-function authenticate(request, reply) {
-  authenticateAsync(request)
-    .then((credentials) => reply.continue({ credentials }))
-    .catch((error) => reply(error));
+async function authenticate(request, reply) {
+  try {
+    const credentials = await authenticateAsync(request);
+    return reply.continue({ credentials });
+  } catch (error) {
+    return reply(error);
+  }
 }
 
 function register(server, options, next) {

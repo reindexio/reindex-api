@@ -29,12 +29,16 @@ export default function createCreateReindexType(typeSets) {
       },
     }),
     returnType: ReindexTypeSet.payload,
-    resolve: (parent, { input: { clientMutationId, id } }, {
-      rootValue: { conn },
-    }) => deleteType(conn, id)
-      .then((result) => ({
+    async resolve(
+      parent,
+      { input: { clientMutationId, id } },
+      { rootValue: { conn } }
+    ) {
+      const result = await deleteType(conn, id);
+      return {
         clientMutationId,
         ReindexType: result,
-      })),
+      };
+    },
   });
 }
