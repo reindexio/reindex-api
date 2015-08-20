@@ -2,7 +2,7 @@
   {
     "fields": [
       {
-        "isRequired": true,
+        "nonNull": true,
         "name": "id",
         "type": "id"
       },
@@ -29,7 +29,7 @@
         "type": "connection"
       },
       {
-        "isRequired": true,
+        "nonNull": true,
         "name": "id",
         "type": "id"
       }

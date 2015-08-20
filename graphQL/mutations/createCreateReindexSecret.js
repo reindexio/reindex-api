@@ -27,12 +27,12 @@ export default function createCreateReindexSecret(typeSets) {
       },
     }),
     returnType: secretPayload,
-    resolve: (parent, { clientMutationId }, { rootValue: { conn } }) => (
-      create(conn, 'ReindexSecret', { value: generateSecret() })
+    resolve(parent, { input: { clientMutationId } }, { rootValue: { conn } }) {
+      return create(conn, 'ReindexSecret', { value: generateSecret() })
         .then((result) => ({
           clientMutationId,
           ReindexSecret: result,
-        }))
-    ),
+        }));
+    },
   });
 }

@@ -1,10 +1,10 @@
 import uuid from 'uuid';
-import { List, Range } from 'immutable';
+import { List, Range, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 import Index from '../Index';
 
 import {
-  TYPE_TABLE,
+  INDEX_TABLE,
 } from '../DBConstants';
 import { getAllQuery } from './simpleQueries';
 import { queryWithIDs } from './queryUtils';
@@ -37,7 +37,7 @@ import { queryWithIDs } from './queryUtils';
 export async function getConnectionQueries(
   conn,
   type,
-  indexes,
+  indexes = Map(),
   {
     keyPrefixFields = List(),
     keyPrefix,
@@ -225,15 +225,15 @@ async function ensureIndex(conn, type, fields) {
   await RethinkDB.table(type).indexCreate(name, (obj) => (
     getIndexValue(obj, fields)
   )).run(conn);
-  await* [
-    RethinkDB.table(type).indexWait(name).run(conn),
-    RethinkDB.table(TYPE_TABLE).filter({ name: type }).nth(0).update((obj) => ({
-      indexes: obj('indexes').append({
-        name,
-        fields: fields.toJS(),
-      }),
-    })).run(conn),
-  ];
+  await RethinkDB.do(
+    RethinkDB.table(type).indexWait(name),
+    () => RethinkDB.table(INDEX_TABLE).insert({
+      type,
+      name,
+      fields: fields.toJS(),
+    })
+  ).run(conn);
+
   return new Index({
     name,
     fields,

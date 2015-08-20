@@ -183,7 +183,7 @@ function createField(field, getTypeSet, interfaces) {
     }
   }
 
-  if (field.get('isRequired')) {
+  if (field.get('nonNull')) {
     type = new GraphQLNonNull(type);
   }
 

@@ -32,39 +32,76 @@ export async function getOrCreateUser(conn, providerName, credential) {
   ).run(conn);
 }
 
-export function create(conn, type, data) {
-  const query = RethinkDB.table(type)
+function getCreateQuery(type, data) {
+  return RethinkDB.table(type)
     .insert(compactObject(data), {
       returnChanges: true,
     })('changes')(0)('new_val');
-  return queryWithIDs(type, query).run(conn);
 }
 
-export function update(conn, type, id, data) {
-  const query = RethinkDB.table(type)
+export function create(conn, type, data) {
+  return queryWithIDs(type, getCreateQuery(type, data)).run(conn);
+}
+
+function getUpdateQuery(type, id, data) {
+  return RethinkDB.table(type)
     .get(id.value)
     .update(compactObject(data), {
       returnChanges: true,
     })('changes')(0)('new_val');
-  return queryWithIDs(type, query).run(conn);
+}
+
+export function update(conn, type, id, data) {
+  return queryWithIDs(type, getUpdateQuery(type, id, data)).run(conn);
+}
+
+function getReplaceQuery(type, id, data) {
+  const cleanData = compactObject(data);
+  cleanData.id = id.value;
+  return RethinkDB.table(type).get(id.value).replace(cleanData, {
+    returnChanges: true,
+  })('changes')(0)('new_val');
 }
 
 export function replace(conn, type, id, data) {
-  const cleanData = compactObject(data);
-  cleanData.id = id.value;
-  const query = RethinkDB.table(type).get(id.value).replace(cleanData, {
-    returnChanges: true,
-  })('changes')(0)('new_val');
-  return queryWithIDs(type, query).run(conn);
+  return queryWithIDs(type, getReplaceQuery(type, id, data)).run(conn);
 }
 
-export function deleteQuery(conn, table, id) {
-  const query = RethinkDB.table(table)
+function getDeleteQuery(type, id) {
+  return RethinkDB.table(type)
     .get(id.value)
     .delete({
       returnChanges: true,
     })('changes')(0)('old_val');
-  return queryWithIDs(table, query).run(conn);
+}
+
+export function deleteQuery(conn, type, id) {
+  return queryWithIDs(type, getDeleteQuery(type, id)).run(conn);
+}
+
+export function createType(conn, type) {
+  if (type.interfaces.includes('Node')) {
+    return queryWithIDs('ReindexType', RethinkDB.do(
+      RethinkDB.tableCreate(type.name),
+      () => getCreateQuery('ReindexType', type)
+    )).run(conn);
+  } else {
+    return create(conn, 'ReindexType', type);
+  }
+}
+
+export function deleteType(conn, id) {
+  return queryWithIDs('ReindexType', RethinkDB.do(
+    getDeleteQuery('ReindexType', id),
+    (result) => RethinkDB.do(
+      RethinkDB.branch(
+        result('interfaces').contains('Node'),
+        RethinkDB.tableDrop(result('name')),
+        {}
+      ),
+      () => result
+    )
+  )).run(conn);
 }
 
 function compactObject(object) {

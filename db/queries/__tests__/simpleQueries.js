@@ -12,6 +12,7 @@ import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
+  INDEX_TABLE,
 } from '../../DBConstants';
 import * as queries from '../simpleQueries';
 
@@ -43,6 +44,15 @@ describe('Simple database queries', () => {
         .map((type) => type.delete('id'))
         .toSet(),
       TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
+    );
+  });
+
+  it('getIndexes', async function() {
+    assert.oequal(
+      fromJS(await queries.getIndexes(conn))
+        .map((type) => type.delete('id'))
+        .toSet(),
+      TEST_DATA.getIn(['tables', INDEX_TABLE]).toSet(),
     );
   });
 

@@ -5,7 +5,8 @@ import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
-  USER_TABLE
+  USER_TABLE,
+  INDEX_TABLE,
 } from '../db/DBConstants';
 
 export const TEST_DATA = fromJS({
@@ -98,6 +99,7 @@ export const TEST_DATA = fromJS({
         value: 'secret',
       },
     ],
+    [INDEX_TABLE]: [],
     [TYPE_TABLE]: [
       {
         kind: 'OBJECT',
@@ -109,34 +111,6 @@ export const TEST_DATA = fromJS({
             type: 'string',
           },
         ],
-        indexes: [],
-      },
-      {
-        kind: 'OBJECT',
-        name: 'User',
-        interfaces: ['Node'],
-        fields: [
-          {
-            name: 'id',
-            type: 'id',
-            isRequired: true,
-          },
-          {
-            name: 'handle',
-            type: 'string',
-          },
-          {
-            name: 'email',
-            type: 'string',
-          },
-          {
-            name: 'microposts',
-            type: 'connection',
-            ofType: 'Micropost',
-            reverseName: 'author',
-          },
-        ],
-        indexes: [],
       },
       {
         kind: 'OBJECT',
@@ -146,7 +120,7 @@ export const TEST_DATA = fromJS({
           {
             name: 'id',
             type: 'id',
-            isRequired: true,
+            nonNull: true,
           },
           {
             name: 'text',
@@ -176,7 +150,32 @@ export const TEST_DATA = fromJS({
             type: 'Category',
           },
         ],
-        indexes: [],
+      },
+      {
+        kind: 'OBJECT',
+        name: 'User',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'id',
+            nonNull: true,
+          },
+          {
+            name: 'handle',
+            type: 'string',
+          },
+          {
+            name: 'email',
+            type: 'string',
+          },
+          {
+            name: 'microposts',
+            type: 'connection',
+            ofType: 'Micropost',
+            reverseName: 'author',
+          },
+        ],
       },
     ],
   },
