@@ -9,6 +9,7 @@ import {
 import createCreate from '../mutations/createCreate';
 import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
+import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
 
 export default function createTypeTypes(interfaces) {
@@ -25,6 +26,9 @@ export default function createTypeTypes(interfaces) {
           type: new GraphQLNonNull(GraphQLString),
         },
         nonNull: {
+          type: GraphQLBoolean,
+        },
+        builtin: {
           type: GraphQLBoolean,
         },
         isDeprecated: {
@@ -58,6 +62,9 @@ export default function createTypeTypes(interfaces) {
         },
         fields: {
           type: new GraphQLList(field.type),
+          resolve(parent) {
+            return injectDefaultFields(parent);
+          },
         },
       },
       interfaces: [interfaces.Node],

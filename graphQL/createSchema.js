@@ -45,7 +45,8 @@ export default function createSchema(dbMetadata) {
   }
 
   dbMetadata.forEach((typeMetadata) => {
-    if (typeMetadata.get('kind') === 'OBJECT') {
+    const kind = typeMetadata.get('kind');
+    if (kind === 'OBJECT') {
       const type = createObjectType(typeMetadata, getTypeSet, interfaces);
       let typeSet = new TypeSet({ type });
       if (type.getInterfaces().includes(interfaces.Node)) {
@@ -76,7 +77,6 @@ export default function createSchema(dbMetadata) {
       }
     }
     return typeSet;
-
   });
 
   const queryFields = createCommonRootFields(

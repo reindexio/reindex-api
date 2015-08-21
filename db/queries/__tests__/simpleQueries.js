@@ -3,6 +3,7 @@ import { fromJS, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import assert from '../../../test/assert';
+import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import {
   createTestDatabase,
   deleteTestDatabase,
@@ -43,7 +44,12 @@ describe('Simple database queries', () => {
       fromJS(await queries.getTypes(conn))
         .map((type) => type.delete('id'))
         .toSet(),
-      TEST_DATA.getIn(['tables', TYPE_TABLE]).toSet(),
+      TEST_DATA
+        .getIn(['tables', TYPE_TABLE])
+        .map((type) => type.set('fields', fromJS(
+          injectDefaultFields(type.toJS())
+        )))
+        .toSet(),
     );
   });
 

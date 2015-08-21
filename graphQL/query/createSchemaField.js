@@ -3,7 +3,7 @@ import createRootField from '../createRootField';
 import { getConnectionQueries } from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
- } from '../connections';
+} from '../connections';
 
 export default function createSchemaField(typeSets) {
   const schema = new GraphQLObjectType({
