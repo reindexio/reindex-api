@@ -499,12 +499,12 @@ describe('Integration Tests', () => {
       fields: [
         {
           name: 'id',
-          type: 'id',
+          type: 'ID',
           nonNull: true,
         },
         {
           name: 'name',
-          type: 'string',
+          type: 'String',
           nonNull: false,
         },
       ],

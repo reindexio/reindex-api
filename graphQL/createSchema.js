@@ -136,12 +136,12 @@ function createObjectType(type, getTypeSet, interfaces) {
 }
 
 const PRIMITIVE_TYPE_MAP = Map({
-  id: ReindexID,
-  string: GraphQLString,
-  integer: GraphQLInt,
-  number: GraphQLFloat,
-  boolean: GraphQLBoolean,
-  datetime: DateTime,
+  ID: ReindexID,
+  String: GraphQLString,
+  Int: GraphQLInt,
+  Float: GraphQLFloat,
+  Boolean: GraphQLBoolean,
+  DateTime,
 });
 
 function createField(field, getTypeSet, interfaces) {
@@ -151,7 +151,7 @@ function createField(field, getTypeSet, interfaces) {
   let type;
   let resolve;
   let argDef = Map();
-  if (fieldType === 'connection') {
+  if (fieldType === 'Connection') {
     const ofType = field.get('ofType');
     const reverseName = field.get('reverseName');
     type = getTypeSet(ofType).connection;
@@ -168,7 +168,7 @@ function createField(field, getTypeSet, interfaces) {
         args
       )
     );
-  } else if (fieldType === 'list') {
+  } else if (fieldType === 'List') {
     const innerType = PRIMITIVE_TYPE_MAP.get(field.get('ofType')) ||
       getTypeSet(field.get('ofType')).type;
     type = new GraphQLList(innerType);

@@ -28,28 +28,28 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'string',
-            type: 'string',
+            type: 'String',
           },
           {
             name: 'integer',
-            type: 'integer',
+            type: 'Int',
           },
           {
-            name: 'number',
-            type: 'number',
+            name: 'float',
+            type: 'Float',
           },
           {
             name: 'boolean',
-            type: 'boolean',
+            type: 'Boolean',
           },
           {
             name: 'datetime',
-            type: 'datetime',
+            type: 'DateTime',
           },
         ],
       },
@@ -69,7 +69,7 @@ describe('createSchema', () => {
       'string is converted');
     assert.equal(fields.integer.type, GraphQLInt,
       'integer is converted');
-    assert.equal(fields.number.type, GraphQLFloat,
+    assert.equal(fields.float.type, GraphQLFloat,
       'number is converted');
     assert.equal(fields.boolean.type, GraphQLBoolean,
       'boolean is converted');
@@ -86,7 +86,7 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'street',
-            type: 'string',
+            type: 'String',
           },
         ],
       },
@@ -97,12 +97,12 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'addresses',
-            type: 'list',
+            type: 'List',
             ofType: 'Address',
           },
           {
@@ -111,8 +111,8 @@ describe('createSchema', () => {
           },
           {
             name: 'nicknames',
-            type: 'list',
-            ofType: 'string',
+            type: 'List',
+            ofType: 'String',
           },
         ],
       },
@@ -135,12 +135,12 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'test',
-            type: 'string',
+            type: 'String',
             nonNull: true,
           },
         ],
@@ -161,12 +161,12 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'microposts',
-            type: 'connection',
+            type: 'Connection',
             ofType: 'Micropost',
             reverseName: 'author',
           },
@@ -179,7 +179,7 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
@@ -260,12 +260,12 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'microposts',
-            type: 'connection',
+            type: 'Connection',
             ofType: 'Micropost',
             reverseName: 'author',
           },
@@ -278,7 +278,7 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
@@ -295,7 +295,7 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'text',
-            type: 'string',
+            type: 'String',
           },
         ],
       },
@@ -329,12 +329,12 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'name',
-            type: 'string',
+            type: 'String',
           },
         ],
       },
@@ -345,7 +345,7 @@ describe('createSchema', () => {
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
         ],

@@ -108,7 +108,7 @@ export const TEST_DATA = fromJS({
         fields: [
           {
             name: 'name',
-            type: 'string',
+            type: 'String',
           },
         ],
       },
@@ -119,16 +119,16 @@ export const TEST_DATA = fromJS({
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'text',
-            type: 'string',
+            type: 'String',
           },
           {
             name: 'createdAt',
-            type: 'datetime',
+            type: 'DateTime',
           },
           {
             name: 'author',
@@ -137,12 +137,12 @@ export const TEST_DATA = fromJS({
           },
           {
             name: 'tags',
-            type: 'list',
-            ofType: 'string',
+            type: 'List',
+            ofType: 'String',
           },
           {
             name: 'categories',
-            type: 'list',
+            type: 'List',
             ofType: 'Category',
           },
           {
@@ -158,20 +158,20 @@ export const TEST_DATA = fromJS({
         fields: [
           {
             name: 'id',
-            type: 'id',
+            type: 'ID',
             nonNull: true,
           },
           {
             name: 'handle',
-            type: 'string',
+            type: 'String',
           },
           {
             name: 'email',
-            type: 'string',
+            type: 'String',
           },
           {
             name: 'microposts',
-            type: 'connection',
+            type: 'Connection',
             ofType: 'Micropost',
             reverseName: 'author',
           },
