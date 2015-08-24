@@ -121,7 +121,7 @@ describe('Mutatative database queries', () => {
       fields: [
         {
           name: 'id',
-          type: 'id',
+          type: 'ID',
           nonNull: true,
         },
       ],

@@ -4,7 +4,7 @@
       {
         "nonNull": true,
         "name": "id",
-        "type": "id"
+        "type": "ID"
       },
       {
         "name": "movie",
@@ -26,12 +26,12 @@
         "name": "examples",
         "ofType": "Example",
         "reverseName": "movie",
-        "type": "connection"
+        "type": "Connection"
       },
       {
         "nonNull": true,
         "name": "id",
-        "type": "id"
+        "type": "ID"
       }
     ],
     "id": "6c1d1b37-4162-4714-9756-47281a90ca2b",
