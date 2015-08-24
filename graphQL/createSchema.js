@@ -118,6 +118,7 @@ export default function createSchema(dbMetadata) {
 function createObjectType(type, getTypeSet, interfaces) {
   const config = {
     name: type.get('name'),
+    description: type.get('description', null),
     fields: () => type
       .get('fields')
       .toKeyedSeq()
@@ -192,7 +193,8 @@ function createField(field, getTypeSet, interfaces) {
     type,
     args: argDef.toObject(),
     resolve,
-    isDeprecated: field.get('isDeprecated') || false,
+    deprecationReason: field.get('deprecationReason', null),
+    description: field.get('description', null),
   };
 }
 
