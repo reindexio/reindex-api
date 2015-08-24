@@ -1,12 +1,16 @@
 import RethinkDB from 'rethinkdb';
 
+import injectDefaultFields from '../../graphQL/builtins/injectDefaultFields';
 import {
   AUTHENTICATION_PROVIDER_TABLE,
   TYPE_TABLE,
   SECRET_TABLE,
   INDEX_TABLE,
 } from '../DBConstants';
-import { getFirstOrNullQuery, queryWithIDs } from './queryUtils';
+import {
+  getFirstOrNullQuery,
+  queryWithIDs,
+} from './queryUtils';
 
 export async function getSecrets(conn) {
   const objects = await RethinkDB.table(SECRET_TABLE)
@@ -16,10 +20,12 @@ export async function getSecrets(conn) {
   return objects.map((object) => object.value);
 }
 
-export function getTypes(conn) {
-  return RethinkDB.table(TYPE_TABLE)
-    .coerceTo('array')
-    .run(conn);
+export async function getTypes(conn) {
+  const types = await RethinkDB.table(TYPE_TABLE).coerceTo('array').run(conn);
+  return types.map((type) => {
+    type.fields = injectDefaultFields(type);
+    return type;
+  });
 }
 
 export function getIndexes(conn) {

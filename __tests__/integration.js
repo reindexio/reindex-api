@@ -1,4 +1,4 @@
-import { fromJS, Map } from 'immutable';
+import { fromJS } from 'immutable';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
@@ -458,15 +458,7 @@ describe('Integration Tests', () => {
           nodes {
             name,
             kind,
-            interfaces,
-            fields {
-              name,
-              type,
-              nonNull,
-              ofType,
-              reverseName,
-              isDeprecated,
-            }
+            interfaces
           }
         }
       }
@@ -476,17 +468,10 @@ describe('Integration Tests', () => {
       data: {
         schema: {
           types: {
-            nodes: TEST_DATA.getIn(['tables', TYPE_TABLE])
-              .map((type) => type.set(
-                'fields',
-                type.get('fields').map((field) => Map({
-                  name: null,
-                  type: null,
-                  nonNull: null,
-                  isDeprecated: null,
-                  ofType: null,
-                  reverseName: null,
-                }).merge(field)))).toJS(),
+            nodes: TEST_DATA
+              .getIn(['tables', TYPE_TABLE])
+              .map((type) => type.delete('fields'))
+              .toJS(),
           },
         },
       },
@@ -498,14 +483,21 @@ describe('Integration Tests', () => {
       interfaces: ['Node'],
       fields: [
         {
-          name: 'id',
-          type: 'ID',
-          nonNull: true,
-        },
-        {
           name: 'name',
           type: 'String',
           nonNull: false,
+        },
+      ],
+    };
+
+    const newTypeWithId = {
+      ...newType,
+      fields: [
+        ...newType.fields,
+        {
+          name: 'id',
+          type: 'ID',
+          nonNull: true,
         },
       ],
     };
@@ -539,7 +531,7 @@ describe('Integration Tests', () => {
       data: {
         createReindexType: {
           ReindexType: {
-            ...newType,
+            ...newTypeWithId,
             id,
           },
         },
@@ -573,7 +565,7 @@ describe('Integration Tests', () => {
       data: {
         deleteReindexType: {
           ReindexType: {
-            ...newType,
+            ...newTypeWithId,
             id,
           },
         },
