@@ -12,7 +12,6 @@ import {
 
 import ReindexID from '../builtins/ReindexID';
 import DateTime from '../builtins/DateTime';
-import Cursor from '../builtins/Cursor';
 import createInterfaces from '../builtins/createInterfaces';
 import createUserTypes from '../builtins/createUserTypes';
 import createSchema from '../createSchema';
@@ -214,7 +213,7 @@ describe('createSchema', () => {
       'connection type edges field is a list of edges');
     assert.equal(micropostEdgeFields.node.type, micropostType,
       'edges type has node field that is of inner type');
-    assert.equal(micropostEdgeFields.cursor.type, Cursor,
+    assert.equal(micropostEdgeFields.cursor.type.toString(), 'Cursor!',
       'edges types has cursor field that is of a Cursor type');
 
     assert.equal(micropostFields.author.type, userType,

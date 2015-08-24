@@ -23,7 +23,7 @@ export function createConnection({ type }) {
     fields: {
       cursor: {
         name: 'cursor',
-        type: Cursor,
+        type: new GraphQLNonNull(Cursor),
       },
       node: {
         name: 'node',
