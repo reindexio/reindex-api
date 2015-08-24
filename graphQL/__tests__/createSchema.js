@@ -125,11 +125,14 @@ describe('createSchema', () => {
 
   });
 
-  it('respects non-nullness', () => {
+  it('respects nonNull, description and deprecationReason', () => {
+    const description = 'This is awesome. You should use it!';
+    const deprecationReason = 'This sucks. Do not use it anymore.';
     const schema = createSchema(fromJS([
       {
         kind: 'OBJECT',
         name: 'User',
+        description,
         interfaces: ['Node'],
         fields: [
           {
@@ -138,17 +141,36 @@ describe('createSchema', () => {
             nonNull: true,
           },
           {
-            name: 'test',
+            name: 'nonNullable',
             type: 'String',
             nonNull: true,
+          },
+          {
+            name: 'described',
+            type: 'String',
+            description,
+          },
+          {
+            name: 'deprecated',
+            type: 'String',
+            deprecationReason,
           },
         ],
       },
     ]));
+    const userType = schema.getType('User');
+    const fields = userType.getFields();
+    assert.instanceOf(fields.nonNullable.type, GraphQLNonNull,
+      'field should use Non-Null wrapper');
+    assert.equal(fields.nonNullable.type.ofType, GraphQLString,
+      'wrapper should wrap the right type');
+    assert.equal(fields.described.description, description,
+      'field should have description');
+    assert.equal(fields.deprecated.deprecationReason, deprecationReason,
+      'field should have deprecationReason');
 
-    const fields = schema.getType('User').getFields();
-    assert.instanceOf(fields.test.type, GraphQLNonNull);
-    assert.equal(fields.test.type.ofType, GraphQLString);
+    assert.equal(userType.description, description,
+      'type should have description');
   });
 
   it('creates appropriate connections', () => {

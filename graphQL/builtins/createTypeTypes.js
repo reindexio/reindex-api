@@ -25,14 +25,17 @@ export default function createTypeTypes(interfaces) {
         name: {
           type: new GraphQLNonNull(GraphQLString),
         },
+        description: {
+          type: GraphQLString,
+        },
         nonNull: {
           type: GraphQLBoolean,
         },
         builtin: {
           type: GraphQLBoolean,
         },
-        isDeprecated: {
-          type: GraphQLBoolean,
+        deprecationReason: {
+          type: GraphQLString,
         },
         ofType: {
           type: GraphQLString,
