@@ -6,6 +6,8 @@ import assert from '../../test/assert';
 import createSchema from '../../graphQL/createSchema';
 
 const types = Immutable.fromJS(require('./fixtures/types.json'));
+
+const CURSOR_TYPE_NAME = 'Cursor';
 const CONNECTION_TYPE_NAME = '_ExampleConnection';
 const EDGE_TYPE_NAME = '_ExampleEdge';
 
@@ -109,20 +111,19 @@ describe('Relay Cursor Connections Specification', () => {
           }
         },
       ], 'node field should match');
-      // TODO(fson, 2015-08-18): Add the test when type is confirmed.
-      // assert.deepEqual(fields.filter((field) => field.name === 'cursor'), [
-      //   {
-      //     "name": "cursor",
-      //     "type": {
-      //       "name": null,
-      //       "kind": "NON_NULL",
-      //       "ofType": {
-      //         "name": "String",
-      //         "kind": "SCALAR"
-      //       }
-      //     }
-      //   }
-      // ], 'cursor field should match');
+      assert.deepEqual(fields.filter((field) => field.name === 'cursor'), [
+        {
+          "name": "cursor",
+          "type": {
+            "name": null,
+            "kind": "NON_NULL",
+            "ofType": {
+              "name": CURSOR_TYPE_NAME,
+              "kind": "SCALAR"
+            }
+          }
+        }
+      ], 'cursor field should match');
     });
   });
 
