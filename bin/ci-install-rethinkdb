@@ -7,10 +7,6 @@ URL="deb http://download.rethinkdb.com/apt $DISTRIB_CODENAME main"
 echo "$URL" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
 wget -qO- http://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
 
-# The neo4j apt repository is currently experiencing some downtime and causing
-# builds that run `apt-get update` to fail.
-# This workaround will prevent apt-get from querying the neo4j repository.
-sudo rm /etc/apt/sources.list.d/neo4j.list
-
-sudo apt-get update
+sudo apt-get update -o Dir::Etc::sourcelist="sources.list.d/rethinkdb.list" \
+    -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
 sudo apt-get install rethinkdb
