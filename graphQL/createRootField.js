@@ -1,42 +1,27 @@
-import { Map, List } from 'immutable';
-
 export default function createRootField({
   name,
   returnType,
-  args = Map(),
-  validators = List(),
+  args = {},
+  validators = [],
   resolve,
 }) {
   return {
     name,
     type: returnType,
-    args: args
-      .map(({ type, description }) => ({
-        type,
-        description,
-      }))
-      .toObject(),
-    resolve(parent, passedArgs, context, ...rest) {
-      const processedArgs = runValidators(
+    args,
+    resolve(parent, passedArgs, context) {
+      runValidators(
         validators,
-        args,
-        Map(passedArgs),
+        passedArgs,
         context
       );
-      return resolve(parent, processedArgs.toObject(), context, ...rest);
+      return resolve(parent, passedArgs, context);
     },
   };
 }
 
-function runValidators(globalValidators, argDefinitions, args, context) {
-  return globalValidators
-    .reduce((newArgs, validator) => (
-      validator(argDefinitions, newArgs, context)
-    ), args)
-    .map((arg, key, all) => {
-      const validators = argDefinitions.get(key).validators || List();
-      return validators.reduce((newArg, validator) => (
-        validator(newArg, all, context)
-      ), arg);
-    });
+function runValidators(validators, args, context) {
+  for (const validator of validators) {
+    validator(args, context);
+  }
 }

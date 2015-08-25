@@ -1,5 +1,12 @@
 [
   {
+    "fields": [],
+    "id": "6c1d1b37-4162-4714-9756-47281a90ca10",
+    "name": "User",
+    "kind": "OBJECT",
+    "interfaces": ["Node"]
+  },
+  {
     "fields": [
       {
         "nonNull": true,
@@ -13,7 +20,6 @@
       }
     ],
     "id": "ed06cf59-b4ff-48ba-94c0-c6db4d24a0d3",
-    "indexes": [],
     "interfaces": [
       "Node"
     ],
@@ -35,7 +41,6 @@
       }
     ],
     "id": "6c1d1b37-4162-4714-9756-47281a90ca2b",
-    "indexes": [],
     "interfaces": [
       "Node"
     ],

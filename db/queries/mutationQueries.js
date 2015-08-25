@@ -2,7 +2,7 @@ import RethinkDB from 'rethinkdb';
 
 import {
   USER_TABLE,
-} from '../DBConstants';
+} from '../DBTableNames';
 import { queryWithIDs } from './queryUtils';
 
 

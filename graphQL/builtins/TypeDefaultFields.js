@@ -6,6 +6,13 @@ export default function getTypeDefaultFields() {
         type: 'ReindexCredentialCollection',
         builtin: true,
       },
+      {
+        name: 'permissions',
+        type: 'Connection',
+        ofType: 'ReindexPermission',
+        reverseName: 'user',
+        builtin: true,
+      },
     ],
   };
 }

@@ -1,4 +1,3 @@
-import { Map } from 'immutable';
 import {
   GraphQLString,
   GraphQLNonNull,
@@ -7,6 +6,7 @@ import {
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
 import { deleteType } from '../../db/queries/mutationQueries';
+import checkPermissionValidator from '../validators/checkPermissionValidator';
 
 export default function createCreateReindexType(typeSets) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -23,12 +23,15 @@ export default function createCreateReindexType(typeSets) {
   });
   return createRootField({
     name: 'deleteReindexType',
-    args: Map({
+    args: {
       input: {
         type: input,
       },
-    }),
+    },
     returnType: ReindexTypeSet.payload,
+    validators: [
+      checkPermissionValidator('ReindexType', 'delete'),
+    ],
     async resolve(
       parent,
       { input: { clientMutationId, id } },

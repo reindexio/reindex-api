@@ -1,4 +1,5 @@
-import { fromJS, List, Range, Map } from 'immutable';
+import { groupBy } from 'lodash';
+import { fromJS, List, Range } from 'immutable';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
@@ -7,7 +8,6 @@ import {
   createTestDatabase,
   deleteTestDatabase,
 } from '../../../test/testDatabase';
-import extractIndexes from '../../extractIndexes';
 import { getIndexes, getPageInfo } from '../simpleQueries';
 import { getConnectionQueries } from '../connectionQueries';
 
@@ -26,7 +26,10 @@ describe('Connection database queries', () => {
   });
 
   async function getDBIndexes(table) {
-    return extractIndexes(fromJS(await getIndexes(conn))).get(table, Map());
+    return groupBy(
+      await getIndexes(conn),
+      (index) => index.type
+    )[table] || {};
   }
 
   describe('getConnectionQueries', () => {
@@ -74,7 +77,10 @@ describe('Connection database queries', () => {
 
       assert.equal(newIndexList.length, indexList.length + 1,
         'one index is created');
-      assert.oequal(newIndexes.last().fields, fromJS([['createdAt']]));
+      assert.deepEqual(
+        newIndexes[newIndexes.length - 1].fields,
+        [['createdAt']]
+      );
 
       await runAndGivePositions(
         newIndexes,
@@ -87,7 +93,8 @@ describe('Connection database queries', () => {
       const newestIndexes = await getDBIndexes('Micropost');
 
       assert.deepEqual(newestIndexList, newIndexList, 'index created once');
-      assert.oequal(newestIndexes, newIndexes, 'index stored in metadata once');
+      assert.deepEqual(newestIndexes, newIndexes,
+        'index stored in metadata once');
     });
 
     it('orders query', async function() {
@@ -357,8 +364,8 @@ describe('Connection database queries', () => {
         await runAndGivePositions(indexes, {
           orderBy: { field: 'createdAt' },
         }, 'paginatedQuery', {
-          keyPrefixFields: fromJS([['author', 'value']]),
-          keyPrefix: List.of('bbd1db98-4ac4-40a7-b514-968059c3dbac'),
+          keyPrefixFields: [['author', 'value']],
+          keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
         }),
         Range(0, 7),
       );
@@ -369,8 +376,8 @@ describe('Connection database queries', () => {
         'Micropost',
         indexes,
         {
-          keyPrefixFields: fromJS([['author', 'value']]),
-          keyPrefix: List.of('bbd1db98-4ac4-40a7-b514-968059c3dbac'),
+          keyPrefixFields: [['author', 'value']],
+          keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
         },
         { orderBy: { field: 'createdAt' } }
       );
@@ -386,8 +393,8 @@ describe('Connection database queries', () => {
           after: cursors.get(2),
           before: cursors.get(5),
         }, 'paginatedQuery', {
-          keyPrefixFields: fromJS([['author', 'value']]),
-          keyPrefix: List.of('bbd1db98-4ac4-40a7-b514-968059c3dbac'),
+          keyPrefixFields: [['author', 'value']],
+          keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
         }),
         Range(3, 5),
       );

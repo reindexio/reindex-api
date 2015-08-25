@@ -1,13 +1,10 @@
-import { fromJS } from 'immutable';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
-import createSchema from '../graphQL/createSchema';
-import { TYPE_TABLE } from '../db/DBConstants';
-import { getTypes, getIndexes } from '../db/queries/simpleQueries';
+import { TYPE_TABLE } from '../db/DBTableNames';
+import getGraphQLContext from '../graphQL/getGraphQLContext';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
-import extractIndexes from '../db/extractIndexes';
 import assert from '../test/assert';
 import {
   createTestDatabase,
@@ -29,12 +26,12 @@ describe('Integration Tests', () => {
     await conn.close();
   });
 
-  async function runQuery(query, variables) {
-    const typePromise = getTypes(conn);
-    const indexPromise = getIndexes(conn);
-    const indexes = extractIndexes(fromJS(await indexPromise));
-    const schema = createSchema(fromJS(await typePromise));
-    return await graphql(schema, query, { conn, indexes }, variables);
+  async function runQuery(query, variables, credentials = {
+    isAdmin: true,
+    userID: 'admin',
+  }) {
+    const context = await getGraphQLContext(conn, { credentials });
+    return await graphql(context.schema, query, context, variables);
   }
 
   it('queries with node', async function() {
@@ -103,14 +100,16 @@ describe('Integration Tests', () => {
       }
     }`);
 
-    assert.deepEqual(micropostResult.data, {
-      getMicropost: {
-        beautifulPerson: {
-          nickname: 'freiksenet',
+    assert.deepEqual(micropostResult, {
+      data: {
+        getMicropost: {
+          beautifulPerson: {
+            nickname: 'freiksenet',
+          },
+          createdAt: '2015-04-10T10:24:52.163Z',
+          text: 'Test text',
+          tags: [],
         },
-        createdAt: '2015-04-10T10:24:52.163Z',
-        text: 'Test text',
-        tags: [],
       },
     });
 
@@ -176,17 +175,19 @@ describe('Integration Tests', () => {
       id: userId,
     });
 
-    assert.deepEqual(userResult.data, {
-      getUser: {
-        handle: 'freiksenet',
-        posts: {
-          count: 7,
-          nodes: [
-            {
-              createdAt: '2015-04-10T10:24:52.163Z',
-              text: 'Test text',
-            },
-          ],
+    assert.deepEqual(userResult, {
+      data: {
+        getUser: {
+          handle: 'freiksenet',
+          posts: {
+            count: 7,
+            nodes: [
+              {
+                createdAt: '2015-04-10T10:24:52.163Z',
+                text: 'Test text',
+              },
+            ],
+          },
         },
       },
     });
@@ -212,16 +213,18 @@ describe('Integration Tests', () => {
       }
     `);
 
-    assert.deepEqual(result.data, {
-      getUser: {
-        microposts: {
-          edges: [
-            {
-              node: {
-                text: 'Test text',
+    assert.deepEqual(result, {
+      data: {
+        getUser: {
+          microposts: {
+            edges: [
+              {
+                node: {
+                  text: 'Test text',
+                },
               },
-            },
-          ],
+            ],
+          },
         },
       },
     });

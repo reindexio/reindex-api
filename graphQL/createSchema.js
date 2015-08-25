@@ -11,11 +11,10 @@ import {
   GraphQLInputObjectType,
   GraphQLEnumType,
 } from 'graphql';
-import { Map, List, fromJS } from 'immutable';
+import { Map } from 'immutable';
 
 import TypeSet from './TypeSet';
-import { getByID } from '../db/queries/simpleQueries';
-import { getConnectionQueries } from '../db/queries/connectionQueries';
+
 import DateTime from './builtins/DateTime';
 import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';
@@ -29,7 +28,9 @@ import createCommonRootFields from './createCommonRootFields';
 import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
-  createConnectionArguments
+  createConnectionArguments,
+  createConnectionSourceResolve,
+  createConnectionTargetResolve,
  } from './connections';
 
 /**
@@ -38,44 +39,44 @@ import {
  */
 export default function createSchema(dbMetadata) {
   const interfaces = createInterfaces();
-  let typeSets = createCommonTypes(interfaces);
+  let typeSets;
 
   function getTypeSet(name) {
     return typeSets.get(name);
   }
 
-  dbMetadata.forEach((typeMetadata) => {
-    const kind = typeMetadata.get('kind');
-    if (kind === 'OBJECT') {
-      const type = createObjectType(typeMetadata, getTypeSet, interfaces);
-      let typeSet = new TypeSet({ type });
-      if (type.getInterfaces().includes(interfaces.Node)) {
+  typeSets = createCommonTypes(interfaces, getTypeSet)
+    .merge(dbMetadata.toKeyedSeq().mapEntries(([, typeMetadata]) => {
+      const kind = typeMetadata.get('kind');
+      if (kind === 'OBJECT') {
+        const type = createObjectType(typeMetadata, getTypeSet, interfaces);
+        return [
+          typeMetadata.get('name'),
+          new TypeSet({ type }),
+        ];
+      }
+    }))
+    .map((typeSet) => {
+      if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
         typeSet = typeSet.set(
           'connection',
           createConnection(typeSet, interfaces),
         );
+        typeSet = typeSet.set(
+          'payload',
+          createPayload(typeSet, interfaces)
+        );
       }
-      typeSets = typeSets.set(typeMetadata.get('name'), typeSet);
-    }
-  });
+      return typeSet;
+    });
 
+  // This has to happen separately, because it forces field thunks and needs
+  // typesets to contain all types required.
   typeSets = typeSets.map((typeSet) => {
     typeSet = typeSet.set(
       'inputObject',
       createInputObjectType(typeSet, getTypeSet, interfaces),
     );
-    if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
-      typeSet = typeSet.set(
-        'payload',
-        createPayload(typeSet, interfaces)
-      );
-      if (!typeSet.connection) {
-        typeSet = typeSet.set(
-          'connection',
-          createConnection(typeSet, interfaces)
-        );
-      }
-    }
     return typeSet;
   });
 
@@ -151,24 +152,13 @@ function createField(field, getTypeSet, interfaces) {
 
   let type;
   let resolve;
-  let argDef = Map();
+  let argDef = {};
   if (fieldType === 'Connection') {
     const ofType = field.get('ofType');
     const reverseName = field.get('reverseName');
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments();
-    resolve = (parent, args, { rootValue: { conn, indexes } }) => (
-      getConnectionQueries(
-        conn,
-        ofType,
-        indexes.get(ofType),
-        {
-          keyPrefixFields: fromJS([[reverseName, 'value']]),
-          keyPrefix: List.of(parent.id.value),
-        },
-        args
-      )
-    );
+    resolve = createConnectionSourceResolve(ofType, reverseName);
   } else if (fieldType === 'List') {
     const innerType = PRIMITIVE_TYPE_MAP.get(field.get('ofType')) ||
       getTypeSet(field.get('ofType')).type;
@@ -178,9 +168,7 @@ function createField(field, getTypeSet, interfaces) {
   } else {
     type = getTypeSet(fieldType).type;
     if (type.getInterfaces().includes(interfaces.Node)) {
-      resolve = (parent, args, { rootValue: { conn } }) => (
-        getByID(conn, parent[fieldName])
-      );
+      resolve = createConnectionTargetResolve(type.name, fieldName);
     }
   }
 
@@ -191,7 +179,7 @@ function createField(field, getTypeSet, interfaces) {
   return {
     name: fieldName,
     type,
-    args: argDef.toObject(),
+    args: argDef,
     resolve,
     deprecationReason: field.get('deprecationReason', null),
     description: field.get('description', null),

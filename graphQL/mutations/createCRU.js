@@ -1,33 +1,39 @@
-import { Map } from 'immutable';
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import * as queries from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
+import checkPermissionValidator from '../validators/checkPermissionValidator';
+
+const OP_TO_PERMISSION = {
+  create: 'create',
+  update: 'update',
+  replace: 'update',
+};
 
 export default function createCRU(operation, getById, {
   type,
   inputObject,
   payload,
 }) {
-  let inputFields = Map({
+  const inputFields = {
     clientMutationId: {
       name: 'clientMutationId',
       type: new GraphQLNonNull(GraphQLString),
     },
-  });
+  };
 
   if (getById) {
-    inputFields = inputFields.set('id', {
+    inputFields.id = {
       name: 'id',
       type: new GraphQLNonNull(ReindexID),
-    });
+    };
   }
 
   if (inputObject) {
-    inputFields = inputFields.set(type.name, {
+    inputFields[type.name] = {
       name: type.name,
       type: new GraphQLNonNull(inputObject),
-    });
+    };
   }
 
   const inputType = new GraphQLInputObjectType({
@@ -36,17 +42,20 @@ export default function createCRU(operation, getById, {
       operation.charAt(0).toUpperCase() + operation.substr(1) +
       type.name + 'Input'
     ),
-    fields: inputFields.toObject(),
+    fields: inputFields,
   });
 
   return createRootField({
     name: operation + type.name,
     returnType: payload,
-    args: Map({
+    args: {
       input: {
         type: inputType,
       },
-    }),
+    },
+    validators: [
+      checkPermissionValidator(type.name, OP_TO_PERMISSION[operation]),
+    ],
     async resolve(parent, { input }, { rootValue: { conn } }) {
       const clientMutationId = input.clientMutationId;
       const object = input[type.name] || {};

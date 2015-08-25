@@ -1,9 +1,6 @@
 import { graphql } from 'graphql';
-import { fromJS } from 'immutable';
 
-import createSchema from '../../graphQL/createSchema';
-import { getTypes, getIndexes } from '../../db/queries/simpleQueries';
-import extractIndexes from '../../db/extractIndexes';
+import getGraphQLContext from '../../graphQL/getGraphQLContext';
 
 async function handler(request, reply) {
   try {
@@ -11,14 +8,12 @@ async function handler(request, reply) {
     const variables = request.payload.variables || {};
 
     const conn = await request.rethinkDBConnection;
-    const typePromise = getTypes(conn);
-    const indexPromise = getIndexes(conn);
-    const indexes = extractIndexes(fromJS(await indexPromise));
-    const schema = createSchema(fromJS(await typePromise));
-    const result = await graphql(schema, query, {
-      conn,
-      indexes,
-    }, variables);
+    const credentials = request.auth.credentials;
+
+    const context = await getGraphQLContext(conn, {
+      credentials,
+    });
+    const result = await graphql(context.schema, query, context, variables);
     reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
     // TODO(fson, 2015-04-13): Handle errors granularly.
