@@ -6,7 +6,8 @@ import {
   TYPE_TABLE,
   SECRET_TABLE,
   INDEX_TABLE,
-} from '../DBConstants';
+  PERMISSION_TABLE,
+} from '../DBTableNames';
 import {
   getFirstOrNullQuery,
   queryWithIDs,
@@ -32,6 +33,24 @@ export function getIndexes(conn) {
   return RethinkDB.table(INDEX_TABLE)
     .coerceTo('array')
     .run(conn);
+}
+
+export async function getMetadata(conn) {
+  const result = await RethinkDB.do(
+    RethinkDB.table(TYPE_TABLE).coerceTo('array'),
+    RethinkDB.table(INDEX_TABLE).coerceTo('array'),
+    RethinkDB.table(PERMISSION_TABLE).coerceTo('array'),
+    (types, indexes, permissions) => ({
+      types,
+      indexes,
+      permissions,
+    })
+  ).run(conn);
+  result.types = result.types.map((type) => {
+    type.fields = injectDefaultFields(type);
+    return type;
+  });
+  return result;
 }
 
 export function getAuthenticationProvider(conn, providerType) {

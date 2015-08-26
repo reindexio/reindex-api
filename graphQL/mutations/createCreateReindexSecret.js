@@ -1,8 +1,8 @@
 import Cryptiles from 'cryptiles';
-import { Map } from 'immutable';
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import createRootField from '../createRootField';
 import { create } from '../../db/queries/mutationQueries';
+import checkPermissionValidator from '../validators/checkPermissionValidator';
 
 function generateSecret() {
   return Cryptiles.randomString(40);
@@ -21,12 +21,15 @@ export default function createCreateReindexSecret(typeSets) {
   });
   return createRootField({
     name: 'createReindexSecret',
-    args: Map({
+    args: {
       input: {
         type: input,
       },
-    }),
+    },
     returnType: secretPayload,
+    validators: [
+      checkPermissionValidator('ReindexSecret', 'create'),
+    ],
     async resolve(
       parent,
       { input: { clientMutationId } },

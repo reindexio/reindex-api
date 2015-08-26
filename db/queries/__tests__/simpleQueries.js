@@ -14,7 +14,7 @@ import {
   SECRET_TABLE,
   TYPE_TABLE,
   INDEX_TABLE,
-} from '../../DBConstants';
+} from '../../DBTableNames';
 import * as queries from '../simpleQueries';
 
 

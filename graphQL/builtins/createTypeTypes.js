@@ -11,8 +11,9 @@ import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
 import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
+import { createConnectionSourceResolve } from '../connections';
 
-export default function createTypeTypes(interfaces) {
+export default function createTypeTypes(interfaces, getTypeSet) {
   // XXX(freiksenet, 2015-08-19): Interface would be nicer, but there is no
   // way to neatly convert it to InputObjectType
   const field = new TypeSet({
@@ -50,7 +51,7 @@ export default function createTypeTypes(interfaces) {
   const type = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexType',
-      fields: {
+      fields: () => ({
         id: {
           type: new GraphQLNonNull(ReindexID),
         },
@@ -69,7 +70,11 @@ export default function createTypeTypes(interfaces) {
             return injectDefaultFields(parent);
           },
         },
-      },
+        permissions: {
+          type: getTypeSet('ReindexPermission').type,
+          resolve: createConnectionSourceResolve('ReindexPermission', 'type'),
+        },
+      }),
       interfaces: [interfaces.Node],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexType';

@@ -5,9 +5,9 @@ import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
-  USER_TABLE,
+  PERMISSION_TABLE,
   INDEX_TABLE,
-} from '../db/DBConstants';
+} from '../db/DBTableNames';
 
 export const TEST_DATA = fromJS({
   tables: {
@@ -93,7 +93,7 @@ export const TEST_DATA = fromJS({
         isEnabled: true,
       },
     ],
-    [USER_TABLE]: [],
+    [PERMISSION_TABLE]: [],
     [SECRET_TABLE]: [
       {
         value: 'secret',

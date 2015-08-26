@@ -1,4 +1,3 @@
-import { Map } from 'immutable';
 import {
   GraphQLObjectType,
   GraphQLInputObjectType,
@@ -13,8 +12,11 @@ import {
   getNodes,
   getEdges,
   getCount,
-  getPageInfo
+  getPageInfo,
+  getByID,
 } from '../db/queries/simpleQueries';
+import { getConnectionQueries } from '../db/queries/connectionQueries';
+import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
 
 export function createConnection({ type }) {
@@ -103,7 +105,7 @@ const OrderByInputType = new GraphQLInputObjectType({
 });
 
 export function createConnectionArguments() {
-  return Map({
+  return {
     first: {
       name: 'first',
       type: GraphQLInt,
@@ -124,5 +126,28 @@ export function createConnectionArguments() {
       name: 'orderBy',
       type: OrderByInputType,
     },
-  });
+  };
+}
+
+export function createConnectionTargetResolve(ofType, fieldName) {
+  return (parent, args, context) => {
+    checkPermission(ofType, 'read', args, context);
+    return getByID(context.rootValue.conn, parent[fieldName]);
+  };
+}
+
+export function createConnectionSourceResolve(ofType, reverseName) {
+  return (parent, args, context) => {
+    checkPermission(ofType, 'read', args, context);
+    return getConnectionQueries(
+      context.rootValue.conn,
+      ofType,
+      context.rootValue.indexes[ofType],
+      {
+        keyPrefixFields: [[reverseName, 'value']],
+        keyPrefix: [parent.id.value],
+      },
+      args
+    );
+  };
 }

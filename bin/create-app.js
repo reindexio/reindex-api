@@ -1,15 +1,15 @@
 import Cryptiles from 'cryptiles';
 import RethinkDB from 'rethinkdb';
-import values from 'lodash.values';
+import { values } from 'lodash';
 
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
-import * as DBConstants from '../db/DBConstants';
+import * as DBTableNames from '../db/DBTableNames';
 
 async function createDatabase(dbName) {
   const conn = await RethinkDB.connect();
   await RethinkDB.dbCreate(dbName).run(conn);
   conn.use(dbName);
-  await* values(DBConstants).map((tableName) =>
+  await* values(DBTableNames).map((tableName) =>
     RethinkDB.db(dbName).tableCreate(tableName).run(conn)
   );
   return conn;
@@ -21,7 +21,7 @@ function generateSecret() {
 
 async function createSecret(conn) {
   const secret = generateSecret();
-  await RethinkDB.table(DBConstants.SECRET_TABLE)
+  await RethinkDB.table(DBTableNames.SECRET_TABLE)
     .insert({ value: secret })
     .run(conn);
   return secret;

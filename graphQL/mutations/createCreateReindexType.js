@@ -1,7 +1,7 @@
-import { Map } from 'immutable';
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import createRootField from '../createRootField';
 import { createType } from '../../db/queries/mutationQueries';
+import checkPermissionValidator from '../validators/checkPermissionValidator';
 
 export default function createCreateReindexType(typeSets) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -18,12 +18,15 @@ export default function createCreateReindexType(typeSets) {
   });
   return createRootField({
     name: 'createReindexType',
-    args: Map({
+    args: {
       input: {
         type: input,
       },
-    }),
+    },
     returnType: ReindexTypeSet.payload,
+    validators: [
+      checkPermissionValidator('ReindexType', 'create'),
+    ],
     async resolve(
       parent,
       { input: { clientMutationId, ReindexType: type } },

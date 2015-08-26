@@ -17,7 +17,7 @@ export default function createSearch({ type, connection }) {
       return getConnectionQueries(
         conn,
         type.name,
-        indexes.get(type.name),
+        indexes[type.name],
         {},
         args
       );

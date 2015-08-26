@@ -1,11 +1,10 @@
 import uuid from 'uuid';
-import { List, Range, Map } from 'immutable';
+import { find, isEqual, isString } from 'lodash';
 import RethinkDB from 'rethinkdb';
-import Index from '../Index';
 
 import {
   INDEX_TABLE,
-} from '../DBConstants';
+} from '../DBTableNames';
 import { getAllQuery } from './simpleQueries';
 import { queryWithIDs } from './queryUtils';
 
@@ -18,7 +17,7 @@ import { queryWithIDs } from './queryUtils';
 //
 // * `conn`: RethinkDB connection
 // * `type`: Type that connection refers to
-// * `indexes`: List of indexes for the type
+// * `indexes`: Array of indexes for the type
 // * `indexParameters`: an object with a known data about the index.
 //    For example, if we are following a connection from some parent object
 //    This would hold information about field that holds parent object
@@ -37,9 +36,9 @@ import { queryWithIDs } from './queryUtils';
 export async function getConnectionQueries(
   conn,
   type,
-  indexes = Map(),
+  indexes = {},
   {
-    keyPrefixFields = List(),
+    keyPrefixFields = [],
     keyPrefix,
   },
   {
@@ -55,15 +54,16 @@ export async function getConnectionQueries(
   if (!orderBy) {
     orderBy = {};
   }
-  const indexFields = keyPrefixFields.push(
-    orderBy.field ? List.of(orderBy.field) : List.of('id')
-  );
+  const indexFields = [
+    ...keyPrefixFields,
+    orderBy.field ? [orderBy.field] : ['id'],
+  ];
   let index = getIndexFromFields(indexes, indexFields);
   if (!index) {
     index = await ensureIndex(conn, type, indexFields);
   }
 
-  const paddingSize = indexFields.count() - keyPrefixFields.count();
+  const paddingSize = indexFields.length - keyPrefixFields.length;
 
   // We create cursor-less index keys for query that is used for
   // counting.
@@ -196,25 +196,25 @@ function paginateQuery(conn, type, index, query, {
 // accesor keys. Like immutable .map((keys) => o.getIn([...keys])
 function getIndexValue(obj, fields) {
   return fields.map((part) => {
-    if (part instanceof String) {
+    if (isString(part)) {
       return obj(part);
     } else {
       return part.reduce((chain, next) => chain(next), obj);
     }
-  }).toArray();
+  });
 }
 
-const ID_FIELDS = List.of(List.of('id'));
+const ID_FIELDS = [['id']];
 
 // Find an index by fields, unless it's a primary key index
 function getIndexFromFields(indexes, fields) {
-  if (ID_FIELDS.equals(fields)) {
-    return new Index({
+  if (isEqual(ID_FIELDS, fields)) {
+    return {
       name: 'id',
       fields: ID_FIELDS,
-    });
+    };
   } else {
-    return indexes.find((index) => fields.equals(index.get('fields')));
+    return find(indexes, (index) => isEqual(fields, index.fields));
   }
 }
 
@@ -230,14 +230,15 @@ async function ensureIndex(conn, type, fields) {
     () => RethinkDB.table(INDEX_TABLE).insert({
       type,
       name,
-      fields: fields.toJS(),
+      fields,
     })
   ).run(conn);
 
-  return new Index({
+  return {
     name,
+    type,
     fields,
-  });
+  };
 }
 
 // Convert a cursor to either a valid RethinkDB value or a RethinkDB query
@@ -248,7 +249,7 @@ async function ensureIndex(conn, type, fields) {
 // * `type` - type we are querying
 // * `index` - index we are querying
 // * `cursor` - Cursor or null
-// * `keyPrefix` - List of known index values
+// * `keyPrefix` - Arrray of known index values
 // * `paddingSize` - count of unknown index values of the key
 // * `defaultValue` - default value to use for unknown values of the key
 //   (usually r.minval/r.maxval)
@@ -278,9 +279,10 @@ function cursorToIndexKey(
   } else if (keyPrefix) {
     // No cursor passed, we create between data from data we already have
     // and pad the unavailable values with base (either minval or maxval)
-    return keyPrefix.concat(
-      Range(0, paddingSize).map(() => defaultValue)
-    ).toArray();
+    return [
+      ...keyPrefix,
+      ...(new Array(paddingSize).fill(defaultValue)),
+    ];
   } else {
     return defaultValue;
   }

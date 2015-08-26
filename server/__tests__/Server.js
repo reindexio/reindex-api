@@ -19,6 +19,7 @@ describe('Server', () => {
   const randomSecret = 'secret';
   const token = JSONWebToken.sign({
     sub: randomUserID,
+    isAdmin: true,
   }, randomSecret);
   const query = `query seacrh {
     getUser(id: "VXNlcjpiYmQxZGI5OC00YWM0LTQwYTctYjUxNC05NjgwNTljM2RiYWM") {

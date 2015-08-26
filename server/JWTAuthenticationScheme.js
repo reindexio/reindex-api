@@ -68,7 +68,7 @@ async function authenticateAsync(request) {
   }
 
   const credentials = {
-    isAdmin: verifiedToken.admin === true,
+    isAdmin: verifiedToken.isAdmin === true,
     userID: verifiedToken.sub,
   };
 

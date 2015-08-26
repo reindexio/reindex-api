@@ -1,7 +1,7 @@
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
-import { TYPE_TABLE } from '../../DBConstants';
+import { TYPE_TABLE } from '../../DBTableNames';
 import assert from '../../../test/assert';
 import {
   createTestDatabase,

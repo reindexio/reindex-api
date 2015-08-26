@@ -1,8 +1,8 @@
-import { Map } from 'immutable';
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import createRootField from '../createRootField';
+import checkPermissionValidator from '../validators/checkPermissionValidator';
 
 export default function createDelete({ type, payload }) {
   const inputType = new GraphQLInputObjectType({
@@ -21,11 +21,14 @@ export default function createDelete({ type, payload }) {
   return createRootField({
     name: 'delete' + type.name,
     returnType: payload,
-    args: Map({
+    args: {
       input: {
         type: inputType,
       },
-    }),
+    },
+    validators: [
+      checkPermissionValidator(type.name, 'delete'),
+    ],
     async resolve(parent, { input }, { rootValue: { conn } }) {
       const result = await deleteQuery(conn, type.name, input.id);
       return {
