@@ -118,46 +118,6 @@ describe('Integration Tests', () => {
       value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
     });
 
-    // TODO(freiksenet, 2015-08-17): doesn't work because it creates indexes
-    // concurrently.
-    // const userResult = await runQuery(`
-    //   query getUser($id: ID!) {
-    //     getUser(id: $id) {
-    //       handle,
-    //       posts: microposts(orderBy: {field: "createdAt"}, first: 1) {
-    //         count,
-    //         nodes {
-    //           createdAt,
-    //           text
-    //         }
-    //       },
-    //       microposts {
-    //         count
-    //       }
-    //     }
-    //   }
-    // `, {
-    //   id: userId,
-    // });
-    //
-    // assert.deepEqual(userResult.data, {
-    //   getUser: {
-    //     handle: 'freiksenet',
-    //     posts: {
-    //       count: 7,
-    //       nodes: [
-    //         {
-    //           createdAt: new Date('2015-04-10T10:24:52.163Z'),
-    //           text: 'Test text',
-    //         },
-    //       ],
-    //     },
-    //     microposts: {
-    //       count: 7,
-    //     },
-    //   },
-    // });
-
     const userResult = await runQuery(`
       query getUser($id: ID!) {
         getUser(id: $id) {
@@ -166,8 +126,11 @@ describe('Integration Tests', () => {
             count,
             nodes {
               createdAt,
-              text
+              text,
             }
+          },
+          microposts {
+            count,
           },
         }
       }
@@ -187,6 +150,9 @@ describe('Integration Tests', () => {
                 text: 'Test text',
               },
             ],
+          },
+          microposts: {
+            count: 7,
           },
         },
       },
