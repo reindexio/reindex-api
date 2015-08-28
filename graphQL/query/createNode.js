@@ -1,22 +1,21 @@
 import { GraphQLNonNull } from 'graphql';
 import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
-import createRootField from '../createRootField';
 import checkPermission from '../permissions/checkPermission';
 
 export default function createNode(typeSets, interfaces) {
-  return createRootField({
+  return {
     name: 'node',
-    returnType: interfaces.Node,
+    type: interfaces.Node,
     args: {
       id: {
-        name: 'id',
         type: new GraphQLNonNull(ReindexID),
       },
     },
-    resolve: (parent, args, context) => {
-      checkPermission(args.id.type, 'read', args, context);
-      return getByID(context.rootValue.conn, args.id);
+    async resolve(parent, { id }, context) {
+      const result = await getByID(context.rootValue.conn, id);
+      checkPermission(id.type, 'read', result, context);
+      return result;
     },
-  });
+  };
 }

@@ -1,13 +1,12 @@
 import { GraphQLNonNull } from 'graphql';
 import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
-import createRootField from '../createRootField';
-import checkPermissionValidator from '../validators/checkPermissionValidator';
+import checkPermission from '../permissions/checkPermission';
 
 export default function createGet({ type }) {
-  return createRootField({
+  return {
     name: 'get' + type.name,
-    returnType: type,
+    type,
     args: {
       id: {
         name: 'id',
@@ -15,11 +14,13 @@ export default function createGet({ type }) {
         type: new GraphQLNonNull(ReindexID),
       },
     },
-    validators: [
-      checkPermissionValidator(type.name, 'read'),
-    ],
-    resolve: (parent, { id }, { rootValue: { conn } }) => (
-      getByID(conn, id)
-    ),
-  });
+    async resolve(parent, { id }, context) {
+      if (id.type !== type.name) {
+        throw new Error(`Invalid ID`);
+      }
+      const result = await getByID(context.rootValue.conn, id);
+      checkPermission(type.name, 'read', result, context);
+      return result;
+    },
+  };
 }

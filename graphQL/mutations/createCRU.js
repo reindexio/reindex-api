@@ -1,8 +1,8 @@
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
+import { getByID } from '../../db/queries/simpleQueries';
 import * as queries from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
-import createRootField from '../createRootField';
-import checkPermissionValidator from '../validators/checkPermissionValidator';
+import checkPermission from '../permissions/checkPermission';
 
 const OP_TO_PERMISSION = {
   create: 'create',
@@ -10,7 +10,7 @@ const OP_TO_PERMISSION = {
   replace: 'update',
 };
 
-export default function createCRU(operation, getById, {
+export default function createCRU(operation, withID, {
   type,
   inputObject,
   payload,
@@ -22,7 +22,7 @@ export default function createCRU(operation, getById, {
     },
   };
 
-  if (getById) {
+  if (withID) {
     inputFields.id = {
       name: 'id',
       type: new GraphQLNonNull(ReindexID),
@@ -45,31 +45,52 @@ export default function createCRU(operation, getById, {
     fields: inputFields,
   });
 
-  return createRootField({
+  return {
     name: operation + type.name,
-    returnType: payload,
+    type: payload,
     args: {
       input: {
         type: inputType,
       },
     },
-    validators: [
-      checkPermissionValidator(type.name, OP_TO_PERMISSION[operation]),
-    ],
-    async resolve(parent, { input }, { rootValue: { conn } }) {
+    async resolve(parent, { input }, context) {
+      const conn = context.rootValue.conn;
       const clientMutationId = input.clientMutationId;
       const object = input[type.name] || {};
+
       let queryArgs;
-      if (getById) {
+      let checkObject = object;
+
+      if (withID) {
+        if (input.id.type !== type.name) {
+          throw new Error(`Invalid ID`);
+        }
+
+        if (operation === 'update') {
+          const existing = await getByID(conn, input.id);
+          checkObject = {
+            ...existing,
+            ...object,
+          };
+        }
+
         queryArgs = [conn, type.name, input.id, object];
       } else {
         queryArgs = [conn, type.name, object];
       }
+
+      checkPermission(
+        type.name,
+        OP_TO_PERMISSION[operation],
+        checkObject,
+        context
+      );
+
       const result = await queries[operation](...queryArgs);
       return {
         clientMutationId,
         [type.name]: result,
       };
     },
-  });
+  };
 }

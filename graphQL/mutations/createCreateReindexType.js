@@ -1,7 +1,6 @@
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
-import createRootField from '../createRootField';
 import { createType } from '../../db/queries/mutationQueries';
-import checkPermissionValidator from '../validators/checkPermissionValidator';
+import checkPermission from '../permissions/checkPermission';
 
 export default function createCreateReindexType(typeSets) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -16,27 +15,25 @@ export default function createCreateReindexType(typeSets) {
       },
     },
   });
-  return createRootField({
+  return {
     name: 'createReindexType',
+    type: ReindexTypeSet.payload,
     args: {
       input: {
         type: input,
       },
     },
-    returnType: ReindexTypeSet.payload,
-    validators: [
-      checkPermissionValidator('ReindexType', 'create'),
-    ],
     async resolve(
       parent,
       { input: { clientMutationId, ReindexType: type } },
-      { rootValue: { conn } }
+      context,
     ) {
-      const result = await createType(conn, type);
+      checkPermission('ReindexType', 'create', {}, context);
+      const result = await createType(context.rootValue.conn, type);
       return {
         clientMutationId,
         ReindexType: result,
       };
     },
-  });
+  };
 }

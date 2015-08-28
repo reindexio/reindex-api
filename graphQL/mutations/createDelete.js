@@ -1,8 +1,8 @@
 import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
+import { getByID } from '../../db/queries/simpleQueries';
 import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
-import createRootField from '../createRootField';
-import checkPermissionValidator from '../validators/checkPermissionValidator';
+import checkPermission from '../permissions/checkPermission';
 
 export default function createDelete({ type, payload }) {
   const inputType = new GraphQLInputObjectType({
@@ -18,23 +18,31 @@ export default function createDelete({ type, payload }) {
       },
     },
   });
-  return createRootField({
+  return {
     name: 'delete' + type.name,
-    returnType: payload,
+    type: payload,
     args: {
       input: {
         type: inputType,
       },
     },
-    validators: [
-      checkPermissionValidator(type.name, 'delete'),
-    ],
-    async resolve(parent, { input }, { rootValue: { conn } }) {
+    async resolve(parent, { input }, context) {
+      const conn = context.rootValue.conn;
+      if (input.id.type !== type.name) {
+        throw new Error(`Invalid ID`);
+      }
+      const object = await getByID(conn, input.id);
+      checkPermission(
+        type.name,
+        'delete',
+        object,
+        context
+      );
       const result = await deleteQuery(conn, type.name, input.id);
       return {
         clientMutationId: input.clientMutationId,
         [type.name]: result,
       };
     },
-  });
+  };
 }

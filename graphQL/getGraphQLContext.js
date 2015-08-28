@@ -10,14 +10,18 @@ export default async function getGraphQLContext(conn, extraContext) {
     permissions: permissionData,
   } = await getMetadata(conn);
   const indexes = extractIndexes(indexData);
-  const permissions = extractPermissions(permissionData);
+  const typePermissions = extractPermissions(permissionData, typeData);
+  const connectionPermissions = extractConnectionPermissions(typeData);
   const schema = createSchema(fromJS(typeData));
 
   return {
     ...extraContext,
     conn,
     indexes,
-    permissions,
+    permissions: {
+      type: typePermissions,
+      connection: connectionPermissions,
+    },
     schema,
   };
 }
@@ -26,16 +30,35 @@ function extractIndexes(indexes) {
   return groupBy(indexes, (index) => index.type);
 }
 
-function extractPermissions(permissions) {
+function extractPermissions(permissions, types) {
+  const typesByID = chain(types)
+    .groupBy((type) => type.id)
+    .mapValues((value) => value[0].name)
+    .value();
+
   return chain(permissions)
-          .groupBy((permission) => permission.type)
+          .groupBy((permission) => typesByID[permission.type.value])
           .mapValues((typePermissions) => chain(typePermissions)
-            .groupBy((permission) => permission.user || 'anonymous')
+            .groupBy((permission) => (
+              permission.user ? permission.user.value : 'anonymous'
+            ))
             .mapValues((userPermissions) => (
               userPermissions.reduce(combinePermissions)
             ), {})
             .value())
           .value();
+}
+
+function extractConnectionPermissions(types) {
+  return chain(types)
+    .groupBy((type) => type.name)
+    .mapValues((type) => (
+      type[0].fields.filter((field) => (
+        field.type === 'User' &&
+        field.grantPermissions
+      ))
+    ))
+    .value();
 }
 
 function combinePermissions(left, right) {

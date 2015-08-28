@@ -47,7 +47,7 @@ function getUpdateQuery(type, id, data) {
   return RethinkDB.table(type)
     .get(id.value)
     .update(compactObject(data), {
-      returnChanges: true,
+      returnChanges: 'always',
     })('changes')(0)('new_val');
 }
 
@@ -59,7 +59,7 @@ function getReplaceQuery(type, id, data) {
   const cleanData = compactObject(data);
   cleanData.id = id.value;
   return RethinkDB.table(type).get(id.value).replace(cleanData, {
-    returnChanges: true,
+    returnChanges: 'always',
   })('changes')(0)('new_val');
 }
 

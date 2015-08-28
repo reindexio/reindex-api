@@ -1,10 +1,9 @@
 import { GraphQLObjectType } from 'graphql';
-import createRootField from '../createRootField';
 import { getConnectionQueries } from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
 } from '../connections';
-import checkPermissionValidator from '../validators/checkPermissionValidator';
+import checkPermission from '../permissions/checkPermission';
 
 export default function createSchemaField(typeSets) {
   const schema = new GraphQLObjectType({
@@ -25,14 +24,12 @@ export default function createSchemaField(typeSets) {
       },
     },
   });
-  return createRootField({
+  return {
     name: 'schema',
-    returnType: schema,
-    validators: [
-      checkPermissionValidator('ReindexType', 'read'),
-    ],
-    resolve() {
+    type: schema,
+    resolve(parent, args, context) {
+      checkPermission('ReindexType', 'read', {}, context);
       return {};
     },
-  });
+  };
 }

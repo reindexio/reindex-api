@@ -11,9 +11,28 @@ import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
 import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
-import { createConnectionSourceResolve } from '../connections';
+import { createConnectionFieldResolve } from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
+  const permissionSet = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexPermissionSet',
+      fields: {
+        read: {
+          type: GraphQLBoolean,
+        },
+        create: {
+          type: GraphQLBoolean,
+        },
+        update: {
+          type: GraphQLBoolean,
+        },
+        delete: {
+          type: GraphQLBoolean,
+        },
+      },
+    }),
+  });
   // XXX(freiksenet, 2015-08-19): Interface would be nicer, but there is no
   // way to neatly convert it to InputObjectType
   const field = new TypeSet({
@@ -44,6 +63,9 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         reverseName: {
           type: GraphQLString,
         },
+        grantPermissions: {
+          type: permissionSet.type,
+        },
       },
     }),
   });
@@ -72,7 +94,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         },
         permissions: {
           type: getTypeSet('ReindexPermission').type,
-          resolve: createConnectionSourceResolve('ReindexPermission', 'type'),
+          resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
         },
       }),
       interfaces: [interfaces.Node],
@@ -87,6 +109,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
   });
 
   return {
+    ReindexPermissionSet: permissionSet,
     ReindexField: field,
     ReindexType: type,
   };
