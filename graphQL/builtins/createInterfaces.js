@@ -8,7 +8,7 @@ export default function createInterfaces() {
   return {
     Node: new GraphQLInterfaceType({
       name: 'Node',
-      description: {},
+      description: 'An object with a globally unique id.',
       fields: {
         id: {
           type: new GraphQLNonNull(ReindexID),
