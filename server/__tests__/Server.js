@@ -5,17 +5,18 @@ import uuid from 'uuid';
 import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
+import createServer from '../createServer';
+import databaseNameFromHostname from '../databaseNameFromHostname';
 import {
   createTestDatabase,
   deleteTestDatabase,
 } from '../../test/testDatabase';
-import createServer from '../createServer';
-import databaseNameFromHostname from '../databaseNameFromHostname';
+import { toReindexID } from '../../graphQL/builtins/ReindexID';
 
 describe('Server', () => {
   const host = randomString(10) + '.example.com';
   const db = databaseNameFromHostname(host);
-  const randomUserID = uuid.v4();
+  const randomUserID = toReindexID({ type: 'User', value: uuid.v4() });
   const randomSecret = 'secret';
   const token = JSONWebToken.sign({
     sub: randomUserID,

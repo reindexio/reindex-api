@@ -8,6 +8,8 @@ import Providers from 'bell/lib/providers';
 import { Set } from 'immutable';
 
 import escapeScriptJSON from './escapeScriptJSON';
+import { toReindexID } from '../graphQL/builtins/ReindexID';
+
 import {
   getAuthenticationProvider,
   getSecrets
@@ -83,9 +85,9 @@ async function authenticate(request, reply) {
       );
     }
 
-    const { clientID, clientSecret } = authenticationProvider;
+    const { clientId, clientSecret } = authenticationProvider;
 
-    if (!clientID || !clientSecret) {
+    if (!clientId || !clientSecret) {
       return reply(
         Boom.badRequest(`Provider '${providerName}' is not configured`, {
           code: LoginErrorCode.PROVIDER_NOT_CONFIGURED,
@@ -102,7 +104,7 @@ async function authenticate(request, reply) {
     }
 
     const settings = {
-      clientId: clientID,
+      clientId,
       clientSecret,
       cookie: COOKIE_NAME,
       forceHttps: false,
@@ -150,11 +152,8 @@ async function handler(request, reply) {
 
     const { provider } = credentials;
     const credential = normalizeCredentials(credentials);
-    const user = await getOrCreateUser(
-      conn,
-      provider,
-      credential,
-    );
+    const dbUser = await getOrCreateUser(conn, provider, credential);
+    const user = { ...dbUser, id: toReindexID(dbUser.id) };
 
     const secrets = await getSecrets(conn);
     if (!secrets.length) {

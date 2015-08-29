@@ -88,7 +88,7 @@ export const TEST_DATA = fromJS({
       {
         id: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',
         type: 'github',
-        clientID: 'fakeClientId',
+        clientId: 'fakeClientId',
         clientSecret: 'fakeClientSecret',
         isEnabled: true,
       },

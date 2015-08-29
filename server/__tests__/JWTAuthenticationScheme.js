@@ -5,13 +5,14 @@ import RethinkDB from 'rethinkdb';
 import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
+import databaseNameFromHostname from '../databaseNameFromHostname';
+import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
+import RethinkDBPlugin from '../RethinkDBPlugin';
 import {
   createTestDatabase,
   deleteTestDatabase,
 } from '../../test/testDatabase';
-import databaseNameFromHostname from '../databaseNameFromHostname';
-import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
-import RethinkDBPlugin from '../RethinkDBPlugin';
+import { toReindexID } from '../../graphQL/builtins/ReindexID';
 
 describe('JWTAuthenticationScheme', () => {
   const host = randomString(10) + '.example.com';
@@ -53,7 +54,7 @@ describe('JWTAuthenticationScheme', () => {
   const HOUR = 3600;
 
   const validToken = JSONWebToken.sign({
-    sub: userID,
+    sub: toReindexID({ type: 'User', value: userID }),
     iat: now,
     exp: now + 24 * HOUR,
   }, secret);
@@ -109,7 +110,7 @@ describe('JWTAuthenticationScheme', () => {
 
   it('returns an error for an expired token', async function () {
     const expiredToken = JSONWebToken.sign({
-      sub: userID,
+      sub: toReindexID({ type: 'User', value: userID }),
       iat: now - 48 * HOUR,
       exp: now - 24 * HOUR,
     }, secret);
