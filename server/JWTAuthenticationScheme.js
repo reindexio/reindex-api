@@ -1,6 +1,7 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
+import { fromReindexID } from '../graphQL/builtins/ReindexID';
 import { getSecrets } from '../db/queries/simpleQueries';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
@@ -67,9 +68,13 @@ async function authenticateAsync(request) {
     throw Boom.unauthorized();
   }
 
+  const userID = verifiedToken.sub ?
+    fromReindexID(verifiedToken.sub).value :
+    null;
+
   const credentials = {
     isAdmin: verifiedToken.isAdmin === true,
-    userID: verifiedToken.sub,
+    userID,
   };
 
   return credentials;
