@@ -46,7 +46,7 @@
     "testonly": "npm run mocha $(find ./ -name __tests__)",
     "test": "npm run lint && npm run testonly",
     "create-app": "babel-node bin/create-app.js",
-    "create-token": "node bin/create-token.js",
+    "create-token": "babel-node bin/create-token.js",
     "print-schema": "babel-node bin/print-schema.js"
   }
 }
