@@ -159,6 +159,15 @@ describe('Integration Tests', () => {
     });
   });
 
+  it('queries viewer', async function () {
+    const user = TEST_DATA.getIn(['tables', 'User', 0]).toJS();
+    const credentials = { isAdmin: true, userID: user.id };
+    assert.deepEqual(
+      await runQuery(`{viewer{handle}}`, null, credentials),
+      { data: { viewer: { handle: user.handle } } }
+    );
+  });
+
   it('works with edges and cursor', async function () {
     const userId = toReindexID({
       type: 'User',
