@@ -1,4 +1,3 @@
-import { forEach } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
@@ -345,31 +344,5 @@ describe('Permissions', () => {
     });
 
 
-  });
-
-
-  it('all root calls have permission validator', async function() {
-    const context = await getGraphQLContext(conn, {
-      credentials: {
-        isAdmin: false,
-        // User that has no perms
-        userID: 'banReadUser',
-      },
-    });
-    const rootFields = {
-      ...context.schema.getType('ReindexQueryRoot').getFields(),
-      ...context.schema.getType('ReindexMutationRoot').getFields(),
-    };
-    // This test is a bit crude, but I think it works for checking that
-    // there are no unprotected root calls.
-    forEach(rootFields, (call) => {
-      assert.throws(
-        // We pass parametes so that node knows how to validate
-        () => call.resolve(context, {
-          id: { type: 'Micropost' },
-        }, { rootValue: context }),
-        /lacks permissions/
-      );
-    });
   });
 });
