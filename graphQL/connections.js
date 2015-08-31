@@ -129,16 +129,29 @@ export function createConnectionArguments() {
   };
 }
 
-export function createConnectionTargetResolve(ofType, fieldName) {
-  return (parent, args, context) => {
-    checkPermission(ofType, 'read', args, context);
-    return getByID(context.rootValue.conn, parent[fieldName]);
+export function createNodeFieldResolve(ofType, fieldName) {
+  return async (parent, args, context) => {
+    const result = await getByID(context.rootValue.conn, parent[fieldName]);
+    checkPermission(ofType, 'read', result, context);
+    return result;
   };
 }
 
-export function createConnectionSourceResolve(ofType, reverseName) {
+function checkConnectionPermissions(type, reverseName, parent, context) {
+  const userFields = context.rootValue.permissions.connection;
+  const userField = userFields[type].find((field) => (
+    field.name === reverseName
+  ));
+  const object = {};
+  if (userField) {
+    object[reverseName] = parent.id;
+  }
+  checkPermission(type, 'read', object, context);
+}
+
+export function createConnectionFieldResolve(ofType, reverseName) {
   return (parent, args, context) => {
-    checkPermission(ofType, 'read', args, context);
+    checkConnectionPermissions(ofType, reverseName, parent, context);
     return getConnectionQueries(
       context.rootValue.conn,
       ofType,

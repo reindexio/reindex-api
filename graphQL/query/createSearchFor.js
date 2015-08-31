@@ -1,26 +1,23 @@
-import createRootField from '../createRootField';
 import { getConnectionQueries } from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
- } from '../connections';
+} from '../connections';
+import checkPermission from '../permissions/checkPermission';
 
 export default function createSearch({ type, connection }) {
-  return createRootField({
+  return {
     name: 'searchFor' + type.name,
-    returnType: connection,
+    type: connection,
     args: createConnectionArguments(),
-    resolve(
-      parent,
-      args,
-      { rootValue: { conn, indexes } }
-    ) {
+    resolve(parent, args, context) {
+      checkPermission(type.name, 'read', {}, context);
       return getConnectionQueries(
-        conn,
+        context.rootValue.conn,
         type.name,
-        indexes[type.name],
+        context.rootValue.indexes[type.name],
         {},
         args
       );
     },
-  });
+  };
 }

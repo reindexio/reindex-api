@@ -1,8 +1,9 @@
+import { chain } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
-import { PERMISSION_TABLE } from '../db/DBTableNames';
+import { PERMISSION_TABLE, TYPE_TABLE } from '../db/DBTableNames';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 import assert from '../test/assert';
@@ -15,39 +16,18 @@ import {
 describe('Permissions', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
+  let typesByName;
+
+  function getTypeID(type) {
+    return {
+      type: 'ReindexType',
+      value: typesByName[type],
+    };
+  }
 
   before(async function () {
     conn = await RethinkDB.connect({ db });
     await createTestDatabase(conn, db);
-    return RethinkDB.db(db).table(PERMISSION_TABLE).insert([
-      {
-        type: 'User',
-        user: 'creatorUser',
-        create: true,
-        update: true,
-        delete: false,
-      },
-      {
-        type: 'User',
-        user: 'banReadUser',
-        read: false,
-      },
-      {
-        type: 'User',
-        user: null,
-        read: true,
-      },
-      {
-        type: 'Micropost',
-        user: 'micropostReader',
-        read: true,
-      },
-      {
-        type: 'User',
-        user: 'micropostReader',
-        read: false,
-      },
-    ]).run(conn);
   });
 
   after(async function () {
@@ -63,286 +43,792 @@ describe('Permissions', () => {
     return await graphql(context.schema, query, context, variables);
   }
 
-  it('node uses permissions properly', async function() {
-    const id = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
+  describe('type permissions', () => {
+    before(async () => {
+      const types = await RethinkDB
+        .db(db)
+        .table(TYPE_TABLE)
+        .coerceTo('array')
+        .run(conn);
+      typesByName = chain(types)
+        .groupBy((type) => type.name)
+        .mapValues((value) => value[0].id)
+        .value();
 
-    assert.deepEqual(await runQuery(`{ node(id: "${id}") { id } }`), {
-      data: {
-        node: null,
-      },
-      errors: [
+      RethinkDB.db(db).table(PERMISSION_TABLE).insert([
         {
-          message: 'User lacks permissions to read records of type Micropost',
+          type: getTypeID('User'),
+          user: {
+            type: 'User',
+            value: 'creatorUser',
+          },
+          create: true,
+          update: true,
+          delete: false,
         },
-      ],
-    });
-
-    const userID = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
-
-    assert.deepEqual(await runQuery(`{ node(id: "${userID}") { id } }`), {
-      data: {
-        node: {
-          id: userID,
-        },
-      },
-    });
-  });
-
-  it('no one can read micropost', async function() {
-    const id = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
-
-    assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`), {
-      data: {
-        getMicropost: null,
-      },
-      errors: [
         {
-          message: 'User lacks permissions to read records of type Micropost',
+          type: getTypeID('User'),
+          user: {
+            type: 'User',
+            value: 'banReadUser',
+          },
+          read: false,
         },
-      ],
-    });
-  });
-
-  it('admin has all permissions everything', async function() {
-    const id = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
-
-    assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`, {
-      isAdmin: true,
-    }), {
-      data: {
-        getMicropost: {
-          id,
-        },
-      },
-    });
-  });
-
-  it('anonymous can read user', async function() {
-    const id = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
-
-    assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`), {
-      data: {
-        getUser: {
-          id,
-        },
-      },
-    });
-  });
-
-  it('anonymous permissions propagate', async function() {
-    const id = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
-
-    assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
-      isAdmin: false,
-      userID: 'creatorUser',
-    }), {
-      data: {
-        getUser: {
-          id,
-        },
-      },
-    });
-  });
-
-  it('one of the users is forbidden from reading user', async function() {
-    const id = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
-
-    assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
-      isAdmin: false,
-      userID: 'banReadUser',
-    }), {
-      data: {
-        getUser: null,
-      },
-      errors: [
         {
-          message: 'User lacks permissions to read records of type User',
+          type: getTypeID('User'),
+          user: null,
+          read: true,
         },
-      ],
-    });
-  });
-
-  it('one user can create, read, but not delete', async function() {
-    const clientMutationId = 'my-client-mutation-id';
-    const created = await runQuery(`
-      mutation createUser($input: _CreateUserInput) {
-        createUser(input: $input) {
-          clientMutationId,
-          User {
-            id,
-          }
-        }
-      }
-    `, {
-      isAdmin: false,
-      userID: 'creatorUser',
-    }, {
-      input: {
-        clientMutationId,
-        User: {
-          handle: 'immonenv',
-          email: 'immonenv@example.com',
+        {
+          type: getTypeID('Micropost'),
+          user: {
+            type: 'User',
+            value: 'micropostReader',
+          },
+          read: true,
         },
-      },
+        {
+          type: getTypeID('User'),
+          user: {
+            type: 'User',
+            value: 'micropostReader',
+          },
+          read: false,
+        },
+      ]).run(conn);
     });
 
-    const id = created.data.createUser.User.id;
+    after(() => {
+      RethinkDB.db(db).table(PERMISSION_TABLE).delete().run(conn);
+    });
 
-    assert.deepEqual(created, {
-      data: {
-        createUser: {
-          clientMutationId,
-          User: {
+    it('node uses permissions properly', async () => {
+      const id = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
+
+      assert.deepEqual(await runQuery(`{ node(id: "${id}") { id } }`), {
+        data: {
+          node: null,
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type Micropost',
+          },
+        ],
+      });
+
+      const userID = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
+
+      assert.deepEqual(await runQuery(`{ node(id: "${userID}") { id } }`), {
+        data: {
+          node: {
+            id: userID,
+          },
+        },
+      });
+    });
+
+    it('no one can read micropost', async () => {
+      const id = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
+
+      assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`), {
+        data: {
+          getMicropost: null,
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type Micropost',
+          },
+        ],
+      });
+    });
+
+    it('admin has all permissions', async () => {
+      const id = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
+
+      assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`, {
+        isAdmin: true,
+      }), {
+        data: {
+          getMicropost: {
             id,
           },
         },
-      },
+      });
     });
 
-    const updated = await runQuery(`
-      mutation updateUser($input: _UpdateUserInput) {
-        updateUser(input: $input) {
-          clientMutationId,
-          User {
-            id
-          }
-        }
-      }
-    `, {
-      isAdmin: false,
-      userID: 'creatorUser',
-    }, {
-      input: {
-        id,
-        clientMutationId,
-        User: {
-          handle: 'villeimmonen',
-        },
-      },
-    });
+    it('anonymous can read user', async () => {
+      const id = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
 
-    assert.deepEqual(updated, {
-      data: {
-        updateUser: {
-          clientMutationId,
-          User: {
+      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`), {
+        data: {
+          getUser: {
             id,
           },
         },
-      },
+      });
     });
 
-    const deleted = await runQuery(`
-      mutation deleteUser($input: _DeleteUserInput) {
-        deleteUser(input: $input) {
-          clientMutationId,
-          User {
+    it('anonymous permissions propagate', async () => {
+      const id = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
+
+      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
+        isAdmin: false,
+        userID: 'creatorUser',
+      }), {
+        data: {
+          getUser: {
             id,
-            handle,
-            email
+          },
+        },
+      });
+    });
+
+    it('one of the users is forbidden from reading user', async () => {
+      const id = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
+
+      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
+        isAdmin: false,
+        userID: 'banReadUser',
+      }), {
+        data: {
+          getUser: null,
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type User',
+          },
+        ],
+      });
+    });
+
+    it('one user can create, read, but not delete', async () => {
+      const clientMutationId = 'my-client-mutation-id';
+      const created = await runQuery(`
+        mutation createUser($input: _CreateUserInput) {
+          createUser(input: $input) {
+            clientMutationId,
+            User {
+              id,
+            }
           }
         }
-      }
-    `, {
-      isAdmin: false,
-      userID: 'creatorUser',
-    }, {
-      input: {
-        id,
-        clientMutationId,
-      },
-    });
-
-    assert.deepEqual(deleted, {
-      data: {
-        deleteUser: null,
-      },
-      errors: [
-        {
-          message: 'User lacks permissions to delete records of type User',
+      `, {
+        isAdmin: false,
+        userID: 'creatorUser',
+      }, {
+        input: {
+          clientMutationId,
+          User: {
+            handle: 'immonenv',
+            email: 'immonenv@example.com',
+          },
         },
-      ],
-    });
-  });
+      });
 
-  it('should check permissions on connections', async function() {
-    const id = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
+      const id = created.data.createUser.User.id;
 
-    assert.deepEqual(await runQuery(`{
-      getMicropost(id: "${id}") {
-        id,
-        author {
-          id
+      assert.deepEqual(created, {
+        data: {
+          createUser: {
+            clientMutationId,
+            User: {
+              id,
+            },
+          },
+        },
+      });
+
+      const updated = await runQuery(`
+        mutation updateUser($input: _UpdateUserInput) {
+          updateUser(input: $input) {
+            clientMutationId,
+            User {
+              id
+            }
+          }
         }
-      }
-    }`, {
-      userID: 'micropostReader',
-    }), {
-      data: {
-        getMicropost: {
+      `, {
+        isAdmin: false,
+        userID: 'creatorUser',
+      }, {
+        input: {
           id,
-          author: null,
+          clientMutationId,
+          User: {
+            handle: 'villeimmonen',
+          },
         },
-      },
-      errors: [
-        {
-          message: 'User lacks permissions to read records of type User',
+      });
+
+      assert.deepEqual(updated, {
+        data: {
+          updateUser: {
+            clientMutationId,
+            User: {
+              id,
+            },
+          },
         },
-      ],
+      });
+
+      const deleted = await runQuery(`
+        mutation deleteUser($input: _DeleteUserInput) {
+          deleteUser(input: $input) {
+            clientMutationId,
+            User {
+              id,
+              handle,
+              email
+            }
+          }
+        }
+      `, {
+        isAdmin: false,
+        userID: 'creatorUser',
+      }, {
+        input: {
+          id,
+          clientMutationId,
+        },
+      });
+
+      assert.deepEqual(deleted, {
+        data: {
+          deleteUser: null,
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to delete records of type User',
+          },
+        ],
+      });
     });
 
-    const userID = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
+    it('should check permissions on connections', async () => {
+      const id = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
 
-    assert.deepEqual(await runQuery(`{
-      getUser(id: "${userID}") {
-        id,
-        microposts {
-          nodes {
+      assert.deepEqual(await runQuery(`{
+        getMicropost(id: "${id}") {
+          id,
+          author {
             id
           }
         }
-      }
-    }`), {
-      data: {
-        getUser: {
-          id: userID,
-          microposts: null,
+      }`, {
+        userID: 'micropostReader',
+      }), {
+        data: {
+          getMicropost: {
+            id,
+            author: null,
+          },
         },
-      },
-      errors: [
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type User',
+          },
+        ],
+      });
+
+      const userID = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
+
+      assert.deepEqual(await runQuery(`{
+        getUser(id: "${userID}") {
+          id,
+          microposts {
+            nodes {
+              id
+            }
+          }
+        }
+      }`), {
+        data: {
+          getUser: {
+            id: userID,
+            microposts: null,
+          },
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type Micropost',
+          },
+        ],
+      });
+    });
+  });
+
+  describe('connection permissions', () => {
+    before(() => RethinkDB
+      .db(db)
+      .table(TYPE_TABLE)
+      .filter({ name: 'Micropost' })
+      .update((obj) => ({
+        fields: obj('fields')
+          .filter((field) => field('name').ne('author'))
+          .append({
+            name: 'author',
+            type: 'User',
+            reverseName: 'microposts',
+            grantPermissions: {
+              read: true,
+              create: true,
+              update: true,
+              delete: true,
+            },
+          }),
+      }))
+      .run(conn)
+    );
+
+    it('user can read himself', async () => {
+      const userID = toReindexID({
+        type: 'User',
+        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      });
+
+      assert.deepEqual(await runQuery(`
         {
-          message: 'User lacks permissions to read records of type Micropost',
+          getUser(id: "${userID}") {
+            id
+          }
+        }`), {
+          data: {
+            getUser: null,
+          },
+          errors: [
+            {
+              message: 'User lacks permissions to read records of type User',
+            },
+          ],
+        }
+      );
+
+      assert.deepEqual(await runQuery(`
+        {
+          getUser(id: "${userID}") {
+            id
+          }
+        }
+      `, {
+        isAdmin: false,
+        userID: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      }), {
+        data: {
+          getUser: {
+            id: userID,
+          },
         },
-      ],
+      });
     });
 
+    it('can not to do stuff to microposts of other users', async () => {
+      const userID = '94b90d89-22b6-4abf-b6ad-2780bf9d0408';
+      const micropostID = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
+      });
 
+      assert.deepEqual(await runQuery(`
+        {
+          getMicropost(id: "${micropostID}") {
+            id,
+          }
+        }
+      `, {
+        userID,
+      }), {
+        data: {
+          getMicropost: null,
+        },
+        errors: [
+          {
+            message: 'User lacks permissions to read records of type Micropost',
+          },
+        ],
+      });
+    });
+
+    it('can read own microposts', async () => {
+      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
+      const id = toReindexID({
+        type: 'User',
+        value: userID,
+      });
+      const micropostID = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
+
+      assert.deepEqual(await runQuery(`
+        {
+          getMicropost(id: "${micropostID}") {
+            id,
+            author {
+              id
+            }
+          }
+        }
+      `, {
+        userID,
+      }), {
+        data: {
+          getMicropost: {
+            id: micropostID,
+            author: {
+              id,
+            },
+          },
+        },
+      });
+
+      assert.deepEqual(await runQuery(`
+        {
+          getUser(id: "${id}") {
+            id,
+            microposts(orderBy: {field: "createdAt"}, first: 1)  {
+              nodes {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }), {
+        data: {
+          getUser: {
+            id,
+            microposts: {
+              nodes: [
+                {
+                  id: micropostID,
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    it('can create оr update microposts only with self as user', async () => {
+      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
+      const id = toReindexID({
+        type: 'User',
+        value: userID,
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation createMicropost($input: _CreateMicropostInput){
+          createMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          Micropost: {},
+        },
+      }), {
+        data: {
+          createMicropost: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to create records of type Micropost'
+            ),
+          },
+        ],
+      });
+
+      const result = await runQuery(`
+        mutation createMicropost($input: _CreateMicropostInput) {
+          createMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          Micropost: {
+            author: id,
+          },
+        },
+      });
+
+      const micropostID = result.data.createMicropost.Micropost.id;
+
+      assert.deepEqual(result, {
+        data: {
+          createMicropost: {
+            Micropost: {
+              id: micropostID,
+              author: {
+                id,
+              },
+            },
+          },
+        },
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation updateMicropost($input: _UpdateMicropostInput) {
+          updateMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          id: micropostID,
+          Micropost: {
+            author: toReindexID({
+              type: 'User',
+              id: 'someOtherId',
+            }),
+          },
+        },
+      }), {
+        data: {
+          updateMicropost: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to update records of type Micropost'
+            ),
+          },
+        ],
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation updateMicropost($input: _UpdateMicropostInput) {
+          updateMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          id: micropostID,
+          Micropost: {
+            text: 'foo',
+          },
+        },
+      }), {
+        data: {
+          updateMicropost: {
+            Micropost: {
+              id: micropostID,
+              author: {
+                id,
+              },
+            },
+          },
+        },
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation replaceMicropost($input: _ReplaceMicropostInput) {
+          replaceMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          id: micropostID,
+          Micropost: {
+            text: 'foo',
+          },
+        },
+      }), {
+        data: {
+          replaceMicropost: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to update records of type Micropost'
+            ),
+          },
+        ],
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation replaceMicropost($input: _ReplaceMicropostInput) {
+          replaceMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          id: micropostID,
+          Micropost: {
+            text: 'foozz',
+            author: id,
+          },
+        },
+      }), {
+        data: {
+          replaceMicropost: {
+            Micropost: {
+              id: micropostID,
+              author: {
+                id,
+              },
+            },
+          },
+        },
+      });
+
+      assert.deepEqual(await runQuery(`
+        mutation deleteMicropost($input: _DeleteMicropostInput) {
+          deleteMicropost(input: $input) {
+            Micropost {
+              id,
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID,
+      }, {
+        input: {
+          clientMutationId: '',
+          id: micropostID,
+        },
+      }), {
+        data: {
+          deleteMicropost: {
+            Micropost: {
+              id: micropostID,
+              author: {
+                id,
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('can not read posts of other users through connections', async () => {
+      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
+      const id = toReindexID({
+        type: 'User',
+        value: userID,
+      });
+
+      await RethinkDB
+        .db(db)
+        .table(PERMISSION_TABLE)
+        .insert({
+          type: getTypeID('User'),
+          user: null,
+          read: true,
+        })
+        .run(conn);
+
+      assert.deepEqual(await runQuery(`
+        {
+          getUser(id: "${id}") {
+            id,
+            microposts {
+              nodes {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        userID: null,
+      }), {
+        data: {
+          getUser: {
+            id,
+            microposts: null,
+          },
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to read records of type Micropost'
+            ),
+          },
+        ],
+      });
+    });
   });
 });

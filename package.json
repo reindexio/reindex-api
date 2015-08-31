@@ -35,6 +35,7 @@
     "diff": "^1.4.0",
     "eslint": "^1.2.0",
     "eslint-plugin-arrow-function": "git://github.com/freiksenet/eslint-plugin-arrow-function.git#return-shorthand",
+    "eslint-plugin-babel": "^2.1.1",
     "jsdoc": "^3.3.0-beta3",
     "mocha": "^2.2.4",
     "nodemon": "^1.3.7"

@@ -29,8 +29,8 @@ import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
   createConnectionArguments,
-  createConnectionSourceResolve,
-  createConnectionTargetResolve,
+  createConnectionFieldResolve,
+  createNodeFieldResolve,
  } from './connections';
 
 /**
@@ -158,7 +158,7 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments();
-    resolve = createConnectionSourceResolve(ofType, reverseName);
+    resolve = createConnectionFieldResolve(ofType, reverseName);
   } else if (fieldType === 'List') {
     const innerType = PRIMITIVE_TYPE_MAP.get(field.get('ofType')) ||
       getTypeSet(field.get('ofType')).type;
@@ -168,7 +168,7 @@ function createField(field, getTypeSet, interfaces) {
   } else {
     type = getTypeSet(fieldType).type;
     if (type.getInterfaces().includes(interfaces.Node)) {
-      resolve = createConnectionTargetResolve(type.name, fieldName);
+      resolve = createNodeFieldResolve(type.name, fieldName);
     }
   }
 

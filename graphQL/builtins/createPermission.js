@@ -5,7 +5,7 @@ import {
 } from 'graphql';
 import ReindexID from '../builtins/ReindexID';
 import TypeSet from '../TypeSet';
-import { createConnectionTargetResolve } from '../connections';
+import { createNodeFieldResolve } from '../connections';
 
 export default function createPermission(interfaces, getTypeSet) {
   return new TypeSet({
@@ -21,11 +21,11 @@ export default function createPermission(interfaces, getTypeSet) {
         },
         user: {
           type: getTypeSet('User').type,
-          resolve: createConnectionTargetResolve('User', 'user'),
+          resolve: createNodeFieldResolve('User', 'user'),
         },
         type: {
           type: new GraphQLNonNull(getTypeSet('ReindexType').type),
-          resolve: createConnectionTargetResolve('ReindexType', 'type'),
+          resolve: createNodeFieldResolve('ReindexType', 'type'),
         },
         read: {
           type: GraphQLBoolean,
