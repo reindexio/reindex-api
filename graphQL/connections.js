@@ -138,13 +138,15 @@ export function createNodeFieldResolve(ofType, fieldName) {
 }
 
 function checkConnectionPermissions(type, reverseName, parent, context) {
-  const userFields = context.rootValue.permissions.connection;
-  const userField = userFields[type].find((field) => (
-    field.name === reverseName
-  ));
+  const userFields = context.rootValue.permissions.connection[type];
   const object = {};
-  if (userField) {
-    object[reverseName] = parent.id;
+  if (userFields) {
+    const userField = userFields.find((field) => (
+      field.name === reverseName
+    ));
+    if (userField) {
+      object[reverseName] = parent.id;
+    }
   }
   checkPermission(type, 'read', object, context);
 }
