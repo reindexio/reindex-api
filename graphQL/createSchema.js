@@ -6,10 +6,7 @@ import {
   GraphQLInt,
   GraphQLFloat,
   GraphQLBoolean,
-  GraphQLScalarType,
   GraphQLList,
-  GraphQLInputObjectType,
-  GraphQLEnumType,
 } from 'graphql';
 import { Map } from 'immutable';
 
@@ -32,6 +29,7 @@ import {
   createConnectionFieldResolve,
   createNodeFieldResolve,
  } from './connections';
+import createInputObjectType from './createInputObjectType';
 
 /**
  * Given map of built-in types and database metadata about custom data,
@@ -73,11 +71,14 @@ export default function createSchema(dbMetadata) {
   // This has to happen separately, because it forces field thunks and needs
   // typesets to contain all types required.
   typeSets = typeSets.map((typeSet) => {
-    typeSet = typeSet.set(
-      'inputObject',
-      createInputObjectType(typeSet, getTypeSet, interfaces),
-    );
-    return typeSet;
+    if (typeSet.inputObject) {
+      return typeSet;
+    } else {
+      return typeSet.set(
+        'inputObject',
+        createInputObjectType(typeSet, getTypeSet, interfaces),
+      );
+    }
   });
 
   const queryFields = createCommonRootFields(
@@ -156,9 +157,12 @@ function createField(field, getTypeSet, interfaces) {
   if (fieldType === 'Connection') {
     const ofType = field.get('ofType');
     const reverseName = field.get('reverseName');
+    const defaultOrdering = field.get('defaultOrdering', Map()).toJS();
     type = getTypeSet(ofType).connection;
-    argDef = createConnectionArguments();
-    resolve = createConnectionFieldResolve(ofType, reverseName);
+    argDef = createConnectionArguments(getTypeSet);
+    resolve = createConnectionFieldResolve(
+      ofType, reverseName, defaultOrdering
+    );
   } else if (fieldType === 'List') {
     const innerType = PRIMITIVE_TYPE_MAP.get(field.get('ofType')) ||
       getTypeSet(field.get('ofType')).type;
@@ -184,61 +188,6 @@ function createField(field, getTypeSet, interfaces) {
     deprecationReason: field.get('deprecationReason', null),
     description: field.get('description', null),
   };
-}
-
-function createInputObjectType(
-  { type },
-  getTypeSet,
-  { Node }
-) {
-  const filteredFields = Map(type.getFields())
-    .filter((field) => {
-      const fieldType = field.type.ofType ? field.type.ofType : field.type;
-      return (
-        fieldType !== ReindexID &&
-        !fieldType.name.endsWith('Connection')
-      );
-    });
-  if (filteredFields.count() > 0) {
-    return new GraphQLInputObjectType({
-      name: '_' + type.name + 'Input',
-      fields: () => filteredFields
-      .map((field) => {
-        let fieldType = field.type;
-        let parentType;
-
-        if (fieldType instanceof GraphQLList ||
-            fieldType instanceof GraphQLNonNull) {
-          parentType = fieldType;
-          fieldType = parentType.ofType;
-        }
-
-        if (fieldType instanceof GraphQLInputObjectType ||
-            fieldType instanceof GraphQLScalarType ||
-            fieldType instanceof GraphQLEnumType) {
-          return {
-            type: field.type,
-          };
-        } else {
-          fieldType = fieldType.getInterfaces().includes(Node) ?
-            ReindexID :
-            getTypeSet(fieldType.name).inputObject;
-          if (parentType) {
-            return {
-              type: new parentType.constructor(fieldType),
-            };
-          } else {
-            return {
-              type: fieldType,
-            };
-          }
-        }
-      })
-      .toObject(),
-    });
-  } else {
-    return null;
-  }
 }
 
 function createPayload({ type }) {

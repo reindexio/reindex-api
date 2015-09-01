@@ -164,6 +164,10 @@ export const TEST_DATA = fromJS({
             type: 'Connection',
             ofType: 'Micropost',
             reverseName: 'author',
+            defaultOrdering: {
+              field: 'createdAt',
+              order: 'ASC',
+            },
           },
         ],
       },
