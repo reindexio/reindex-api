@@ -12,6 +12,14 @@ async function createDatabase(dbName) {
   await* values(DBTableNames).map((tableName) =>
     RethinkDB.db(dbName).tableCreate(tableName).run(conn)
   );
+
+  await RethinkDB.db(dbName).table('ReindexType').insert({
+    name: 'User',
+    fields: [],
+    kind: 'OBJECT',
+    interfaces: ['Node'],
+  }).run(conn);
+
   return conn;
 }
 
