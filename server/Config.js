@@ -19,6 +19,12 @@ const Config = convict({
     },
   },
   RethinkDBPlugin: {
+    authKey: {
+      default: undefined,
+      doc: 'The RethinkDB authentication key',
+      env: 'RETHINKDB_AUTH_KEY',
+      format: String,
+    },
     host: {
       default: 'localhost',
       doc: 'The host of RethinkDB to connect to.',

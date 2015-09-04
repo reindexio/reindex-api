@@ -31,7 +31,10 @@ export default async function createServer() {
   }
   server.connection(Config.get('connection'));
 
-  await server.register(RethinkDBPlugin);
+  await server.register({
+    register: RethinkDBPlugin,
+    options: Config.get('RethinkDBPlugin'),
+  });
   await server.register({
     register: SocialLoginPlugin,
     options: Config.get('SocialLoginPlugin'),
