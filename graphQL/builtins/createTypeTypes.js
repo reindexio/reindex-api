@@ -5,6 +5,7 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLBoolean,
+  GraphQLEnumType,
 } from 'graphql';
 import createCreate from '../mutations/createCreate';
 import createDelete from '../mutations/createDelete';
@@ -12,8 +13,21 @@ import TypeSet from '../TypeSet';
 import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
 import { createConnectionFieldResolve } from '../connections';
+import createInputObjectType from '../createInputObjectType';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
+  const OrderByOrderEnum = new GraphQLEnumType({
+    name: 'ReindexOrderByOrder',
+    values: {
+      ASC: {
+        value: 'ASC',
+      },
+      DESC: {
+        value: 'DESC',
+      },
+    },
+  });
+
   const permissionSet = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexPermissionSet',
@@ -33,6 +47,26 @@ export default function createTypeTypes(interfaces, getTypeSet) {
       },
     }),
   });
+
+  let ordering = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexOrdering',
+      fields: {
+        order: {
+          type: OrderByOrderEnum,
+        },
+        field: {
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+    }),
+  });
+  ordering = ordering.set('inputObject', createInputObjectType(
+    ordering,
+    () => {},
+    interfaces
+  ));
+
   // XXX(freiksenet, 2015-08-19): Interface would be nicer, but there is no
   // way to neatly convert it to InputObjectType
   const field = new TypeSet({
@@ -65,6 +99,9 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         },
         grantPermissions: {
           type: permissionSet.type,
+        },
+        defaultOrdering: {
+          type: ordering.type,
         },
       },
     }),
@@ -112,5 +149,6 @@ export default function createTypeTypes(interfaces, getTypeSet) {
     ReindexPermissionSet: permissionSet,
     ReindexField: field,
     ReindexType: type,
+    ReindexOrdering: ordering,
   };
 }

@@ -4,11 +4,15 @@ import {
 } from '../connections';
 import checkPermission from '../permissions/checkPermission';
 
-export default function createSearch({ type, connection }) {
+export default function createSearch(
+  { type, connection },
+  interfaces,
+  typeSets
+) {
   return {
     name: 'searchFor' + type.name,
     type: connection,
-    args: createConnectionArguments(),
+    args: createConnectionArguments((name) => typeSets.get(name)),
     resolve(parent, args, context) {
       checkPermission(type.name, 'read', {}, context);
       return getConnectionQueries(

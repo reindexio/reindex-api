@@ -11,7 +11,7 @@ export default function createSchemaField(typeSets) {
     fields: {
       types: {
         type: typeSets.get('ReindexType').connection,
-        args: createConnectionArguments(),
+        args: createConnectionArguments((name) => typeSets.get(name)),
         resolve(parent, args, { rootValue: { conn, indexes } }) {
           return getConnectionQueries(
             conn,

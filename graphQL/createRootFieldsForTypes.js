@@ -10,19 +10,20 @@ export default function createRootFieldsForTypes(
       createRootFieldsForType(
         creators,
         typeSet,
-        interfaces
+        interfaces,
+        typeSets
       )
     ))
     .reduce((operations, next) => operations.merge(next), Map());
 }
 
-function createRootFieldsForType(creators, typeSet, interfaces) {
+function createRootFieldsForType(creators, typeSet, interfaces, typeSets) {
   return creators
     .filter((creator) =>
       typeSet.type.getInterfaces().includes(interfaces.Node) &&
       !typeSet.blacklistedRootFields.contains(creator)
     )
-    .map((creator) => creator(typeSet, interfaces))
+    .map((creator) => creator(typeSet, interfaces, typeSets))
     .toKeyedSeq()
     .mapEntries(([, query]) => [query.name, query]);
 }

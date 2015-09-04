@@ -1,12 +1,9 @@
 import {
   GraphQLObjectType,
-  GraphQLInputObjectType,
   GraphQLBoolean,
   GraphQLInt,
-  GraphQLString,
   GraphQLNonNull,
   GraphQLList,
-  GraphQLEnumType,
 } from 'graphql';
 import {
   getNodes,
@@ -68,7 +65,7 @@ export function createConnection({ type }) {
   });
 }
 
-const PageInfo = new GraphQLObjectType({
+export const PageInfo = new GraphQLObjectType({
   name: 'PageInfo',
   fields: {
     hasNextPage: {
@@ -80,31 +77,7 @@ const PageInfo = new GraphQLObjectType({
   },
 });
 
-const OrderByOrderEnum = new GraphQLEnumType({
-  name: 'ReindexOrderByOrder',
-  values: {
-    ASC: {
-      value: 'ASC',
-    },
-    DESC: {
-      value: 'DESC',
-    },
-  },
-});
-
-const OrderByInputType = new GraphQLInputObjectType({
-  name: 'ReindexOrderBy',
-  fields: {
-    order: {
-      type: OrderByOrderEnum,
-    },
-    field: {
-      type: new GraphQLNonNull(GraphQLString),
-    },
-  },
-});
-
-export function createConnectionArguments() {
+export function createConnectionArguments(getTypeSet) {
   return {
     first: {
       name: 'first',
@@ -124,7 +97,7 @@ export function createConnectionArguments() {
     },
     orderBy: {
       name: 'orderBy',
-      type: OrderByInputType,
+      type: getTypeSet('ReindexOrdering').inputObject,
     },
   };
 }
@@ -151,9 +124,17 @@ function checkConnectionPermissions(type, reverseName, parent, context) {
   checkPermission(type, 'read', object, context);
 }
 
-export function createConnectionFieldResolve(ofType, reverseName) {
+export function createConnectionFieldResolve(
+  ofType,
+  reverseName,
+  defaultOrdering
+) {
   return (parent, args, context) => {
     checkConnectionPermissions(ofType, reverseName, parent, context);
+    const processedArgs = {
+      orderBy: defaultOrdering,
+      ...args,
+    };
     return getConnectionQueries(
       context.rootValue.conn,
       ofType,
@@ -162,7 +143,7 @@ export function createConnectionFieldResolve(ofType, reverseName) {
         keyPrefixFields: [[reverseName, 'value']],
         keyPrefix: [parent.id.value],
       },
-      args
+      processedArgs
     );
   };
 }

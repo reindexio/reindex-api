@@ -177,7 +177,7 @@ describe('Integration Tests', () => {
     const result = await runQuery(`
       {
         getUser(id: "${userId}") {
-          microposts(orderBy: {field: "createdAt"}, first: 1) {
+          microposts(first: 1) {
             edges {
               node {
                 text
