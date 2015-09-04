@@ -41,9 +41,6 @@
 #
 #   web: python tunnel.py && ....
 #
-# It's safe to run the script multiple times concurrently. Only one tunnel will
-# be made and the other invocations will fail successfully. This way multiple
-# workers can depend on the tunnel, and you can still use foreman locally.
 
 import os
 import sys
@@ -51,24 +48,7 @@ from tempfile import NamedTemporaryFile
 import subprocess
 
 def check_already_running(forwards):
-	try:
-		lines = subprocess.check_output(['pgrep', '-x', '-a', 'ssh']).split('\n')
-	except subprocess.CalledProcessError:
-		lines = list()
-
-	for line in lines:
-		if not line:
-			continue
-		pid, cmd = line.split(' ', 1)
-		pid = int(pid)
-		found = False
-		for f in forwards:
-			if f in cmd:
-				found = True
-				break
-		if found:
-			print 'SSH tunnel already running. PID=%d' % pid
-			return True
+	# XXX: Assumes the SSH tunnel is not running.
 	return False
 
 target = os.environ['SSH_TUNNEL_TARGET']
