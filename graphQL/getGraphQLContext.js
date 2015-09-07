@@ -36,17 +36,22 @@ function extractPermissions(permissions, types) {
     .mapValues((value) => value[0].name)
     .value();
 
+  const allTypesPermissions = permissions
+    .filter((permission) => !permission.type);
+
   return chain(permissions)
-          .groupBy((permission) => typesByID[permission.type.value])
-          .mapValues((typePermissions) => chain(typePermissions)
-            .groupBy((permission) => (
-              permission.user ? permission.user.value : 'anonymous'
-            ))
-            .mapValues((userPermissions) => (
-              userPermissions.reduce(combinePermissions)
-            ), {})
-            .value())
-          .value();
+    .filter((permission) => permission.type)
+    .groupBy((permission) => typesByID[permission.type.value])
+    .mapValues((typePermissions) => typePermissions.concat(allTypesPermissions))
+    .mapValues((typePermissions) => chain(typePermissions)
+      .groupBy((permission) => (
+        permission.user ? permission.user.value : 'anonymous'
+      ))
+      .mapValues((userPermissions) => (
+        userPermissions.reduce(combinePermissions, {})
+      ))
+      .value())
+    .value();
 }
 
 function extractConnectionPermissions(types) {
