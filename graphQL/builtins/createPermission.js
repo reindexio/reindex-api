@@ -24,7 +24,7 @@ export default function createPermission(interfaces, getTypeSet) {
           resolve: createNodeFieldResolve('User', 'user'),
         },
         type: {
-          type: new GraphQLNonNull(getTypeSet('ReindexType').type),
+          type: getTypeSet('ReindexType').type,
           resolve: createNodeFieldResolve('ReindexType', 'type'),
         },
         read: {

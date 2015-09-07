@@ -20,6 +20,15 @@ async function createDatabase(dbName) {
     interfaces: ['Node'],
   }).run(conn);
 
+  await RethinkDB.db(dbName).table('ReindexPermissions').insert({
+    type: null,
+    user: null,
+    read: true,
+    create: true,
+    update: true,
+    delete: true,
+  }).run(conn);
+
   return conn;
 }
 

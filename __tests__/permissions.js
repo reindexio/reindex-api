@@ -102,6 +102,60 @@ describe('Permissions', () => {
       RethinkDB.db(db).table(PERMISSION_TABLE).delete().run(conn);
     });
 
+    it('wildcard permissions', async () => {
+      const permission = await runQuery(`mutation createPermission {
+        createReindexPermission(input: {
+          clientMutationId: "",
+          ReindexPermission: {
+            read: true,
+            create: true,
+            update: true,
+            delete: true,
+          }
+        }) {
+          ReindexPermission {
+            id
+          }
+        }
+      }`, {
+        isAdmin: true,
+      });
+
+      const permissionId = permission
+        .data.createReindexPermission.ReindexPermission.id;
+
+      assert.deepProperty(
+        permission,
+        'data.createReindexPermission.ReindexPermission.id'
+      );
+
+      const id = toReindexID({
+        type: 'Micropost',
+        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
+      });
+
+      assert.deepEqual(await runQuery(`{ node(id: "${id}") { id } }`), {
+        data: {
+          node: {
+            id,
+          },
+        },
+      });
+
+      assert.deepProperty(await runQuery(`mutation deletePermission {
+        deleteReindexPermission(input: {
+          clientMutationId: "",
+          id: "${permissionId}"
+        }) {
+          ReindexPermission {
+            id
+          }
+        }
+      }`, {
+        isAdmin: true,
+      }), 'data.deleteReindexPermission.ReindexPermission.id');
+    });
+
     it('node uses permissions properly', async () => {
       const id = toReindexID({
         type: 'Micropost',
