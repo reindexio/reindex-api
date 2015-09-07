@@ -124,15 +124,10 @@ describe('Permissions', () => {
       const permissionId = permission
         .data.createReindexPermission.ReindexPermission.id;
 
-      assert.deepEqual(permission, {
-        data: {
-          createReindexPermission: {
-            ReindexPermission: {
-              id: permissionId,
-            },
-          },
-        },
-      });
+      assert.deepProperty(
+        permission,
+        'data.createReindexPermission.ReindexPermission.id'
+      );
 
       const id = toReindexID({
         type: 'Micropost',
@@ -147,7 +142,7 @@ describe('Permissions', () => {
         },
       });
 
-      assert.deepEqual(await runQuery(`mutation deletePermission {
+      assert.deepProperty(await runQuery(`mutation deletePermission {
         deleteReindexPermission(input: {
           clientMutationId: "",
           id: "${permissionId}"
@@ -158,15 +153,7 @@ describe('Permissions', () => {
         }
       }`, {
         isAdmin: true,
-      }), {
-        data: {
-          deleteReindexPermission: {
-            ReindexPermission: {
-              id: permissionId,
-            },
-          },
-        },
-      });
+      }), 'data.deleteReindexPermission.ReindexPermission.id');
     });
 
     it('node uses permissions properly', async () => {
