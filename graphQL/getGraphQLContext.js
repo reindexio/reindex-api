@@ -42,8 +42,8 @@ function extractPermissions(permissions, types) {
   return chain(permissions)
     .filter((permission) => permission.type)
     .groupBy((permission) => typesByID[permission.type.value])
-    .mapValues((typePermissions) => typePermissions.concat(allTypesPermissions))
     .mapValues((typePermissions) => chain(typePermissions)
+      .concat(allTypesPermissions)
       .groupBy((permission) => (
         permission.user ? permission.user.value : 'anonymous'
       ))
