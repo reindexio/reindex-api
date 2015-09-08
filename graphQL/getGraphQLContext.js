@@ -1,19 +1,17 @@
 import { chain, groupBy } from 'lodash';
 import { fromJS } from 'immutable';
-import { getMetadata } from '../db/queries/simpleQueries';
 import createSchema from './createSchema';
 
-export default async function getGraphQLContext(conn, extraContext) {
+export default function getGraphQLContext(conn, metadata, extraContext) {
   const {
     types: typeData,
     indexes: indexData,
     permissions: permissionData,
-  } = await getMetadata(conn);
+  } = metadata;
   const indexes = extractIndexes(indexData);
   const typePermissions = extractPermissions(permissionData, typeData);
   const connectionPermissions = extractConnectionPermissions(typeData);
   const schema = createSchema(fromJS(typeData));
-
   return {
     ...extraContext,
     conn,
@@ -36,21 +34,28 @@ function extractPermissions(permissions, types) {
     .mapValues((value) => value[0].name)
     .value();
 
+  const definedTypePermissions = chain(permissions)
+    .filter((permission) => permission.type)
+    .groupBy((permission) => typesByID[permission.type.value])
+    .value();
+
   const allTypesPermissions = permissions
     .filter((permission) => !permission.type);
 
-  return chain(permissions)
-    .filter((permission) => permission.type)
-    .groupBy((permission) => typesByID[permission.type.value])
-    .mapValues((typePermissions) => chain(typePermissions)
-      .concat(allTypesPermissions)
-      .groupBy((permission) => (
-        permission.user ? permission.user.value : 'anonymous'
-      ))
-      .mapValues((userPermissions) => (
-        userPermissions.reduce(combinePermissions, {})
-      ))
-      .value())
+  return chain(typesByID)
+    .map((name) => [
+      name,
+      chain(allTypesPermissions)
+        .concat(definedTypePermissions[name] || [])
+        .groupBy((permission) => (
+          permission.user ? permission.user.value : 'anonymous'
+        ))
+        .mapValues((userPermissions) => (
+          userPermissions.reduce(combinePermissions, {})
+        ))
+        .value(),
+    ])
+    .zipObject()
     .value();
 }
 
@@ -67,7 +72,7 @@ function extractConnectionPermissions(types) {
 }
 
 function combinePermissions(left, right) {
-  const result = { ...right };
+  const result = {};
   for (const permission of ['read', 'create', 'update', 'delete']) {
     const leftPermission = left[permission];
     const rightPermission = right[permission];
