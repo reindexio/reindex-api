@@ -18,7 +18,12 @@ export default function createSchemaField(typeSets) {
             'ReindexType',
             indexes.ReindexType,
             {},
-            args
+            {
+              orderBy: {
+                field: 'name',
+              },
+              ...args,
+            }
           );
         },
       },

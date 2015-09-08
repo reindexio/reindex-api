@@ -131,6 +131,11 @@ export function createConnectionFieldResolve(
 ) {
   return (parent, args, context) => {
     checkConnectionPermissions(ofType, reverseName, parent, context);
+    if (!defaultOrdering) {
+      defaultOrdering = {
+        field: 'id',
+      };
+    }
     const processedArgs = {
       orderBy: defaultOrdering,
       ...args,
