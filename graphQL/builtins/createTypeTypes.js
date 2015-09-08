@@ -130,7 +130,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
           },
         },
         permissions: {
-          type: getTypeSet('ReindexPermission').type,
+          type: getTypeSet('ReindexPermission').connection,
           resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
         },
       }),
