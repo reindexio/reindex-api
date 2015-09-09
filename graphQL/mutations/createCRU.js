@@ -10,11 +10,16 @@ const OP_TO_PERMISSION = {
   replace: 'update',
 };
 
-export default function createCRU(operation, withID, {
-  type,
-  inputObject,
-  payload,
-}) {
+export default function createCRU(
+  operation, withID, typeSet, interfaces, typeSets
+) {
+  const type = typeSet.type;
+  const payload = typeSet.payload;
+  const inputObject = typeSet.getInputObject(
+    (name) => typeSets.get(name),
+    interfaces
+  );
+
   const inputFields = {
     clientMutationId: {
       name: 'clientMutationId',

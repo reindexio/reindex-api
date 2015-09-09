@@ -1,5 +1,5 @@
 import createCRU from './createCRU';
 
-export default function createCreate(type) {
-  return createCRU('create', false, type);
+export default function createCreate(type, interfaces, typeSets) {
+  return createCRU('create', false, type, interfaces, typeSets);
 }

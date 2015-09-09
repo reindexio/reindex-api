@@ -1,4 +1,3 @@
-import { List } from 'immutable';
 import {
   GraphQLObjectType,
   GraphQLString,
@@ -13,7 +12,6 @@ import TypeSet from '../TypeSet';
 import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
 import { createConnectionFieldResolve } from '../connections';
-import createInputObjectType from '../createInputObjectType';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
   const OrderByOrderEnum = new GraphQLEnumType({
@@ -48,7 +46,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
     }),
   });
 
-  let ordering = new TypeSet({
+  const ordering = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexOrdering',
       fields: {
@@ -61,11 +59,6 @@ export default function createTypeTypes(interfaces, getTypeSet) {
       },
     }),
   });
-  ordering = ordering.set('inputObject', createInputObjectType(
-    ordering,
-    () => {},
-    interfaces
-  ));
 
   // XXX(freiksenet, 2015-08-19): Interface would be nicer, but there is no
   // way to neatly convert it to InputObjectType
@@ -139,10 +132,10 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         return obj.id.type === 'ReindexType';
       },
     }),
-    blacklistedRootFields: List([
+    blacklistedRootFields: [
       createCreate,
       createDelete,
-    ]),
+    ],
   });
 
   return {

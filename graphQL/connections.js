@@ -97,7 +97,7 @@ export function createConnectionArguments(getTypeSet) {
     },
     orderBy: {
       name: 'orderBy',
-      type: getTypeSet('ReindexOrdering').inputObject,
+      type: getTypeSet('ReindexOrdering').getInputObject(getTypeSet, {}),
     },
   };
 }

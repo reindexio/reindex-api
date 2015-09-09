@@ -2,7 +2,7 @@ import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import { createType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 
-export default function createCreateReindexType(typeSets) {
+export default function createCreateReindexType(typeSets, interfaces) {
   const ReindexTypeSet = typeSets.get('ReindexType');
   const input = new GraphQLInputObjectType({
     name: '_CreateReindexTypeInput',
@@ -11,7 +11,10 @@ export default function createCreateReindexType(typeSets) {
         type: new GraphQLNonNull(GraphQLString),
       },
       ReindexType: {
-        type: ReindexTypeSet.inputObject,
+        type: ReindexTypeSet.getInputObject(
+          (name) => typeSets.get(name),
+          interfaces,
+        ),
       },
     },
   });

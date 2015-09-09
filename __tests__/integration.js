@@ -423,6 +423,7 @@ describe('Integration Tests', () => {
         }
       }
     `);
+
     assert.match(
       result.data.createReindexSecret.ReindexSecret.value,
       /^[a-zA-Z0-9_-]{40}$/
