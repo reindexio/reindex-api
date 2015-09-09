@@ -1,20 +1,24 @@
-import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
+import { GraphQLString, GraphQLInputObjectType } from 'graphql';
 import { createType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import createInputObjectFields from '../createInputObjectFields';
 
 export default function createCreateReindexType(typeSets, interfaces) {
   const ReindexTypeSet = typeSets.get('ReindexType');
+
+  const objectFields = createInputObjectFields(
+    ReindexTypeSet.getInputObjectFields(),
+    true,
+    (name) => typeSets.get(name),
+    interfaces
+  );
+
   const input = new GraphQLInputObjectType({
     name: '_CreateReindexTypeInput',
     fields: {
+      ...objectFields,
       clientMutationId: {
-        type: new GraphQLNonNull(GraphQLString),
-      },
-      ReindexType: {
-        type: ReindexTypeSet.getInputObject(
-          (name) => typeSets.get(name),
-          interfaces,
-        ),
+        type: GraphQLString,
       },
     },
   });
@@ -28,14 +32,14 @@ export default function createCreateReindexType(typeSets, interfaces) {
     },
     async resolve(
       parent,
-      { input: { clientMutationId, ReindexType: type } },
+      { input: { clientMutationId, ...type } },
       context,
     ) {
       checkPermission('ReindexType', 'create', {}, context);
       const result = await createType(context.rootValue.conn, type);
       return {
         clientMutationId,
-        ReindexType: result,
+        changedReindexType: result,
       };
     },
   };

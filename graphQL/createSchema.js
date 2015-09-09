@@ -139,7 +139,7 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     const defaultOrdering = field.get('defaultOrdering', Map()).toJS();
     type = getTypeSet(ofType).connection;
-    argDef = createConnectionArguments(getTypeSet);
+    argDef = createConnectionArguments(getTypeSet, interfaces);
     resolve = createConnectionFieldResolve(
       ofType, reverseName, defaultOrdering
     );
@@ -177,7 +177,7 @@ function createPayload({ type }) {
       clientMutationId: {
         type: GraphQLString,
       },
-      [type.name]: {
+      ['changed' + type.name]: {
         type,
       },
     },

@@ -35,30 +35,27 @@ function convertInputObjectField(
     fieldType = parentType.ofType;
   }
 
-  if (fieldType instanceof GraphQLInputObjectType ||
-      fieldType instanceof GraphQLScalarType ||
-      fieldType instanceof GraphQLEnumType) {
-    return {
-      type: field.type,
-    };
-  } else {
+  if (!(fieldType instanceof GraphQLInputObjectType ||
+        fieldType instanceof GraphQLScalarType ||
+        fieldType instanceof GraphQLEnumType)) {
     fieldType = fieldType.getInterfaces().includes(interfaces.Node) ?
       ReindexID :
       getTypeSet(fieldType.name).getInputObject(getTypeSet, interfaces);
-    if (parentType) {
-      if (parentType instanceof GraphQLNonNull && !preserveNonNull) {
-        return {
-          type: fieldType,
-        };
-      } else {
-        return {
-          type: new parentType.constructor(fieldType),
-        };
-      }
-    } else {
+  }
+
+  if (parentType) {
+    if (parentType instanceof GraphQLNonNull && !preserveNonNull) {
       return {
         type: fieldType,
       };
+    } else {
+      return {
+        type: new parentType.constructor(fieldType),
+      };
     }
+  } else {
+    return {
+      type: fieldType,
+    };
   }
 }

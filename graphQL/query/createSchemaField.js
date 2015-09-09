@@ -5,13 +5,16 @@ import {
 } from '../connections';
 import checkPermission from '../permissions/checkPermission';
 
-export default function createSchemaField(typeSets) {
+export default function createSchemaField(typeSets, interfaces) {
   const schema = new GraphQLObjectType({
     name: 'ReindexSchema',
     fields: {
       types: {
         type: typeSets.get('ReindexType').connection,
-        args: createConnectionArguments((name) => typeSets.get(name)),
+        args: createConnectionArguments(
+          (name) => typeSets.get(name),
+          interfaces
+        ),
         resolve(parent, args, { rootValue: { conn, indexes } }) {
           return getConnectionQueries(
             conn,

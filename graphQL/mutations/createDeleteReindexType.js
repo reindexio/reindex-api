@@ -13,7 +13,7 @@ export default function createCreateReindexType(typeSets) {
     name: '_DeleteReindexTypeInput',
     fields: {
       clientMutationId: {
-        type: new GraphQLNonNull(GraphQLString),
+        type: GraphQLString,
       },
       id: {
         type: new GraphQLNonNull(ReindexID),
@@ -37,7 +37,7 @@ export default function createCreateReindexType(typeSets) {
       const result = await deleteType(context.rootValue.conn, id);
       return {
         clientMutationId,
-        ReindexType: result,
+        changedReindexType: result,
       };
     },
   };

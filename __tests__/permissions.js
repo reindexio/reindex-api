@@ -105,15 +105,12 @@ describe('Permissions', () => {
     it('wildcard permissions', async () => {
       const permission = await runQuery(`mutation createPermission {
         createReindexPermission(input: {
-          clientMutationId: "",
-          ReindexPermission: {
-            read: true,
-            create: true,
-            update: true,
-            delete: true,
-          }
+          read: true,
+          create: true,
+          update: true,
+          delete: true,
         }) {
-          ReindexPermission {
+          changedReindexPermission {
             id
           }
         }
@@ -122,11 +119,11 @@ describe('Permissions', () => {
       });
 
       const permissionId = permission
-        .data.createReindexPermission.ReindexPermission.id;
+        .data.createReindexPermission.changedReindexPermission.id;
 
       assert.deepProperty(
         permission,
-        'data.createReindexPermission.ReindexPermission.id'
+        'data.createReindexPermission.changedReindexPermission.id'
       );
 
       const id = toReindexID({
@@ -144,16 +141,15 @@ describe('Permissions', () => {
 
       assert.deepProperty(await runQuery(`mutation deletePermission {
         deleteReindexPermission(input: {
-          clientMutationId: "",
           id: "${permissionId}"
         }) {
-          ReindexPermission {
+          changedReindexPermission {
             id
           }
         }
       }`, {
         isAdmin: true,
-      }), 'data.deleteReindexPermission.ReindexPermission.id');
+      }), 'data.deleteReindexPermission.changedReindexPermission.id');
     });
 
     it('node uses permissions properly', async () => {
@@ -277,12 +273,10 @@ describe('Permissions', () => {
     });
 
     it('one user can create, read, but not delete', async () => {
-      const clientMutationId = 'my-client-mutation-id';
       const created = await runQuery(`
         mutation createUser($input: _CreateUserInput) {
           createUser(input: $input) {
-            clientMutationId,
-            User {
+            changedUser {
               id,
             }
           }
@@ -292,32 +286,28 @@ describe('Permissions', () => {
         userID: 'creatorUser',
       }, {
         input: {
-          clientMutationId,
-          User: {
-            handle: 'immonenv',
-            email: 'immonenv@example.com',
-          },
+          handle: 'immonenv',
+          email: 'immonenv@example.com',
         },
       });
 
-      const id = created.data.createUser.User.id;
 
       assert.deepEqual(created, {
         data: {
           createUser: {
-            clientMutationId,
-            User: {
-              id,
+            changedUser: {
+              id: created.data.createUser.changedUser.id,
             },
           },
         },
       });
 
+      const id = created.data.createUser.changedUser.id;
+
       const updated = await runQuery(`
         mutation updateUser($input: _UpdateUserInput) {
           updateUser(input: $input) {
-            clientMutationId,
-            User {
+            changedUser {
               id
             }
           }
@@ -328,18 +318,14 @@ describe('Permissions', () => {
       }, {
         input: {
           id,
-          clientMutationId,
-          User: {
-            handle: 'villeimmonen',
-          },
+          handle: 'villeimmonen',
         },
       });
 
       assert.deepEqual(updated, {
         data: {
           updateUser: {
-            clientMutationId,
-            User: {
+            changedUser: {
               id,
             },
           },
@@ -349,8 +335,7 @@ describe('Permissions', () => {
       const deleted = await runQuery(`
         mutation deleteUser($input: _DeleteUserInput) {
           deleteUser(input: $input) {
-            clientMutationId,
-            User {
+            changedUser {
               id,
               handle,
               email
@@ -363,7 +348,6 @@ describe('Permissions', () => {
       }, {
         input: {
           id,
-          clientMutationId,
         },
       });
 
@@ -601,7 +585,7 @@ describe('Permissions', () => {
       assert.deepEqual(await runQuery(`
         mutation createMicropost($input: _CreateMicropostInput){
           createMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -614,7 +598,6 @@ describe('Permissions', () => {
       }, {
         input: {
           clientMutationId: '',
-          Micropost: {},
         },
       }), {
         data: {
@@ -632,7 +615,7 @@ describe('Permissions', () => {
       const result = await runQuery(`
         mutation createMicropost($input: _CreateMicropostInput) {
           createMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -645,19 +628,16 @@ describe('Permissions', () => {
       }, {
         input: {
           clientMutationId: '',
-          Micropost: {
-            author: id,
-          },
+          author: id,
         },
       });
 
-      const micropostID = result.data.createMicropost.Micropost.id;
 
       assert.deepEqual(result, {
         data: {
           createMicropost: {
-            Micropost: {
-              id: micropostID,
+            changedMicropost: {
+              id: result.data.createMicropost.changedMicropost.id,
               author: {
                 id,
               },
@@ -666,10 +646,12 @@ describe('Permissions', () => {
         },
       });
 
+      const micropostID = result.data.createMicropost.changedMicropost.id;
+
       assert.deepEqual(await runQuery(`
         mutation updateMicropost($input: _UpdateMicropostInput) {
           updateMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -683,12 +665,10 @@ describe('Permissions', () => {
         input: {
           clientMutationId: '',
           id: micropostID,
-          Micropost: {
-            author: toReindexID({
-              type: 'User',
-              id: 'someOtherId',
-            }),
-          },
+          author: toReindexID({
+            type: 'User',
+            id: 'someOtherId',
+          }),
         },
       }), {
         data: {
@@ -706,7 +686,7 @@ describe('Permissions', () => {
       assert.deepEqual(await runQuery(`
         mutation updateMicropost($input: _UpdateMicropostInput) {
           updateMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -720,14 +700,12 @@ describe('Permissions', () => {
         input: {
           clientMutationId: '',
           id: micropostID,
-          Micropost: {
-            text: 'foo',
-          },
+          text: 'foo',
         },
       }), {
         data: {
           updateMicropost: {
-            Micropost: {
+            changedMicropost: {
               id: micropostID,
               author: {
                 id,
@@ -740,7 +718,7 @@ describe('Permissions', () => {
       assert.deepEqual(await runQuery(`
         mutation replaceMicropost($input: _ReplaceMicropostInput) {
           replaceMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -752,11 +730,8 @@ describe('Permissions', () => {
         userID,
       }, {
         input: {
-          clientMutationId: '',
           id: micropostID,
-          Micropost: {
-            text: 'foo',
-          },
+          text: 'foo',
         },
       }), {
         data: {
@@ -774,7 +749,7 @@ describe('Permissions', () => {
       assert.deepEqual(await runQuery(`
         mutation replaceMicropost($input: _ReplaceMicropostInput) {
           replaceMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -786,17 +761,14 @@ describe('Permissions', () => {
         userID,
       }, {
         input: {
-          clientMutationId: '',
           id: micropostID,
-          Micropost: {
-            text: 'foozz',
-            author: id,
-          },
+          text: 'foozz',
+          author: id,
         },
       }), {
         data: {
           replaceMicropost: {
-            Micropost: {
+            changedMicropost: {
               id: micropostID,
               author: {
                 id,
@@ -809,7 +781,7 @@ describe('Permissions', () => {
       assert.deepEqual(await runQuery(`
         mutation deleteMicropost($input: _DeleteMicropostInput) {
           deleteMicropost(input: $input) {
-            Micropost {
+            changedMicropost {
               id,
               author {
                 id
@@ -827,7 +799,7 @@ describe('Permissions', () => {
       }), {
         data: {
           deleteMicropost: {
-            Micropost: {
+            changedMicropost: {
               id: micropostID,
               author: {
                 id,

@@ -1,5 +1,5 @@
 import Cryptiles from 'cryptiles';
-import { GraphQLString, GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
+import { GraphQLString, GraphQLInputObjectType } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 
@@ -14,7 +14,7 @@ export default function createCreateReindexSecret(typeSets) {
     fields: {
       clientMutationId: {
         name: 'clientMutationId',
-        type: new GraphQLNonNull(GraphQLString),
+        type: GraphQLString,
       },
     },
   });
@@ -37,7 +37,7 @@ export default function createCreateReindexSecret(typeSets) {
       });
       return {
         clientMutationId,
-        ReindexSecret: result,
+        changedReindexSecret: result,
       };
     },
   };

@@ -8,8 +8,6 @@ export default function createInputObjectType(
 ) {
   return new GraphQLInputObjectType({
     name: '_' + typeSet.type.name + 'Input',
-    fields: () => createInputObjectFields(
-      fields, true, getTypeSet, interfaces
-    ),
+    fields: () => createInputObjectFields(fields, true, getTypeSet, interfaces),
   });
 }

@@ -77,7 +77,7 @@ export const PageInfo = new GraphQLObjectType({
   },
 });
 
-export function createConnectionArguments(getTypeSet) {
+export function createConnectionArguments(getTypeSet, interfaces) {
   return {
     first: {
       name: 'first',
@@ -97,7 +97,8 @@ export function createConnectionArguments(getTypeSet) {
     },
     orderBy: {
       name: 'orderBy',
-      type: getTypeSet('ReindexOrdering').getInputObject(getTypeSet, {}),
+      type: getTypeSet('ReindexOrdering')
+        .getInputObject(getTypeSet, interfaces),
     },
   };
 }

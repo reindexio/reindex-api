@@ -211,7 +211,7 @@ describe('Integration Tests', () => {
       mutation createUser($input: _CreateUserInput) {
         createUser(input: $input) {
           clientMutationId,
-          User {
+          changedUser {
             id,
             handle,
             email
@@ -221,29 +221,31 @@ describe('Integration Tests', () => {
     `, {
       input: {
         clientMutationId,
-        User: {
-          handle: 'immonenv',
-          email: 'immonenv@example.com',
-        },
-      },
-    });
-
-    const id = created.data.createUser.User.id;
-
-    assert.deepEqual(created.data.createUser, {
-      clientMutationId,
-      User: {
-        id,
         handle: 'immonenv',
         email: 'immonenv@example.com',
       },
+    });
+
+    assert.deepEqual(created, {
+      data: {
+        createUser: {
+          clientMutationId,
+          changedUser: {
+            id: created.data.createUser.changedUser.id,
+            handle: 'immonenv',
+            email: 'immonenv@example.com',
+          },
+        },
+      },
     }, 'create works');
+
+    const id = created.data.createUser.changedUser.id;
 
     const updated = await runQuery(`
       mutation updateUser($input: _UpdateUserInput) {
         updateUser(input: $input) {
           clientMutationId,
-          User {
+          changedUser {
             id,
             handle,
             email
@@ -253,19 +255,20 @@ describe('Integration Tests', () => {
     `, {
       input: {
         id,
-        clientMutationId,
-        User: {
-          handle: 'villeimmonen',
-        },
+        handle: 'villeimmonen',
       },
     });
 
-    assert.deepEqual(updated.data.updateUser, {
-      clientMutationId,
-      User: {
-        id,
-        handle: 'villeimmonen',
-        email: 'immonenv@example.com',
+    assert.deepEqual(updated, {
+      data: {
+        updateUser: {
+          clientMutationId: null,
+          changedUser: {
+            id,
+            handle: 'villeimmonen',
+            email: 'immonenv@example.com',
+          },
+        },
       },
     }, 'update works');
 
@@ -273,7 +276,7 @@ describe('Integration Tests', () => {
       mutation replaceUser($input: _ReplaceUserInput) {
         replaceUser(input: $input) {
           clientMutationId,
-          User {
+          changedUser {
             id,
             handle,
             email
@@ -284,18 +287,20 @@ describe('Integration Tests', () => {
       input: {
         id,
         clientMutationId,
-        User: {
-          handle: 'immonenv',
-        },
+        handle: 'immonenv',
       },
     });
 
-    assert.deepEqual(replaced.data.replaceUser, {
-      clientMutationId,
-      User: {
-        id,
-        handle: 'immonenv',
-        email: null,
+    assert.deepEqual(replaced, {
+      data: {
+        replaceUser: {
+          clientMutationId,
+          changedUser: {
+            id,
+            handle: 'immonenv',
+            email: null,
+          },
+        },
       },
     }, 'replace works');
 
@@ -303,7 +308,7 @@ describe('Integration Tests', () => {
       mutation deleteUser($input: _DeleteUserInput) {
         deleteUser(input: $input) {
           clientMutationId,
-          User {
+          changedUser {
             id,
             handle,
             email
@@ -349,7 +354,7 @@ describe('Integration Tests', () => {
     const result = await runQuery(`
       mutation postMicropost($input: _CreateMicropostInput) {
         createMicropost(input: $input) {
-          Micropost {
+          changedMicropost {
             text,
             createdAt,
             author {
@@ -361,15 +366,21 @@ describe('Integration Tests', () => {
     `, {
       input: {
         clientMutationId: '1',
-        Micropost: micropost,
+        ...micropost,
       },
     });
 
-    assert.deepEqual(result.data.createMicropost.Micropost, {
-      ...micropost,
-      createdAt: micropost.createdAt,
-      author: {
-        id: authorID,
+    assert.deepEqual(result, {
+      data: {
+        createMicropost: {
+          changedMicropost: {
+            ...micropost,
+            createdAt: micropost.createdAt,
+            author: {
+              id: authorID,
+            },
+          },
+        },
       },
     });
   });
@@ -395,7 +406,7 @@ describe('Integration Tests', () => {
     const result = await runQuery(`
       mutation postMicropost($input: _CreateMicropostInput) {
         createMicropost(input: $input) {
-          Micropost {
+          changedMicropost {
             text,
             tags,
             categories { name },
@@ -406,18 +417,24 @@ describe('Integration Tests', () => {
     `, {
       input: {
         clientMutationId: '1',
-        Micropost: micropost,
+        ...micropost,
       },
     });
 
-    assert.deepEqual(result.data.createMicropost.Micropost, micropost);
+    assert.deepEqual(result, {
+      data: {
+        createMicropost: {
+          changedMicropost: micropost,
+        },
+      },
+    });
   });
 
   it('creates a secret', async function() {
     const result = await runQuery(`
       mutation secret {
         createReindexSecret(input: {clientMutationId: "mutation"}) {
-          ReindexSecret {
+          changedReindexSecret {
             value
           }
         }
@@ -425,7 +442,7 @@ describe('Integration Tests', () => {
     `);
 
     assert.match(
-      result.data.createReindexSecret.ReindexSecret.value,
+      result.data.createReindexSecret.changedReindexSecret.value,
       /^[a-zA-Z0-9_-]{40}$/
     );
   });
@@ -484,7 +501,7 @@ describe('Integration Tests', () => {
     const newTypeResult = await runQuery(`
       mutation createType($input: _CreateReindexTypeInput!) {
         createReindexType(input: $input) {
-          ReindexType {
+          changedReindexType {
             id,
             name,
             kind,
@@ -498,29 +515,25 @@ describe('Integration Tests', () => {
         }
       }
     `, {
-      input: {
-        clientMutationId: 'mutation',
-        ReindexType: newType,
-      },
+      input: newType,
     });
-
-    const id = newTypeResult.data.createReindexType.ReindexType.id;
 
     assert.deepEqual(newTypeResult, {
       data: {
         createReindexType: {
-          ReindexType: {
+          changedReindexType: {
             ...newTypeWithId,
-            id,
+            id: newTypeResult.data.createReindexType.changedReindexType.id,
           },
         },
       },
     });
 
+    const id = newTypeResult.data.createReindexType.changedReindexType.id;
     const deleteTypeResult = await runQuery(`
       mutation deleteType($input: _DeleteReindexTypeInput!) {
         deleteReindexType(input: $input) {
-          ReindexType {
+          changedReindexType {
             id,
             name,
             kind,
@@ -535,7 +548,6 @@ describe('Integration Tests', () => {
       }
     `, {
       input: {
-        clientMutationId: 'mutation',
         id,
       },
     });
@@ -543,7 +555,7 @@ describe('Integration Tests', () => {
     assert.deepEqual(deleteTypeResult, {
       data: {
         deleteReindexType: {
-          ReindexType: {
+          changedReindexType: {
             ...newTypeWithId,
             id,
           },

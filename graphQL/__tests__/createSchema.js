@@ -328,6 +328,11 @@ describe('createSchema', () => {
             name: 'name',
             type: 'String',
           },
+          {
+            name: 'nonnull',
+            type: 'String',
+            nonNull: true,
+          },
         ],
       },
       {
@@ -351,22 +356,22 @@ describe('createSchema', () => {
       },
     ], 'create mutation has one argument input');
     const createPersonInputFields = createPersonInput.getFields();
-    assert.instanceOf(
-      createPersonInputFields.clientMutationId.type,
-      GraphQLNonNull,
-      'create input has required clientMutationId'
-    );
     assert.equal(
-      createPersonInputFields.clientMutationId.type.ofType,
+      createPersonInputFields.clientMutationId.type,
       GraphQLString,
       'create input clientMutationId field is string'
     );
     assert.isUndefined(createPersonInputFields.id,
       'create input has no field id');
     assert.equal(
-      createPersonInputFields.Person.type.ofType,
-      schema.getType('_PersonInput'),
-      'create input has a corresponding input object field'
+      createPersonInputFields.name.type,
+      GraphQLString,
+      'create input has a name field'
+    );
+    assert.instanceOf(
+      createPersonInputFields.nonnull.type,
+      GraphQLNonNull,
+      'create input preserves nonNull field'
     );
 
     const updatePersonInput = schema.getType('_UpdatePersonInput');
@@ -379,13 +384,8 @@ describe('createSchema', () => {
       },
     ], 'update mutation has one argument input');
     const updatePersonInputFields = updatePersonInput.getFields();
-    assert.instanceOf(
-      updatePersonInputFields.clientMutationId.type,
-      GraphQLNonNull,
-      'update input has required clientMutationId'
-    );
     assert.equal(
-      updatePersonInputFields.clientMutationId.type.ofType,
+      updatePersonInputFields.clientMutationId.type,
       GraphQLString,
       'update input clientMutationId field is string'
     );
@@ -394,13 +394,9 @@ describe('createSchema', () => {
     assert.equal(updatePersonInputFields.id.type.ofType, ReindexID,
       'update input id field is a ID');
     assert.equal(
-      updatePersonInputFields.Person.type.ofType,
-      schema.getType('_PersonInput'),
-      'update input has a corresponding input object field'
+      updatePersonInputFields.nonnull.type,
+      GraphQLString,
+      'update input does not preserve nonNull field'
     );
-
-    const createEmptyTypeInput = schema.getType('_CreateEmptyTypeInput');
-    assert.isUndefined(createEmptyTypeInput.getFields().EmptyType,
-      'objects with no fields do not get input object in their input');
   });
 });
