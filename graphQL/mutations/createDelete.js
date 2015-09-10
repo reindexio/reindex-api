@@ -10,7 +10,7 @@ export default function createDelete({ type, payload }) {
     fields: {
       clientMutationId: {
         name: 'clientMutationId',
-        type: new GraphQLNonNull(GraphQLString),
+        type: GraphQLString,
       },
       id: {
         name: 'id',
@@ -41,7 +41,7 @@ export default function createDelete({ type, payload }) {
       const result = await deleteQuery(conn, type.name, input.id);
       return {
         clientMutationId: input.clientMutationId,
-        [type.name]: result,
+        ['changed' + type.name]: result,
       };
     },
   };

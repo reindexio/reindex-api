@@ -1,4 +1,3 @@
-import { List } from 'immutable';
 import {
   GraphQLObjectType,
   GraphQLString,
@@ -29,10 +28,10 @@ export default function createSecret(interfaces) {
         return obj.id.type === 'ReindexSecret';
       },
     }),
-    blacklistedRootFields: List([
+    blacklistedRootFields: [
       createCreate,
       createUpdate,
       createReplace,
-    ]),
+    ],
   });
 }

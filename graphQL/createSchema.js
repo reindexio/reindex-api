@@ -29,7 +29,6 @@ import {
   createConnectionFieldResolve,
   createNodeFieldResolve,
  } from './connections';
-import createInputObjectType from './createInputObjectType';
 
 /**
  * Given map of built-in types and database metadata about custom data,
@@ -56,30 +55,11 @@ export default function createSchema(dbMetadata) {
     }))
     .map((typeSet) => {
       if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
-        typeSet = typeSet.set(
-          'connection',
-          createConnection(typeSet, interfaces),
-        );
-        typeSet = typeSet.set(
-          'payload',
-          createPayload(typeSet, interfaces)
-        );
+        typeSet.connection = createConnection(typeSet, interfaces);
+        typeSet.payload = createPayload(typeSet, interfaces);
       }
       return typeSet;
     });
-
-  // This has to happen separately, because it forces field thunks and needs
-  // typesets to contain all types required.
-  typeSets = typeSets.map((typeSet) => {
-    if (typeSet.inputObject) {
-      return typeSet;
-    } else {
-      return typeSet.set(
-        'inputObject',
-        createInputObjectType(typeSet, getTypeSet, interfaces),
-      );
-    }
-  });
 
   const queryFields = createCommonRootFields(
     CommonQueryFieldCreators,
@@ -159,7 +139,7 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     const defaultOrdering = field.get('defaultOrdering', Map()).toJS();
     type = getTypeSet(ofType).connection;
-    argDef = createConnectionArguments(getTypeSet);
+    argDef = createConnectionArguments(getTypeSet, interfaces);
     resolve = createConnectionFieldResolve(
       ofType, reverseName, defaultOrdering
     );
@@ -197,7 +177,7 @@ function createPayload({ type }) {
       clientMutationId: {
         type: GraphQLString,
       },
-      [type.name]: {
+      ['changed' + type.name]: {
         type,
       },
     },

@@ -12,7 +12,7 @@ export default function createSearch(
   return {
     name: 'searchFor' + type.name,
     type: connection,
-    args: createConnectionArguments((name) => typeSets.get(name)),
+    args: createConnectionArguments((name) => typeSets.get(name), interfaces),
     resolve(parent, args, context) {
       checkPermission(type.name, 'read', {}, context);
       return getConnectionQueries(

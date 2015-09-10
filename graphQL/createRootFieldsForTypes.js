@@ -21,7 +21,7 @@ function createRootFieldsForType(creators, typeSet, interfaces, typeSets) {
   return creators
     .filter((creator) =>
       typeSet.type.getInterfaces().includes(interfaces.Node) &&
-      !typeSet.blacklistedRootFields.contains(creator)
+      !typeSet.blacklistedRootFields.includes(creator)
     )
     .map((creator) => creator(typeSet, interfaces, typeSets))
     .toKeyedSeq()
