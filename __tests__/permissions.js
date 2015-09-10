@@ -3,6 +3,7 @@ import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
+import { getMetadata } from '../db/queries/simpleQueries';
 import { PERMISSION_TABLE, TYPE_TABLE } from '../db/DBTableNames';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
@@ -39,7 +40,9 @@ describe('Permissions', () => {
     isAdmin: false,
     userID: null,
   }, variables) {
-    const context = await getGraphQLContext(conn, { credentials });
+    const context = getGraphQLContext(conn, await getMetadata(conn), {
+      credentials,
+    });
     return await graphql(context.schema, query, context, variables);
   }
 
