@@ -198,7 +198,7 @@ describe('getGraphQLContext', () => {
               value: 'user1',
             },
             read: true,
-            update: false,
+            update: true,
           },
           {
             type: {
