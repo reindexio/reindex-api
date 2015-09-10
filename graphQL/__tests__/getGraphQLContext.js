@@ -3,48 +3,47 @@ import getGraphQLContext from '../getGraphQLContext';
 import assert from '../../test/assert';
 
 describe('getGraphQLContext', () => {
-  const testTypes = [
-    {
-      id: 'Micropost',
-      name: 'Micropost',
-      kind: 'OBJECT',
-      interfaces: ['Node'],
-      fields: [
-        {
-          name: 'id',
-          type: 'ID',
-          nonNull: true,
+  const micropostType = {
+    id: '91ffff68-50ec-403d-9d55-1d1fdc86b335',
+    name: 'Micropost',
+    kind: 'OBJECT',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+      },
+      {
+        name: 'author',
+        type: 'User',
+        reverseName: 'microposts',
+        grantPermissions: {
+          read: true,
         },
-        {
-          name: 'author',
-          type: 'User',
-          reverseName: 'microposts',
-          grantPermissions: {
-            read: true,
-          },
-        },
-      ],
-    },
-    {
-      id: 'User',
-      name: 'User',
-      kind: 'OBJECT',
-      interfaces: ['Node'],
-      fields: [
-        {
-          name: 'id',
-          type: 'ID',
-          nonNull: true,
-        },
-        {
-          name: 'microposts',
-          type: 'Connection',
-          ofType: 'User',
-          reverseName: 'author',
-        },
-      ],
-    },
-  ];
+      },
+    ],
+  };
+  const userType = {
+    id: '3992ff9a-637b-4e67-aeee-34b02d9c99ab',
+    name: 'User',
+    kind: 'OBJECT',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+      },
+      {
+        name: 'microposts',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'author',
+      },
+    ],
+  };
+  const testTypes = [micropostType, userType];
 
   describe('extractIndexes', () => {
     it('extracts indexes', () => {
@@ -103,7 +102,7 @@ describe('getGraphQLContext', () => {
           {
             type: {
               type: 'ReindexType',
-              value: 'Micropost',
+              value: micropostType.id,
             },
             user: null,
             read: true,
@@ -144,7 +143,7 @@ describe('getGraphQLContext', () => {
           {
             type: {
               type: 'ReindexType',
-              value: 'Micropost',
+              value: micropostType.id,
             },
             user: {
               type: 'User',
@@ -191,7 +190,7 @@ describe('getGraphQLContext', () => {
           {
             type: {
               type: 'ReindexType',
-              value: 'Micropost',
+              value: micropostType.id,
             },
             user: {
               type: 'User',
@@ -203,7 +202,7 @@ describe('getGraphQLContext', () => {
           {
             type: {
               type: 'ReindexType',
-              value: 'Micropost',
+              value: micropostType.id,
             },
             user: {
               type: 'User',
