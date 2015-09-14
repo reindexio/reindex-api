@@ -31,7 +31,6 @@ import { queryWithIDs } from './queryUtils';
 //
 // * `query` - an unpaginated, but ordered and filtered query
 // * `paginatedQuery` - paginated query
-// * `cursorFn` - a RethinkDB function that returns cursor for given object
 // * `pageInfo` - a query or an object of PageInfo
 export async function getConnectionQueries(
   conn,
@@ -101,11 +100,6 @@ export async function getConnectionQueries(
     RethinkDB.minval
   );
 
-  const cursorFn = (obj) => ({
-    index: index.name,
-    value: obj('id')('value'),
-  });
-
   const {
     query: paginatedQuery,
     pageInfo,
@@ -127,7 +121,6 @@ export async function getConnectionQueries(
       }).query
     ),
     pageInfo,
-    cursorFn,
   };
 }
 
@@ -261,11 +254,7 @@ function cursorToIndexKey(
   paddingSize,
   defaultValue,
 ) {
-  if (cursor && cursor.index !== index.name) {
-    throw new Error(
-      `Invalid cursor`
-    );
-  } else if (cursor) {
+  if (cursor) {
     // Valid cursor is always enough, we retrieve the object it points to
     // to get between data
     return RethinkDB.do(

@@ -4,6 +4,7 @@ import { GraphQLString, GraphQLInputObjectType } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 import createInputObjectFields from '../createInputObjectFields';
+import formatMutationResult from './formatMutationResult';
 
 export default function createCreate(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -47,10 +48,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
 
       const result = await create(conn, type.name, object);
 
-      return {
-        clientMutationId,
-        ['changed' + type.name]: result,
-      };
+      return formatMutationResult(clientMutationId, type.name, result);
     },
   };
 }

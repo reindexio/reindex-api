@@ -30,39 +30,42 @@ export function createConnection({ type }) {
       },
     },
   });
-  return new GraphQLObjectType({
-    name: '_' + type.name + 'Connection',
-    fields: {
-      count: {
-        name: 'count',
-        type: GraphQLInt,
-        resolve({ query }, args, { rootValue: { conn } }) {
-          return getCount(conn, query);
+  return {
+    edge,
+    connection: new GraphQLObjectType({
+      name: '_' + type.name + 'Connection',
+      fields: {
+        count: {
+          name: 'count',
+          type: GraphQLInt,
+          resolve({ query }, args, { rootValue: { conn } }) {
+            return getCount(conn, query);
+          },
+        },
+        nodes: {
+          name: 'nodes',
+          type: new GraphQLList(type),
+          resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
+            return getNodes(conn, paginatedQuery);
+          },
+        },
+        edges: {
+          name: 'edges',
+          type: new GraphQLList(edge),
+          resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
+            return getEdges(conn, paginatedQuery);
+          },
+        },
+        pageInfo: {
+          name: 'pageInfo',
+          type: new GraphQLNonNull(PageInfo),
+          resolve({ pageInfo }, args, { rootValue: { conn } }) {
+            return getPageInfo(conn, pageInfo);
+          },
         },
       },
-      nodes: {
-        name: 'nodes',
-        type: new GraphQLList(type),
-        resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
-          return getNodes(conn, paginatedQuery);
-        },
-      },
-      edges: {
-        name: 'edges',
-        type: new GraphQLList(edge),
-        resolve({ paginatedQuery, cursorFn }, args, { rootValue: { conn } }) {
-          return getEdges(conn, paginatedQuery, cursorFn);
-        },
-      },
-      pageInfo: {
-        name: 'pageInfo',
-        type: new GraphQLNonNull(PageInfo),
-        resolve({ pageInfo }, args, { rootValue: { conn } }) {
-          return getPageInfo(conn, pageInfo);
-        },
-      },
-    },
-  });
+    }),
+  };
 }
 
 export const PageInfo = new GraphQLObjectType({

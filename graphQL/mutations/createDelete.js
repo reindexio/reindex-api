@@ -3,6 +3,7 @@ import { getByID } from '../../db/queries/simpleQueries';
 import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import formatMutationResult from './formatMutationResult';
 
 export default function createDelete({ type, payload }) {
   const inputType = new GraphQLInputObjectType({
@@ -28,6 +29,7 @@ export default function createDelete({ type, payload }) {
     },
     async resolve(parent, { input }, context) {
       const conn = context.rootValue.conn;
+      const clientMutationId = input.clientMutationId;
       if (input.id.type !== type.name) {
         throw new Error(`Invalid ID`);
       }
@@ -39,10 +41,8 @@ export default function createDelete({ type, payload }) {
         context
       );
       const result = await deleteQuery(conn, type.name, input.id);
-      return {
-        clientMutationId: input.clientMutationId,
-        ['changed' + type.name]: result,
-      };
+
+      return formatMutationResult(clientMutationId, type.name, result);
     },
   };
 }

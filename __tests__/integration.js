@@ -5,7 +5,8 @@ import { graphql } from 'graphql';
 import { getMetadata } from '../db/queries/simpleQueries';
 import { TYPE_TABLE } from '../db/DBTableNames';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
-import { toReindexID } from '../graphQL/builtins/ReindexID';
+import { fromReindexID, toReindexID } from '../graphQL/builtins/ReindexID';
+import { toCursor } from '../graphQL/builtins/Cursor';
 import assert from '../test/assert';
 import {
   createTestDatabase,
@@ -218,6 +219,12 @@ describe('Integration Tests', () => {
             id,
             handle,
             email
+          },
+          changedUserEdge {
+            node {
+              id
+            },
+            cursor
           }
         }
       }
@@ -229,20 +236,30 @@ describe('Integration Tests', () => {
       },
     });
 
+    assert.deepProperty(created, 'data.createUser.changedUser.id');
+
+    const id = created.data.createUser.changedUser.id;
+
     assert.deepEqual(created, {
       data: {
         createUser: {
           clientMutationId,
           changedUser: {
-            id: created.data.createUser.changedUser.id,
+            id,
             handle: 'immonenv',
             email: 'immonenv@example.com',
+          },
+          changedUserEdge: {
+            node: {
+              id,
+            },
+            cursor: toCursor({
+              value: fromReindexID(id).value,
+            }),
           },
         },
       },
     }, 'create works');
-
-    const id = created.data.createUser.changedUser.id;
 
     const updated = await runQuery(`
       mutation updateUser($input: _UpdateUserInput) {

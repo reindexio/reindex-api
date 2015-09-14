@@ -32,6 +32,12 @@ describe('Connection database queries', () => {
     )[table] || {};
   }
 
+  function makeCursor(obj) {
+    return {
+      value: obj('id')('value'),
+    };
+  }
+
   describe('getConnectionQueries', () => {
     let orderedIds;
     before(async function() {
@@ -124,7 +130,7 @@ describe('Connection database queries', () => {
           { orderBy: { field: 'createdAt' } }
         );
         cursors = List(await result.paginatedQuery
-          .map(result.cursorFn)
+          .map(makeCursor)
           .coerceTo('array')
           .run(conn)
         );
@@ -382,7 +388,7 @@ describe('Connection database queries', () => {
         { orderBy: { field: 'createdAt' } }
       );
       const cursors = List(await result.paginatedQuery
-        .map(result.cursorFn)
+        .map(makeCursor)
         .coerceTo('array')
         .run(conn)
       );

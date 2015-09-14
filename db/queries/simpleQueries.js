@@ -79,10 +79,12 @@ export function getNodes(conn, query) {
   return query.coerceTo('array').run(conn);
 }
 
-export function getEdges(conn, query, cursorFn) {
+export function getEdges(conn, query) {
   return query.map((node) => ({
     node,
-    cursor: cursorFn(node),
+    cursor: {
+      value: node('id')('value'),
+    },
   })).coerceTo('array').run(conn);
 }
 

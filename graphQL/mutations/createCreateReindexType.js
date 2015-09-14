@@ -2,6 +2,7 @@ import { GraphQLString, GraphQLInputObjectType } from 'graphql';
 import { createType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 import createInputObjectFields from '../createInputObjectFields';
+import formatMutationResult from './formatMutationResult';
 
 export default function createCreateReindexType(typeSets, interfaces) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -37,10 +38,7 @@ export default function createCreateReindexType(typeSets, interfaces) {
     ) {
       checkPermission('ReindexType', 'create', {}, context);
       const result = await createType(context.rootValue.conn, type);
-      return {
-        clientMutationId,
-        changedReindexType: result,
-      };
+      return formatMutationResult(clientMutationId, 'ReindexType', result);
     },
   };
 }
