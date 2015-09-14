@@ -4,10 +4,11 @@ import ReindexID from './builtins/ReindexID';
 
 export default class TypeSet {
   constructor(
-    { type, connection, inputObject, payload, blacklistedRootFields }
+    { type, connection, edge, inputObject, payload, blacklistedRootFields }
   ) {
     this.type = type;
     this.connection = connection || null;
+    this.edge = edge || null;
     this._inputObject = inputObject || null;
     this.payload = payload || null;
     this.blacklistedRootFields = blacklistedRootFields || [];

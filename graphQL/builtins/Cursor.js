@@ -2,25 +2,21 @@ import Base64URL from 'base64-url';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 
-export function toCursor({ index, value }) {
-  return Base64URL.encode(index + ':' + value);
+export function toCursor({ value }) {
+  return Base64URL.encode(value);
 }
 
 export function fromCursor(string) {
-  const parts = Base64URL.decode(string).split(':');
-  if (parts.length === 2) {
-    return new Cursor({
-      index: parts[0],
-      value: parts[1],
-    });
+  const value = Base64URL.decode(string);
+  if (value) {
+    return value;
   } else {
     return null;
   }
 }
 
 export class Cursor {
-  constructor({ index, value }) {
-    this.index = index;
+  constructor({ value }) {
     this.value = value;
   }
 }
@@ -28,7 +24,7 @@ export class Cursor {
 const CursorType = new GraphQLScalarType({
   name: 'Cursor',
   serialize(value) {
-    if (value.index && value.value) {
+    if (value.value) {
       return toCursor(value);
     } else {
       return null;

@@ -4,6 +4,7 @@ import { replace } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import createInputObjectFields from '../createInputObjectFields';
+import formatMutationResult from './formatMutationResult';
 
 export default function createReplace(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -54,10 +55,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
 
       const result = await replace(conn, type.name, input.id, object);
 
-      return {
-        clientMutationId,
-        ['changed' + type.name]: result,
-      };
+      return formatMutationResult(clientMutationId, type.name, result);
     },
   };
 }

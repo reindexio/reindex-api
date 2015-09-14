@@ -6,6 +6,7 @@ import {
 import ReindexID from '../builtins/ReindexID';
 import { deleteType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import formatMutationResult from './formatMutationResult';
 
 export default function createCreateReindexType(typeSets) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -35,10 +36,7 @@ export default function createCreateReindexType(typeSets) {
     ) {
       checkPermission('ReindexType', 'delete', {}, context);
       const result = await deleteType(context.rootValue.conn, id);
-      return {
-        clientMutationId,
-        changedReindexType: result,
-      };
+      return formatMutationResult(clientMutationId, 'ReindexType', result);
     },
   };
 }

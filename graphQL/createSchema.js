@@ -55,7 +55,9 @@ export default function createSchema(dbMetadata) {
     }))
     .map((typeSet) => {
       if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
-        typeSet.connection = createConnection(typeSet, interfaces);
+        const { connection, edge } = createConnection(typeSet, interfaces);
+        typeSet.connection = connection;
+        typeSet.edge = edge;
         typeSet.payload = createPayload(typeSet, interfaces);
       }
       return typeSet;
@@ -170,7 +172,7 @@ function createField(field, getTypeSet, interfaces) {
   };
 }
 
-function createPayload({ type }) {
+function createPayload({ type, edge }) {
   return new GraphQLObjectType({
     name: '_' + type.name + 'Payload',
     fields: {
@@ -179,6 +181,9 @@ function createPayload({ type }) {
       },
       ['changed' + type.name]: {
         type,
+      },
+      ['changed' + type.name + 'Edge']: {
+        type: edge,
       },
     },
   });

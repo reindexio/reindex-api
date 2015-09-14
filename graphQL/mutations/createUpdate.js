@@ -5,6 +5,7 @@ import { update } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import createInputObjectFields from '../createInputObjectFields';
+import formatMutationResult from './formatMutationResult';
 
 export default function createUpdate(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -61,10 +62,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
 
       const result = await update(conn, type.name, input.id, object);
 
-      return {
-        clientMutationId,
-        ['changed' + type.name]: result,
-      };
+      return formatMutationResult(clientMutationId, type.name, result);
     },
   };
 }

@@ -16,6 +16,7 @@ import {
   INDEX_TABLE,
 } from '../../DBTableNames';
 import * as queries from '../simpleQueries';
+import { queryWithIDs } from '../queryUtils';
 
 
 describe('Simple database queries', () => {
@@ -119,14 +120,18 @@ describe('Simple database queries', () => {
   });
 
   it('getEdges', async function() {
-    const base = queries.getAllQuery('Micropost');
+    const base = queryWithIDs('Micropost', queries.getAllQuery('Micropost'));
     assert.oequal(
-      fromJS(await queries.getEdges(conn, base, (node) => node('id')))
+      fromJS(await queries.getEdges(conn, base))
         .toSet(),
-      TEST_DATA.getIn(['tables', 'Micropost']).map((node) => Map({
-        cursor: node.get('id'),
-        node,
-      })).toSet(),
+      processIds('Micropost', TEST_DATA.getIn(['tables', 'Micropost']))
+        .map((node) => Map({
+          cursor: Map({
+            value: node.getIn(['id', 'value']),
+          }),
+          node,
+        }))
+        .toSet(),
     );
   });
 

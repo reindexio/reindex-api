@@ -2,6 +2,7 @@ import Cryptiles from 'cryptiles';
 import { GraphQLString, GraphQLInputObjectType } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import formatMutationResult from './formatMutationResult';
 
 function generateSecret() {
   return Cryptiles.randomString(40);
@@ -35,10 +36,7 @@ export default function createCreateReindexSecret(typeSets) {
       const result = await create(context.rootValue.conn, 'ReindexSecret', {
         value: generateSecret(),
       });
-      return {
-        clientMutationId,
-        changedReindexSecret: result,
-      };
+      return formatMutationResult(clientMutationId, 'ReindexSecret', result);
     },
   };
 }
