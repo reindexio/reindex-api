@@ -1,0 +1,614 @@
+{
+  "types": [
+    {
+      "description": "A collection of movies.",
+      "fields": [
+        {
+          "name": "backdrop_path",
+          "type": "String"
+        },
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "poster_path",
+          "type": "String"
+        }
+      ],
+      "id": "98fcb41a-2894-46df-800b-45f251308503",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Collection"
+    },
+    {
+      "description": "A logged in or anonymous user of the system.",
+      "fields": [],
+      "id": "0407552d-5b95-4553-b5a4-4f038f3e4210",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "User"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "id": "450a7f1f-cb9e-4f20-8ae2-0c34090d574f",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Genre"
+    },
+    {
+      "description": "Basic information about a TV network.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "id": "4ce42a5e-2e8a-4004-89b7-47a5f911eb22",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "TvNetwork"
+    },
+    {
+      "description": "Represents a creator of a TV show.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "profile_path",
+          "type": "String"
+        }
+      ],
+      "id": "5149ef8a-b736-4de6-8e91-9fe0b4d3c1aa",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Creator"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "id": "a5d2629f-0b59-42e4-8cb9-85d7d8e871b0",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Company"
+    },
+    {
+      "fields": [
+        {
+          "name": "iso_639_1",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "id": "c8f7b3fd-2a89-465e-8880-2a3e3e730c6a",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Language"
+    },
+    {
+      "description": "Information about a specific movie.",
+      "fields": [
+        {
+          "name": "adult",
+          "type": "Boolean"
+        },
+        {
+          "name": "backdrop_path",
+          "type": "String"
+        },
+        {
+          "name": "belongs_to_collection",
+          "type": "Collection"
+        },
+        {
+          "name": "budget",
+          "type": "Int"
+        },
+        {
+          "name": "credits",
+          "ofType": "Credit",
+          "reverseName": "movie",
+          "type": "Connection"
+        },
+        {
+          "name": "genres",
+          "ofType": "Genre",
+          "type": "List"
+        },
+        {
+          "name": "homepage",
+          "type": "String"
+        },
+        {
+          "name": "imdb_id",
+          "type": "String"
+        },
+        {
+          "name": "original_language",
+          "type": "String"
+        },
+        {
+          "name": "original_title",
+          "type": "String"
+        },
+        {
+          "name": "overview",
+          "type": "String"
+        },
+        {
+          "name": "popularity",
+          "type": "Float"
+        },
+        {
+          "name": "poster_path",
+          "type": "String"
+        },
+        {
+          "name": "production_companies",
+          "ofType": "Company",
+          "type": "List"
+        },
+        {
+          "name": "production_countries",
+          "ofType": "Country",
+          "type": "List"
+        },
+        {
+          "name": "release_date",
+          "type": "DateTime"
+        },
+        {
+          "name": "revenue",
+          "type": "Int"
+        },
+        {
+          "name": "runtime",
+          "type": "Int"
+        },
+        {
+          "name": "spoken_languages",
+          "ofType": "Language",
+          "type": "List"
+        },
+        {
+          "name": "status",
+          "type": "String"
+        },
+        {
+          "name": "tagline",
+          "type": "String"
+        },
+        {
+          "name": "title",
+          "type": "String"
+        },
+        {
+          "name": "video",
+          "type": "Boolean"
+        },
+        {
+          "name": "vote_average",
+          "type": "Float"
+        },
+        {
+          "name": "vote_count",
+          "type": "Int"
+        }
+      ],
+      "id": "f543d25b-e77e-4bd1-8ef0-e95d43a91fda",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "Movie"
+    },
+    {
+      "description": "Information about a TV season.",
+      "fields": [
+        {
+          "name": "air_date",
+          "type": "DateTime"
+        },
+        {
+          "name": "episodes",
+          "ofType": "TvEpisode",
+          "reverseName": "season",
+          "type": "Connection"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "overview",
+          "type": "String"
+        },
+        {
+          "name": "poster_path",
+          "type": "String"
+        },
+        {
+          "name": "season_number",
+          "type": "Int"
+        },
+        {
+          "name": "tv",
+          "reverseName": "seasons",
+          "type": "Tv"
+        }
+      ],
+      "id": "99013f87-8976-4253-b2df-aaecee05866c",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "TvSeason"
+    },
+    {
+      "fields": [
+        {
+          "name": "adult",
+          "type": "Boolean"
+        },
+        {
+          "name": "also_known_as",
+          "ofType": "String",
+          "type": "List"
+        },
+        {
+          "name": "biography",
+          "type": "String"
+        },
+        {
+          "name": "birthday",
+          "type": "DateTime"
+        },
+        {
+          "name": "credits",
+          "ofType": "Credit",
+          "reverseName": "person",
+          "type": "Connection"
+        },
+        {
+          "name": "deathday",
+          "type": "DateTime"
+        },
+        {
+          "name": "homepage",
+          "type": "String"
+        },
+        {
+          "name": "imdb_id",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "place_of_birth",
+          "type": "String"
+        },
+        {
+          "name": "popularity",
+          "type": "Float"
+        },
+        {
+          "name": "profile_path",
+          "type": "String"
+        }
+      ],
+      "id": "c3cb9619-42b8-4fa4-89a7-5a0e41bc8969",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "Person"
+    },
+    {
+      "description": "Information about a TV series.",
+      "fields": [
+        {
+          "description": "File path for the backdrop image URL.",
+          "name": "backdrop_path",
+          "type": "String"
+        },
+        {
+          "description": "A list of creators of the TV series.",
+          "name": "created_by",
+          "ofType": "Creator",
+          "type": "List"
+        },
+        {
+          "description": "All the cast and crew credits for the TV series.",
+          "name": "credits",
+          "ofType": "Credit",
+          "reverseName": "tv",
+          "type": "Connection"
+        },
+        {
+          "description": "A list of all episode run times (in minutes) of the episodes of this TV series.",
+          "name": "episode_run_time",
+          "ofType": "Int",
+          "type": "List"
+        },
+        {
+          "name": "first_air_date",
+          "type": "DateTime"
+        },
+        {
+          "name": "genres",
+          "ofType": "Genre",
+          "type": "List"
+        },
+        {
+          "name": "homepage",
+          "type": "String"
+        },
+        {
+          "name": "in_production",
+          "type": "Boolean"
+        },
+        {
+          "name": "languages",
+          "ofType": "String",
+          "type": "List"
+        },
+        {
+          "name": "last_air_date",
+          "type": "DateTime"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "networks",
+          "ofType": "TvNetwork",
+          "type": "List"
+        },
+        {
+          "name": "number_of_episodes",
+          "type": "Int"
+        },
+        {
+          "name": "number_of_seasons",
+          "type": "Int"
+        },
+        {
+          "name": "origin_country",
+          "ofType": "String",
+          "type": "List"
+        },
+        {
+          "name": "original_language",
+          "type": "String"
+        },
+        {
+          "name": "original_name",
+          "type": "String"
+        },
+        {
+          "name": "overview",
+          "type": "String"
+        },
+        {
+          "description": "A number representing the relative popularity of the TV series.",
+          "name": "popularity",
+          "type": "Float"
+        },
+        {
+          "name": "poster_path",
+          "type": "String"
+        },
+        {
+          "name": "production_companies",
+          "ofType": "Company",
+          "type": "List"
+        },
+        {
+          "description": "A connection to all the seasons of this TV series.",
+          "name": "seasons",
+          "ofType": "TvSeason",
+          "reverseName": "tv",
+          "type": "Connection"
+        },
+        {
+          "name": "status",
+          "type": "String"
+        },
+        {
+          "name": "type",
+          "type": "String"
+        },
+        {
+          "description": "Average rating of this TV series. (0-10)",
+          "name": "vote_average",
+          "type": "Float"
+        },
+        {
+          "name": "vote_count",
+          "type": "Int"
+        }
+      ],
+      "id": "13f48bf3-9317-486f-b767-4cc2b0697954",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "Tv"
+    },
+    {
+      "description": "Information about a TV episode",
+      "fields": [
+        {
+          "name": "air_date",
+          "type": "DateTime"
+        },
+        {
+          "name": "episode_number",
+          "type": "Int"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "name": "overview",
+          "type": "String"
+        },
+        {
+          "name": "production_code",
+          "type": "String"
+        },
+        {
+          "name": "season",
+          "reverseName": "episodes",
+          "type": "TvSeason"
+        },
+        {
+          "name": "season_number",
+          "type": "Int"
+        },
+        {
+          "name": "still_path",
+          "type": "String"
+        },
+        {
+          "name": "vote_average",
+          "type": "Float"
+        },
+        {
+          "name": "vote_count",
+          "type": "Int"
+        }
+      ],
+      "id": "24cc3e13-fdcd-4c7e-90cf-5c1e3ddc546a",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "TvEpisode"
+    },
+    {
+      "fields": [
+        {
+          "name": "iso_3166_1",
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "id": "1393cb21-bb50-4e43-86a3-d016adce0ec5",
+      "interfaces": [],
+      "kind": "OBJECT",
+      "name": "Country"
+    },
+    {
+      "description": "A cast or crew credits for a TV series or movie",
+      "fields": [
+        {
+          "description": "Name of a character. Included in cast credits.",
+          "name": "character",
+          "type": "String"
+        },
+        {
+          "description": "Credit type. Possible values are \"cast\" and \"crew\".",
+          "name": "credit_type",
+          "type": "String"
+        },
+        {
+          "name": "department",
+          "type": "String"
+        },
+        {
+          "description": "Job title. Included in crew credits.",
+          "name": "job",
+          "type": "String"
+        },
+        {
+          "description": "Media type of this Credit. Possible values are \"tv\" for TV credits and \"movie\" for movie credits.",
+          "name": "media_type",
+          "type": "String"
+        },
+        {
+          "description": "For movie credits, includes the movie of this Credit.",
+          "name": "movie",
+          "reverseName": "credits",
+          "type": "Movie"
+        },
+        {
+          "description": "Name of the person this Credit belongs to.",
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "description": "A sequence number for default ordering of credits for a particular TV series or movie.",
+          "name": "order",
+          "type": "Int"
+        },
+        {
+          "description": "The person this Credit belongs to.",
+          "name": "person",
+          "reverseName": "credits",
+          "type": "Person"
+        },
+        {
+          "description": "The file path for the profile image URL. To build an image URL, you will need 3 pieces of data. The base_url, size and the file path. Simply combine them all and you will have a fully qualified URL. Here’s an example URL: `http://image.tmdb.org/t/p/w500/8uO0gUM8aNqYLs1OsTBQiXu0fEv.jpg`",
+          "name": "profile_path",
+          "type": "String"
+        },
+        {
+          "description": "For TV credits, includes the TV series of this Credit.",
+          "name": "tv",
+          "reverseName": "credits",
+          "type": "Tv"
+        }
+      ],
+      "id": "b15c8b4e-e609-4ec7-877b-daa52075f6b3",
+      "interfaces": [
+        "Node"
+      ],
+      "kind": "OBJECT",
+      "name": "Credit"
+    }
+  ]
+}

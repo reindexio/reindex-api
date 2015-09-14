@@ -3,22 +3,18 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLInt,
-  GraphQLFloat,
-  GraphQLBoolean,
   GraphQLList,
 } from 'graphql';
 import { Map } from 'immutable';
 
 import TypeSet from './TypeSet';
 
-import DateTime from './builtins/DateTime';
-import ReindexID from './builtins/ReindexID';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
 import CommonMutationFieldCreators
   from './builtins/CommonMutationFieldCreators';
+import ScalarTypes from './builtins/ScalarTypes';
 import TypeQueryFieldCreators from './builtins/TypeQueryFieldCreators';
 import TypeMutationFieldCreators from './builtins/TypeMutationFieldCreators';
 import createCommonRootFields from './createCommonRootFields';
@@ -118,15 +114,6 @@ function createObjectType(type, getTypeSet, interfaces) {
   return new GraphQLObjectType(config);
 }
 
-const PRIMITIVE_TYPE_MAP = Map({
-  ID: ReindexID,
-  String: GraphQLString,
-  Int: GraphQLInt,
-  Float: GraphQLFloat,
-  Boolean: GraphQLBoolean,
-  DateTime,
-});
-
 function createField(field, getTypeSet, interfaces) {
   const fieldName = field.get('name');
   const fieldType = field.get('type');
@@ -144,11 +131,11 @@ function createField(field, getTypeSet, interfaces) {
       ofType, reverseName, defaultOrdering
     );
   } else if (fieldType === 'List') {
-    const innerType = PRIMITIVE_TYPE_MAP.get(field.get('ofType')) ||
+    const innerType = ScalarTypes[field.get('ofType')] ||
       getTypeSet(field.get('ofType')).type;
     type = new GraphQLList(innerType);
-  } else if (PRIMITIVE_TYPE_MAP.has(fieldType)) {
-    type = PRIMITIVE_TYPE_MAP.get(fieldType);
+  } else if (fieldType in ScalarTypes) {
+    type = ScalarTypes[fieldType];
   } else {
     type = getTypeSet(fieldType).type;
     if (type.getInterfaces().includes(interfaces.Node)) {
