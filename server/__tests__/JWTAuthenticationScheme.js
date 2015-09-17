@@ -22,6 +22,9 @@ describe('JWTAuthenticationScheme', () => {
   let server;
 
   before(async function () {
+    conn = await RethinkDB.connect({ db });
+    await createTestDatabase(conn, db);
+
     server = new Hapi.Server();
     server.connection();
     const register = Promise.promisify(server.register, server);
@@ -37,11 +40,6 @@ describe('JWTAuthenticationScheme', () => {
       },
       config: { auth: 'token' },
     });
-  });
-
-  before(async function () {
-    conn = await RethinkDB.connect({ db });
-    await createTestDatabase(conn, db);
   });
 
   after(async function () {

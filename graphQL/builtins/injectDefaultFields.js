@@ -7,12 +7,12 @@ export default function injectDefaultFields(type) {
   const interfaceInjections = InterfaceDefaultFields();
 
   if (typeInjections[type.name]) {
-    fields = fields.concat(typeInjections[type.name]);
+    fields = typeInjections[type.name].concat(fields);
   }
 
   for (const typeInterface of type.interfaces) {
     if (interfaceInjections[typeInterface]) {
-      fields = fields.concat(interfaceInjections[typeInterface]);
+      fields = interfaceInjections[typeInterface].concat(fields);
     }
   }
 

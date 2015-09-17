@@ -3,8 +3,11 @@ import buildSchemaMigration from '../buildSchemaMigration';
 import {
   CreateField,
   CreateType,
+  CreateTypeData,
   DeleteField,
+  DeleteFieldData,
   DeleteType,
+  DeleteTypeData,
   UpdateFieldInfo,
 } from '../commands';
 import { field, type } from './helpers';
@@ -22,8 +25,8 @@ describe('buildSchemaMigration', () => {
       ],
     );
     assert.sameDeepMembers(commands, [
-      new CreateType('C'),
-      new DeleteType('A'),
+      new CreateType(type('C')),
+      new DeleteType(type('A')),
     ]);
   });
 
@@ -39,86 +42,145 @@ describe('buildSchemaMigration', () => {
       ],
     );
     assert.sameDeepMembers(commands, [
-      new DeleteType('B'),
-      new CreateType('B'),
-      new DeleteType('A'),
-      new CreateType('A'),
+      new DeleteType(type('B')),
+      new CreateType(type('B', { interfaces: ['Node'] })),
+      new CreateTypeData(type('B', { interfaces: ['Node'] })),
+      new DeleteType(type('A', { interfaces: ['Node'] })),
+      new DeleteTypeData(type('A', { interfaces: ['Node'] })),
+      new CreateType(type('A')),
+    ]);
+  });
+
+  it('recreates fields for deleted types', () => {
+    const prevType = type('A', { interfaces: [], fields: [field('a')] });
+    const nextType = type('A', { interfaces: ['Node'], fields: [field('a')] });
+    const commands = buildSchemaMigration([prevType], [nextType]);
+    assert.sameDeepMembers(commands, [
+      new DeleteType(prevType),
+      new CreateType(nextType),
+      new CreateTypeData(nextType),
+      new CreateField(nextType, 'a', 'Int'),
+    ]);
+  });
+
+  it('creates data deletion for deleted fields', () => {
+    const notUsedInline = type('FI', { fields: [field('b')] });
+    const inlineType = type('I', { fields: [field('a')] });
+    const nestedInlineType = type('NI', {
+      fields: [field('inline', { type: 'I' })],
+    });
+    const nodeType = type('T', {
+      interfaces: ['Node'],
+      fields: [
+        field('normal'),
+        field('inline', { type: 'I' }),
+        field('list', { type: 'List', ofType: 'I' }),
+        field('nested', { type: 'NI' }),
+      ],
+    });
+
+    const modifiedInline = type('I');
+    const modifiedNode = type('T', {
+      interfaces: ['Node'],
+      fields: [
+        field('inline', { type: 'I' }),
+        field('list', { type: 'List', ofType: 'I' }),
+        field('nested', { type: 'NI' }),
+      ],
+    });
+    const modifiedNotUsedInline = type('FI');
+
+    const commands = buildSchemaMigration(
+      [inlineType, nestedInlineType, nodeType, notUsedInline],
+      [modifiedInline, nestedInlineType, modifiedNode, modifiedNotUsedInline]
+    );
+
+    assert.sameDeepMembers(commands, [
+      new DeleteField(inlineType, 'a'),
+      new DeleteField(nodeType, 'normal'),
+      new DeleteField(notUsedInline, 'b'),
+      new DeleteFieldData(nodeType, ['normal']),
+      new DeleteFieldData(nodeType, ['inline', 'a']),
+      new DeleteFieldData(nodeType, ['list', 'a']),
+      new DeleteFieldData(nodeType, ['nested', 'inline', 'a']),
     ]);
   });
 
   it('creates new fields and deletes missing fields', () => {
-    const commands = buildSchemaMigration(
-      [
-        type('T', { fields: [field('a'), field('b')] }),
-      ],
-      [
-        type('T', { fields: [field('b'), field('c')] }),
-      ],
-    );
+    const prevType = type('T', { fields: [field('a'), field('b')] });
+    const nextType = type('T', { fields: [field('b'), field('c')] });
+    const commands = buildSchemaMigration([prevType], [nextType]);
     assert.sameDeepMembers(commands, [
-      new CreateField('T', 'c'),
-      new DeleteField('T', 'a'),
+      new CreateField(nextType, 'c', 'Int', {}),
+      new DeleteField(prevType, 'a'),
     ]);
   });
 
   it('recreates fields with changed types', () => {
+    const prevType = type('T', {
+      interfaces: ['Node'],
+      fields: [
+        field('a', { type: 'Int' }),
+        field('b', { type: 'String' }),
+        field('c', { type: 'Connection', ofType: 'U' }),
+      ],
+    });
+    const nextType = type('T', {
+      interfaces: ['Node'],
+      fields: [
+        field('a', { type: 'Float' }),
+        field('b', { type: 'String' }),
+        field('c', { type: 'Connection', ofType: 'V' }),
+      ],
+    });
+
     const commands = buildSchemaMigration(
       [
-        type('T', {
-          fields: [
-            field('a', { type: 'Int' }),
-            field('b', { type: 'String' }),
-            field('c', { type: 'Connection', ofType: 'U' }),
-          ],
-        }),
+        prevType,
         type('U'),
         type('V'),
       ],
       [
-        type('T', {
-          fields: [
-            field('a', { type: 'Float' }),
-            field('b', { type: 'String' }),
-            field('c', { type: 'Connection', ofType: 'V' }),
-          ],
-        }),
+        nextType,
         type('U'),
         type('V'),
       ],
     );
+
     assert.sameDeepMembers(commands, [
-      new DeleteField('T', 'a'),
-      new CreateField('T', 'a'),
-      new DeleteField('T', 'c'),
-      new CreateField('T', 'c'),
+      new DeleteField(prevType, 'a'),
+      new DeleteField(prevType, 'c'),
+      new DeleteFieldData(prevType, ['a']),
+      new DeleteFieldData(prevType, ['c']),
+      new CreateField(nextType, 'a', 'Float'),
+      new CreateField(nextType, 'c', 'Connection', { ofType: 'V' }),
     ]);
   });
 
   it('updates field info', () => {
-    const commands = buildSchemaMigration(
-      [
-        type('T', {
-          fields: [
-            field('a'),
-            field('b'),
-            field('c', { description: 'c field' }),
-          ],
-        }),
+    const prevType = type('T', {
+      fields: [
+        field('a'),
+        field('b'),
+        field('c', { description: 'c field' }),
       ],
-      [
-        type('T', {
-          fields: [
-            field('a', { description: 'Hello World' }),
-            field('b', { deprecationReason: 'Use ReactDOM.render' }),
-            field('c'),
-          ],
-        }),
+    });
+    const nextType = type('T', {
+      fields: [
+        field('a', { description: 'Hello World' }),
+        field('b', { deprecationReason: 'Use ReactDOM.render' }),
+        field('c'),
       ],
-    );
+    });
+
+    const commands = buildSchemaMigration([prevType], [nextType]);
+
     assert.deepEqual(commands, [
-      new UpdateFieldInfo('T', 'a'),
-      new UpdateFieldInfo('T', 'b'),
-      new UpdateFieldInfo('T', 'c'),
+      new UpdateFieldInfo(prevType, 'a', { description: 'Hello World' }),
+      new UpdateFieldInfo(prevType, 'b', {
+        deprecationReason: 'Use ReactDOM.render',
+      }),
+      new UpdateFieldInfo(prevType, 'c', {}),
     ]);
   });
 });

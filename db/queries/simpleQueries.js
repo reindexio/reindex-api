@@ -22,7 +22,11 @@ export async function getSecrets(conn) {
 }
 
 export async function getTypes(conn) {
-  const types = await RethinkDB.table(TYPE_TABLE).coerceTo('array').run(conn);
+  const types = await RethinkDB
+    .table(TYPE_TABLE)
+    .orderBy('name')
+    .coerceTo('array')
+    .run(conn);
   return types.map((type) => {
     type.fields = injectDefaultFields(type);
     return type;
