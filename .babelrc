@@ -1,4 +1,4 @@
 {
   "stage": 1,
-  "optional": ["bluebirdCoroutines"]
+  "optional": ["bluebirdCoroutines", "es7.classProperties"]
 }

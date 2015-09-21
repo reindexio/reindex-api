@@ -1,53 +1,94 @@
-import { difference, intersection, isEqual } from 'lodash';
+import { difference, intersection, isEqual, omit } from 'lodash';
 
 import {
   CreateField,
   CreateType,
+  CreateTypeData,
   DeleteField,
+  DeleteFieldData,
   DeleteType,
+  DeleteTypeData,
   UpdateFieldInfo,
 } from './commands';
 import { byName, sortedNames } from './utilities';
 
+export default function buildTypeMigration(type, nextType) {
+  const commands = [];
+
+  if (type && nextType) {
+    if (!isEqual(type.interfaces, nextType.interfaces)) {
+      commands.push(...buildDeleteType(type));
+      commands.push(...buildCreateType(nextType));
+      type = null;
+    }
+  } else if (!type && nextType) {
+    commands.push(...buildCreateType(nextType));
+  } else if (type && !nextType) {
+    commands.push(...buildDeleteType(type));
+  }
+
+  if (nextType) {
+    commands.push(...buildFieldsMigration(type, nextType));
+  }
+
+  return commands;
+}
+
+function buildDeleteType(type) {
+  const commands = [];
+  if (type.interfaces.includes('Node')) {
+    commands.push(new DeleteTypeData(type));
+  }
+  commands.push(new DeleteType(type));
+  return commands;
+}
+
+function buildCreateType(type) {
+  const commands = [];
+  if (type.interfaces.includes('Node')) {
+    commands.push(new CreateTypeData(type));
+  }
+  commands.push(new CreateType(type));
+  return commands;
+}
+
 function buildFieldsMigration(type, nextType) {
-  const previousFields = byName(type.fields);
+  const previousFields = type ? byName(type.fields) : {};
   const nextFields = byName(nextType.fields);
-  const previousFieldNames = sortedNames(type.fields);
+  const previousFieldNames = type ? sortedNames(type.fields) : [];
   const nextFieldNames = sortedNames(nextType.fields);
 
   const commands = [];
 
   difference(nextFieldNames, previousFieldNames).forEach((name) => {
-    commands.push(new CreateField(type.name, name));
+    const nextField = nextFields[name];
+    commands.push(new CreateField(
+      nextType, name, nextField.type, extractFieldOptions(nextField),
+    ));
   });
   difference(previousFieldNames, nextFieldNames).forEach((name) => {
-    commands.push(new DeleteField(type.name, name));
+    commands.push(new DeleteField(type, name));
+    commands.push(new DeleteFieldData(type, [name]));
   });
   intersection(previousFieldNames, nextFieldNames).forEach((name) => {
     const previousField = previousFields[name];
     const nextField = nextFields[name];
     if (previousField.type !== nextField.type ||
         previousField.ofType !== nextField.ofType) {
-      commands.push(new DeleteField(type.name, name));
-      commands.push(new CreateField(type.name, name));
-    } else if (previousField.description !== nextField.description ||
-        previousField.deprecationReason !== nextField.deprecationReason ||
-        previousField.isRequired !== nextField.isRequired) {
-      commands.push(new UpdateFieldInfo(type.name, name));
+      commands.push(new DeleteFieldData(type, [name]));
+      commands.push(new DeleteField(type, name));
+      commands.push(new CreateField(
+        nextType, name, nextField.type, extractFieldOptions(nextField)
+      ));
+    } else if (!isEqual(previousField, nextField)) {
+      commands.push(new UpdateFieldInfo(type, name, extractFieldOptions(
+        nextField
+      )));
     }
   });
   return commands;
 }
 
-export default function buildTypeMigration(type, nextType) {
-  const commands = [];
-
-  if (!isEqual(type.interfaces, nextType.interfaces)) {
-    commands.push(new DeleteType(type.name));
-    commands.push(new CreateType(type.name));
-  }
-
-  commands.push(...buildFieldsMigration(type, nextType));
-
-  return commands;
+function extractFieldOptions(field) {
+  return omit(field, ['name', 'type']);
 }

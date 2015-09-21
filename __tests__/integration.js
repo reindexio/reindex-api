@@ -509,12 +509,12 @@ describe('Integration Tests', () => {
     const newTypeWithId = {
       ...newType,
       fields: [
-        ...newType.fields,
         {
           name: 'id',
           type: 'ID',
           nonNull: true,
         },
+        ...newType.fields,
       ],
     };
 
