@@ -1,11 +1,11 @@
 import { Map } from 'immutable';
 import createNode from '../query/createNode';
-import createSchemaField from '../query/createSchemaField';
+import createList from '../query/createList';
 import createViewer from '../query/createViewer';
 
 const CommonQueryFields = Map({
   node: createNode,
-  schema: createSchemaField,
+  list: createList,
   viewer: createViewer,
 });
 

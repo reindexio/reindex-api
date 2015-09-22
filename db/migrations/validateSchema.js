@@ -107,8 +107,8 @@ function validateFields(type, invariant) {
     for (const defaultField of InterfaceDefaultFields[interfaceName] || []) {
       invariant(
         type.fields.some((field) => isEqual(field, defaultField)),
-        `%s.%s: Expected %s field of type %s from interfaces %s`,
-        type.name, defaultField.name, defaultField.nonNull ? 'non-null' : '',
+        '%s.%s: Expected %sfield of type %s from interface %s',
+        type.name, defaultField.name, defaultField.nonNull ? 'non-null ' : '',
         defaultField.type, interfaceName
       );
     }

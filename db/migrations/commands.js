@@ -26,7 +26,7 @@ export class CreateTypeData {
   }
 
   description() {
-    return `create new type data ${this.type.name}`;
+    return `create storage for type ${this.type.name}`;
   }
 }
 

@@ -18,7 +18,7 @@ export default function createMigrate(typeSets, interfaces) {
   const ReindexMigrationCommandSet = typeSets.get('ReindexMigrationCommand');
 
   const payload = new GraphQLObjectType({
-    name: '_ReindexMigrationPayload',
+    name: 'ReindexMigrationPayload',
     fields: () => ({
       clientMutationId: {
         type: GraphQLString,
@@ -33,7 +33,7 @@ export default function createMigrate(typeSets, interfaces) {
   });
 
   const ReindexTypeInputObject = new GraphQLInputObjectType({
-    name: '_ReindexTypeMigrationInputObject',
+    name: 'ReindexTypeMigrationInputObject',
     fields: createInputObjectFields(
       ReindexTypeSet.getInputObjectFields(),
       false,
@@ -43,7 +43,7 @@ export default function createMigrate(typeSets, interfaces) {
   });
 
   const inputType = new GraphQLInputObjectType({
-    name: '_ReindexMigrationInput',
+    name: 'ReindexMigrationInput',
     fields: {
       types: {
         type: new GraphQLList(ReindexTypeInputObject),
