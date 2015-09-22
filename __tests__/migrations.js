@@ -31,7 +31,7 @@ describe('Migrations', () => {
       },
     });
     return await graphql(context.schema, `
-      mutation migration($input: _ReindexMigrationInput!) {
+      mutation migration($input: ReindexMigrationInput!) {
         migrate(input: $input) {
           commands {
             commandType,
@@ -100,7 +100,7 @@ describe('Migrations', () => {
           commands: [
             {
               commandType: 'CreateTypeData',
-              description: 'create new type data Micropost',
+              description: 'create storage for type Micropost',
               isDestructive: false,
             },
             {

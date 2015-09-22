@@ -171,6 +171,39 @@ describe('Integration Tests', () => {
     );
   });
 
+  it('queries list', async function() {
+    assert.deepEqual(
+      await runQuery(`{
+        list {
+          ofReindexType {
+            count
+          }
+          ofMicropost(first: 1) {
+            nodes {
+              text
+            }
+          }
+        }
+      }`),
+      {
+        data: {
+          list: {
+            ofReindexType: {
+              count: 3,
+            },
+            ofMicropost: {
+              nodes: [
+                {
+                  text: 'Test text 4',
+                },
+              ],
+            },
+          },
+        },
+      }
+    );
+  });
+
   it('works with edges and cursor', async function () {
     const userId = toReindexID({
       type: 'User',
