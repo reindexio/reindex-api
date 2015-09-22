@@ -7,9 +7,10 @@ import {
   GraphQLEnumType,
 } from 'graphql';
 import createCreate from '../mutations/createCreate';
+import createUpdate from '../mutations/createUpdate';
+import createReplace from '../mutations/createReplace';
 import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
-import injectDefaultFields from './injectDefaultFields';
 import ReindexID from './ReindexID';
 import { createConnectionFieldResolve } from '../connections';
 
@@ -118,9 +119,6 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         },
         fields: {
           type: new GraphQLList(field.type),
-          resolve(parent) {
-            return injectDefaultFields(parent);
-          },
         },
         permissions: {
           type: getTypeSet('ReindexPermission').connection,
@@ -134,6 +132,8 @@ export default function createTypeTypes(interfaces, getTypeSet) {
     }),
     blacklistedRootFields: [
       createCreate,
+      createUpdate,
+      createReplace,
       createDelete,
     ],
   });

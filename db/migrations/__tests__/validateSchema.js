@@ -214,6 +214,14 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'missing interface fields': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [],
+    },
+  ],
 };
 
 
@@ -222,12 +230,9 @@ describe('validateSchema', () => {
     validateSchema(TMDbSchema, interfaces);
   });
 
-  it('throws for an invalid schema', () => {
+  it('returns errors for an invalid schema', () => {
     forEach(invalidSchemas, (types, issue) => {
-      assert.throws(
-        () => validateSchema({ types }, interfaces),
-        Error,
-        /^Invariant Violation:/,
+      assert(validateSchema({ types }, interfaces).length > 0,
         `${issue} should raise a validation error`,
       );
     });

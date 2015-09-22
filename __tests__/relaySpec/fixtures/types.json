@@ -1,6 +1,12 @@
 [
   {
-    "fields": [],
+    "fields": [
+      {
+        "nonNull": true,
+        "name": "id",
+        "type": "ID"
+      }
+    ],
     "id": "6c1d1b37-4162-4714-9756-47281a90ca10",
     "name": "User",
     "kind": "OBJECT",

@@ -49,6 +49,9 @@ describe('Migration queries', () => {
         interfaces: [],
         kind: 'OBJECT',
       }),
+      new CreateField(nodeType, 'id', 'ID', {
+        nonNull: true,
+      }),
       new CreateField(nodeType, 'testField', 'String'),
     ]);
 
@@ -69,7 +72,6 @@ describe('Migration queries', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
-            builtin: true,
           },
           {
             name: 'testField',
@@ -123,7 +125,6 @@ describe('Migration queries', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
-            builtin: true,
           },
           {
             name: 'testField',
@@ -232,7 +233,6 @@ describe('Migration queries', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
-            builtin: true,
           },
           {
             name: 'testInlineField',

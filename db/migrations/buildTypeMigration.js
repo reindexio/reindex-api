@@ -53,9 +53,10 @@ function buildCreateType(type) {
 }
 
 function buildFieldsMigration(type, nextType) {
-  const previousFields = type ? byName(type.fields) : {};
+  const prevFields = type ? type.fields.filter((field) => !field.builtin) : [];
+  const previousFields = byName(prevFields);
   const nextFields = byName(nextType.fields);
-  const previousFieldNames = type ? sortedNames(type.fields) : [];
+  const previousFieldNames = sortedNames(prevFields);
   const nextFieldNames = sortedNames(nextType.fields);
 
   const commands = [];
@@ -63,7 +64,7 @@ function buildFieldsMigration(type, nextType) {
   difference(nextFieldNames, previousFieldNames).forEach((name) => {
     const nextField = nextFields[name];
     commands.push(new CreateField(
-      nextType, name, nextField.type, extractFieldOptions(nextField),
+      type || nextType, name, nextField.type, extractFieldOptions(nextField),
     ));
   });
   difference(previousFieldNames, nextFieldNames).forEach((name) => {
@@ -78,7 +79,7 @@ function buildFieldsMigration(type, nextType) {
       commands.push(new DeleteFieldData(type, [name]));
       commands.push(new DeleteField(type, name));
       commands.push(new CreateField(
-        nextType, name, nextField.type, extractFieldOptions(nextField)
+        type, name, nextField.type, extractFieldOptions(nextField)
       ));
     } else if (!isEqual(previousField, nextField)) {
       commands.push(new UpdateFieldInfo(type, name, extractFieldOptions(

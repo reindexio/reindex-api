@@ -1,5 +1,5 @@
-import invariant from 'invariant';
-import { isBoolean, isPlainObject, isString, uniq } from 'lodash';
+import invariantFunction from 'invariant';
+import { isEqual, isBoolean, isPlainObject, isString, uniq } from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
@@ -11,20 +11,52 @@ const InterfaceDefaultFields = getInterfaceDefaultFields();
 const TypeDefaultFields = getTypeDefaultFields();
 
 export default function validateSchema({ types }, interfaces) {
+  const errors = [];
+  function invariant(...args) {
+    try {
+      invariantFunction(...args);
+    } catch (e) {
+      errors.push(e.toString().replace(
+        /Error: Invariant Violation: /,
+        ''
+      ));
+    }
+  }
+
   invariant(
     uniq(types, 'name').length === types.length,
     'Expected type names to be unique.',
   );
+
+  if (errors.length > 0) {
+    return errors;
+  }
+
   const typesByName = byName(types);
-  types.forEach((type) => validateType(type, typesByName, interfaces));
-  types.forEach((type) => {
-    type.fields.forEach((field) => validateField(type, field, typesByName));
-  });
+  types.forEach((type) => validateType(
+    type, typesByName, interfaces, invariant)
+  );
+
+  if (errors.length > 0) {
+    return errors;
+  }
+
+  for (const type of types) {
+    validateFields(type, invariant);
+    if (errors.length > 0) {
+      continue;
+    }
+    type.fields.forEach((field) => validateField(
+      type, field, typesByName, invariant
+    ));
+  }
+
+  return errors;
 }
 
 const TYPE_NAME_PATTERN = /^[A-Z][_0-9A-Za-z]*$/;
 
-function validateType(type, typesByName, interfaces) {
+function validateType(type, typesByName, interfaces, invariant) {
   invariant(
     isString(type.name) && TYPE_NAME_PATTERN.test(type.name),
     'Expected `name` of a type to be a string starting with a capital ' +
@@ -33,7 +65,7 @@ function validateType(type, typesByName, interfaces) {
     type.name,
   );
   invariant(
-    !type.name.startsWith('Reindex'),
+    type.name && !type.name.startsWith('Reindex'),
     'Invalid type `name`: %s. Names that begin with "Reindex" are reserved ' +
     'for built-in types.',
     type.name,
@@ -66,9 +98,24 @@ function validateType(type, typesByName, interfaces) {
     '%s: Expected field names to be unique within a type.',
     type.name,
   );
+
 }
 
-function validateField(type, field, typesByName) {
+function validateFields(type, invariant) {
+  // must have all fields of interfaces
+  type.interfaces.forEach((interfaceName) => {
+    for (const defaultField of InterfaceDefaultFields[interfaceName] || []) {
+      invariant(
+        type.fields.some((field) => isEqual(field, defaultField)),
+        `%s.%s: Expected %s field of type %s from interfaces %s`,
+        type.name, defaultField.name, defaultField.nonNull ? 'non-null' : '',
+        defaultField.type, interfaceName
+      );
+    }
+  });
+}
+
+function validateField(type, field, typesByName, invariant) {
   invariant(
     isString(field.name),
     '%s: Expected field name to be a string.',
@@ -131,9 +178,9 @@ function validateField(type, field, typesByName) {
   }
 
   // reverseName
-  if (field.type === 'Connection' ||
-      field.type in typesByName && isNodeType(typesByName[field.type])) {
-    validateReverseField(type, field, typesByName);
+  const ofType = field.type === 'Connection' ? field.ofType : field.type;
+  if (ofType in typesByName && isNodeType(typesByName[ofType])) {
+    validateReverseField(type, field, typesByName, invariant);
   }
 
   // no overriding default fields
@@ -144,21 +191,13 @@ function validateField(type, field, typesByName) {
     '%s.%s: Field name shadows a built-in field.',
     type.name, field.name,
   );
-  type.interfaces.forEach((interfaceName) => {
-    const fields = InterfaceDefaultFields[interfaceName];
-    invariant(
-      !fields ||
-      fields.every((defaultField) => defaultField.name !== field.name),
-      '%s.%s: Field name shadows a built-in field from interface %s.',
-      type.name, field.name, interfaceName,
-    );
-  });
 }
 
 function validateReverseField(
   type,
   field,
   typesByName,
+  invariant
 ) {
   let reverseType;
   let expectedFieldType;
@@ -186,19 +225,21 @@ function validateReverseField(
     '%s.%s: Expected `reverseName` to be a field name in type %s. Found: %s.',
     type.name, field.name, reverseType, field.reverseName,
   );
-  invariant(
-    reverseField.reverseName === field.name,
-    '%s.%s: Expected reverse field of %s.%s to have matching `reverseName` ' +
-    '%s. Found: %s.',
-    reverseType, reverseField.name, type.name, field.name, field.name,
-    reverseField.reverseName,
-  );
-  invariant(
-    reverseField.type === expectedFieldType,
-    '%s.%s: Expected reverse field of %s.%s to have type %s. Found: %s.',
-    reverseType, reverseField.name, type.name, field.name, expectedFieldType,
-    reverseField.type,
-  );
+  if (reverseField) {
+    invariant(
+      reverseField.reverseName === field.name,
+      '%s.%s: Expected reverse field of %s.%s to have matching `reverseName` ' +
+      '%s. Found: %s.',
+      reverseType, reverseField.name, type.name, field.name, field.name,
+      reverseField.reverseName,
+    );
+    invariant(
+      reverseField.type === expectedFieldType,
+      '%s.%s: Expected reverse field of %s.%s to have type %s. Found: %s.',
+      reverseType, reverseField.name, type.name, field.name, expectedFieldType,
+      reverseField.type,
+    );
+  }
   if (expectedFieldOfType) {
     invariant(
       reverseField.ofType === expectedFieldOfType,
