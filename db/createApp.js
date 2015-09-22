@@ -33,7 +33,13 @@ async function createDatabase(conn, dbName) {
 
   await RethinkDB.db(dbName).table(DBTableNames.TYPE_TABLE).insert({
     name: 'User',
-    fields: [],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+      },
+    ],
     kind: 'OBJECT',
     interfaces: ['Node'],
   }).run(conn);

@@ -118,6 +118,11 @@ export const TEST_DATA = fromJS({
         interfaces: ['Node'],
         fields: [
           {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+          {
             name: 'text',
             type: 'String',
           },
@@ -151,6 +156,11 @@ export const TEST_DATA = fromJS({
         name: 'User',
         interfaces: ['Node'],
         fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
           {
             name: 'handle',
             type: 'String',

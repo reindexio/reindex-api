@@ -20,6 +20,7 @@ export default function getGraphQLContext(conn, metadata, extraContext) {
       type: typePermissions,
       connection: connectionPermissions,
     },
+    types: typeData,
     schema,
   };
 }

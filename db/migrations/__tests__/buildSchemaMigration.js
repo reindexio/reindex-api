@@ -48,6 +48,9 @@ describe('buildSchemaMigration', () => {
       new DeleteType(type('A', { interfaces: ['Node'] })),
       new DeleteTypeData(type('A', { interfaces: ['Node'] })),
       new CreateType(type('A')),
+      new CreateField(type('B', { interfaces: ['Node'] }), 'id', 'ID', {
+        nonNull: true,
+      }),
     ]);
   });
 
@@ -60,6 +63,9 @@ describe('buildSchemaMigration', () => {
       new CreateType(nextType),
       new CreateTypeData(nextType),
       new CreateField(nextType, 'a', 'Int'),
+      new CreateField(nextType, 'id', 'ID', {
+        nonNull: true,
+      }),
     ]);
   });
 
@@ -111,7 +117,7 @@ describe('buildSchemaMigration', () => {
     const nextType = type('T', { fields: [field('b'), field('c')] });
     const commands = buildSchemaMigration([prevType], [nextType]);
     assert.sameDeepMembers(commands, [
-      new CreateField(nextType, 'c', 'Int', {}),
+      new CreateField(prevType, 'c', 'Int', {}),
       new DeleteField(prevType, 'a'),
     ]);
   });
@@ -152,8 +158,8 @@ describe('buildSchemaMigration', () => {
       new DeleteField(prevType, 'c'),
       new DeleteFieldData(prevType, ['a']),
       new DeleteFieldData(prevType, ['c']),
-      new CreateField(nextType, 'a', 'Float'),
-      new CreateField(nextType, 'c', 'Connection', { ofType: 'V' }),
+      new CreateField(prevType, 'a', 'Float'),
+      new CreateField(prevType, 'c', 'Connection', { ofType: 'V' }),
     ]);
   });
 

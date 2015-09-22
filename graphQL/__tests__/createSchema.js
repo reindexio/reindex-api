@@ -25,11 +25,18 @@ describe('createSchema', () => {
         kind: 'OBJECT',
         name: 'User',
         interfaces: ['Node'],
-        fields: [],
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+        ],
       }]);
     }
     return createSchema(fromJS(data.map((type) => {
       type.fields = injectDefaultFields(type);
+
       return type;
     })));
   }
@@ -41,6 +48,11 @@ describe('createSchema', () => {
         name: 'Person',
         interfaces: ['Node'],
         fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
           {
             name: 'string',
             type: 'String',
@@ -106,6 +118,11 @@ describe('createSchema', () => {
         interfaces: ['Node'],
         fields: [
           {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+          {
             name: 'addresses',
             type: 'List',
             ofType: 'Address',
@@ -140,6 +157,11 @@ describe('createSchema', () => {
         description,
         interfaces: ['Node'],
         fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
           {
             name: 'nonNullable',
             type: 'String',
@@ -181,6 +203,11 @@ describe('createSchema', () => {
         interfaces: ['Node'],
         fields: [
           {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+          {
             name: 'microposts',
             type: 'Connection',
             ofType: 'Micropost',
@@ -193,6 +220,11 @@ describe('createSchema', () => {
         name: 'Micropost',
         interfaces: ['Node'],
         fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
           {
             name: 'author',
             type: 'Person',
@@ -270,6 +302,11 @@ describe('createSchema', () => {
         interfaces: ['Node'],
         fields: [
           {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+          {
             name: 'microposts',
             type: 'Connection',
             ofType: 'Micropost',
@@ -282,6 +319,11 @@ describe('createSchema', () => {
         name: 'Micropost',
         interfaces: ['Node'],
         fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
           {
             name: 'author',
             type: 'Person',
@@ -325,6 +367,11 @@ describe('createSchema', () => {
         interfaces: ['Node'],
         fields: [
           {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+          {
             name: 'name',
             type: 'String',
           },
@@ -339,7 +386,13 @@ describe('createSchema', () => {
         kind: 'OBJECT',
         name: 'EmptyType',
         interfaces: ['Node'],
-        fields: [],
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+        ],
       },
     ]);
 
