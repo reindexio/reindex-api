@@ -18,7 +18,7 @@
 - Create a test app
 
   ```
-  npm run create-app localhost.reindexio.com
+  npm run create-app localhost
   ```
 - Run server
 
