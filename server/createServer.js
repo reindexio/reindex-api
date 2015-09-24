@@ -1,6 +1,7 @@
 import Bassmaster from 'bassmaster';
 import Hapi from 'hapi';
 import Promise from 'bluebird';
+import HapiRequireHttpsPlugin from 'hapi-require-https';
 
 import Config from './Config';
 import Good from 'good';
@@ -32,6 +33,9 @@ export default async function createServer() {
   }
   server.connection(Config.get('connection'));
 
+  if (process.env.NODE_ENV === 'production') {
+    await server.register(HapiRequireHttpsPlugin);
+  }
   await server.register({
     register: RethinkDBPlugin,
     options: Config.get('RethinkDBPlugin'),
