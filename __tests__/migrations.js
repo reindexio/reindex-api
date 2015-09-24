@@ -90,45 +90,74 @@ describe('Migrations', () => {
       },
     ];
 
-    const result = await runMigration({
+    let result = await runMigration({
+      types: newSchema,
+      dryRun: true,
+    });
+
+    const commands = [
+      {
+        commandType: 'CreateTypeData',
+        description: 'create storage for type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'CreateType',
+        description: 'create new type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'CreateField',
+        description: 'add new field author (User) to type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'CreateField',
+        description: 'add new field createdAt (String) to type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'CreateField',
+        description: 'add new field id (ID) to type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'CreateField',
+        description: 'add new field microposts (Connection) to type User',
+        isDestructive: false,
+      },
+    ];
+
+    assert.deepEqual(result, {
+      data: {
+        migrate: {
+          commands,
+          isExecuted: false,
+        },
+      },
+    });
+
+    result = await runMigration({
       types: newSchema,
     });
 
     assert.deepEqual(result, {
       data: {
         migrate: {
-          commands: [
-            {
-              commandType: 'CreateTypeData',
-              description: 'create storage for type Micropost',
-              isDestructive: false,
-            },
-            {
-              commandType: 'CreateType',
-              description: 'create new type Micropost',
-              isDestructive: false,
-            },
-            {
-              commandType: 'CreateField',
-              description: 'add new field author (User) to type Micropost',
-              isDestructive: false,
-            },
-            {
-              commandType: 'CreateField',
-              description: 'add new field createdAt (String) to type Micropost',
-              isDestructive: false,
-            },
-            {
-              commandType: 'CreateField',
-              description: 'add new field id (ID) to type Micropost',
-              isDestructive: false,
-            },
-            {
-              commandType: 'CreateField',
-              description: 'add new field microposts (Connection) to type User',
-              isDestructive: false,
-            },
-          ],
+          commands,
+          isExecuted: true,
+        },
+      },
+    });
+
+    result = await runMigration({
+      types: newSchema,
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        migrate: {
+          commands: [],
           isExecuted: true,
         },
       },

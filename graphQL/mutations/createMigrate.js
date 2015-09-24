@@ -51,6 +51,9 @@ export default function createMigrate(typeSets, interfaces) {
       force: {
         type: GraphQLBoolean,
       },
+      dryRun: {
+        type: GraphQLBoolean,
+      },
       clientMutationId: {
         type: GraphQLString,
       },
@@ -87,7 +90,7 @@ export default function createMigrate(typeSets, interfaces) {
         );
         const isDestructive = commands.some((command) => command.isDestructive);
 
-        if (isDestructive && !input.force) {
+        if (input.dryRun || (isDestructive && !input.force)) {
           return {
             clientMutationId,
             commands,
