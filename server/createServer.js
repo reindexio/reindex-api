@@ -6,6 +6,7 @@ import Config from './Config';
 import Good from 'good';
 import GoodConsole from 'good-console';
 import GraphQLHandler from './handlers/GraphQLHandler';
+import GraphiQLHandler from './handlers/GraphiQLHandler';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import RethinkDBPlugin from './RethinkDBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
@@ -43,6 +44,7 @@ export default async function createServer() {
   server.auth.strategy('token', 'jwt');
 
   server.route(GraphQLHandler);
+  server.route(GraphiQLHandler);
   server.route({
     handler: {
       directory: {
