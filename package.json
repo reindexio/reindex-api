@@ -18,6 +18,7 @@
     "good-console": "^5.0.2",
     "graphql": "^0.4.2",
     "hapi": "^8.4.0",
+    "hapi-require-https": "^2.0.2",
     "immutable": "^3.7.2",
     "invariant": "^2.1.0",
     "jsonwebtoken": "^5.0.1",

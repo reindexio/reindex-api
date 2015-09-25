@@ -2,6 +2,7 @@ import JSONWebToken from 'jsonwebtoken';
 import minimist from 'minimist';
 import RethinkDB from 'rethinkdb';
 
+import Config from '../server/Config';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 import { getSecrets } from '../db/queries/simpleQueries';
 
@@ -20,6 +21,7 @@ async function createToken() {
       return;
     }
     conn = await RethinkDB.connect({
+      ...Config.get('RethinkDBPlugin'),
       db: databaseNameFromHostname(argv.host),
     });
     const secrets = await getSecrets(conn);
