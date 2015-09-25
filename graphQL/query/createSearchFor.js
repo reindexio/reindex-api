@@ -16,7 +16,7 @@ export default function createSearchFor(
   argDefs.first.defaultValue = 10;
 
   return {
-    name: 'of' + type.name,
+    name: 'all' + type.name,
     type: connection,
     args: argDefs,
     resolve(parent, args, context) {

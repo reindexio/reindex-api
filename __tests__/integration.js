@@ -162,23 +162,23 @@ describe('Integration Tests', () => {
     });
   });
 
-  it('queries viewer', async function () {
+  it('queries viewer for user', async function () {
     const user = TEST_DATA.getIn(['tables', 'User', 0]).toJS();
     const credentials = { isAdmin: true, userID: user.id };
     assert.deepEqual(
-      await runQuery(`{viewer{handle}}`, null, credentials),
-      { data: { viewer: { handle: user.handle } } }
+      await runQuery(`{ viewer { user { handle } } }`, null, credentials),
+      { data: { viewer: { user: { handle: user.handle } } } }
     );
   });
 
-  it('queries list', async function() {
+  it('queries viewer list', async function() {
     assert.deepEqual(
       await runQuery(`{
-        list {
-          ofReindexType {
+        viewer {
+          allReindexType {
             count
           }
-          ofMicropost(first: 1) {
+          allMicropost(first: 1) {
             nodes {
               text
             }
@@ -187,11 +187,11 @@ describe('Integration Tests', () => {
       }`),
       {
         data: {
-          list: {
-            ofReindexType: {
+          viewer: {
+            allReindexType: {
               count: 3,
             },
-            ofMicropost: {
+            allMicropost: {
               nodes: [
                 {
                   text: 'Test text 4',
