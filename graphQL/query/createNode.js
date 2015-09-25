@@ -13,6 +13,11 @@ export default function createNode(typeSets, interfaces) {
       },
     },
     async resolve(parent, { id }, context) {
+      if (id.type === 'ReindexViewer' && id.value === 'viewer') {
+        return {
+          id,
+        };
+      }
       const result = await getByID(context.rootValue.conn, id);
       checkPermission(id.type, 'read', result, context);
       return result;
