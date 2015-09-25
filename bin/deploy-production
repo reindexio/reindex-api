@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+echo "Deploying..."
+
+cf stop reindex-1
+cf push reindex-1
+cf stop reindex-2
+cf push reindex-2
+
+NEW_RELIC_API_KEY="4956f88a89bd79c5c437a589493edffeb5d527190822adf"
+REVISION=`git rev-parse HEAD`
+
+curl -H "x-api-key:$NEW_RELIC_API_KEY" \
+     -d "deployment[app_name]=reindex" \
+     -d "deployment[revision]=$REVISION" \
+     https://api.newrelic.com/deployments.xml
+
+echo "Done."

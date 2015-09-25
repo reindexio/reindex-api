@@ -1,13 +1,31 @@
 machine:
   node:
     version: iojs-v3.0.0
+
 checkout:
   post:
     - git config --global user.email "hello+circleci@reindex.io"
     - git config --global user.name "CirceCI Runner"
     - git merge -m "Master merge" origin/master
+
 dependencies:
   pre:
     - bin/ci-install-rethinkdb
     - rethinkdb:
         background: true
+    - curl -v -L -o cf-cli_amd64.deb 'https://cli.run.pivotal.io/stable?release=debian64&source=github'
+    - sudo dpkg -i cf-cli_amd64.deb
+    - cf -v
+
+test:
+  post:
+    - cf api https://api.ng.bluemix.net
+    - cf auth $BLUEMIX_USER $BLUEMIX_PASSWORD
+    - cf target -o $BLUEMIX_ORG -s dev
+    - cf apps
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - ./bin/deploy-production
