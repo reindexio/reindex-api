@@ -107,7 +107,7 @@ async function authenticate(request, reply) {
       clientId,
       clientSecret,
       cookie: COOKIE_NAME,
-      forceHttps: false,
+      forceHttps: process.env.NODE_ENV === 'production',
       location: false,
       name: providerName,
       provider: bellProvider,
