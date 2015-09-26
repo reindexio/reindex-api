@@ -92,7 +92,8 @@ function createUpdatedType(commands) {
     fields = fields.map((field) => {
       if (field.name === command.fieldName) {
         return {
-          ...field,
+          name: field.name,
+          type: field.type,
           ...command.getData(),
         };
       } else {

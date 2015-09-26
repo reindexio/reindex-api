@@ -124,7 +124,9 @@ export class UpdateFieldInfo {
   }
 
   description() {
-    return `update metadata of field ${this.name} of type ${this.type.name}`;
+    return (
+      `update metadata of field ${this.fieldName} of type ${this.type.name}`
+    );
   }
 
   getData() {
