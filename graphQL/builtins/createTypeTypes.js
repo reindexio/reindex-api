@@ -15,8 +15,8 @@ import ReindexID from './ReindexID';
 import { createConnectionFieldResolve } from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
-  const OrderByOrderEnum = new GraphQLEnumType({
-    name: 'ReindexOrderByOrder',
+  const OrderEnum = new GraphQLEnumType({
+    name: 'ReindexOrder',
     values: {
       ASC: {
         value: 'ASC',
@@ -52,7 +52,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
       name: 'ReindexOrdering',
       fields: {
         order: {
-          type: OrderByOrderEnum,
+          type: OrderEnum,
         },
         field: {
           type: new GraphQLNonNull(GraphQLString),
