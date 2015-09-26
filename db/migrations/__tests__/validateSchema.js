@@ -13,6 +13,10 @@ const invalidSchemas = {
     type('T'),
     type('T'),
   ],
+  'duplicated plural name': [
+    type('Type1', { pluralName: 'Ts' }),
+    type('Type2', { pluralName: 'Ts' }),
+  ],
   'missing type name': [
     type(undefined),
   ],
@@ -27,6 +31,18 @@ const invalidSchemas = {
   ],
   'reserved type name': [
     type('ReindexThing'),
+  ],
+  'plural name starts with a number': [
+    type('00sevens'),
+  ],
+  'plural name has illegal characters': [
+    type('I-like-lisps'),
+  ],
+  'lowercase plural name': [
+    type('mytypes'),
+  ],
+  'reserved plural name': [
+    type('ReindexThings'),
   ],
   'unsupported kind': [
     type('T', { kind: 'UNKNOWN' }),

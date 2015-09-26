@@ -3,6 +3,7 @@ import { isEqual, isBoolean, isPlainObject, isString, uniq } from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
+import getPluralName from '../../graphQL/utilities/getPluralName';
 import ScalarTypes from '../../graphQL/builtins/ScalarTypes';
 import getTypeDefaultFields from '../../graphQL/builtins/TypeDefaultFields';
 import { byName } from './utilities';
@@ -26,6 +27,10 @@ export default function validateSchema({ types }, interfaces) {
   invariant(
     uniq(types, 'name').length === types.length,
     'Expected type names to be unique.',
+  );
+  invariant(
+    uniq(types, getPluralName).length === types.length,
+    'Expected plural names of types to be unique.',
   );
 
   if (errors.length > 0) {
@@ -58,18 +63,26 @@ const TYPE_NAME_PATTERN = /^[A-Z][_0-9A-Za-z]*$/;
 
 function validateType(type, typesByName, interfaces, invariant) {
   invariant(
-    isString(type.name) && TYPE_NAME_PATTERN.test(type.name),
-    'Expected `name` of a type to be a string starting with a capital ' +
-    'letter. Allowed characters are letters A-Z, a-z and underscore (_).' +
-    'Found: %s',
+    isString(type.name),
+    'Expected `name` of a type to be a string. Found: %s',
     type.name,
   );
-  invariant(
-    type.name && !type.name.startsWith('Reindex'),
-    'Invalid type `name`: %s. Names that begin with "Reindex" are reserved ' +
-    'for built-in types.',
-    type.name,
-  );
+  ['name', 'pluralName'].forEach((property) => {
+    const name = type[property];
+    invariant(
+      name == null || TYPE_NAME_PATTERN.test(name),
+      'Expected `%s` of a type to be a string starting with a capital ' +
+      'letter. Allowed characters are letters A-Z, a-z and underscore (_).' +
+      'Found: %s',
+      property, name,
+    );
+    invariant(
+      type.name && !type.name.startsWith('Reindex'),
+      'Invalid `%s`: %s. Names that begin with "Reindex" are reserved ' +
+      'for built-in types.',
+      property, name,
+    );
+  });
   invariant(
     type.kind === 'OBJECT',
     '%s: Expected type `kind` to be "OBJECT".',

@@ -1,17 +1,26 @@
 import { omit, isEmpty } from 'lodash';
+
 import createInputObjectType from './createInputObjectType';
+import getPluralName from './utilities/getPluralName';
 import ReindexID from './builtins/ReindexID';
 
 export default class TypeSet {
-  constructor(
-    { type, connection, edge, inputObject, payload, blacklistedRootFields }
-  ) {
+  constructor({
+    type,
+    connection,
+    edge,
+    inputObject,
+    payload,
+    blacklistedRootFields,
+    pluralName,
+  }) {
     this.type = type;
     this.connection = connection || null;
     this.edge = edge || null;
     this._inputObject = inputObject || null;
     this.payload = payload || null;
     this.blacklistedRootFields = blacklistedRootFields || [];
+    this.pluralName = getPluralName({ name: type.name, pluralName });
   }
 
   getInputObjectFields() {
