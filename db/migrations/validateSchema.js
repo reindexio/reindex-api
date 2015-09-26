@@ -1,13 +1,5 @@
 import invariantFunction from 'invariant';
-import {
-  chain,
-  groupBy,
-  isEqual,
-  isBoolean,
-  isPlainObject,
-  isString,
-  uniq
-} from 'lodash';
+import { chain, groupBy, isEqual, isPlainObject, isString, uniq } from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
@@ -165,11 +157,6 @@ function validateField(type, field, typesByName, invariant) {
     isString(field.name),
     '%s: Expected field name to be a string.',
     type.name
-  );
-  invariant(
-    field.isRequired == null || isBoolean(field.isRequired),
-    '%s.%s: Expected `isRequired` to be undefined or boolean value. Found %s.',
-    type.name, field.name, field.isRequired,
   );
   invariant(
     field.description == null || isString(field.description),
