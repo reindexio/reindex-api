@@ -52,7 +52,9 @@ describe('Migration queries', () => {
       new CreateField(nodeType, 'id', 'ID', {
         nonNull: true,
       }),
-      new CreateField(nodeType, 'testField', 'String'),
+      new CreateField(nodeType, 'testField', 'String', {
+        description: 'Some description',
+      }),
     ]);
 
     const newTypes = await getTypesNoIDs(conn);
@@ -76,6 +78,7 @@ describe('Migration queries', () => {
           {
             name: 'testField',
             type: 'String',
+            description: 'Some description',
           },
         ],
       },
@@ -97,7 +100,8 @@ describe('Migration queries', () => {
       }),
       new CreateField(nodeType, 'testInlineField', 'TestInlineType'),
       new UpdateFieldInfo(nodeType, 'testField', {
-        description: 'Some more info',
+        nonNull: false,
+        deprecationReason: 'No reason',
       }),
     ]);
 
@@ -129,7 +133,8 @@ describe('Migration queries', () => {
           {
             name: 'testField',
             type: 'String',
-            description: 'Some more info',
+            nonNull: false,
+            deprecationReason: 'No reason',
           },
           {
             name: 'testInlineField',
