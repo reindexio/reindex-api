@@ -1,6 +1,6 @@
 import { indexBy } from 'lodash';
 
-function getName(object) {
+export function getName(object) {
   return object.name;
 }
 
