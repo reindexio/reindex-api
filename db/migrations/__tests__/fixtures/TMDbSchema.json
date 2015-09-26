@@ -268,9 +268,9 @@
           "type": "Int"
         },
         {
-          "name": "tv",
+          "name": "series",
           "reverseName": "seasons",
-          "type": "Tv"
+          "type": "TvSeries"
         }
       ],
       "id": "99013f87-8976-4253-b2df-aaecee05866c",
@@ -359,7 +359,7 @@
           "description": "All the cast and crew credits for the TV series.",
           "name": "credits",
           "ofType": "Credit",
-          "reverseName": "tv",
+          "reverseName": "series",
           "type": "Connection"
         },
         {
@@ -446,7 +446,7 @@
           "description": "A connection to all the seasons of this TV series.",
           "name": "seasons",
           "ofType": "TvSeason",
-          "reverseName": "tv",
+          "reverseName": "series",
           "type": "Connection"
         },
         {
@@ -472,7 +472,7 @@
         "Node"
       ],
       "kind": "OBJECT",
-      "name": "Tv"
+      "name": "TvSeries"
     },
     {
       "description": "Information about a TV episode",
@@ -598,9 +598,9 @@
         },
         {
           "description": "For TV credits, includes the TV series of this Credit.",
-          "name": "tv",
+          "name": "series",
           "reverseName": "credits",
-          "type": "Tv"
+          "type": "TvSeries"
         }
       ],
       "id": "b15c8b4e-e609-4ec7-877b-daa52075f6b3",

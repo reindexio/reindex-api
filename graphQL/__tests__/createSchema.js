@@ -342,6 +342,19 @@ describe('createSchema', () => {
           },
         ],
       },
+      {
+        kind: 'OBJECT',
+        name: 'Cactus',
+        pluralName: 'Cacti',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+          },
+        ],
+      },
     ]);
 
     const query = schema.getType('ReindexQueryRoot');
@@ -352,6 +365,12 @@ describe('createSchema', () => {
     assert.isDefined(queryFields.getPerson);
     assert.isDefined(mutationFields.createPerson);
     assert.isDefined(mutationFields.deleteMicropost);
+
+    const viewerFields = schema.getType('ReindexViewer').getFields();
+    assert.isDefined(viewerFields.allPeople,
+      'all nodes field');
+    assert.isDefined(viewerFields.allCacti,
+      'all nodes field with custom plural');
 
     assert.isUndefined(queryFields.getComment,
       'root fields are only created for ReindexNode types');

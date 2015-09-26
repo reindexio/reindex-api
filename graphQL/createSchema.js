@@ -45,7 +45,7 @@ export default function createSchema(dbMetadata) {
         const type = createObjectType(typeMetadata, getTypeSet, interfaces);
         return [
           typeMetadata.get('name'),
-          new TypeSet({ type }),
+          new TypeSet({ type, pluralName: typeMetadata.get('pluralName') }),
         ];
       }
     }))

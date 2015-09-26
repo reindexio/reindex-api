@@ -1,11 +1,20 @@
 import invariantFunction from 'invariant';
-import { isEqual, isBoolean, isPlainObject, isString, uniq } from 'lodash';
+import {
+  chain,
+  groupBy,
+  isEqual,
+  isBoolean,
+  isPlainObject,
+  isString,
+  uniq
+} from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
+import getPluralName from '../../graphQL/utilities/getPluralName';
 import ScalarTypes from '../../graphQL/builtins/ScalarTypes';
 import getTypeDefaultFields from '../../graphQL/builtins/TypeDefaultFields';
-import { byName } from './utilities';
+import { getName, byName } from './utilities';
 
 const InterfaceDefaultFields = getInterfaceDefaultFields();
 const TypeDefaultFields = getTypeDefaultFields();
@@ -23,18 +32,39 @@ export default function validateSchema({ types }, interfaces) {
     }
   }
 
-  invariant(
-    uniq(types, 'name').length === types.length,
-    'Expected type names to be unique.',
-  );
+  function getDuplicateSummary(iteratee, property) {
+    return chain(groupBy(types, iteratee))
+      .filter((values) => values.length > 1)
+      .map((values) =>
+        `${values.length} types with ${property} "${iteratee(values[0])}"`
+      )
+      .value()
+      .join(', ');
+  }
+
+  if (uniq(types, getName).length !== types.length) {
+    const summary = getDuplicateSummary(getName, 'name');
+    invariant(false, 'Expected type names to be unique. Found %s', summary);
+  }
+
+  if (errors.length > 0) {
+    return errors;
+  }
+
+  if (uniq(types, getPluralName).length !== types.length) {
+    const summary = getDuplicateSummary(getPluralName, 'plural name');
+    invariant(false, 'Expected plural names of types to be unique. Found %s',
+      summary,
+    );
+  }
 
   if (errors.length > 0) {
     return errors;
   }
 
   const typesByName = byName(types);
-  types.forEach((type) => validateType(
-    type, typesByName, interfaces, invariant)
+  types.forEach((type) =>
+    validateType(type, typesByName, interfaces, invariant)
   );
 
   if (errors.length > 0) {
@@ -58,17 +88,32 @@ const TYPE_NAME_PATTERN = /^[A-Z][_0-9A-Za-z]*$/;
 
 function validateType(type, typesByName, interfaces, invariant) {
   invariant(
-    isString(type.name) && TYPE_NAME_PATTERN.test(type.name),
-    'Expected `name` of a type to be a string starting with a capital ' +
-    'letter. Allowed characters are letters A-Z, a-z and underscore (_).' +
-    'Found: %s',
+    isString(type.name),
+    'Expected `name` of a type to be a string. Found: %s',
     type.name,
   );
+  ['name', 'pluralName'].forEach((property) => {
+    const name = type[property];
+    invariant(
+      name == null || TYPE_NAME_PATTERN.test(name),
+      'Expected `%s` of a type to be a string starting with a capital ' +
+      'letter. Allowed characters are letters A-Z, a-z and underscore (_).' +
+      'Found: %s',
+      property, name,
+    );
+    invariant(
+      name == null || !name.startsWith('Reindex'),
+      'Invalid `%s`: %s. Names that begin with "Reindex" are reserved ' +
+      'for built-in types.',
+      property, name,
+    );
+  });
+  const pluralName = getPluralName(type);
   invariant(
-    type.name && !type.name.startsWith('Reindex'),
-    'Invalid type `name`: %s. Names that begin with "Reindex" are reserved ' +
-    'for built-in types.',
-    type.name,
+    !typesByName[pluralName] || typesByName[pluralName] === type,
+    '%s: Plural name "%s" conflicts with the name of type %s. ' +
+    'Use the `pluralName` property to define a unique plural name.',
+    type.name, pluralName, pluralName,
   );
   invariant(
     type.kind === 'OBJECT',

@@ -175,10 +175,10 @@ describe('Integration Tests', () => {
     assert.deepEqual(
       await runQuery(`{
         viewer {
-          allReindexType {
+          allReindexTypes {
             count
           }
-          allMicropost(first: 1) {
+          allMicroposts(first: 1) {
             nodes {
               text
             }
@@ -188,10 +188,10 @@ describe('Integration Tests', () => {
       {
         data: {
           viewer: {
-            allReindexType: {
+            allReindexTypes: {
               count: 3,
             },
-            allMicropost: {
+            allMicroposts: {
               nodes: [
                 {
                   text: 'Test text 4',

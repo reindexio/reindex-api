@@ -20,6 +20,7 @@
     "hapi": "^8.4.0",
     "hapi-require-https": "^2.0.2",
     "immutable": "^3.7.2",
+    "inflection": "^1.7.1",
     "invariant": "^2.1.0",
     "jsonwebtoken": "^5.0.1",
     "lodash": "^3.10.1",

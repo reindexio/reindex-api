@@ -5,7 +5,7 @@ import {
 import checkPermission from '../permissions/checkPermission';
 
 export default function createSearchFor(
-  { type, connection },
+  { type, connection, pluralName },
   interfaces,
   typeSets
 ) {
@@ -16,7 +16,7 @@ export default function createSearchFor(
   argDefs.first.defaultValue = 10;
 
   return {
-    name: 'all' + type.name,
+    name: 'all' + pluralName,
     type: connection,
     args: argDefs,
     resolve(parent, args, context) {

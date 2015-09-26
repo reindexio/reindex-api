@@ -9,10 +9,6 @@ import TMDbSchema from './fixtures/TMDbSchema';
 const interfaces = { Node: true };
 
 const invalidSchemas = {
-  'duplicated type name': [
-    type('T'),
-    type('T'),
-  ],
   'missing type name': [
     type(undefined),
   ],
@@ -27,6 +23,26 @@ const invalidSchemas = {
   ],
   'reserved type name': [
     type('ReindexThing'),
+  ],
+  'pluralName starts with a number': [
+    type('T', { pluralName: '00sevens' }),
+  ],
+  'pluralName has illegal characters': [
+    type('T', { pluralName: 'I-like-lisps' }),
+  ],
+  'lowercase pluralName': [
+    type('T', { pluralName: 'mytypes' }),
+  ],
+  'reserved pluralName': [
+    type('T', { pluralName: 'ReindexThings' }),
+  ],
+  'conflicting pluralName': [
+    type('T'),
+    type('U', { pluralName: 'T' }),
+  ],
+  'conflicting pluralized name': [
+    type('Oxen', { pluralName: 'SomethingElse' }),
+    type('Ox'),
   ],
   'unsupported kind': [
     type('T', { kind: 'UNKNOWN' }),
@@ -236,5 +252,30 @@ describe('validateSchema', () => {
         `${issue} should raise a validation error`,
       );
     });
+  });
+
+  it('reports duplicated type names', () => {
+    const types = [
+      type('DuplicateName'),
+      type('DuplicateName'),
+    ];
+    const errors = validateSchema({ types }, interfaces);
+    assert.deepEqual(errors, [
+      'Expected type names to be unique. ' +
+      'Found 2 types with name "DuplicateName"',
+    ]);
+  });
+
+  it('reports duplicated plural names', () => {
+    const types = [
+      type('Typo'),
+      type('Typos'),
+      type('Type', { pluralName: 'Typos' }),
+    ];
+    const errors = validateSchema({ types }, interfaces);
+    assert.deepEqual(errors, [
+      'Expected plural names of types to be unique. ' +
+      'Found 3 types with plural name \"Typos\"',
+    ]);
   });
 });

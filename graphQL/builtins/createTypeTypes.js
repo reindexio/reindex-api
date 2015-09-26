@@ -124,6 +124,9 @@ export default function createTypeTypes(interfaces, getTypeSet) {
           type: getTypeSet('ReindexPermission').connection,
           resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
         },
+        pluralName: {
+          type: GraphQLString,
+        },
       }),
       interfaces: [interfaces.Node],
       isTypeOf(obj) {
