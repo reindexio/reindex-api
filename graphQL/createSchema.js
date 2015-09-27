@@ -8,7 +8,7 @@ import {
 import { Map } from 'immutable';
 
 import TypeSet from './TypeSet';
-
+import getGeneratedTypeName from './utilities/getGeneratedTypeName';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
@@ -161,7 +161,7 @@ function createField(field, getTypeSet, interfaces) {
 
 function createPayload({ type, edge }) {
   return new GraphQLObjectType({
-    name: '_' + type.name + 'Payload',
+    name: getGeneratedTypeName(type.name, 'Payload'),
     fields: {
       clientMutationId: {
         type: GraphQLString,

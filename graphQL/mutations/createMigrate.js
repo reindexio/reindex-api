@@ -33,7 +33,7 @@ export default function createMigrate(typeSets, interfaces) {
   });
 
   const ReindexTypeInputObject = new GraphQLInputObjectType({
-    name: 'ReindexTypeMigrationInputObject',
+    name: 'ReindexTypeInput',
     fields: createInputObjectFields(
       ReindexTypeSet.getInputObjectFields(),
       false,
