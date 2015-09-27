@@ -1,9 +1,8 @@
 import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
 import checkPermission from '../permissions/checkPermission';
 import { getByID } from '../../db/queries/simpleQueries';
-import createSearchFor from './createSearchFor';
-import ReindexID, { ID } from '../builtins/ReindexID';
-
+import createSearchFor from '../query/createSearchFor';
+import ReindexID, { ID } from './ReindexID';
 
 export default function createViewer(typeSets, interfaces) {
   const viewerFields = typeSets
@@ -36,25 +35,24 @@ export default function createViewer(typeSets, interfaces) {
     },
   };
 
-  const viewerType = new GraphQLObjectType({
+  return new GraphQLObjectType({
     name: 'ReindexViewer',
     interfaces: [interfaces.Node],
     isTypeOf(obj) {
-      return obj.id.type === 'ReindexViewer';
+      return isViewerID(obj.id);
     },
     fields: viewerFields,
   });
+}
 
-  return {
-    name: 'ReindexViewer',
-    type: viewerType,
-    resolve() {
-      return {
-        id: new ID({
-          type: 'ReindexViewer',
-          value: 'viewer',
-        }),
-      };
-    },
-  };
+export const VIEWER_ID = new ID({
+  type: 'ReindexViewer',
+  value: 'viewer',
+});
+
+export function isViewerID(id) {
+  return (
+    id.type === VIEWER_ID.type &&
+    id.value === VIEWER_ID.value
+  );
 }

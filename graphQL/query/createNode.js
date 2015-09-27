@@ -1,6 +1,7 @@
 import { GraphQLNonNull } from 'graphql';
 import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
+import { isViewerID } from '../builtins/createViewer';
 import checkPermission from '../permissions/checkPermission';
 
 export default function createNode(typeSets, interfaces) {
@@ -13,7 +14,7 @@ export default function createNode(typeSets, interfaces) {
       },
     },
     async resolve(parent, { id }, context) {
-      if (id.type === 'ReindexViewer' && id.value === 'viewer') {
+      if (isViewerID(id)) {
         return {
           id,
         };
