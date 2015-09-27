@@ -257,6 +257,11 @@ describe('Integration Tests', () => {
               id
             },
             cursor
+          },
+          viewer {
+            allUsers {
+              count
+            }
           }
         }
       }
@@ -288,6 +293,11 @@ describe('Integration Tests', () => {
             cursor: toCursor({
               value: fromReindexID(id).value,
             }),
+          },
+          viewer: {
+            allUsers: {
+              count: 3,
+            },
           },
         },
       },

@@ -12,6 +12,7 @@ import getGeneratedTypeName from './utilities/getGeneratedTypeName';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
+import createViewer, { VIEWER_ID } from './builtins/createViewer';
 import CommonMutationFieldCreators
   from './builtins/CommonMutationFieldCreators';
 import ScalarTypes from './builtins/ScalarTypes';
@@ -33,6 +34,7 @@ import {
 export default function createSchema(dbMetadata) {
   const interfaces = createInterfaces();
   let typeSets;
+  let viewer;
 
   function getTypeSet(name) {
     return typeSets.get(name);
@@ -54,29 +56,35 @@ export default function createSchema(dbMetadata) {
         const { connection, edge } = createConnection(typeSet, interfaces);
         typeSet.connection = connection;
         typeSet.edge = edge;
-        typeSet.payload = createPayload(typeSet, interfaces);
+        typeSet.payload = createPayload(typeSet, interfaces, () => viewer);
       }
       return typeSet;
     });
 
+  viewer = createViewer(typeSets, interfaces);
+
   const queryFields = createCommonRootFields(
     CommonQueryFieldCreators,
     typeSets,
-    interfaces
+    interfaces,
+    viewer
   ).merge(createRootFieldsForTypes(
     TypeQueryFieldCreators,
     typeSets,
-    interfaces
+    interfaces,
+    viewer
   ));
 
   const mutationFields = createCommonRootFields(
     CommonMutationFieldCreators,
     typeSets,
-    interfaces
+    interfaces,
+    viewer
   ).merge(createRootFieldsForTypes(
     TypeMutationFieldCreators,
     typeSets,
-    interfaces
+    interfaces,
+    viewer
   ));
 
   const query = new GraphQLObjectType({
@@ -159,10 +167,10 @@ function createField(field, getTypeSet, interfaces) {
   };
 }
 
-function createPayload({ type, edge }) {
+function createPayload({ type, edge }, interfaces, getViewer) {
   return new GraphQLObjectType({
     name: getGeneratedTypeName(type.name, 'Payload'),
-    fields: {
+    fields: () => ({
       clientMutationId: {
         type: GraphQLString,
       },
@@ -172,6 +180,14 @@ function createPayload({ type, edge }) {
       ['changed' + type.name + 'Edge']: {
         type: edge,
       },
-    },
+      viewer: {
+        type: getViewer(),
+        resolve() {
+          return {
+            id: VIEWER_ID,
+          };
+        },
+      },
+    }),
   });
 }

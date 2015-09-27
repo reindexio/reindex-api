@@ -3,7 +3,8 @@ import { Map } from 'immutable';
 export default function createRootFieldsForTypes(
   creators,
   typeSets,
-  interfaces
+  interfaces,
+  viewer
 ) {
   return typeSets
     .map((typeSet) => (
@@ -11,19 +12,26 @@ export default function createRootFieldsForTypes(
         creators,
         typeSet,
         interfaces,
-        typeSets
+        typeSets,
+        viewer
       )
     ))
     .reduce((operations, next) => operations.merge(next), Map());
 }
 
-function createRootFieldsForType(creators, typeSet, interfaces, typeSets) {
+function createRootFieldsForType(
+  creators,
+  typeSet,
+  interfaces,
+  typeSets,
+  viewer
+) {
   return creators
     .filter((creator) =>
       typeSet.type.getInterfaces().includes(interfaces.Node) &&
       !typeSet.blacklistedRootFields.includes(creator)
     )
-    .map((creator) => creator(typeSet, interfaces, typeSets))
+    .map((creator) => creator(typeSet, interfaces, typeSets, viewer))
     .toKeyedSeq()
     .mapEntries(([, query]) => [query.name, query]);
 }
