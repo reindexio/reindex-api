@@ -79,13 +79,6 @@ const invalidSchemas = {
       ],
     }),
   ],
-  'invalid isRequired': [
-    type('T', {
-      fields: [
-        field('c', { isRequired: 'true' }),
-      ],
-    }),
-  ],
   'invalid description of a field': [
     type('T', {
       fields: [
