@@ -15,10 +15,11 @@ import {
 import { getConnectionQueries } from '../db/queries/connectionQueries';
 import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
+import getGeneratedTypeName from './utilities/getGeneratedTypeName';
 
 export function createConnection({ type }) {
   const edge = new GraphQLObjectType({
-    name: '_' + type.name + 'Edge',
+    name: getGeneratedTypeName(type.name, 'Edge'),
     fields: {
       cursor: {
         name: 'cursor',
@@ -33,7 +34,7 @@ export function createConnection({ type }) {
   return {
     edge,
     connection: new GraphQLObjectType({
-      name: '_' + type.name + 'Connection',
+      name: getGeneratedTypeName(type.name, 'Connection'),
       fields: {
         count: {
           name: 'count',
