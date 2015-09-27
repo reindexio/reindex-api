@@ -1,3 +1,4 @@
+import { isFunction } from 'lodash';
 import {
   GraphQLObjectType,
   GraphQLBoolean,
@@ -5,6 +6,7 @@ import {
   GraphQLNonNull,
   GraphQLList,
 } from 'graphql';
+
 import {
   getNodes,
   getEdges,
@@ -109,7 +111,8 @@ export function createConnectionArguments(getTypeSet, interfaces) {
 
 export function createNodeFieldResolve(ofType, fieldName) {
   return async (parent, args, context) => {
-    const result = await getByID(context.rootValue.conn, parent[fieldName]);
+    const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
+    const result = await getByID(context.rootValue.conn, id);
     checkPermission(ofType, 'read', result, context);
     return result;
   };
