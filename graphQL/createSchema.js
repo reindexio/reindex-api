@@ -13,6 +13,7 @@ import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
 import createViewer, { VIEWER_ID } from './builtins/createViewer';
+import ReindexID from './builtins/ReindexID';
 import CommonMutationFieldCreators
   from './builtins/CommonMutationFieldCreators';
 import ScalarTypes from './builtins/ScalarTypes';
@@ -179,6 +180,9 @@ function createPayload({ type, edge }, interfaces, getViewer) {
       },
       ['changed' + type.name + 'Edge']: {
         type: edge,
+      },
+      id: {
+        type: ReindexID,
       },
       viewer: {
         type: getViewer(),

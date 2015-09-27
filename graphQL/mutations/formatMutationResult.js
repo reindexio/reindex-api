@@ -12,5 +12,6 @@ export default function formatMutationResult(
         value: result.id.value,
       }),
     },
+    id: result.id,
   };
 }
