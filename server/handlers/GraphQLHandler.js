@@ -15,9 +15,18 @@ async function handler(request, reply) {
       credentials,
     });
     const result = await graphql(context.schema, query, context, variables);
+    if (result.errors) {
+      console.error({
+        error: 'GraphQL Error',
+        query,
+        variables,
+        errors: result.errors,
+      });
+    }
     reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
-    // TODO(fson, 2015-04-13): Handle errors granularly.
+    console.error(error);
+    console.error(error.stack);
     reply(error);
   }
 }
