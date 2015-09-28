@@ -247,6 +247,7 @@ describe('Integration Tests', () => {
       mutation createUser($input: _CreateUserInput) {
         createUser(input: $input) {
           clientMutationId,
+          id,
           changedUser {
             id,
             handle,
@@ -281,6 +282,7 @@ describe('Integration Tests', () => {
       data: {
         createUser: {
           clientMutationId,
+          id,
           changedUser: {
             id,
             handle: 'immonenv',
@@ -422,6 +424,9 @@ describe('Integration Tests', () => {
             author {
               id
             }
+          },
+          author {
+            id
           }
         }
       }
@@ -441,6 +446,9 @@ describe('Integration Tests', () => {
             author: {
               id: authorID,
             },
+          },
+          author: {
+            id: authorID,
           },
         },
       },

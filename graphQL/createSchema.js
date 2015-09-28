@@ -6,6 +6,7 @@ import {
   GraphQLList,
 } from 'graphql';
 import { Map } from 'immutable';
+import { chain } from 'lodash';
 
 import TypeSet from './TypeSet';
 import getGeneratedTypeName from './utilities/getGeneratedTypeName';
@@ -171,27 +172,43 @@ function createField(field, getTypeSet, interfaces) {
 function createPayload({ type, edge }, interfaces, getViewer) {
   return new GraphQLObjectType({
     name: getGeneratedTypeName(type.name, 'Payload'),
-    fields: () => ({
-      clientMutationId: {
-        type: GraphQLString,
-      },
-      ['changed' + type.name]: {
-        type,
-      },
-      ['changed' + type.name + 'Edge']: {
-        type: edge,
-      },
-      id: {
-        type: ReindexID,
-      },
-      viewer: {
-        type: getViewer(),
-        resolve() {
-          return {
-            id: VIEWER_ID,
-          };
+    fields: () => {
+      const nodeFields = chain(type.getFields())
+        .pick((field) => (
+          field.type.getInterfaces &&
+          field.type.getInterfaces().includes(interfaces.Node)
+        ))
+        .mapValues((field) => ({
+          type: field.type,
+          resolve: createNodeFieldResolve(
+            field.type.name,
+            (object) => object['changed' + type.name][field.name]
+          ),
+        }))
+        .value();
+      return {
+        clientMutationId: {
+          type: GraphQLString,
         },
-      },
-    }),
+        id: {
+          type: ReindexID,
+        },
+        viewer: {
+          type: getViewer(),
+          resolve() {
+            return {
+              id: VIEWER_ID,
+            };
+          },
+        },
+        ...nodeFields,
+        ['changed' + type.name]: {
+          type,
+        },
+        ['changed' + type.name + 'Edge']: {
+          type: edge,
+        },
+      };
+    },
   });
 }
