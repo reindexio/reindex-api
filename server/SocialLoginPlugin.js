@@ -167,6 +167,8 @@ async function handler(request, reply) {
     );
     return renderCallbackPopup(reply, { token, provider, user });
   } catch (error) {
+    console.error(error);
+    console.error(error.stack);
     return reply(error);
   }
 }
