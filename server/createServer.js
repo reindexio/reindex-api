@@ -6,6 +6,7 @@ import HapiRequireHttpsPlugin from 'hapi-require-https';
 import Config from './Config';
 import Good from 'good';
 import GoodConsole from 'good-console';
+import StatusHandler from './handlers/StatusHandler';
 import GraphQLHandler from './handlers/GraphQLHandler';
 import GraphiQLHandler from './handlers/GraphiQLHandler';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
@@ -47,6 +48,7 @@ export default async function createServer() {
   await server.register(JWTAuthenticationScheme);
   server.auth.strategy('token', 'jwt');
 
+  server.route(StatusHandler);
   server.route(GraphQLHandler);
   server.route(GraphiQLHandler);
   server.route({

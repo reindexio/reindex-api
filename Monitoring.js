@@ -24,6 +24,11 @@ const Monitoring = {
     console.error(error.stack);
     console.error(customParameters);
   },
+  setIgnoreTransaction(ignored) {
+    if (newrelic) {
+      newrelic.setIgnoreTransaction(ignored);
+    }
+  },
 };
 
 export default Monitoring;
