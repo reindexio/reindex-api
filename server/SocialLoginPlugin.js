@@ -7,6 +7,8 @@ import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
 import { Set } from 'immutable';
 
+import Monitoring from '../Monitoring';
+
 import escapeScriptJSON from './escapeScriptJSON';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 
@@ -167,8 +169,6 @@ async function handler(request, reply) {
     );
     return renderCallbackPopup(reply, { token, provider, user });
   } catch (error) {
-    console.error(error);
-    console.error(error.stack);
     return reply(error);
   }
 }
@@ -177,6 +177,12 @@ function onPreResponse(request, reply) {
   const { response } = request;
   if (request.isSocialLoginRequest && response.isBoom) {
     const code = !response.isServer && response.data && response.data.code;
+
+    Monitoring.addCustomParameter('loginError', {
+      code,
+      message: response.message,
+    });
+
     const error = code ?
       {
         code,
@@ -186,6 +192,7 @@ function onPreResponse(request, reply) {
         code: LoginErrorCode.LOGIN_FAILED,
         message: 'Login failed',
       };
+
     return renderCallbackPopup(reply, { error });
   }
   return reply.continue();
