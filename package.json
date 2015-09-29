@@ -4,6 +4,9 @@
   "description": "reindex-api",
   "private": true,
   "repository": "freiksenet/reindex-api",
+  "engines": {
+    "node": "4.1.1"
+  },
   "dependencies": {
     "babel": "^5.8.21",
     "base64-url": "^1.2.1",

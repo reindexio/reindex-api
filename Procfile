@@ -1,1 +1,1 @@
-web: python tunnel.py && node --harmony-generators index.js
+web: python2 tunnel.py && node index.js
