@@ -1,1 +1,1 @@
-web: python2 tunnel.py && node index.js
+web: bash bin/tunnel.sh && node index.js
