@@ -56,6 +56,6 @@
     "create-app": "babel-node bin/create-app.js",
     "create-token": "babel-node bin/create-token.js",
     "print-schema": "babel-node bin/print-schema.js",
-    "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build:prod && cd ../ && cp reindex-graphiql/public/static/* static/"
+    "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/"
   }
 }
