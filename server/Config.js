@@ -18,6 +18,26 @@ const Config = convict({
       },
     },
   },
+  Intercom: {
+    appId: {
+      default: undefined,
+      doc: 'Intercom app ID',
+      env: 'INTERCOM_APP_ID',
+      format: String,
+    },
+    appApiKey: {
+      default: undefined,
+      doc: 'Intercom full access API key',
+      env: 'INTERCOM_API_KEY',
+      format: String,
+    },
+    secretKey: {
+      default: undefined,
+      doc: 'Intercom secret key for secure mode',
+      env: 'INTERCOM_SECRET_KEY',
+      format: String,
+    },
+  },
   RethinkDBPlugin: {
     authKey: {
       default: undefined,
@@ -47,5 +67,7 @@ const Config = convict({
     },
   },
 });
+
+Config.load({}).validate();
 
 export default Config;

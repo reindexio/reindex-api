@@ -1,3 +1,4 @@
+/* globals Intercom */
 import Qs from 'qs';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -10,6 +11,7 @@ import 'graphiql/graphiql.css';
 
 const root = document.getElementById('root');
 const parameters = Qs.parse(window.location.search.slice(1));
+
 
 if (parameters.variables) {
   try {
@@ -29,6 +31,23 @@ if (parameters.token) {
     <GraphiQLView initialParameters={parameters} reindex={Reindex} />,
     root
   );
+  fetchIntercomSettings().then((intercomSettings) => {
+    if (intercomSettings) {
+      Intercom('boot', intercomSettings);
+    }
+  });
 } else {
   ReactDOM.render(<NotLoggedIn />, root);
+}
+
+function fetchIntercomSettings() {
+  return Reindex.query(`{
+    viewer {
+      __intercomSettings {
+        app_id: appId,
+        user_id: userId,
+        user_hash: userHash,
+      },
+    },
+  }`).then((result) => result.data.viewer.__intercomSettings);
 }

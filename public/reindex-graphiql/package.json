@@ -10,8 +10,8 @@
   },
   "private": true,
   "dependencies": {
-    "graphiql": "^0.2.4",
-    "graphql": "^0.4.4",
+    "graphiql": "^0.3.0",
+    "graphql": "^0.4.7",
     "isomorphic-fetch": "^2.1.1",
     "qs": "^5.1.0",
     "react": "^0.14.0-rc1",
@@ -24,7 +24,6 @@
     "css-loader": "^0.19.0",
     "eslint": "^1.5.1",
     "eslint-config-airbnb": "0.0.8",
-    "eslint-plugin-arrow-function": "git://github.com/freiksenet/eslint-plugin-arrow-function.git#return-shorthand",
     "eslint-plugin-babel": "^2.1.1",
     "eslint-plugin-react": "^3.4.2",
     "express": "^4.13.3",

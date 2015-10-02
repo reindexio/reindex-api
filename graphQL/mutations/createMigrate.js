@@ -1,4 +1,3 @@
-
 import {
   GraphQLList,
   GraphQLBoolean,
@@ -12,6 +11,8 @@ import buildSchemaMigration from '../../db/migrations/buildSchemaMigration';
 import { performMigration } from '../../db/queries/migrationQueries';
 import createInputObjectFields from '../createInputObjectFields';
 import checkPermission from '../permissions/checkPermission';
+import resolveIntercomSettings from '../builtins/resolveIntercomSettings';
+import { trackEvent } from '../../server/IntercomClient';
 
 export default function createMigrate(typeSets, interfaces) {
   const ReindexTypeSet = typeSets.get('ReindexType');
@@ -80,6 +81,15 @@ export default function createMigrate(typeSets, interfaces) {
       );
 
       const errors = validateSchema({ types: input.types }, interfaces);
+
+      const intercomSettings = resolveIntercomSettings(null, null, context);
+      if (intercomSettings) {
+        trackEvent(intercomSettings.userId, 'pushed-schema', {
+          dryRun: Boolean(input.dryRun),
+          force: Boolean(input.force),
+          types: input.types && input.types.map((type) => type.name).join(','),
+        });
+      }
 
       if (errors.length > 0) {
         // XXX(freiksenet, 2015-09-22): Can be fixed when graphql is updated
