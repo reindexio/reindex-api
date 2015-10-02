@@ -24,7 +24,13 @@ export default class GraphiQLView extends React.Component {
   }
 
   fetchGraphQL = ({ query, variables }) => {
-    return this.props.reindex.query(query, variables && JSON.parse(variables));
+    return this.props.reindex.query(query, variables && JSON.parse(variables))
+      .catch((error) => {
+        if (!error.stack) {
+          error.stack = error.message;
+        }
+        throw error;
+      });
   }
 
   handleEditQuery = (query) => {
