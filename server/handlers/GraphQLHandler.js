@@ -21,8 +21,9 @@ async function handler(request, reply) {
     });
     const result = await graphql(context.schema, query, context, variables);
 
-    Monitoring.setTransactionName(`graphql/${Object.keys(result.data)[0]}`);
-
+    if (result.data) {
+      Monitoring.setTransactionName(`graphql/${Object.keys(result.data)[0]}`);
+    }
     if (result.errors) {
       Monitoring.addCustomParameter('errors', result.errors);
     }
