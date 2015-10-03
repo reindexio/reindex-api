@@ -1,5 +1,6 @@
 import { Map } from 'immutable';
 import createAuthenticationProvider from './createAuthenticationProvider';
+import createIntercomSettings from './createIntercomSettings';
 import createTypeTypes from './createTypeTypes';
 import createUserTypes from './createUserTypes';
 import createSecret from './createSecret';
@@ -14,5 +15,6 @@ export default function createCommonTypes(interfaces, getTypeSet) {
     ReindexSecret: createSecret(interfaces),
     ReindexAuthethenticationProvider: createAuthenticationProvider(interfaces),
     ReindexPermission: createPermission(interfaces, getTypeSet),
+    ReindexIntercomSettings: createIntercomSettings(),
   });
 }

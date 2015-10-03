@@ -24,10 +24,12 @@ function verifyToken(token, secrets) {
 }
 
 async function authenticateAsync(request) {
+  const hostname = request.info.hostname;
   const { authorization } = request.headers;
 
   if (!authorization) {
     return {
+      hostname,
       isAdmin: false,
       userID: null,
     };
@@ -73,6 +75,7 @@ async function authenticateAsync(request) {
     null;
 
   const credentials = {
+    hostname,
     isAdmin: verifiedToken.isAdmin === true,
     userID,
   };

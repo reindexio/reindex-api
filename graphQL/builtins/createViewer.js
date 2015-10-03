@@ -1,8 +1,10 @@
 import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
+
 import checkPermission from '../permissions/checkPermission';
-import { getByID } from '../../db/queries/simpleQueries';
 import createSearchFor from '../query/createSearchFor';
 import ReindexID, { ID } from './ReindexID';
+import resolveIntercomSettings from './resolveIntercomSettings';
+import { getByID } from '../../db/queries/simpleQueries';
 
 export default function createViewer(typeSets, interfaces) {
   const viewerFields = typeSets
@@ -14,12 +16,10 @@ export default function createViewer(typeSets, interfaces) {
     .toObject();
 
   viewerFields.id = {
-    name: 'id',
     type: new GraphQLNonNull(ReindexID),
   };
 
   viewerFields.user = {
-    name: 'user',
     type: typeSets.get('User').type,
     async resolve(parent, args, context) {
       const { userID } = context.rootValue.credentials;
@@ -33,6 +33,11 @@ export default function createViewer(typeSets, interfaces) {
       checkPermission('User', 'read', result, context);
       return result;
     },
+  };
+
+  viewerFields.__intercomSettings = {
+    type: typeSets.get('ReindexIntercomSettings').type,
+    resolve: resolveIntercomSettings,
   };
 
   return new GraphQLObjectType({

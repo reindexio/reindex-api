@@ -81,15 +81,19 @@ describe('JWTAuthenticationScheme', () => {
       host,
     });
     assert.deepEqual(response.request.auth.credentials, {
+      hostname: host,
       isAdmin: false,
       userID,
     });
   });
 
   it('uses anonymous credentials when header not given', async function() {
-    const response = await makeRequest({});
+    const response = await makeRequest({
+      host,
+    });
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.request.auth.credentials, {
+      hostname: host,
       isAdmin: false,
       userID: null,
     });

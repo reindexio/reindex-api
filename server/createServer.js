@@ -13,8 +13,6 @@ import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import RethinkDBPlugin from './RethinkDBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
 
-Config.load({}).validate();
-
 const loggingOptions = {
   reporters: [
     {
