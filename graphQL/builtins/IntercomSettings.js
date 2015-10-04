@@ -4,12 +4,12 @@ import Config from '../../server/Config';
 
 const { appId, secretKey } = Config.get('Intercom');
 
-function getAdminUserId(hostname) {
+export function getAdminUserId(hostname) {
   return `admin@${hostname}`;
 }
 
-export default function resolveIntercomSettings(parent, args, context) {
-  const { hostname, isAdmin } = context.rootValue.credentials;
+export function getIntercomSettings(credentials) {
+  const { hostname, isAdmin } = credentials;
   if (!isAdmin || !appId || !secretKey) {
     return null;
   }

@@ -3,7 +3,7 @@ import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
 import checkPermission from '../permissions/checkPermission';
 import createSearchFor from '../query/createSearchFor';
 import ReindexID, { ID } from './ReindexID';
-import resolveIntercomSettings from './resolveIntercomSettings';
+import { getIntercomSettings } from './IntercomSettings';
 import { getByID } from '../../db/queries/simpleQueries';
 
 export default function createViewer(typeSets, interfaces) {
@@ -37,7 +37,9 @@ export default function createViewer(typeSets, interfaces) {
 
   viewerFields.__intercomSettings = {
     type: typeSets.get('ReindexIntercomSettings').type,
-    resolve: resolveIntercomSettings,
+    resolve(parent, args, context) {
+      return getIntercomSettings(context.rootValue.credentials);
+    },
   };
 
   return new GraphQLObjectType({

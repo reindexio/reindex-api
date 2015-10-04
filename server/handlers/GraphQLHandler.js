@@ -1,8 +1,9 @@
 import { graphql } from 'graphql';
-import Monitoring from '../../Monitoring';
-import { getMetadata } from '../../db/queries/simpleQueries';
 
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
+import Monitoring from '../../Monitoring';
+import { getMetadata } from '../../db/queries/simpleQueries';
+import { trackEvent } from '../../server/IntercomClient';
 
 async function handler(request, reply) {
   try {
@@ -22,7 +23,17 @@ async function handler(request, reply) {
     const result = await graphql(context.schema, query, context, variables);
 
     if (result.data) {
-      Monitoring.setTransactionName(`graphql/${Object.keys(result.data)[0]}`);
+      const rootNames = Object.keys(result.data).sort().join(',');
+      Monitoring.setTransactionName(`graphql/${rootNames}`);
+      if (credentials.isAdmin) {
+        setImmediate(() => {
+          trackEvent(credentials, 'executed-query', {
+            query,
+            rootNames,
+            variables: JSON.stringify(variables),
+          });
+        });
+      }
     }
     if (result.errors) {
       Monitoring.addCustomParameter('errors', result.errors);
