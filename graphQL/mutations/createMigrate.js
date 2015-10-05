@@ -19,7 +19,7 @@ export default function createMigrate(typeSets, interfaces) {
 
   const payload = new GraphQLObjectType({
     name: 'ReindexMigrationPayload',
-    fields: () => ({
+    fields: {
       clientMutationId: {
         type: GraphQLString,
       },
@@ -29,7 +29,7 @@ export default function createMigrate(typeSets, interfaces) {
       isExecuted: {
         type: GraphQLBoolean,
       },
-    }),
+    },
   });
 
   const ReindexTypeInputObject = new GraphQLInputObjectType({

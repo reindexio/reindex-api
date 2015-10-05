@@ -9,7 +9,7 @@ export default function createMigrationTypes() {
   const ReindexMigrationCommand = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexMigrationCommand',
-      fields: () => ({
+      fields: {
         commandType: {
           type: GraphQLString,
         },
@@ -19,7 +19,7 @@ export default function createMigrationTypes() {
         description: {
           type: GraphQLString,
         },
-      }),
+      },
     }),
   });
 
