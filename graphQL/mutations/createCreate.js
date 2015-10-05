@@ -1,7 +1,9 @@
 import { omit } from 'lodash';
 
-import { GraphQLString, GraphQLInputObjectType } from 'graphql';
+import { GraphQLInputObjectType } from 'graphql';
+
 import { create } from '../../db/queries/mutationQueries';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import checkPermission from '../permissions/checkPermission';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
@@ -20,14 +22,13 @@ export default function createCreate(typeSet, interfaces, typeSets) {
     name: '_Create' + type.name + 'Input',
     fields: {
       ...objectFields,
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
     },
   });
 
   return {
     name: 'create' + type.name,
+    description: `Creates a new \`${type.name}\` object`,
     type: payload,
     args: {
       input: {

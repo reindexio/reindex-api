@@ -17,6 +17,7 @@ export default function createSearchFor(
 
   return {
     name: 'all' + pluralName,
+    description: `A connection with all objects of type \`${type.name}\``,
     type: connection,
     args: argDefs,
     resolve(parent, args, context) {

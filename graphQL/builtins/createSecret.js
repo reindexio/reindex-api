@@ -13,12 +13,17 @@ export default function createSecret(interfaces) {
   return new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexSecret',
+      description:
+        'Stores a secret used for signing authentication tokens for an app.',
       fields: {
         id: {
           type: new GraphQLNonNull(ReindexID),
+          description: 'The ID of the object.',
         },
         value: {
           type: GraphQLString,
+          description:
+            'A long secret string used for signing authentication tokens.',
         },
       },
       interfaces: [

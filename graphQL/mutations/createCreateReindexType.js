@@ -1,6 +1,7 @@
-import { GraphQLString, GraphQLInputObjectType } from 'graphql';
+import { GraphQLInputObjectType } from 'graphql';
 import { createType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
@@ -18,9 +19,7 @@ export default function createCreateReindexType(typeSets, interfaces) {
     name: '_CreateReindexTypeInput',
     fields: {
       ...objectFields,
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
     },
   });
   return {

@@ -9,6 +9,7 @@ export default function createIntercomSettings() {
   return new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexIntercomSettings',
+      description: 'INTERNAL',
       fields: {
         appId: {
           type: GraphQLString,

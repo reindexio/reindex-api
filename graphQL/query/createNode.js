@@ -7,10 +7,12 @@ import checkPermission from '../permissions/checkPermission';
 export default function createNode(typeSets, interfaces) {
   return {
     name: 'node',
+    description: 'Get any Node by ID.',
     type: interfaces.Node,
     args: {
       id: {
         type: new GraphQLNonNull(ReindexID),
+        description: 'The ID of the object.',
       },
     },
     async resolve(parent, { id }, context) {

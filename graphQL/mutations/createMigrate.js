@@ -1,7 +1,6 @@
 import {
   GraphQLList,
   GraphQLBoolean,
-  GraphQLString,
   GraphQLObjectType,
   GraphQLInputObjectType,
   GraphQLNonNull,
@@ -11,6 +10,7 @@ import buildSchemaMigration from '../../db/migrations/buildSchemaMigration';
 import { performMigration } from '../../db/queries/migrationQueries';
 import createInputObjectFields from '../createInputObjectFields';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import { trackEvent } from '../../server/IntercomClient';
 
 export default function createMigrate(typeSets, interfaces) {
@@ -20,14 +20,15 @@ export default function createMigrate(typeSets, interfaces) {
   const payload = new GraphQLObjectType({
     name: 'ReindexMigrationPayload',
     fields: {
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
       commands: {
         type: new GraphQLList(ReindexMigrationCommandSet.type),
+        description: 'The commands created for this migration.',
       },
       isExecuted: {
         type: GraphQLBoolean,
+        description: 'Indicates whether the migration was executed. Only ' +
+          'non-destructive migrations are executed by default.',
       },
     },
   });
@@ -47,21 +48,25 @@ export default function createMigrate(typeSets, interfaces) {
     fields: {
       types: {
         type: new GraphQLList(ReindexTypeInputObject),
+        description: 'The list of types in the desired schema.',
       },
       force: {
         type: GraphQLBoolean,
+        description: 'Must be `true` to run the migration, if it includes ' +
+          'destructive commands.',
       },
       dryRun: {
         type: GraphQLBoolean,
+        description: 'If `true`, we only validate the schema and return the ' +
+          'migration commands without running them.',
       },
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
     },
   });
 
   return {
     name: 'migrate',
+    description: 'Migrates the schema of the app.',
     type: payload,
     args: {
       input: {

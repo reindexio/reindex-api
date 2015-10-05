@@ -1,23 +1,22 @@
 import {
-  GraphQLString,
   GraphQLNonNull,
   GraphQLInputObjectType,
 } from 'graphql';
 import ReindexID from '../builtins/ReindexID';
 import { deleteType } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import formatMutationResult from './formatMutationResult';
 
-export default function createCreateReindexType(typeSets) {
+export default function createDeleteReindexType(typeSets) {
   const ReindexTypeSet = typeSets.get('ReindexType');
   const input = new GraphQLInputObjectType({
     name: '_DeleteReindexTypeInput',
     fields: {
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
       id: {
         type: new GraphQLNonNull(ReindexID),
+        description: 'The ID of the deleted type.',
       },
     },
   });

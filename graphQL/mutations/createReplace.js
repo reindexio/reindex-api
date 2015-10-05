@@ -1,8 +1,9 @@
 import { omit } from 'lodash';
-import { GraphQLString, GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { replace } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
@@ -20,17 +21,17 @@ export default function createReplace(typeSet, interfaces, typeSets) {
     name: '_Replace' + type.name + 'Input',
     fields: {
       ...objectFields,
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
       id: {
         type: new GraphQLNonNull(ReindexID),
+        description: 'The ID of the replaced object.',
       },
     },
   });
 
   return {
     name: 'replace' + type.name,
+    description: `Replaces the given \`${type.name}\` object.`,
     type: payload,
     args: {
       input: {

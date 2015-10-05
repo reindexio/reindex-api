@@ -40,6 +40,8 @@ export function createConnection({ type }) {
       fields: {
         count: {
           name: 'count',
+          description:
+            'The total number of nodes included in the connection.',
           type: GraphQLInt,
           resolve({ query }, args, { rootValue: { conn } }) {
             return getCount(conn, query);
@@ -47,6 +49,8 @@ export function createConnection({ type }) {
         },
         nodes: {
           name: 'nodes',
+          description: `A plain list of ${type.name} objects without the ` +
+            `${edge.name} wrapper object.`,
           type: new GraphQLList(type),
           resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
             return getNodes(conn, paginatedQuery);
@@ -54,6 +58,7 @@ export function createConnection({ type }) {
         },
         edges: {
           name: 'edges',
+          description: 'A list of edges included in the connection.',
           type: new GraphQLList(edge),
           resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
             return getEdges(conn, paginatedQuery);
@@ -61,6 +66,8 @@ export function createConnection({ type }) {
         },
         pageInfo: {
           name: 'pageInfo',
+          description:
+            'Information used by the client for paginating the connection.',
           type: new GraphQLNonNull(PageInfo),
           resolve({ pageInfo }, args, { rootValue: { conn } }) {
             return getPageInfo(conn, pageInfo);
@@ -87,22 +94,29 @@ export function createConnectionArguments(getTypeSet, interfaces) {
   return {
     first: {
       name: 'first',
+      description:
+        'Number of edges to include from the beginning of the result.',
       type: GraphQLInt,
     },
     last: {
       name: 'last',
+      description:
+        'Number of edges to include from the end of the result.',
       type: GraphQLInt,
     },
     before: {
       name: 'before',
+      description: 'Only return edges before given cursor.',
       type: Cursor,
     },
     after: {
       name: 'after',
+      description: 'Only return edges after given cursor.',
       type: Cursor,
     },
     orderBy: {
       name: 'orderBy',
+      description: 'The ordering to sort the results by.',
       type: getTypeSet('ReindexOrdering')
         .getInputObject(getTypeSet, interfaces),
     },

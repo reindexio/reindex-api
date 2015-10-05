@@ -4,6 +4,7 @@ import {
 
 export const ProviderType = new GraphQLEnumType({
   name: 'ReindexProviderType',
+  description: 'Defines the type of authentication service.',
   values: {
     github: {
       value: 'github',
