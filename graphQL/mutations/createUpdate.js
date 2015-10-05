@@ -1,9 +1,10 @@
 import { omit } from 'lodash';
-import { GraphQLString, GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { getByID } from '../../db/queries/simpleQueries';
 import { update } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
@@ -21,17 +22,18 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
     name: '_Update' + type.name + 'Input',
     fields: {
       ...objectFields,
-      clientMutationId: {
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
       id: {
         type: new GraphQLNonNull(ReindexID),
+        description: 'The ID of the updated object.',
       },
     },
   });
 
   return {
     name: 'update' + type.name,
+    description: `Updates the given \`${type.name}\` object. ` +
+      'The given fields are merged to the existing object.',
     type: payload,
     args: {
       input: {

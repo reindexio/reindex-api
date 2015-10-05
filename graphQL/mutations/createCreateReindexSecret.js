@@ -1,7 +1,8 @@
 import Cryptiles from 'cryptiles';
-import { GraphQLString, GraphQLInputObjectType } from 'graphql';
+import { GraphQLInputObjectType } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
+import clientMutationIdField from '../utilities/clientMutationIdField';
 import formatMutationResult from './formatMutationResult';
 
 function generateSecret() {
@@ -13,14 +14,12 @@ export default function createCreateReindexSecret(typeSets) {
   const input = new GraphQLInputObjectType({
     name: '_CreateReindexSecretInput',
     fields: {
-      clientMutationId: {
-        name: 'clientMutationId',
-        type: GraphQLString,
-      },
+      clientMutationId: clientMutationIdField,
     },
   });
   return {
     name: 'createReindexSecret',
+    description: 'Creates a new `ReindexSecret` object.',
     type: secretPayload,
     args: {
       input: {

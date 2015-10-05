@@ -89,7 +89,7 @@ function validateType(type, typesByName, interfaces, invariant) {
     invariant(
       name == null || TYPE_NAME_PATTERN.test(name),
       'Expected `%s` of a type to be a string starting with a capital ' +
-      'letter. Allowed characters are letters A-Z, a-z and underscore (_).' +
+      'letter. Allowed characters are letters A-Z, a-z and underscore (_). ' +
       'Found: %s',
       property, name,
     );

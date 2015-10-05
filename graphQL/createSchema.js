@@ -2,7 +2,6 @@ import {
   GraphQLSchema,
   GraphQLObjectType,
   GraphQLNonNull,
-  GraphQLString,
   GraphQLList,
 } from 'graphql';
 import { Map } from 'immutable';
@@ -20,6 +19,7 @@ import CommonMutationFieldCreators
 import ScalarTypes from './builtins/ScalarTypes';
 import TypeQueryFieldCreators from './builtins/TypeQueryFieldCreators';
 import TypeMutationFieldCreators from './builtins/TypeMutationFieldCreators';
+import clientMutationIdField from './utilities/clientMutationIdField';
 import createCommonRootFields from './createCommonRootFields';
 import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
@@ -91,11 +91,13 @@ export default function createSchema(dbMetadata) {
 
   const query = new GraphQLObjectType({
     name: 'ReindexQueryRoot',
+    description: 'The query root.',
     fields: queryFields.toObject(),
   });
 
   const mutation = new GraphQLObjectType({
     name: 'ReindexMutationRoot',
+    description: 'The mutation root.',
     fields: mutationFields.toObject(),
   });
 
@@ -169,9 +171,12 @@ function createField(field, getTypeSet, interfaces) {
   };
 }
 
-function createPayload({ type, edge }, interfaces, getViewer) {
+function createPayload({ type, edge, pluralName }, interfaces, getViewer) {
+  const allConnectionName = `all${pluralName}`;
+  const edgeName = `changed${type.name}Edge`;
   return new GraphQLObjectType({
     name: getGeneratedTypeName(type.name, 'Payload'),
+    description: `The payload returned from mutations of \`${type.name}\`.`,
     fields: () => {
       const nodeFields = chain(type.getFields())
         .pick((field) => (
@@ -187,14 +192,33 @@ function createPayload({ type, edge }, interfaces, getViewer) {
         }))
         .value();
       return {
-        clientMutationId: {
-          type: GraphQLString,
-        },
+        clientMutationId: clientMutationIdField,
         id: {
           type: ReindexID,
+          description: 'The ID of the mutated object.',
         },
         viewer: {
           type: getViewer(),
+          description:
+`The global viewer object. Can be used in the client to add
+a newly created object to the connection of all objects of
+the type.
+
+E.g. when creating a ${type.name} object, you can add it
+to \`viewer.${allConnectionName}\` using the following Relay
+mutation config:
+\`\`\`javascript
+{
+  type: 'RANGE_ADD',
+  parentID: this.props.viewer.id,
+  connectionName: '${allConnectionName}',
+  edgeName: '${edgeName}',
+  rangeBehaviors: {
+    '': 'prepend',
+  },
+}
+\`\`\`
+`,
           resolve() {
             return {
               id: VIEWER_ID,
@@ -204,9 +228,12 @@ function createPayload({ type, edge }, interfaces, getViewer) {
         ...nodeFields,
         ['changed' + type.name]: {
           type,
+          description: 'The the mutated object.',
         },
-        ['changed' + type.name + 'Edge']: {
+        [edgeName]: {
           type: edge,
+          description: 'A connection edge containing the mutated object. ' +
+            'Can be used to add a newly created object to a connection.',
         },
       };
     },
