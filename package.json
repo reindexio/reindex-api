@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "reindex-api",
   "private": true,
-  "repository": "freiksenet/reindex-api",
+  "repository": "reindexio/reindex-api",
   "engines": {
     "node": "4.1.1"
   },
