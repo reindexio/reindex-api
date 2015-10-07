@@ -88,7 +88,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         },
         description: {
           type: GraphQLString,
-          description: 'Description shown for the GraphQL field.',
+          description: 'Description for the GraphQL field.',
         },
         nonNull: {
           type: GraphQLBoolean,
@@ -101,7 +101,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
         },
         deprecationReason: {
           type: GraphQLString,
-          description: 'If set, makes the field show as depracated.',
+          description: 'If set, makes the field show as deprecated.',
         },
         ofType: {
           type: GraphQLString,
