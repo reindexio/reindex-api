@@ -244,18 +244,17 @@ function validateReverseField(
     expectedFieldOfType = type.name;
   }
 
-  invariant(
-    isString(field.reverseName),
-    '%s.%s: Expected Connection field to define `reverseName`. Found: %s.',
-    type.name, field.name, field.reverseName,
-  );
-  const reverseField = typesByName[reverseType].fields.find(({ name }) =>
-    name === field.reverseName
-  );
+  let reverseField;
+  if (field.reverseName) {
+    reverseField = typesByName[reverseType].fields.find(({ name }) =>
+      name === field.reverseName
+    );
+  }
   invariant(
     reverseField,
-    '%s.%s: Expected `reverseName` to be a field name in type %s. Found: %s.',
-    type.name, field.name, reverseType, field.reverseName,
+    '%s.%s: Expected `reverseName` to be a name of a %s field in type %s. ' +
+    'Found: %s.',
+    type.name, field.name, expectedFieldType, reverseType, field.reverseName,
   );
   if (reverseField) {
     invariant(
@@ -271,14 +270,14 @@ function validateReverseField(
       reverseType, reverseField.name, type.name, field.name, expectedFieldType,
       reverseField.type,
     );
-  }
-  if (expectedFieldOfType) {
-    invariant(
-      reverseField.ofType === expectedFieldOfType,
-      '%s.%s: Expected reverse field of %s.%s to have ofType %s. Found: %s.',
-      reverseType, reverseField.name, type.name, field.name,
-      expectedFieldOfType, reverseField.ofType,
-    );
+    if (expectedFieldOfType) {
+      invariant(
+        reverseField.ofType === expectedFieldOfType,
+        '%s.%s: Expected reverse field of %s.%s to have ofType %s. Found: %s.',
+        reverseType, reverseField.name, type.name, field.name,
+        expectedFieldOfType, reverseField.ofType,
+      );
+    }
   }
 }
 
