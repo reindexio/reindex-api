@@ -259,6 +259,16 @@ describe('validateSchema', () => {
     ]);
   });
 
+  it('reports missing required types', () => {
+    const types = [
+      type('Foo'),
+    ];
+    const errors = validateSchema({ types }, interfaces, ['User']);
+    assert.deepEqual(errors, [
+      'Expected User type to be present.',
+    ]);
+  });
+
   it('reports duplicated plural names', () => {
     const types = [
       type('Typo'),
