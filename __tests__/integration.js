@@ -516,4 +516,102 @@ describe('Integration Tests', () => {
       /^[a-zA-Z0-9_-]{40}$/
     );
   });
+
+  it('handles null nodes and inlines', async function() {
+    let result = await runQuery(`
+      mutation createMicropost($input: _CreateMicropostInput) {
+        createMicropost(input: $input) {
+          changedMicropost {
+            id,
+            text,
+            author {
+              id
+            },
+            categories {
+              name
+            },
+            mainCategory {
+              name
+            },
+          }
+        }
+      }`,
+      {
+        input: {
+          text: 'Test',
+        },
+      }
+    );
+
+    assert.deepProperty(result, `data.createMicropost.changedMicropost.id`);
+
+    const id = result.data.createMicropost.changedMicropost.id;
+
+    assert.deepEqual(result, {
+      data: {
+        createMicropost: {
+          changedMicropost: {
+            id,
+            text: 'Test',
+            author: null,
+            categories: null,
+            mainCategory: null,
+          },
+        },
+      },
+    });
+
+    result = await runQuery(`
+      query getMicropost($id: ID!) {
+        getMicropost(id: $id) {
+          id,
+          text,
+          author {
+            id,
+          },
+          categories {
+            name,
+          },
+          mainCategory {
+            name,
+          },
+        },
+      }
+    `, {
+      id,
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        getMicropost: {
+          id,
+          text: 'Test',
+          author: null,
+          categories: null,
+          mainCategory: null,
+        },
+      },
+    });
+
+    result = await runQuery(`
+      mutation deleteMicropost($input: _DeleteMicropostInput) {
+        deleteMicropost(input: $input) {
+          id,
+        }
+      }`,
+      {
+        input: {
+          id,
+        },
+      }
+    );
+
+    assert.deepEqual(result, {
+      data: {
+        deleteMicropost: {
+          id,
+        },
+      },
+    });
+  });
 });

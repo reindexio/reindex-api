@@ -126,9 +126,13 @@ export function createConnectionArguments(getTypeSet, interfaces) {
 export function createNodeFieldResolve(ofType, fieldName) {
   return async (parent, args, context) => {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
-    const result = await getByID(context.rootValue.conn, id);
-    checkPermission(ofType, 'read', result, context);
-    return result;
+    if (id) {
+      const result = await getByID(context.rootValue.conn, id);
+      checkPermission(ofType, 'read', result, context);
+      return result;
+    } else {
+      return null;
+    }
   };
 }
 
