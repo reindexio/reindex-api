@@ -84,7 +84,9 @@ export default function createMigrate(typeSets, interfaces) {
         context,
       );
 
-      const errors = validateSchema({ types: input.types }, interfaces);
+      const errors = validateSchema({ types: input.types }, interfaces, [
+        'User',
+      ]);
 
       setImmediate(() => {
         trackEvent(context.rootValue.credentials, 'pushed-schema', {

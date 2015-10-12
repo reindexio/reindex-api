@@ -11,7 +11,11 @@ import { getName, byName } from './utilities';
 const InterfaceDefaultFields = getInterfaceDefaultFields();
 const TypeDefaultFields = getTypeDefaultFields();
 
-export default function validateSchema({ types }, interfaces) {
+export default function validateSchema(
+  { types },
+  interfaces,
+  requiredTypes = []
+) {
   const errors = [];
   function invariant(...args) {
     try {
@@ -47,6 +51,19 @@ export default function validateSchema({ types }, interfaces) {
     const summary = getDuplicateSummary(getPluralName, 'plural name');
     invariant(false, 'Expected plural names of types to be unique. Found %s',
       summary,
+    );
+  }
+
+  if (errors.length > 0) {
+    return errors;
+  }
+
+  const typeNames = types.map(getName);
+  for (const requiredType of requiredTypes) {
+    invariant(
+      typeNames.includes(requiredType),
+      'Expected %s type to be present.',
+      requiredType
     );
   }
 
