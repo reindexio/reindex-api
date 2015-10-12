@@ -18,7 +18,7 @@ export class CreateType {
 }
 
 export class CreateTypeData {
-  commandType = 'CreateTypeData'
+  commandType = 'CreateTypeData';
   isDestructive = false;
 
   constructor(type) {
@@ -27,6 +27,28 @@ export class CreateTypeData {
 
   description() {
     return `create storage for type ${this.type.name}`;
+  }
+}
+
+export class UpdateTypeInfo {
+  commandType = 'UpdateTypeInfo';
+  isDestructive = false;
+
+  constructor(type, metadata) {
+    this.type = type;
+    this.metadata = metadata;
+  }
+
+  description() {
+    return (
+      `update metadata of type ${this.type.name}`
+    );
+  }
+
+  getData() {
+    return {
+      ...this.metadata,
+    };
   }
 }
 

@@ -65,6 +65,7 @@ describe('Migrations', () => {
           },
         ],
         kind: 'OBJECT',
+        description: 'A user',
         interfaces: ['Node'],
       },
       {
@@ -119,6 +120,11 @@ describe('Migrations', () => {
       {
         commandType: 'CreateField',
         description: 'add new field id (ID) to type Micropost',
+        isDestructive: false,
+      },
+      {
+        commandType: 'UpdateTypeInfo',
+        description: 'update metadata of type User',
         isDestructive: false,
       },
       {
@@ -186,6 +192,7 @@ describe('Migrations', () => {
           },
         ],
         kind: 'OBJECT',
+        description: 'A user',
         interfaces: ['Node'],
       },
       {
