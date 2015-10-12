@@ -149,6 +149,10 @@ See: [Reindex tutorial: Defining the schema
           type: new GraphQLNonNull(GraphQLString),
           description: 'The name of the type.',
         },
+        description: {
+          type: GraphQLString,
+          description: 'Description of the type.',
+        },
         interfaces: {
           type: new GraphQLList(GraphQLString),
           description: 'The names of interfaces the type implements. ' +

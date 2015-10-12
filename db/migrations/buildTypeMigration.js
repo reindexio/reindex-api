@@ -1,9 +1,12 @@
-import { difference, intersection, isEqual, omit } from 'lodash';
+import { difference, intersection, isEqual } from 'lodash';
+
+import { extractTypeOptions, extractFieldOptions } from './utilities';
 
 import {
   CreateField,
   CreateType,
   CreateTypeData,
+  UpdateTypeInfo,
   DeleteField,
   DeleteFieldData,
   DeleteType,
@@ -20,6 +23,11 @@ export default function buildTypeMigration(type, nextType) {
       commands.push(...buildDeleteType(type));
       commands.push(...buildCreateType(nextType));
       type = null;
+    } else if (!isEqual(
+      extractTypeOptions(type),
+      extractTypeOptions(nextType),
+    )) {
+      commands.push(new UpdateTypeInfo(type, extractTypeOptions(nextType)));
     }
   } else if (!type && nextType) {
     commands.push(...buildCreateType(nextType));
@@ -88,8 +96,4 @@ function buildFieldsMigration(type, nextType) {
     }
   });
   return commands;
-}
-
-function extractFieldOptions(field) {
-  return omit(field, ['name', 'type']);
 }

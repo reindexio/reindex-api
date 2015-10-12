@@ -57,10 +57,16 @@ function createNewTypeData(conn, commands) {
 function updateTypes(conn, commands) {
   const commandsByTypeName = chain(commands)
     .filter((command) => (
-      ['CreateType', 'CreateField', 'DeleteField', 'UpdateFieldInfo'].includes(
+      [
+        'CreateType',
+        'CreateField',
+        'UpdateTypeInfo',
+        'DeleteField',
+        'UpdateFieldInfo',
+      ].includes(
         command.commandType
-      )
-    ))
+      ))
+    )
     .groupBy((command) => command.type.name)
     .value();
 
@@ -82,6 +88,13 @@ function createUpdatedType(commands) {
       ...commands[0].type,
     };
     fields = type.fields.filter((field) => !field.builtin);
+  }
+
+  if (commandsByType.UpdateTypeInfo) {
+    type = {
+      ...type,
+      ...commandsByType.UpdateTypeInfo[0].getData(),
+    };
   }
 
   for (const command of commandsByType.DeleteField || []) {

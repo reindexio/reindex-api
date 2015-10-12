@@ -4,6 +4,7 @@ import {
   CreateField,
   CreateType,
   CreateTypeData,
+  UpdateTypeInfo,
   DeleteField,
   DeleteFieldData,
   DeleteType,
@@ -50,6 +51,24 @@ describe('buildSchemaMigration', () => {
       new CreateType(type('A')),
       new CreateField(type('B', { interfaces: ['Node'] }), 'id', 'ID', {
         nonNull: true,
+      }),
+    ]);
+  });
+
+  it('updates type metadata', () => {
+    const commands = buildSchemaMigration(
+      [
+        type('A', { pluralName: 'foo' }),
+      ],
+      [
+        type('A', { pluralName: 'bar', description: 'baz' }),
+      ],
+    );
+
+    assert.sameDeepMembers(commands, [
+      new UpdateTypeInfo(type('A', { pluralName: 'foo' }), {
+        pluralName: 'bar',
+        description: 'baz',
       }),
     ]);
   });
