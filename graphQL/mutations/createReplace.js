@@ -35,7 +35,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
     type: payload,
     args: {
       input: {
-        type: inputType,
+        type: new GraphQLNonNull(inputType),
       },
     },
     async resolve(parent, { input }, context) {

@@ -244,7 +244,7 @@ describe('Integration Tests', () => {
   it('does crud', async function() {
     const clientMutationId = 'my-client-mutation-id';
     const created = await runQuery(`
-      mutation createUser($input: _CreateUserInput) {
+      mutation createUser($input: _CreateUserInput!) {
         createUser(input: $input) {
           clientMutationId,
           id,
@@ -306,7 +306,7 @@ describe('Integration Tests', () => {
     }, 'create works');
 
     const updated = await runQuery(`
-      mutation updateUser($input: _UpdateUserInput) {
+      mutation updateUser($input: _UpdateUserInput!) {
         updateUser(input: $input) {
           clientMutationId,
           changedUser {
@@ -337,7 +337,7 @@ describe('Integration Tests', () => {
     }, 'update works');
 
     const replaced = await runQuery(`
-      mutation replaceUser($input: _ReplaceUserInput) {
+      mutation replaceUser($input: _ReplaceUserInput!) {
         replaceUser(input: $input) {
           clientMutationId,
           changedUser {
@@ -369,7 +369,7 @@ describe('Integration Tests', () => {
     }, 'replace works');
 
     const deleted = await runQuery(`
-      mutation deleteUser($input: _DeleteUserInput) {
+      mutation deleteUser($input: _DeleteUserInput!) {
         deleteUser(input: $input) {
           clientMutationId,
           changedUser {
@@ -416,7 +416,7 @@ describe('Integration Tests', () => {
       author: authorID,
     };
     const result = await runQuery(`
-      mutation postMicropost($input: _CreateMicropostInput) {
+      mutation postMicropost($input: _CreateMicropostInput!) {
         createMicropost(input: $input) {
           changedMicropost {
             text,
@@ -474,7 +474,7 @@ describe('Integration Tests', () => {
       },
     };
     const result = await runQuery(`
-      mutation postMicropost($input: _CreateMicropostInput) {
+      mutation postMicropost($input: _CreateMicropostInput!) {
         createMicropost(input: $input) {
           changedMicropost {
             text,
@@ -519,7 +519,7 @@ describe('Integration Tests', () => {
 
   it('handles null nodes and inlines', async function() {
     let result = await runQuery(`
-      mutation createMicropost($input: _CreateMicropostInput) {
+      mutation createMicropost($input: _CreateMicropostInput!) {
         createMicropost(input: $input) {
           changedMicropost {
             id,
@@ -594,7 +594,7 @@ describe('Integration Tests', () => {
     });
 
     result = await runQuery(`
-      mutation deleteMicropost($input: _DeleteMicropostInput) {
+      mutation deleteMicropost($input: _DeleteMicropostInput!) {
         deleteMicropost(input: $input) {
           id,
         }

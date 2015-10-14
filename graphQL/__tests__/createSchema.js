@@ -422,7 +422,7 @@ describe('createSchema', () => {
     assert.deepEqual(mutationFields.createPerson.args, [
       {
         name: 'input',
-        type: createPersonInput,
+        type: new GraphQLNonNull(createPersonInput),
         description: null,
         defaultValue: null,
       },
@@ -450,7 +450,7 @@ describe('createSchema', () => {
     assert.deepEqual(mutationFields.updatePerson.args, [
       {
         name: 'input',
-        type: updatePersonInput,
+        type: new GraphQLNonNull(updatePersonInput),
         description: null,
         defaultValue: null,
       },
