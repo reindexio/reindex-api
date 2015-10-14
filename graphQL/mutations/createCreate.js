@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { GraphQLInputObjectType } from 'graphql';
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 
 import { create } from '../../db/queries/mutationQueries';
 import clientMutationIdField from '../utilities/clientMutationIdField';
@@ -32,7 +32,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
     type: payload,
     args: {
       input: {
-        type: inputType,
+        type: new GraphQLNonNull(inputType),
       },
     },
     async resolve(parent, { input }, context) {

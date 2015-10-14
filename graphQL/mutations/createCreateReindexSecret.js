@@ -1,5 +1,5 @@
 import Cryptiles from 'cryptiles';
-import { GraphQLInputObjectType } from 'graphql';
+import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 import clientMutationIdField from '../utilities/clientMutationIdField';
@@ -23,7 +23,7 @@ export default function createCreateReindexSecret(typeSets) {
     type: secretPayload,
     args: {
       input: {
-        type: input,
+        type: new GraphQLNonNull(input),
       },
     },
     async resolve(

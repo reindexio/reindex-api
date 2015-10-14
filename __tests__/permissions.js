@@ -273,7 +273,7 @@ describe('Permissions', () => {
 
     it('one user can create, read, but not delete', async () => {
       const created = await runQuery(`
-        mutation createUser($input: _CreateUserInput) {
+        mutation createUser($input: _CreateUserInput!) {
           createUser(input: $input) {
             changedUser {
               id,
@@ -305,7 +305,7 @@ describe('Permissions', () => {
       assert.isDefined(id, 'created with proper id');
 
       const updated = await runQuery(`
-        mutation updateUser($input: _UpdateUserInput) {
+        mutation updateUser($input: _UpdateUserInput!) {
           updateUser(input: $input) {
             changedUser {
               id
@@ -333,7 +333,7 @@ describe('Permissions', () => {
       });
 
       const deleted = await runQuery(`
-        mutation deleteUser($input: _DeleteUserInput) {
+        mutation deleteUser($input: _DeleteUserInput!) {
           deleteUser(input: $input) {
             changedUser {
               id,
@@ -583,7 +583,7 @@ describe('Permissions', () => {
       });
 
       assert.deepEqual(await runQuery(`
-        mutation createMicropost($input: _CreateMicropostInput){
+        mutation createMicropost($input: _CreateMicropostInput!){
           createMicropost(input: $input) {
             changedMicropost {
               id,
@@ -613,7 +613,7 @@ describe('Permissions', () => {
       });
 
       const result = await runQuery(`
-        mutation createMicropost($input: _CreateMicropostInput) {
+        mutation createMicropost($input: _CreateMicropostInput!) {
           createMicropost(input: $input) {
             changedMicropost {
               id,
@@ -649,7 +649,7 @@ describe('Permissions', () => {
       const micropostID = result.data.createMicropost.changedMicropost.id;
 
       assert.deepEqual(await runQuery(`
-        mutation updateMicropost($input: _UpdateMicropostInput) {
+        mutation updateMicropost($input: _UpdateMicropostInput!) {
           updateMicropost(input: $input) {
             changedMicropost {
               id,
@@ -684,7 +684,7 @@ describe('Permissions', () => {
       });
 
       assert.deepEqual(await runQuery(`
-        mutation updateMicropost($input: _UpdateMicropostInput) {
+        mutation updateMicropost($input: _UpdateMicropostInput!) {
           updateMicropost(input: $input) {
             changedMicropost {
               id,
@@ -716,7 +716,7 @@ describe('Permissions', () => {
       });
 
       assert.deepEqual(await runQuery(`
-        mutation replaceMicropost($input: _ReplaceMicropostInput) {
+        mutation replaceMicropost($input: _ReplaceMicropostInput!) {
           replaceMicropost(input: $input) {
             changedMicropost {
               id,
@@ -747,7 +747,7 @@ describe('Permissions', () => {
       });
 
       assert.deepEqual(await runQuery(`
-        mutation replaceMicropost($input: _ReplaceMicropostInput) {
+        mutation replaceMicropost($input: _ReplaceMicropostInput!) {
           replaceMicropost(input: $input) {
             changedMicropost {
               id,
@@ -779,7 +779,7 @@ describe('Permissions', () => {
       });
 
       assert.deepEqual(await runQuery(`
-        mutation deleteMicropost($input: _DeleteMicropostInput) {
+        mutation deleteMicropost($input: _DeleteMicropostInput!) {
           deleteMicropost(input: $input) {
             changedMicropost {
               id,
