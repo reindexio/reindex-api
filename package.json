@@ -51,7 +51,7 @@
   "scripts": {
     "start": "nodemon index.js",
     "lint": "eslint ./",
-    "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive",
+    "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive test/setup.js",
     "testonly": "npm run mocha $(find ./ -name __tests__ | grep -v node_modules)",
     "test": "npm run lint && npm run testonly",
     "create-app": "babel-node bin/create-app.js",
