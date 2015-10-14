@@ -1,4 +1,4 @@
-import { chain } from 'lodash';
+import { chain, get } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
@@ -121,13 +121,9 @@ describe('Permissions', () => {
         isAdmin: true,
       });
 
-      const permissionId = permission
-        .data.createReindexPermission.changedReindexPermission.id;
-
-      assert.deepProperty(
-        permission,
-        'data.createReindexPermission.changedReindexPermission.id'
-      );
+      const permissionId = get(permission, [
+        'data', 'createReindexPermission', 'changedReindexPermission', 'id',
+      ]);
 
       const id = toReindexID({
         type: 'Micropost',
@@ -294,18 +290,19 @@ describe('Permissions', () => {
         },
       });
 
+      const id = get(created, ['data', 'createUser', 'changedUser', 'id']);
 
       assert.deepEqual(created, {
         data: {
           createUser: {
             changedUser: {
-              id: created.data.createUser.changedUser.id,
+              id,
             },
           },
         },
       });
 
-      const id = created.data.createUser.changedUser.id;
+      assert.isDefined(id, 'created with proper id');
 
       const updated = await runQuery(`
         mutation updateUser($input: _UpdateUserInput) {

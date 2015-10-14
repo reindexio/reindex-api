@@ -1,3 +1,4 @@
+import { get } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
@@ -10,7 +11,7 @@ import assert from '../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
-  TEST_DATA
+  TEST_DATA,
 } from '../test/testDatabase';
 
 describe('Integration Tests', () => {
@@ -55,9 +56,11 @@ describe('Integration Tests', () => {
       id,
     });
 
-    assert.deepEqual(result.data, {
-      node: {
-        text: 'Test text',
+    assert.deepEqual(result, {
+      data: {
+        node: {
+          text: 'Test text',
+        },
       },
     });
 
@@ -79,10 +82,12 @@ describe('Integration Tests', () => {
       id: builtinID,
     });
 
-    assert.deepEqual(builtinResult.data, {
-      node: {
-        type: 'github',
-        isEnabled: true,
+    assert.deepEqual(builtinResult, {
+      data: {
+        node: {
+          type: 'github',
+          isEnabled: true,
+        },
       },
     });
   });
@@ -274,9 +279,7 @@ describe('Integration Tests', () => {
       },
     });
 
-    assert.deepProperty(created, 'data.createUser.changedUser.id');
-
-    const id = created.data.createUser.changedUser.id;
+    const id = get(created, ['data', 'createUser', 'changedUser', 'id']);
 
     assert.deepEqual(created, {
       data: {
@@ -292,7 +295,7 @@ describe('Integration Tests', () => {
             node: {
               id,
             },
-            cursor: toCursor({
+            cursor: id && toCursor({
               value: fromReindexID(id).value,
             }),
           },
@@ -304,6 +307,8 @@ describe('Integration Tests', () => {
         },
       },
     }, 'create works');
+
+    assert.isDefined(id, 'created with proper id');
 
     const updated = await runQuery(`
       mutation updateUser($input: _UpdateUserInput) {
@@ -543,9 +548,9 @@ describe('Integration Tests', () => {
       }
     );
 
-    assert.deepProperty(result, `data.createMicropost.changedMicropost.id`);
-
-    const id = result.data.createMicropost.changedMicropost.id;
+    const id = get(result, [
+      'data', 'createMicropost', 'changedMicropost', 'id',
+    ]);
 
     assert.deepEqual(result, {
       data: {
@@ -560,6 +565,8 @@ describe('Integration Tests', () => {
         },
       },
     });
+
+    assert.isDefined(id, 'created with proper id');
 
     result = await runQuery(`
       query getMicropost($id: ID!) {

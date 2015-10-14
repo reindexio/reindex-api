@@ -70,4 +70,19 @@ const Config = convict({
 
 Config.load({}).validate();
 
+Config.resetTestConfig = function() {
+  Config.set('connection.port', 5000);
+  Config.set('RethinkDBPlugin.authKey', undefined);
+  Config.set('RethinkDBPlugin.host', 'localhost');
+  Config.set('RethinkDBPlugin.port', 28015);
+  Config.set('Intercom.appId', undefined);
+  Config.set('Intercom.appApiKey', undefined);
+  Config.set('Intercom.secretKey', undefined);
+  Config.set(
+    'SocialLoginPlugin.cookiePassword',
+    Config.default('SocialLoginPlugin.cookiePassword')
+  );
+  Config.validate();
+};
+
 export default Config;
