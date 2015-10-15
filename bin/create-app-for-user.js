@@ -1,3 +1,4 @@
+import parseArgs from 'minimist';
 import createApp from '../apps/createApp';
 import createToken from '../apps/createToken';
 import createAppName from '../apps/createAppName';
@@ -10,11 +11,15 @@ import {
 import { yesOrNo } from '../utilities';
 
 async function main() {
-  const email = process.argv[2];
-  const name = process.argv[3];
+  const args = parseArgs(process.argv.slice(2), {
+    boolean: ['n'],
+  });
+  const email = args._[0];
+  const name = args._[1];
+  const dontPrompt = args.n;
   if (email && name) {
     try {
-      await createAppForUser(email, name);
+      await createAppForUser(email, name, dontPrompt);
       process.exit(0);
     } catch (e) {
       console.log('Failure!');
@@ -27,19 +32,21 @@ async function main() {
 }
 
 function usage() {
-  console.log(`Usage: ${process.argv[1]} "email" "name"`);
+  console.log(`Usage: ${process.argv[1]} [-n] "email" "name"`);
 }
 
-async function createAppForUser(email, name) {
+async function createAppForUser(email, name, dontPrompt) {
   try {
     if (!hasIntercom() &&
+        !dontPrompt &&
         !(await yesOrNo('Intercom is not set up, continue?'))) {
       return;
     }
     console.log(`Creating app for user ${name} <${email}>`);
     let appName = createAppName();
     let hostname = `${appName}.myreindex.com`;
-    while ((await hasApp(appName)) || !(await promptIfAppNameIsFine(appName))) {
+    while ((await hasApp(appName)) ||
+           (!dontPrompt && !(await promptIfAppNameIsFine(appName)))) {
       appName = createAppName();
       hostname = `${appName}.myreindex.com`;
     }
@@ -54,9 +61,12 @@ async function createAppForUser(email, name) {
   Admin token: ${token}
   `);
 
-    if (hasIntercom() && await yesOrNo('Create intercom user?')) {
+    if (hasIntercom() &&
+        (dontPrompt || await yesOrNo('Create intercom user?'))) {
+      console.log('Creating intercom user...');
       const user = await createIntercomUser(email, name, hostname);
-      if (await yesOrNo('Send welcome email?')) {
+      if (dontPrompt || await yesOrNo('Send welcome email?')) {
+        console.log('Sending welcome email...');
         await sendWelcomeEmail(user.id, name, hostname, token);
       }
     }
