@@ -15,7 +15,8 @@ import {
   UpdateFieldInfo,
 } from '../../migrations/commands';
 import assert from '../../../test/assert';
-import createApp from '../../createApp';
+import createApp from '../../../apps/createApp';
+import deleteApp from '../../../apps/deleteApp';
 
 describe('Migration queries', () => {
   const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
@@ -28,7 +29,7 @@ describe('Migration queries', () => {
   });
 
   after(async () => {
-    await RethinkDB.dbDrop(dbName).run(conn);
+    await deleteApp(host);
     await conn.close();
   });
 
