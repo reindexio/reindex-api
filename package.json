@@ -56,6 +56,7 @@
     "test": "npm run lint && npm run testonly",
     "create-app": "babel-node bin/create-app-for-user.js",
     "create-token": "babel-node bin/create-token.js",
+    "list-apps": "babel-node bin/list-apps.js",
     "delete-app": "babel-node bin/delete-app",
     "print-schema": "babel-node bin/print-schema.js",
     "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/"
