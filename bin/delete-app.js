@@ -6,6 +6,15 @@ function usage() {
   process.stdout.write(`Usage: ${process.argv[1]} HOSTNAME\n`);
 }
 
+const warningMessage = (hostname) => `
+###########################################################
+# DANGER!
+# This will PERMANENTLY delete the app
+# "${hostname}"
+# and all its data. Are you sure you want to continue?
+###########################################################
+Delete ${hostname}?`;
+
 async function main() {
   const hostname = process.argv[2];
   if (!hostname) {
@@ -18,12 +27,10 @@ async function main() {
       console.log('No such app!');
       process.exit(1);
     }
-    if (await yesOrNo(`Are you sure you want to delete ${hostname}?`, false) &&
-        await yesOrNo('Are you ABSOLUTELY positive about that?', false)) {
+    if (await yesOrNo(warningMessage(hostname), false)) {
       console.log(`Deleting ${hostname}... `);
       await deleteApp(hostname);
-      console.log('Note that I am not deleting intercom data.');
-      console.log('Done! I hope it was not someone\'s production system ;)');
+      console.log('Done!');
     }
   } catch (e) {
     console.error(e);
