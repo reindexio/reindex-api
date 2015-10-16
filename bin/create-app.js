@@ -1,4 +1,4 @@
-import createApp from '../db/createApp';
+import createApp from '../apps/createApp';
 
 function usage() {
   process.stdout.write(`Usage: ${process.argv[1]} HOSTNAME\n`);
@@ -17,9 +17,11 @@ async function main() {
     process.stdout.write(`done.
         app: ${hostname}:5000
         secret: ${secret}\n`);
+    process.exit(0);
   } catch (e) {
     process.stdout.write('failed.\n');
     console.error(e);
+    process.exit(1);
   }
 }
 

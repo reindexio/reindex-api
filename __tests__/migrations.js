@@ -6,7 +6,8 @@ import { graphql } from 'graphql';
 import { getMetadata } from '../db/queries/simpleQueries';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import assert from '../test/assert';
-import createApp from '../db/createApp';
+import createApp from '../apps/createApp';
+import deleteApp from '../apps/deleteApp';
 
 describe('Migrations', () => {
   const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
@@ -19,7 +20,7 @@ describe('Migrations', () => {
   });
 
   after(async () => {
-    await RethinkDB.dbDrop(dbName).run(conn);
+    await deleteApp(host);
     await conn.close();
   });
 
