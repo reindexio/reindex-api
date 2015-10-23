@@ -24,8 +24,8 @@ export default function createViewer(typeSets, interfaces) {
 If there is no logged-in user, this field will return \`null\`.
 
 For each type, \`ReindexViewer\` holds a field with a Connection to all objects
-of that type. Their name is \`allObjects\`, where Object is a pluralized name of
-the type.
+of that type. Its name is \`allObjects\`, where \`Objects\` is a pluralized name
+of the type.
 `,
     interfaces: [interfaces.Node],
     isTypeOf(obj) {

@@ -13,7 +13,7 @@ export default function createInputObjectType(
   const { type } = typeSet;
   return new GraphQLInputObjectType({
     name: getGeneratedTypeName(type.name, 'Input'),
-    description: 'The input object for mutations of type `${type.name}`.',
+    description: `The input object for mutations of type \`${type.name}\`.`,
     fields: () => createInputObjectFields(fields, true, getTypeSet, interfaces),
   });
 }
