@@ -52,13 +52,16 @@ export default function createMigrate(typeSets, interfaces) {
       },
       force: {
         type: GraphQLBoolean,
-        description: 'Must be `true` to run the migration, if it includes ' +
-          'destructive commands.',
+        description:
+`Must be \`true\` to run the migration, if it includes destructive commands.
+`,
       },
       dryRun: {
         type: GraphQLBoolean,
-        description: 'If `true`, we only validate the schema and return the ' +
-          'migration commands without running them.',
+        description:
+`If \`true\`, we only validate the schema and return the migration commands
+without running them.
+`,
       },
       clientMutationId: clientMutationIdField,
     },
@@ -66,7 +69,16 @@ export default function createMigrate(typeSets, interfaces) {
 
   return {
     name: 'migrate',
-    description: 'Migrates the schema of the app.',
+    description:
+`Performs a migration.
+
+This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
+
+* [Reindex docs: Reindex schema
+](https://www.reindex.io/docs/reindex-schema/)
+* [Reindex docs: Reindex CLI
+](https://www.reindex.io/docs/reindex-cli/)
+`,
     type: payload,
     args: {
       input: {

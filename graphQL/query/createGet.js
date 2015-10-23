@@ -6,7 +6,7 @@ import checkPermission from '../permissions/checkPermission';
 export default function createGet({ type }) {
   return {
     name: 'get' + type.name,
-    description: `Get a \`${type.name}\` object by ID.`,
+    description: `Get an object of type \`${type.name}\` by ID.`,
     type,
     args: {
       id: {

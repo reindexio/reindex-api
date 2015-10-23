@@ -176,7 +176,12 @@ function createPayload({ type, edge, pluralName }, interfaces, getViewer) {
   const edgeName = `changed${type.name}Edge`;
   return new GraphQLObjectType({
     name: getGeneratedTypeName(type.name, 'Payload'),
-    description: `The payload returned from mutations of \`${type.name}\`.`,
+    description:
+`The payload returned from mutations of \`${type.name}\`.
+
+* [Reindex docs: Mutations
+](https://www.reindex.io/docs/graphql-api/mutations/)
+`,
     fields: () => {
       const nodeFields = chain(type.getFields())
         .pick((field) => (
@@ -228,12 +233,14 @@ mutation config:
         ...nodeFields,
         ['changed' + type.name]: {
           type,
-          description: 'The the mutated object.',
+          description: 'The mutated object.',
         },
         [edgeName]: {
           type: edge,
-          description: 'A connection edge containing the mutated object. ' +
-            'Can be used to add a newly created object to a connection.',
+          description:
+`A connection edge containing the mutated object. Can be used to add a newly
+created object to a connection in Relay.
+`,
         },
       };
     },

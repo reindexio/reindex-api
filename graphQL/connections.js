@@ -22,13 +22,28 @@ import getGeneratedTypeName from './utilities/getGeneratedTypeName';
 export function createConnection({ type }) {
   const edge = new GraphQLObjectType({
     name: getGeneratedTypeName(type.name, 'Edge'),
+    description:
+`This is a generated Edge for ${type.name}.
+
+Edges are elements of \`edges\` list of Connections.
+
+* [Reindex docs: Connection
+](https://reindex)
+* [Relay docs: Connections
+](https://facebook.github.io/relay/docs/graphql-connections.html#content)
+`,
     fields: {
       cursor: {
         name: 'cursor',
+        description:
+`The opaque string-like object, that points to the current node. To be used with
+\`before\` and \`after\` arguments of the Connection field.
+`,
         type: new GraphQLNonNull(Cursor),
       },
       node: {
         name: 'node',
+        description: 'The ${type.name} object wrapped by this edge.',
         type,
       },
     },
@@ -37,11 +52,26 @@ export function createConnection({ type }) {
     edge,
     connection: new GraphQLObjectType({
       name: getGeneratedTypeName(type.name, 'Connection'),
+      description:
+`This is a generated Connection for ${type.name}.
+
+Connection is a pattern from Relay.
+It's a specification, designed to make management of ordered collections easier,
+when pagination and ordering is required. Reindex uses Connections for linking
+\`Node\` types and for providing an interface to retrieving all objects of some
+type.
+
+* [Reindex docs: Connection
+](https://reindex)
+* [Relay docs: Connections
+](https://facebook.github.io/relay/docs/graphql-connections.html#content)
+`,
       fields: {
         count: {
           name: 'count',
           description:
-            'The total number of nodes included in the connection.',
+`The total number of elements in the connection.
+`,
           type: GraphQLInt,
           resolve({ query }, args, { rootValue: { conn } }) {
             return getCount(conn, query);
@@ -49,8 +79,8 @@ export function createConnection({ type }) {
         },
         nodes: {
           name: 'nodes',
-          description: `A plain list of ${type.name} objects without the ` +
-            `${edge.name} wrapper object.`,
+          description:
+`A plain list of ${type.name} objects without the ${edge.name} wrapper object.`,
           type: new GraphQLList(type),
           resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
             return getNodes(conn, paginatedQuery);
@@ -67,7 +97,9 @@ export function createConnection({ type }) {
         pageInfo: {
           name: 'pageInfo',
           description:
-            'Information used by the client for paginating the connection.',
+`Information about if there are any more elements before or after the current
+slice.
+`,
           type: new GraphQLNonNull(PageInfo),
           resolve({ pageInfo }, args, { rootValue: { conn } }) {
             return getPageInfo(conn, pageInfo);

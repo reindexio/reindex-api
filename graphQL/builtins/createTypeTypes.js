@@ -56,8 +56,10 @@ export default function createTypeTypes(interfaces, getTypeSet) {
   const ordering = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexOrdering',
-      description: 'A sort ordering, consist of a name of a field and an ' +
-        'order (ascending/descending).',
+      description:
+`A sort ordering, consist of a name of a field and an order
+(ascending/descending).
+`,
       fields: {
         order: {
           type: OrderEnum,
@@ -128,12 +130,18 @@ export default function createTypeTypes(interfaces, getTypeSet) {
   const type = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexType',
-      description: `
-A custom type defined in the app. Normally created by
+      description:
+`A custom type defined in the app. Normally created by
 creating a migration with the CLI tool.
 
-See: [Reindex tutorial: Defining the schema
+* [Reindex docs: Reindex Schema
+](https://www.reindex.io/docs/reindex-schema/)
+* [Reindex docs: Reindex CLI
+](https:///www.reindex.io/docs/reindex-cli/)
+* [Reindex tutorial: Defining the schema
 ](https://www.reindex.io/docs/tutorial/defining-the-schema/)
+* [Reindex docs: migrate
+](https://www.reindex.io/docs/graphql-api/mutations/#migrate)
 `,
       fields: () => ({
         id: {

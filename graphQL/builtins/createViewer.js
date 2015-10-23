@@ -17,8 +17,16 @@ export default function createViewer(typeSets, interfaces) {
 
   return new GraphQLObjectType({
     name: 'ReindexViewer',
-    description: 'The global node with fields used to query all the objects ' +
-      'by type as well as the currently signed in user in the `user` field.',
+    description:
+`Global \`Node\` used to query all objects and current user.
+
+\`ReindexViewer\` has a \`user\` field, which is currently logged-in user.
+If there is no logged-in user, this field will return \`null\`.
+
+For each type, \`ReindexViewer\` holds a field with a Connection to all objects
+of that type. Their name is \`allObjects\`, where Object is a pluralized name of
+the type.
+`,
     interfaces: [interfaces.Node],
     isTypeOf(obj) {
       return isViewerID(obj.id);

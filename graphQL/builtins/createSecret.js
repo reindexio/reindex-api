@@ -14,7 +14,11 @@ export default function createSecret(interfaces) {
     type: new GraphQLObjectType({
       name: 'ReindexSecret',
       description:
-        'Stores a secret used for signing authentication tokens for an app.',
+`Stores a secret used for signing authentication tokens for an app.
+
+* [Reindex docs: Authentication
+](https://www.reindex.io/docs/security/authentication/)
+`,
       fields: {
         id: {
           type: new GraphQLNonNull(ReindexID),
