@@ -31,7 +31,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
 
   return {
     name: 'replace' + type.name,
-    description: `Replaces the given \`${type.name}\` object.`,
+    description: `Replaces the given \`${type.name}\` object with a new one.`,
     type: payload,
     args: {
       input: {

@@ -22,8 +22,10 @@ Currently supported providers are:
 * Twitter (provider type \`twitter\`)
 * GitHub (provider type \`github\`)
 
-See also:
-[Reindex tutorial: Authentication
+
+* [Reindex docs: Authentication
+](https://www.reindex.io/docs/security/authentication/)
+* [Reindex tutorial: Authentication
 ](https://www.reindex.io/docs/tutorial/authentication/)
 `,
       fields: {

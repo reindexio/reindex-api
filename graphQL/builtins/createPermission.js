@@ -12,9 +12,13 @@ export default function createPermission(interfaces, getTypeSet) {
     type: new GraphQLObjectType({
       name: 'ReindexPermission',
       description:
-        'A create/read/update/delete permission to a specific type. ' +
-        'Can be granted to a specific `user`, or as a wildcard permission to ' +
-        'all users by setting user to `null`.',
+`A create/read/update/delete permission to a specific type.
+Can be granted to a specific \`user\`, or as a wildcard permission to
+all users by setting user to \`null\`.
+
+* [Reindex docs: Authorization
+](https://www.reindex.io/docs/security/authorization/)
+`,
       interfaces: [interfaces.Node],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexPermission';
