@@ -32,8 +32,15 @@ import {
 /**
  * Given map of built-in types and database metadata about custom data,
  * construct GraphQL schema for them.
+ *
+ * `extraRootFields` is a map of additional root fields to inject. It's a map
+ * with keys as object:
+ *   * `name` - name of the field to inject
+ *   * `returnTypeName` - name of the return type (as string)
+ *   * `returnTypeType` - type of the return type (type, payload, connection)
+ *   * `resolve` - resolve function
  */
-export default function createSchema(dbMetadata) {
+export default function createSchema(dbMetadata, extraRootFields) {
   const interfaces = createInterfaces();
   let typeSets;
   let viewer;
@@ -75,7 +82,7 @@ export default function createSchema(dbMetadata) {
     typeSets,
     interfaces,
     viewer
-  ));
+  )).toObject();
 
   const mutationFields = createCommonRootFields(
     CommonMutationFieldCreators,
@@ -87,18 +94,32 @@ export default function createSchema(dbMetadata) {
     typeSets,
     interfaces,
     viewer
-  ));
+  )).toObject();
+
+  if (extraRootFields) {
+    for (const fieldName in extraRootFields) {
+      const field = extraRootFields[fieldName];
+      const type = typeSets.get(field.returnTypeName);
+      const typeType = field.returnTypeType;
+      if (!queryFields[fieldName] && type && type[typeType]) {
+        queryFields[fieldName] = {
+          ...field,
+          type: type[typeType],
+        };
+      }
+    }
+  }
 
   const query = new GraphQLObjectType({
     name: 'ReindexQueryRoot',
     description: 'The query root.',
-    fields: queryFields.toObject(),
+    fields: queryFields,
   });
 
   const mutation = new GraphQLObjectType({
     name: 'ReindexMutationRoot',
     description: 'The mutation root.',
-    fields: mutationFields.toObject(),
+    fields: mutationFields,
   });
 
   return new GraphQLSchema({

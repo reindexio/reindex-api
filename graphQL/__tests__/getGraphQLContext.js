@@ -252,4 +252,54 @@ describe('getGraphQLContext', () => {
       });
     });
   });
+
+  describe('extractHooks', () => {
+    it('extracts hooks', () => {
+      const result = getGraphQLContext(null, {
+        types: testTypes,
+        permissions: [],
+        indexes: [],
+        hooks: [
+          {
+            type: null,
+            trigger: 'afterCreate',
+            url: 'http://example.com',
+            fragment: '{ id, foo }',
+          },
+          {
+            type: {
+              type: 'ReindexType',
+              value: micropostType.id,
+            },
+            trigger: 'afterUpdate',
+            url: 'http://example.com/micropost',
+            fragment: '{ id }',
+          },
+        ],
+      });
+
+      assert.deepEqual(result.hooks, {
+        global: {
+          afterCreate: [
+            {
+              type: null,
+              trigger: 'afterCreate',
+              url: 'http://example.com',
+              fragment: '{ id, foo }',
+            },
+          ],
+        },
+        Micropost: {
+          afterUpdate: [
+            {
+              type: micropostType,
+              trigger: 'afterUpdate',
+              url: 'http://example.com/micropost',
+              fragment: '{ id }',
+            },
+          ],
+        },
+      });
+    });
+  });
 });

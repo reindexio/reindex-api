@@ -7,6 +7,7 @@ import {
   SECRET_TABLE,
   INDEX_TABLE,
   PERMISSION_TABLE,
+  HOOK_TABLE,
 } from '../DBTableNames';
 import {
   getFirstOrNullQuery,
@@ -44,10 +45,12 @@ export async function getMetadata(conn) {
     RethinkDB.table(TYPE_TABLE).coerceTo('array'),
     RethinkDB.table(INDEX_TABLE).coerceTo('array'),
     RethinkDB.table(PERMISSION_TABLE).coerceTo('array'),
-    (types, indexes, permissions) => ({
+    RethinkDB.table(HOOK_TABLE).coerceTo('array'),
+    (types, indexes, permissions, hooks) => ({
       types,
       indexes,
       permissions,
+      hooks,
     })
   ).run(conn);
   result.types = result.types.map((type) => {

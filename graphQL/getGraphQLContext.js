@@ -2,16 +2,20 @@ import { chain, groupBy } from 'lodash';
 import { fromJS } from 'immutable';
 import createSchema from './createSchema';
 
-export default function getGraphQLContext(conn, metadata, extraContext) {
+export default function getGraphQLContext(
+  conn, metadata, extraContext, extraRootFields,
+) {
   const {
     types: typeData,
     indexes: indexData,
     permissions: permissionData,
+    hooks: hookData,
   } = metadata;
   const indexes = extractIndexes(indexData);
   const typePermissions = extractPermissions(permissionData, typeData);
   const connectionPermissions = extractConnectionPermissions(typeData);
-  const schema = createSchema(fromJS(typeData));
+  const hooks = extractHooks(hookData, typeData);
+  const schema = createSchema(fromJS(typeData), extraRootFields);
   return {
     ...extraContext,
     conn,
@@ -20,6 +24,7 @@ export default function getGraphQLContext(conn, metadata, extraContext) {
       type: typePermissions,
       connection: connectionPermissions,
     },
+    hooks,
     types: typeData,
     schema,
   };
@@ -84,4 +89,21 @@ function combinePermissions(left, right) {
     }
   }
   return result;
+}
+
+function extractHooks(hookData, typeData) {
+  const typesByID = chain(typeData)
+    .groupBy((type) => type.id)
+    .mapValues((value) => value[0])
+    .value();
+
+  return chain(hookData)
+    .map((hook) => ({
+      ...hook,
+      type: hook.type && typesByID[hook.type.value],
+    }))
+    .flatten()
+    .groupBy((hook) => hook.type ? hook.type.name : 'global')
+    .mapValues((hooks) => groupBy(hooks, (hook) => hook.trigger))
+    .value();
 }
