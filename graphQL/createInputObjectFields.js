@@ -3,7 +3,6 @@ import { mapValues } from 'lodash';
 import {
   GraphQLNonNull,
   GraphQLScalarType,
-  GraphQLList,
   GraphQLInputObjectType,
   GraphQLEnumType,
 } from 'graphql';
@@ -27,12 +26,11 @@ function convertInputObjectField(
   interfaces,
 ) {
   let fieldType = field.type;
-  let parentType;
+  const wrappers = [];
 
-  if (fieldType instanceof GraphQLList ||
-      fieldType instanceof GraphQLNonNull) {
-    parentType = fieldType;
-    fieldType = parentType.ofType;
+  while (fieldType.ofType) {
+    wrappers.unshift(fieldType.constructor);
+    fieldType = fieldType.ofType;
   }
 
   if (!(fieldType instanceof GraphQLInputObjectType ||
@@ -43,19 +41,12 @@ function convertInputObjectField(
       getTypeSet(fieldType.name).getInputObject(getTypeSet, interfaces);
   }
 
-  if (parentType) {
-    if (parentType instanceof GraphQLNonNull && !preserveNonNull) {
-      return {
-        type: fieldType,
-      };
-    } else {
-      return {
-        type: new parentType.constructor(fieldType),
-      };
+  fieldType = wrappers.reduce((type, Wrapper) => {
+    if (Wrapper === GraphQLNonNull && !preserveNonNull) {
+      return type;
     }
-  } else {
-    return {
-      type: fieldType,
-    };
-  }
+    return new Wrapper(type);
+  }, fieldType);
+
+  return { type: fieldType };
 }

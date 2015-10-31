@@ -28,7 +28,7 @@ export default class TypeSet {
       const fieldType = field.type.ofType ? field.type.ofType : field.type;
       return (
         fieldType === ReindexID ||
-        fieldType.name.endsWith('Connection')
+        (fieldType.name && fieldType.name.endsWith('Connection'))
       );
     });
   }

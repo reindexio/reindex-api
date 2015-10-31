@@ -136,6 +136,12 @@ describe('createSchema', () => {
             type: 'List',
             ofType: 'String',
           },
+          {
+            name: 'phoneNumbers',
+            type: 'List',
+            ofType: 'String',
+            nonNull: true,
+          },
         ],
       },
     ]);
@@ -144,7 +150,7 @@ describe('createSchema', () => {
     assert.equal(fields.addresses.type.toString(), '[Address]');
     assert.equal(fields.homeAddress.type.toString(), 'Address');
     assert.equal(fields.nicknames.type.toString(), '[String]');
-
+    assert.equal(fields.phoneNumbers.type.toString(), '[String]!');
   });
 
   it('respects nonNull, description and deprecationReason', () => {
