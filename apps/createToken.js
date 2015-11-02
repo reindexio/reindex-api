@@ -1,7 +1,6 @@
 import JSONWebToken from 'jsonwebtoken';
-import RethinkDB from 'rethinkdb';
 
-import Config from '../server/Config';
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 import { getSecrets } from '../db/queries/simpleQueries';
 
@@ -14,15 +13,10 @@ export default async function createToken(hostname, params) {
   let conn;
   let secrets;
   try {
-    conn = await RethinkDB.connect({
-      ...Config.get('RethinkDBPlugin'),
-      db: databaseNameFromHostname(hostname),
-    });
+    conn = await getConnection(databaseNameFromHostname(hostname));
     secrets = await getSecrets(conn);
   } finally {
-    if (conn) {
-      conn.close();
-    }
+    await releaseConnection(conn);
   }
 
   const secret = secrets[0];

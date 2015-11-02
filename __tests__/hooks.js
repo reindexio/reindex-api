@@ -5,6 +5,7 @@ import Hapi from 'hapi';
 import RethinkDB from 'rethinkdb';
 import { graphql } from 'graphql';
 
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import { TYPE_TABLE } from '../db/DBTableNames';
 import { getMetadata } from '../db/queries/simpleQueries';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
@@ -43,7 +44,7 @@ describe('Hooks', () => {
 
   before(async () => {
     dbName = (await createApp(host)).dbName;
-    conn = await RethinkDB.connect({ db: dbName });
+    conn = await getConnection(dbName);
     await server.start();
 
     const types = await RethinkDB
@@ -59,7 +60,7 @@ describe('Hooks', () => {
 
   after(async () => {
     await deleteApp(host);
-    await conn.close();
+    await releaseConnection(conn);
     await server.stop();
   });
 

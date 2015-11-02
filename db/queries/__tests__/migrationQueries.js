@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
+import { getConnection, releaseConnection } from '../../dbConnections';
 import { getTypes } from '../simpleQueries';
 import { performMigration } from '../migrationQueries';
 import {
@@ -25,12 +26,12 @@ describe('Migration queries', () => {
 
   before(async () => {
     dbName = (await createApp(host)).dbName;
-    conn = await RethinkDB.connect({ db: dbName });
+    conn = await getConnection(dbName);
   });
 
   after(async () => {
     await deleteApp(host);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   it('creates types and table', async () => {

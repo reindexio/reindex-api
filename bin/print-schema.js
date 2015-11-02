@@ -1,10 +1,10 @@
 import Immutable from 'immutable';
-import RethinkDB from 'rethinkdb';
 import { printSchema } from 'graphql/utilities';
 
 import createSchema from '../graphQL/createSchema';
 import { getTypes } from '../db/queries/simpleQueries';
 
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 
 function usage() {
@@ -20,7 +20,8 @@ async function main() {
 
   const db = databaseNameFromHostname(hostname);
 
-  const conn = await RethinkDB.connect({ db });
+  const conn = await getConnection(db);
+
   try {
     const types = await getTypes(conn);
     const schema = createSchema(Immutable.fromJS(types));
@@ -28,7 +29,7 @@ async function main() {
   } catch (e) {
     console.error(e.stack);
   } finally {
-    await conn.close();
+    await releaseConnection(conn);
   }
 }
 

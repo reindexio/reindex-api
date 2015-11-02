@@ -1,6 +1,7 @@
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
+import { getConnection, releaseConnection } from '../../dbConnections';
 import { TYPE_TABLE } from '../../DBTableNames';
 import assert from '../../../test/assert';
 import {
@@ -16,13 +17,13 @@ describe('Mutatative database queries', () => {
   let conn;
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     await createTestDatabase(conn, db);
   });
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   describe('CRUD', () => {

@@ -8,6 +8,7 @@ import {
   createTestDatabase,
   deleteTestDatabase,
 } from '../../../test/testDatabase';
+import { getConnection, releaseConnection } from '../../dbConnections';
 import { getIndexes, getPageInfo } from '../simpleQueries';
 import { getConnectionQueries } from '../connectionQueries';
 
@@ -16,13 +17,13 @@ describe('Connection database queries', () => {
   let conn;
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     await createTestDatabase(conn, db);
   });
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   async function getDBIndexes(table) {

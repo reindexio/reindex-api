@@ -1,10 +1,10 @@
 import Hapi from 'hapi';
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import RethinkDB from 'rethinkdb';
 import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
+import { getConnection, releaseConnection } from '../../db/dbConnections';
 import databaseNameFromHostname from '../databaseNameFromHostname';
 import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
 import RethinkDBPlugin from '../RethinkDBPlugin';
@@ -22,7 +22,7 @@ describe('JWTAuthenticationScheme', () => {
   let server;
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     await createTestDatabase(conn, db);
 
     server = new Hapi.Server();
@@ -44,7 +44,7 @@ describe('JWTAuthenticationScheme', () => {
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   const userID = '3c00d00d-e7d9-4cde-899f-e9c5d6400d87';
