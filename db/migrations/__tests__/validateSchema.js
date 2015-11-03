@@ -56,6 +56,17 @@ const invalidSchemas = {
   'invalid interface': [
     type('T', { interfaces: ['IUnknown'] }),
   ],
+  'non-array fields': [
+    type('T', {
+      fields: 'bogus',
+    }),
+  ],
+  'empty fields': [
+    type('T', {
+      interfaces: [],
+      fields: [],
+    }),
+  ],
   'duplicated field name': [
     type('T', {
       fields: [field('a'), field('a')],
