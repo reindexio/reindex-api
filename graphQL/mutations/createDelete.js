@@ -3,6 +3,7 @@ import { getByID } from '../../db/queries/simpleQueries';
 import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import formatMutationResult from './formatMutationResult';
 
@@ -40,8 +41,21 @@ export default function createDelete({ type, payload }) {
         context
       );
       const result = await deleteQuery(conn, type.name, input.id);
+      const formattedResult = formatMutationResult(
+        clientMutationId,
+        type.name,
+        result
+      );
 
-      return formatMutationResult(clientMutationId, type.name, result);
+      checkAndEnqueueHooks(
+        conn,
+        context.rootValue.hooks,
+        type.name,
+        'afterDelete',
+        formattedResult
+      );
+
+      return formattedResult;
     },
   };
 }

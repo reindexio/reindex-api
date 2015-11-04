@@ -181,6 +181,11 @@ creating a migration with the CLI tool.
            'specified, the default English pluralization will be used for ' +
            'field names like `allStories`.',
         },
+        hooks: {
+          type: getTypeSet('ReindexHook').connection,
+          resolve: createConnectionFieldResolve('ReindexHook', 'type'),
+          description: '',
+        },
       }),
       interfaces: [interfaces.Node],
       isTypeOf(obj) {

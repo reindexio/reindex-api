@@ -7,6 +7,7 @@ import {
   TYPE_TABLE,
   PERMISSION_TABLE,
   INDEX_TABLE,
+  HOOK_TABLE,
 } from '../db/DBTableNames';
 
 export const TEST_DATA = fromJS({
@@ -84,6 +85,7 @@ export const TEST_DATA = fromJS({
         text: 'Test text 7',
       },
     ],
+    [HOOK_TABLE]: [],
     [AUTHENTICATION_PROVIDER_TABLE]: [
       {
         id: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',

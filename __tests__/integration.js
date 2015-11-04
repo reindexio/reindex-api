@@ -30,7 +30,7 @@ describe('Integration Tests', () => {
 
   async function runQuery(query, variables, credentials = {
     isAdmin: true,
-    userID: 'admin',
+    userID: null,
   }) {
     const context = getGraphQLContext(conn, await getMetadata(conn), {
       credentials,
