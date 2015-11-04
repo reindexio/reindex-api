@@ -1,5 +1,6 @@
 import { omit } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
+import { getByID } from '../../db/queries/simpleQueries';
 import { replace } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
@@ -46,6 +47,12 @@ export default function createReplace(typeSet, interfaces, typeSets) {
 
       if (input.id.type !== type.name) {
         throw new Error(`Invalid ID`);
+      }
+
+      const existing = await getByID(conn, input.id);
+
+      if (!existing) {
+        throw new Error(`Can not find ${type.name} object with given id.`);
       }
 
       checkPermission(

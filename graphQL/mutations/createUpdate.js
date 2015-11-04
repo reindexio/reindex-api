@@ -51,6 +51,11 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
       }
 
       const existing = await getByID(conn, input.id);
+
+      if (!existing) {
+        throw new Error(`Can not find ${type.name} object with given id.`);
+      }
+
       const checkObject = {
         ...existing,
         ...object,
