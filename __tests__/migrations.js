@@ -3,6 +3,7 @@ import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 import { graphql } from 'graphql';
 
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import { getMetadata } from '../db/queries/simpleQueries';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import assert from '../test/assert';
@@ -16,12 +17,12 @@ describe('Migrations', () => {
 
   before(async () => {
     dbName = (await createApp(host)).dbName;
-    conn = await RethinkDB.connect({ db: dbName });
+    conn = await getConnection(dbName);
   });
 
   after(async () => {
     await deleteApp(host);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   async function runMigration(input) {

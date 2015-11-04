@@ -1,8 +1,8 @@
 import { get } from 'lodash';
-import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import { getMetadata } from '../db/queries/simpleQueries';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import { fromReindexID, toReindexID } from '../graphQL/builtins/ReindexID';
@@ -19,13 +19,13 @@ describe('Integration Tests', () => {
   let conn;
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     return await createTestDatabase(conn, db);
   });
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   async function runQuery(query, variables, credentials = {

@@ -1,10 +1,10 @@
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import RethinkDB from 'rethinkdb';
 import uuid from 'uuid';
 import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
+import { getConnection, releaseConnection } from '../../db/dbConnections';
 import createServer from '../createServer';
 import databaseNameFromHostname from '../databaseNameFromHostname';
 import {
@@ -41,13 +41,13 @@ describe('Server', () => {
   });
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     await createTestDatabase(conn, db);
   });
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   it('executes a GraphQL query', async function () {

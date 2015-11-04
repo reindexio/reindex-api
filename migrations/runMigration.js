@@ -1,7 +1,5 @@
-import RethinkDB from 'rethinkdb';
-
 import listApps from '../apps/listApps';
-import Config from '../server/Config';
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 
 /**
@@ -23,15 +21,13 @@ export default async function runMigration(queries) {
   let conn;
   console.log('Running migrations.');
   try {
-    conn = await RethinkDB.connect(Config.get('RethinkDBPlugin'));
+    conn = await getConnection();
     for (const app of apps) {
       console.log(`Migrating ${app}...`);
       await migrateApp(conn, app, queries);
     }
   } finally {
-    if (conn) {
-      await conn.close();
-    }
+    await releaseConnection(conn);
   }
   console.log('Done!');
 }

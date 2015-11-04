@@ -2,6 +2,7 @@ import uuid from 'uuid';
 import { fromJS, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 
+import { getConnection, releaseConnection } from '../../dbConnections';
 import assert from '../../../test/assert';
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import {
@@ -24,13 +25,13 @@ describe('Simple database queries', () => {
   let conn;
 
   before(async function () {
-    conn = await RethinkDB.connect({ db });
+    conn = await getConnection(db);
     await createTestDatabase(conn, db);
   });
 
   after(async function () {
     await deleteTestDatabase(conn, db);
-    await conn.close();
+    await releaseConnection(conn);
   });
 
   it('getSecrets', async function() {

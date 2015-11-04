@@ -2,7 +2,7 @@ import Cryptiles from 'cryptiles';
 import RethinkDB from 'rethinkdb';
 import { values } from 'lodash';
 
-import Config from '../server/Config';
+import { getConnection, releaseConnection } from '../db/dbConnections';
 import databaseNameFromHostname from '../server/databaseNameFromHostname';
 import * as DBTableNames from '../db/DBTableNames';
 
@@ -11,11 +11,11 @@ export default async function createApp(hostname) {
   let conn;
   let secret;
   try {
-    conn = await RethinkDB.connect(Config.get('RethinkDBPlugin'));
+    conn = await getConnection();
     await createDatabase(conn, dbName);
     secret = await createSecret(conn);
   } finally {
-    await conn.close();
+    await releaseConnection(conn);
   }
 
   return {

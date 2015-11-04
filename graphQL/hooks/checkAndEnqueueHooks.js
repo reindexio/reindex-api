@@ -1,7 +1,6 @@
 import { get } from 'lodash';
-import RethinkDB from 'rethinkdb';
 
-import Config from '../../server/Config';
+import { getConnection, releaseConnection } from '../../db/dbConnections';
 import { getMetadata } from '../../db/queries/simpleQueries';
 import getGraphQLContext from '../getGraphQLContext';
 import performHook from './performHook';
@@ -24,10 +23,7 @@ export default function checkAndEnqueueHooks(
 async function enqueueHooks(db, type, hooks, object) {
   let conn;
   try {
-    conn = await RethinkDB.connect({
-      ...Config.get('RethinkDBPlugin'),
-      db,
-    });
+    conn = await getConnection(db);
     const credentials = {
       isAdmin: true,
       userID: null,
@@ -48,8 +44,6 @@ async function enqueueHooks(db, type, hooks, object) {
   } catch (error) {
     console.error(error);
   } finally {
-    if (conn) {
-      await conn.close();
-    }
+    await releaseConnection(conn);
   }
 }

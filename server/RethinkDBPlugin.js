@@ -1,27 +1,23 @@
-import RethinkDB from 'rethinkdb';
-
 import databaseNameFromHostname from './databaseNameFromHostname';
+import { getConnection, releaseConnection } from '../db/dbConnections';
 
-function makeRequestHandler(options) {
+
+function makeRequestHandler() {
   return function openConnection(request, reply) {
-    request.rethinkDBConnection = RethinkDB.connect({
-      ...options,
-      db: databaseNameFromHostname(request.info.hostname),
-    });
+    request.rethinkDBConnection = getConnection(
+      databaseNameFromHostname(request.info.hostname),
+    );
     reply.continue();
   };
 }
 
-async function closeConnection(request) {
-  if (request.rethinkDBConnection) {
-    const conn = await request.rethinkDBConnection;
-    conn.close();
-  }
+async function close(request) {
+  await releaseConnection(request.rethinkDBConnection);
 }
 
 function register(server, options, next) {
-  server.ext('onRequest', makeRequestHandler(options));
-  server.on('tail', closeConnection);
+  server.ext('onRequest', makeRequestHandler());
+  server.on('tail', close);
   next();
 }
 
