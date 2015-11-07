@@ -29,8 +29,8 @@ export async function createIntercomUser(email, name, hostname) {
   const client = getClient();
   try {
     const result = await fromNode((callback) => client.users.create({
+      ...name && { name },
       user_id: `admin@${hostname}`,
-      name,
       email,
       signed_up_at: Math.round(Date.now() / 1000),
       custom_attributes: {
@@ -57,12 +57,21 @@ You've got access to the private beta of Reindex.
 
 To learn how to get started, check out the tutorial at https://www.reindex.io/docs/
 
-Here are the connection details for your app:
-URL: https://${hostname}
-Admin token: ${token}
+You can make queries and view your API docs in GraphiQL.
+Use this link to sign in: [GraphiQL (${hostname})](https://${hostname}/?token=${token})
 
-If you have any questions, problems or other feedback please email us at
-support@reindex.io.
+Install [Reindex CLI](https://www.reindex.io/docs/reindex-cli/) with:
+\`\`\`
+npm install -g reindex-cli
+\`\`\`
+and configure your environment:
+\`\`\`
+export REINDEX_URL="https://${hostname}
+export REINDEX_TOKEN="${token}"
+\`\`\`
+
+If you have any questions, problems or feedback please email us at
+support@reindex.io or click the "?" button in GraphiQL to chat with us.
 
 Happy hacking!
 
