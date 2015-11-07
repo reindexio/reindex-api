@@ -17,7 +17,7 @@ async function main() {
   const email = args._[0];
   const name = args._[1];
   const dontPrompt = args.n;
-  if (email && name) {
+  if (email) {
     try {
       await createAppForUser(email, name, dontPrompt);
       process.exit(0);
@@ -42,7 +42,7 @@ async function createAppForUser(email, name, dontPrompt) {
         !(await yesOrNo('Intercom is not set up, continue?'))) {
       return;
     }
-    console.log(`Creating app for user ${name} <${email}>`);
+    console.log(`Creating app for user ${name || ''} <${email}>`);
     let appName = createAppName();
     let hostname = `${appName}.myreindex.com`;
     while ((await hasApp(hostname)) ||
