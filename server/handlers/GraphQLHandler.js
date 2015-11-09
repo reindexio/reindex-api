@@ -41,6 +41,7 @@ async function handler(request, reply) {
 
     reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
+    Monitoring.noticeError(error);
     reply(error);
   }
 }

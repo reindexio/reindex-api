@@ -1,6 +1,7 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
+import Monitoring from '../Monitoring';
 import { fromReindexID } from '../graphQL/builtins/ReindexID';
 import { getSecrets } from '../db/queries/simpleQueries';
 
@@ -51,6 +52,7 @@ async function authenticateAsync(request) {
         databaseDoesNotExistRegExp.test(error.msg)) {
       throw Boom.notFound();
     } else {
+      Monitoring.noticeError(error);
       throw error;
     }
   }
