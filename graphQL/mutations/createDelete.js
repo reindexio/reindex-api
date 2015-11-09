@@ -34,6 +34,11 @@ export default function createDelete({ type, payload }) {
         throw new Error(`Invalid ID`);
       }
       const object = await getByID(conn, input.id);
+
+      if (!object) {
+        throw new Error(`Can not find ${type.name} object with given id.`);
+      }
+
       checkPermission(
         type.name,
         'delete',
