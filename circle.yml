@@ -19,9 +19,9 @@ dependencies:
 
 test:
   post:
-    - cf api https://api.ng.bluemix.net
-    - cf auth $BLUEMIX_USER $BLUEMIX_PASSWORD
-    - cf target -o $BLUEMIX_ORG -s dev
+    - cf api $CF_API
+    - cf auth $CF_USER $CF_PASSWORD
+    - cf target -o $CF_ORG
     - cf apps
 
 deployment:
