@@ -148,6 +148,11 @@ function validateType(type, typesByName, interfaces, invariant) {
     type.name,
   );
   invariant(
+    type.fields.length > 0,
+    '%s: Expected `fields` to be an array with at least one element',
+    type.name,
+  );
+  invariant(
     uniq(type.fields, 'name').length === type.fields.length,
     '%s: Expected field names to be unique within a type.',
     type.name,
