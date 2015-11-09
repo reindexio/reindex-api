@@ -1,5 +1,6 @@
 import RethinkDB from 'rethinkdb';
 
+import { TIMESTAMP } from '../../graphQL/builtins/DateTime';
 import {
   USER_TABLE,
 } from '../DBTableNames';
@@ -107,7 +108,9 @@ export function deleteType(conn, id) {
 function compactObject(object) {
   const result = {};
   for (const key of Object.keys(object)) {
-    if (object[key] !== undefined) {
+    if (object[key] === TIMESTAMP) {
+      result[key] = RethinkDB.now();
+    } else if (object[key] !== undefined) {
       result[key] = object[key];
     }
   }
