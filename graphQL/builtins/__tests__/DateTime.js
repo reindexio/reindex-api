@@ -1,7 +1,7 @@
 import { Kind } from 'graphql/language';
 
 import assert from '../../../test/assert';
-import DateTime from '../DateTime';
+import DateTime, { TIMESTAMP } from '../DateTime';
 
 const dateISOString = '2015-08-06T10:03:50.052Z';
 
@@ -34,5 +34,10 @@ describe('DateTime', () => {
       kind: Kind.STRING,
       value: 'mistake',
     }), null);
+
+    assert.equal(DateTime.parseLiteral({
+      kind: Kind.STRING,
+      value: '@TIMESTAMP',
+    }), TIMESTAMP);
   });
 });

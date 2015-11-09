@@ -1,6 +1,7 @@
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
+import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
 import { getConnection, releaseConnection } from '../../dbConnections';
 import { TYPE_TABLE } from '../../DBTableNames';
 import assert from '../../../test/assert';
@@ -171,5 +172,14 @@ describe('Mutatative database queries', () => {
     assert.equal(0, await RethinkDB.table(TYPE_TABLE).filter({
       name: 'NewType',
     }).count().run(conn));
+  });
+
+  it('converts special values', async () => {
+    const newMicropost = {
+      text: 'test',
+      createdAt: TIMESTAMP,
+    };
+    const result = await queries.create(conn, 'Micropost', newMicropost);
+    assert.instanceOf(result.createdAt, Date);
   });
 });

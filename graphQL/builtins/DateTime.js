@@ -3,6 +3,8 @@ import {
 } from 'graphql';
 import { Kind } from 'graphql/language';
 
+export const TIMESTAMP = Symbol('TIMESTAMP');
+
 export const DateTime = new GraphQLScalarType({
   name: 'DateTime',
   serialize(value) {
@@ -13,6 +15,9 @@ export const DateTime = new GraphQLScalarType({
   },
   parseLiteral(ast) {
     if (ast.kind === Kind.STRING) {
+      if (ast.value === '@TIMESTAMP') {
+        return TIMESTAMP;
+      }
       const result = new Date(ast.value);
       if (!Number.isNaN(result.getTime())) {
         return result;
@@ -21,6 +26,10 @@ export const DateTime = new GraphQLScalarType({
     return null;
   },
   parseValue(value) {
+    if (value === '@TIMESTAMP') {
+      return TIMESTAMP;
+    }
+
     const result = new Date(value);
     if (!Number.isNaN(result.getTime())) {
       return result;
