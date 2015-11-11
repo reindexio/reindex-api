@@ -104,6 +104,22 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'non-scalar unique': [
+    type('A', {
+      fields: [
+        field('e'),
+      ],
+      interfaces: [],
+    }),
+    type('T', {
+      fields: [
+        field('a', {
+          type: 'A',
+          unique: true,
+        }),
+      ],
+    }),
+  ],
   'ofType in a scalar field': [
     type('T', {
       fields: [

@@ -166,6 +166,7 @@ export const TEST_DATA = fromJS({
           {
             name: 'handle',
             type: 'String',
+            unique: true,
           },
           {
             name: 'email',

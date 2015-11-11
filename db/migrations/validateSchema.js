@@ -237,6 +237,13 @@ function validateField(type, field, typesByName, invariant) {
     validateReverseField(type, field, typesByName, invariant);
   }
 
+  // only scalar uniques
+  invariant(
+    !field.unique || field.type in ScalarTypes,
+    '%s.%s: Expected unique field to be a scalar type. Found: %s.',
+    type.name, field.name, field.type
+  );
+
   // no overriding default fields
   const typeFields = TypeDefaultFields[type.name];
   invariant(

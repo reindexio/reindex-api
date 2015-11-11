@@ -4,6 +4,7 @@ import { getByID } from '../../db/queries/simpleQueries';
 import { update } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
@@ -66,6 +67,14 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
         'update',
         checkObject,
         context
+      );
+
+      await validate(
+        conn,
+        context,
+        type,
+        checkObject,
+        existing
       );
 
       const result = await update(conn, type.name, input.id, object);

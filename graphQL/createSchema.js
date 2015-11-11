@@ -189,6 +189,10 @@ function createField(field, getTypeSet, interfaces) {
     resolve,
     deprecationReason: field.get('deprecationReason', null),
     description: field.get('description', null),
+    metadata: {
+      builtin: field.get('builtin'),
+      unique: field.get('unique'),
+    },
   };
 }
 

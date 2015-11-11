@@ -141,13 +141,15 @@ describe('buildSchemaMigration', () => {
     ]);
   });
 
-  it('recreates fields with changed types', () => {
+  it('recreates fields with changed types or other crucial metadata', () => {
     const prevType = type('T', {
       interfaces: ['Node'],
       fields: [
         field('a', { type: 'Int' }),
         field('b', { type: 'String' }),
         field('c', { type: 'Connection', ofType: 'U' }),
+        field('d', { type: 'String' }),
+        field('e', { type: 'String', unique: true }),
       ],
     });
     const nextType = type('T', {
@@ -156,6 +158,8 @@ describe('buildSchemaMigration', () => {
         field('a', { type: 'Float' }),
         field('b', { type: 'String' }),
         field('c', { type: 'Connection', ofType: 'V' }),
+        field('d', { type: 'String', unique: true }),
+        field('e', { type: 'String' }),
       ],
     });
 
@@ -175,10 +179,14 @@ describe('buildSchemaMigration', () => {
     assert.sameDeepMembers(commands, [
       new DeleteField(prevType, 'a'),
       new DeleteField(prevType, 'c'),
+      new DeleteField(prevType, 'd'),
       new DeleteFieldData(prevType, ['a']),
       new DeleteFieldData(prevType, ['c']),
+      new DeleteFieldData(prevType, ['d']),
       new CreateField(prevType, 'a', 'Float'),
       new CreateField(prevType, 'c', 'Connection', { ofType: 'V' }),
+      new CreateField(prevType, 'd', 'String', { unique: true }),
+      new UpdateFieldInfo(prevType, 'e', {}),
     ]);
   });
 

@@ -5,6 +5,7 @@ import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { create } from '../../db/queries/mutationQueries';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import checkPermission from '../permissions/checkPermission';
+import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
@@ -48,6 +49,13 @@ export default function createCreate(typeSet, interfaces, typeSets) {
         'create',
         object,
         context
+      );
+
+      await validate(
+        conn,
+        context,
+        type,
+        object
       );
 
       const result = await create(conn, type.name, object);

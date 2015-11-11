@@ -167,6 +167,36 @@ describe('Integration Tests', () => {
     });
   });
 
+  it('queries through unique fields', async () => {
+    const result = await runQuery(`
+      {
+        getUserByHandle(handle: "freiksenet") {
+          handle
+        }
+      }`
+    );
+
+    assert.deepEqual(result, {
+      data: {
+        getUserByHandle: {
+          handle: 'freiksenet',
+        },
+      },
+    });
+
+    assert.deepEqual(await runQuery(`
+      {
+        getUserByHandle(handle: "nonsense") {
+          handle
+        }
+      }
+    `), {
+      data: {
+        getUserByHandle: null,
+      },
+    });
+  });
+
   it('queries viewer for user', async function () {
     const user = TEST_DATA.getIn(['tables', 'User', 0]).toJS();
     const credentials = { isAdmin: true, userID: user.id };
@@ -454,6 +484,115 @@ describe('Integration Tests', () => {
           },
           author: {
             id: authorID,
+          },
+        },
+      },
+    });
+  });
+
+  it('validates uniqueness', async () => {
+    const id = toReindexID({
+      type: 'User',
+      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+    });
+
+    let result = await runQuery(`
+      mutation createDuplicateUser($input: _CreateUserInput!) {
+        createUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        handle: 'freiksenet',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        createUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got \"freiksenet"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation updateUserToDuplicate($input: _UpdateUserInput!) {
+        updateUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'fson',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        updateUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got \"fson"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation replaceUserToDuplicate($input: _ReplaceUserInput!) {
+        replaceUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'fson',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        replaceUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got \"fson"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation updateUserToSame($input: _UpdateUserInput!) {
+        updateUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'freiksenet',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        updateUser: {
+          changedUser: {
+            handle: 'freiksenet',
           },
         },
       },
