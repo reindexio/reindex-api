@@ -66,7 +66,7 @@ npm install -g reindex-cli
 \`\`\`
 and configure your environment:
 \`\`\`
-export REINDEX_URL="https://${hostname}
+export REINDEX_URL="https://${hostname}"
 export REINDEX_TOKEN="${token}"
 \`\`\`
 
