@@ -80,6 +80,7 @@ describe('Hooks', () => {
         trigger: 'afterCreate',
         url: 'http://localhost:8888',
         fragment: '{ id }',
+        logLevel: 'all',
       },
     });
 
@@ -100,6 +101,32 @@ describe('Hooks', () => {
 
     const userId = get(user, ['data', 'createUser', 'id']);
 
+    await runQuery(`
+      mutation update($input: _UpdateReindexHookInput!) {
+        updateReindexHook(input: $input) {
+          id,
+        }
+      }`, {
+        input: {
+          id,
+          fragment: '{ id, invalidField }',
+          logLevel: 'error',
+        },
+      },
+    );
+
+    await runQuery(`
+      mutation User(
+        $input: _CreateUserInput!
+      ) {
+        createUser(input: $input) {
+          id,
+        }
+      }
+    `, {
+      input: {},
+    });
+
     await requestMade;
 
     assert.deepEqual(requests, [
@@ -117,6 +144,40 @@ describe('Hooks', () => {
     ]);
 
     requests = [];
+
+    assert.deepEqual(await runQuery(`
+      query getLog($id: ID!) {
+        reindexHookById(id: $id) {
+          log(orderBy: { field: "createdAt" }) {
+            nodes {
+              type,
+              errors,
+            }
+          }
+        }
+      }
+    `, {
+      id,
+    }), {
+      data: {
+        reindexHookById: {
+          log: {
+            nodes: [
+              {
+                type: 'success',
+                errors: null,
+              },
+              {
+                type: 'error',
+                errors: [
+                  'Error: Cannot query field "invalidField" on "_UserPayload".',
+                ],
+              },
+            ],
+          },
+        },
+      },
+    });
 
     await runQuery(`
       mutation deleteHook($id: ID!) {
