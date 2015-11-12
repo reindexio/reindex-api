@@ -47,6 +47,9 @@ POST request to a specified URL.
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
         type: {
           type: getTypeSet('ReindexType').type,
