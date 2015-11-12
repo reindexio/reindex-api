@@ -21,6 +21,7 @@ async function validateUnique(
 ) {
   const uniqueFields = filter(type.getFields(),
     (field) => (
+      field.name !== 'id' &&
       field.metadata && field.metadata.unique &&
       newObject[field.name] !== existingObject[field.name]
     )

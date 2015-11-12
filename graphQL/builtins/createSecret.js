@@ -23,6 +23,9 @@ export default function createSecret(interfaces) {
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
         value: {
           type: GraphQLString,

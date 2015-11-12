@@ -98,7 +98,7 @@ describe('Integration Tests', () => {
       value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
     });
     const micropostResult = await runQuery(`{
-      getMicropost(id: "${micropostId}") {
+      micropostById(id: "${micropostId}") {
         text,
         createdAt,
         beautifulPerson: author {
@@ -110,7 +110,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(micropostResult, {
       data: {
-        getMicropost: {
+        micropostById: {
           beautifulPerson: {
             nickname: 'freiksenet',
           },
@@ -127,8 +127,8 @@ describe('Integration Tests', () => {
     });
 
     const userResult = await runQuery(`
-      query getUser($id: ID!) {
-        getUser(id: $id) {
+      query userById($id: ID!) {
+        userById(id: $id) {
           handle,
           posts: microposts(orderBy: {field: "createdAt"}, first: 1) {
             count,
@@ -148,7 +148,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(userResult, {
       data: {
-        getUser: {
+        userById: {
           handle: 'freiksenet',
           posts: {
             count: 7,
@@ -170,7 +170,7 @@ describe('Integration Tests', () => {
   it('queries through unique fields', async () => {
     const result = await runQuery(`
       {
-        getUserByHandle(handle: "freiksenet") {
+        userByHandle(handle: "freiksenet") {
           handle
         }
       }`
@@ -178,7 +178,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        getUserByHandle: {
+        userByHandle: {
           handle: 'freiksenet',
         },
       },
@@ -186,13 +186,13 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(await runQuery(`
       {
-        getUserByHandle(handle: "nonsense") {
+        userByHandle(handle: "nonsense") {
           handle
         }
       }
     `), {
       data: {
-        getUserByHandle: null,
+        userByHandle: null,
       },
     });
   });
@@ -247,7 +247,7 @@ describe('Integration Tests', () => {
 
     const result = await runQuery(`
       {
-        getUser(id: "${userId}") {
+        userById(id: "${userId}") {
           microposts(first: 1) {
             edges {
               node {
@@ -261,7 +261,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        getUser: {
+        userById: {
           microposts: {
             edges: [
               {
@@ -425,8 +425,8 @@ describe('Integration Tests', () => {
       'delete returns deleted data');
 
     const afterDeleted = await runQuery(`
-      query getUser($id: ID!) {
-        getUser(id: $id) {
+      query userById($id: ID!) {
+        userById(id: $id) {
           id,
           handle,
           email
@@ -436,7 +436,7 @@ describe('Integration Tests', () => {
       id,
     });
 
-    assert.isNull(afterDeleted.data.getUser,
+    assert.isNull(afterDeleted.data.userById,
       'delete really deletes data');
   });
 
@@ -516,7 +516,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got \"freiksenet"',
+          message: 'User.handle: value must be unique, got "freiksenet"',
         },
       ],
     });
@@ -542,7 +542,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got \"fson"',
+          message: 'User.handle: value must be unique, got "fson"',
         },
       ],
     });
@@ -568,7 +568,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got \"fson"',
+          message: 'User.handle: value must be unique, got "fson"',
         },
       ],
     });
@@ -708,8 +708,8 @@ describe('Integration Tests', () => {
     assert.isDefined(id, 'created with proper id');
 
     result = await runQuery(`
-      query getMicropost($id: ID!) {
-        getMicropost(id: $id) {
+      query micropostById($id: ID!) {
+        micropostById(id: $id) {
           id,
           text,
           author {
@@ -729,7 +729,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        getMicropost: {
+        micropostById: {
           id,
           text: 'Test',
           author: null,

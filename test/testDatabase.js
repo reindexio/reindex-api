@@ -123,6 +123,7 @@ export const TEST_DATA = fromJS({
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'text',
@@ -162,6 +163,7 @@ export const TEST_DATA = fromJS({
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'handle',

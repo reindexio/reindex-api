@@ -80,13 +80,15 @@ export function getByID(conn, id) {
 }
 
 export async function getByIndex(conn, type, indexes = {}, field, value) {
-  let index = getIndexFromFields(indexes, [field]);
+  let index = getIndexFromFields(indexes, [[field]]);
   if (!index) {
-    index = await ensureIndex(conn, type, [field]);
+    index = await ensureIndex(conn, type, [[field]]);
   }
 
+  const indexValue = index.name === 'id' && value ? value.value : [value];
+
   return getFirstOrNullQuery(
-    queryWithIDs(type, RethinkDB.table(type).getAll([value], {
+    queryWithIDs(type, RethinkDB.table(type).getAll(indexValue, {
       index: index.name,
     }))
   ).run(conn);

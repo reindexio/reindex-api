@@ -121,6 +121,26 @@ describe('Simple database queries', () => {
         handle: 'fson',
       }
     );
+
+    assert.deepEqual(
+      await queries.getByIndex(
+        conn,
+        'User',
+        {},
+        'id',
+        {
+          value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+          type: 'User',
+        },
+      ),
+      {
+        id: {
+          value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+          type: 'User',
+        },
+        handle: 'fson',
+      }
+    );
   });
 
   it('getCount', async function() {

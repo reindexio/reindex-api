@@ -51,6 +51,7 @@ describe('buildSchemaMigration', () => {
       new CreateType(type('A')),
       new CreateField(type('B', { interfaces: ['Node'] }), 'id', 'ID', {
         nonNull: true,
+        unique: true,
       }),
     ]);
   });
@@ -84,6 +85,7 @@ describe('buildSchemaMigration', () => {
       new CreateField(nextType, 'a', 'Int'),
       new CreateField(nextType, 'id', 'ID', {
         nonNull: true,
+        unique: true,
       }),
     ]);
   });
@@ -145,6 +147,7 @@ describe('buildSchemaMigration', () => {
     const prevType = type('T', {
       interfaces: ['Node'],
       fields: [
+        field('id', { type: 'ID', nonNull: true }),
         field('a', { type: 'Int' }),
         field('b', { type: 'String' }),
         field('c', { type: 'Connection', ofType: 'U' }),
@@ -186,6 +189,10 @@ describe('buildSchemaMigration', () => {
       new CreateField(prevType, 'a', 'Float'),
       new CreateField(prevType, 'c', 'Connection', { ofType: 'V' }),
       new CreateField(prevType, 'd', 'String', { unique: true }),
+      new UpdateFieldInfo(prevType, 'id', {
+        nonNull: true,
+        unique: true,
+      }),
       new UpdateFieldInfo(prevType, 'e', {}),
     ]);
   });

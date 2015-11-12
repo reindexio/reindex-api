@@ -5,6 +5,7 @@ export default function getInterfaceDefaultFields() {
         name: 'id',
         type: 'ID',
         nonNull: true,
+        unique: true,
       },
     ],
   };

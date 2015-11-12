@@ -191,7 +191,7 @@ function createField(field, getTypeSet, interfaces) {
     description: field.get('description', null),
     metadata: {
       builtin: field.get('builtin'),
-      unique: field.get('unique'),
+      unique: field.get('unique') || fieldType === 'ID',
     },
   };
 }

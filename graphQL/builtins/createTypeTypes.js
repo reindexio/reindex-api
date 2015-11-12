@@ -154,6 +154,9 @@ creating a migration with the CLI tool.
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
         kind: {
           type: new GraphQLNonNull(GraphQLString),

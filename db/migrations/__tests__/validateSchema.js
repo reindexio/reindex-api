@@ -258,6 +258,50 @@ const invalidSchemas = {
       fields: [],
     },
   ],
+  'invalid interface field type': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          nonNull: true,
+          unique: true,
+        },
+      ],
+    },
+  ],
+  'invalid interface field nullness': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          unique: true,
+        },
+      ],
+    },
+  ],
+  'invalid interface field uniqueness': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          nonNull: true,
+
+        },
+      ],
+    },
+  ],
 };
 
 

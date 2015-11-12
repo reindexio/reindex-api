@@ -13,6 +13,9 @@ export default function createInterfaces() {
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
       },
     }),

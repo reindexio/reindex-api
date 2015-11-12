@@ -1,11 +1,14 @@
 export function type(name, props = {}) {
   if (props.interfaces && props.interfaces.includes('Node')) {
     props.fields = props.fields || [];
-    props.fields.unshift({
-      type: 'ID',
-      name: 'id',
-      nonNull: true,
-    });
+    if (!props.fields.some((thefield) => thefield.name === 'id')) {
+      props.fields.unshift({
+        type: 'ID',
+        name: 'id',
+        nonNull: true,
+        unique: true,
+      });
+    }
   }
   return { kind: 'OBJECT', fields: [], interfaces: [], name, ...props };
 }

@@ -27,6 +27,9 @@ all users by setting user to \`null\`.
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
         user: {
           type: getTypeSet('User').type,

@@ -1,5 +1,5 @@
 import { GraphQLNonNull } from 'graphql';
-import { chain, capitalize } from 'lodash';
+import { chain, capitalize, camelCase } from 'lodash';
 
 import { getByIndex } from '../../db/queries/simpleQueries';
 import checkPermission from '../permissions/checkPermission';
@@ -8,7 +8,7 @@ export default function createGetByField({ type }) {
   return chain(type.getFields())
     .filter((field) => field.metadata && field.metadata.unique)
     .map((field) => ({
-      name: 'get' + type.name + 'By' + capitalize(field.name),
+      name: camelCase(type.name) + 'By' + capitalize(field.name),
       description:
 `Get an object of type \`${type.name}\` by \`${field.name}\``,
       type,
@@ -21,6 +21,9 @@ export default function createGetByField({ type }) {
       },
       async resolve(parent, args, context) {
         const value = args[field.name];
+        if (field.name === 'id' && value.type !== type.name) {
+          throw new Error(`Invalid ID`);
+        }
         const result = await getByIndex(
           context.rootValue.conn,
           type.name,
