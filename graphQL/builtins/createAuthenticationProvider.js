@@ -36,6 +36,9 @@ Currently supported providers are:
         type: {
           type: ProviderType,
           description: 'The provider type (e.g. facebook).',
+          metadata: {
+            unique: true,
+          },
         },
         clientId: {
           type: GraphQLString,

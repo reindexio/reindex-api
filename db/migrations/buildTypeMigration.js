@@ -83,7 +83,10 @@ function buildFieldsMigration(type, nextType) {
     const previousField = previousFields[name];
     const nextField = nextFields[name];
     if (previousField.type !== nextField.type ||
-        previousField.ofType !== nextField.ofType) {
+        previousField.ofType !== nextField.ofType ||
+        (!previousField.unique &&
+          nextField.unique &&
+          nextField.type !== 'ID')) {
       commands.push(new DeleteFieldData(type, [name]));
       commands.push(new DeleteField(type, name));
       commands.push(new CreateField(

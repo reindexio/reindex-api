@@ -4,6 +4,7 @@ import { getByID } from '../../db/queries/simpleQueries';
 import { replace } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
@@ -60,6 +61,14 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         'update',
         object,
         context
+      );
+
+      await validate(
+        conn,
+        context,
+        type,
+        object,
+        existing
       );
 
       const result = await replace(conn, type.name, input.id, object);

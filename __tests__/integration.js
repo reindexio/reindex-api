@@ -98,7 +98,7 @@ describe('Integration Tests', () => {
       value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
     });
     const micropostResult = await runQuery(`{
-      getMicropost(id: "${micropostId}") {
+      micropostById(id: "${micropostId}") {
         text,
         createdAt,
         beautifulPerson: author {
@@ -110,7 +110,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(micropostResult, {
       data: {
-        getMicropost: {
+        micropostById: {
           beautifulPerson: {
             nickname: 'freiksenet',
           },
@@ -127,8 +127,8 @@ describe('Integration Tests', () => {
     });
 
     const userResult = await runQuery(`
-      query getUser($id: ID!) {
-        getUser(id: $id) {
+      query userById($id: ID!) {
+        userById(id: $id) {
           handle,
           posts: microposts(orderBy: {field: "createdAt"}, first: 1) {
             count,
@@ -148,7 +148,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(userResult, {
       data: {
-        getUser: {
+        userById: {
           handle: 'freiksenet',
           posts: {
             count: 7,
@@ -163,6 +163,36 @@ describe('Integration Tests', () => {
             count: 7,
           },
         },
+      },
+    });
+  });
+
+  it('queries through unique fields', async () => {
+    const result = await runQuery(`
+      {
+        userByHandle(handle: "freiksenet") {
+          handle
+        }
+      }`
+    );
+
+    assert.deepEqual(result, {
+      data: {
+        userByHandle: {
+          handle: 'freiksenet',
+        },
+      },
+    });
+
+    assert.deepEqual(await runQuery(`
+      {
+        userByHandle(handle: "nonsense") {
+          handle
+        }
+      }
+    `), {
+      data: {
+        userByHandle: null,
       },
     });
   });
@@ -217,7 +247,7 @@ describe('Integration Tests', () => {
 
     const result = await runQuery(`
       {
-        getUser(id: "${userId}") {
+        userById(id: "${userId}") {
           microposts(first: 1) {
             edges {
               node {
@@ -231,7 +261,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        getUser: {
+        userById: {
           microposts: {
             edges: [
               {
@@ -395,8 +425,8 @@ describe('Integration Tests', () => {
       'delete returns deleted data');
 
     const afterDeleted = await runQuery(`
-      query getUser($id: ID!) {
-        getUser(id: $id) {
+      query userById($id: ID!) {
+        userById(id: $id) {
           id,
           handle,
           email
@@ -406,7 +436,7 @@ describe('Integration Tests', () => {
       id,
     });
 
-    assert.isNull(afterDeleted.data.getUser,
+    assert.isNull(afterDeleted.data.userById,
       'delete really deletes data');
   });
 
@@ -454,6 +484,115 @@ describe('Integration Tests', () => {
           },
           author: {
             id: authorID,
+          },
+        },
+      },
+    });
+  });
+
+  it('validates uniqueness', async () => {
+    const id = toReindexID({
+      type: 'User',
+      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+    });
+
+    let result = await runQuery(`
+      mutation createDuplicateUser($input: _CreateUserInput!) {
+        createUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        handle: 'freiksenet',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        createUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got "freiksenet"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation updateUserToDuplicate($input: _UpdateUserInput!) {
+        updateUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'fson',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        updateUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got "fson"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation replaceUserToDuplicate($input: _ReplaceUserInput!) {
+        replaceUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'fson',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        replaceUser: null,
+      },
+      errors: [
+        {
+          message: 'User.handle: value must be unique, got "fson"',
+        },
+      ],
+    });
+
+    result = await runQuery(`
+      mutation updateUserToSame($input: _UpdateUserInput!) {
+        updateUser(input: $input) {
+          changedUser {
+            handle
+          }
+        }
+      }
+    `, {
+      input: {
+        id,
+        handle: 'freiksenet',
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        updateUser: {
+          changedUser: {
+            handle: 'freiksenet',
           },
         },
       },
@@ -569,8 +708,8 @@ describe('Integration Tests', () => {
     assert.isDefined(id, 'created with proper id');
 
     result = await runQuery(`
-      query getMicropost($id: ID!) {
-        getMicropost(id: $id) {
+      query micropostById($id: ID!) {
+        micropostById(id: $id) {
           id,
           text,
           author {
@@ -590,7 +729,7 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        getMicropost: {
+        micropostById: {
           id,
           text: 'Test',
           author: null,

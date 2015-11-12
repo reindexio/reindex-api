@@ -9,6 +9,7 @@ import {
   PERMISSION_TABLE,
   HOOK_TABLE,
 } from '../DBTableNames';
+import { getIndexFromFields, ensureIndex } from './indexes';
 import {
   getFirstOrNullQuery,
   queryWithIDs,
@@ -75,6 +76,21 @@ export function getAllQuery(type) {
 export function getByID(conn, id) {
   return getFirstOrNullQuery(
     queryWithIDs(id.type, RethinkDB.table(id.type).getAll(id.value))
+  ).run(conn);
+}
+
+export async function getByIndex(conn, type, indexes = {}, field, value) {
+  let index = getIndexFromFields(indexes, [[field]]);
+  if (!index) {
+    index = await ensureIndex(conn, type, [[field]]);
+  }
+
+  const indexValue = index.name === 'id' && value ? value.value : [value];
+
+  return getFirstOrNullQuery(
+    queryWithIDs(type, RethinkDB.table(type).getAll(indexValue, {
+      index: index.name,
+    }))
   ).run(conn);
 }
 

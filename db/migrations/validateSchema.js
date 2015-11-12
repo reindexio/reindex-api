@@ -166,8 +166,10 @@ function validateFields(type, invariant) {
     for (const defaultField of InterfaceDefaultFields[interfaceName] || []) {
       invariant(
         type.fields.some((field) => isEqual(field, defaultField)),
-        '%s.%s: Expected %sfield of type %s from interface %s',
-        type.name, defaultField.name, defaultField.nonNull ? 'non-null ' : '',
+        '%s.%s: Expected %s%sfield of type %s from interface %s',
+        type.name, defaultField.name,
+        defaultField.nonNull ? 'non-null ' : '',
+        defaultField.unique ? 'unique ' : '',
         defaultField.type, interfaceName
       );
     }
@@ -236,6 +238,13 @@ function validateField(type, field, typesByName, invariant) {
   if (ofType in typesByName && isNodeType(typesByName[ofType])) {
     validateReverseField(type, field, typesByName, invariant);
   }
+
+  // only scalar uniques
+  invariant(
+    !field.unique || field.type in ScalarTypes,
+    '%s.%s: Expected unique field to be a scalar type. Found: %s.',
+    type.name, field.name, field.type
+  );
 
   // no overriding default fields
   const typeFields = TypeDefaultFields[type.name];

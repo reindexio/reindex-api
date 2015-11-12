@@ -1,3 +1,4 @@
+import { flatten } from 'lodash';
 import { Map } from 'immutable';
 
 export default function createRootFieldsForTypes(
@@ -31,7 +32,9 @@ function createRootFieldsForType(
       typeSet.type.getInterfaces().includes(interfaces.Node) &&
       !typeSet.blacklistedRootFields.includes(creator)
     )
-    .map((creator) => creator(typeSet, interfaces, typeSets, viewer))
+    .flatMap((creator) => flatten([
+      creator(typeSet, interfaces, typeSets, viewer),
+    ]))
     .toKeyedSeq()
     .mapEntries(([, query]) => [query.name, query]);
 }

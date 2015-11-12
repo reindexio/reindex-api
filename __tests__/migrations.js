@@ -58,6 +58,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'microposts',
@@ -79,6 +80,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'createdAt',
@@ -185,6 +187,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'microposts',
@@ -206,6 +209,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'author',
@@ -288,6 +292,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'microposts',
@@ -308,6 +313,7 @@ describe('Migrations', () => {
             name: 'id',
             type: 'ID',
             nonNull: true,
+            unique: true,
           },
           {
             name: 'author',

@@ -123,6 +123,13 @@ export default function createTypeTypes(interfaces, getTypeSet) {
           type: ordering.type,
           description: 'Default ordering (for a connection field).',
         },
+        unique: {
+          type: GraphQLBoolean,
+          description:
+`If set, the field value must be unique. Can only be set on scalar fields.
+Unique fields are validated on mutation. In addition, for each unique field a
+new root query field is created to get values based on that field.`,
+        },
       },
     }),
   });
@@ -147,6 +154,9 @@ creating a migration with the CLI tool.
         id: {
           type: new GraphQLNonNull(ReindexID),
           description: 'The ID of the object.',
+          metadata: {
+            unique: true,
+          },
         },
         kind: {
           type: new GraphQLNonNull(GraphQLString),
@@ -156,6 +166,9 @@ creating a migration with the CLI tool.
         name: {
           type: new GraphQLNonNull(GraphQLString),
           description: 'The name of the type.',
+          metadata: {
+            unique: true,
+          },
         },
         description: {
           type: GraphQLString,

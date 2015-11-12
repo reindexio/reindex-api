@@ -104,6 +104,22 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'non-scalar unique': [
+    type('A', {
+      fields: [
+        field('e'),
+      ],
+      interfaces: [],
+    }),
+    type('T', {
+      fields: [
+        field('a', {
+          type: 'A',
+          unique: true,
+        }),
+      ],
+    }),
+  ],
   'ofType in a scalar field': [
     type('T', {
       fields: [
@@ -240,6 +256,50 @@ const invalidSchemas = {
       kind: 'OBJECT',
       interfaces: ['Node'],
       fields: [],
+    },
+  ],
+  'invalid interface field type': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          nonNull: true,
+          unique: true,
+        },
+      ],
+    },
+  ],
+  'invalid interface field nullness': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          unique: true,
+        },
+      ],
+    },
+  ],
+  'invalid interface field uniqueness': [
+    {
+      name: 'Foo',
+      kind: 'OBJECT',
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'id',
+          type: 'String',
+          nonNull: true,
+
+        },
+      ],
     },
   ],
 };

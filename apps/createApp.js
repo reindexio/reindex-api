@@ -39,6 +39,7 @@ async function createDatabase(conn, dbName) {
         name: 'id',
         type: 'ID',
         nonNull: true,
+        unique: true,
       },
     ],
     kind: 'OBJECT',
