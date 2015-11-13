@@ -12,7 +12,10 @@ import createReplace from '../mutations/createReplace';
 import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
 import ReindexID from './ReindexID';
-import { createConnectionFieldResolve } from '../connections';
+import {
+  createConnectionFieldResolve,
+  createConnectionArguments,
+} from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
   const OrderEnum = new GraphQLEnumType({
@@ -185,6 +188,7 @@ creating a migration with the CLI tool.
         },
         permissions: {
           type: getTypeSet('ReindexPermission').connection,
+          args: createConnectionArguments(getTypeSet, interfaces),
           resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
           description: 'All the permissions defined for this type.',
         },
@@ -196,6 +200,7 @@ creating a migration with the CLI tool.
         },
         hooks: {
           type: getTypeSet('ReindexHook').connection,
+          args: createConnectionArguments(getTypeSet, interfaces),
           resolve: createConnectionFieldResolve('ReindexHook', 'type'),
           description: '',
         },

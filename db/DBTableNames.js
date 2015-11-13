@@ -5,3 +5,4 @@ export const USER_TABLE = 'User';
 export const INDEX_TABLE = 'ReindexIndex';
 export const PERMISSION_TABLE = 'ReindexPermission';
 export const HOOK_TABLE = 'ReindexHook';
+export const HOOK_LOG_TABLE = 'ReindexHookLog';

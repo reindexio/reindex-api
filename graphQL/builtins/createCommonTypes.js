@@ -13,10 +13,10 @@ export default function createCommonTypes(interfaces, getTypeSet) {
     ...createTypeTypes(interfaces, getTypeSet),
     ...createUserTypes(interfaces, getTypeSet),
     ...createMigrationTypes(interfaces, getTypeSet),
+    ...createHook(interfaces, getTypeSet),
     ReindexSecret: createSecret(interfaces),
     ReindexAuthethenticationProvider: createAuthenticationProvider(interfaces),
     ReindexPermission: createPermission(interfaces, getTypeSet),
     ReindexIntercomSettings: createIntercomSettings(),
-    ReindexHook: createHook(interfaces, getTypeSet),
   });
 }
