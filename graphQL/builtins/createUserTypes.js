@@ -17,7 +17,7 @@ function getBaseCredentialFields(providerName) {
     },
     id: {
       type: GraphQLString,
-      description: `The ${providerName} user's ID`,
+      description: `The ${providerName} user's ID.`,
     },
   };
 }
@@ -30,11 +30,11 @@ export default function createUserTypes() {
       ...getBaseCredentialFields('GitHub'),
       email: {
         type: GraphQLString,
-        description: 'The GitHub user\'s email address',
+        description: 'The GitHub user\'s (public) email address.',
       },
       username: {
         type: GraphQLString,
-        description: 'The user\'s GitHub username',
+        description: 'The user\'s GitHub username.',
       },
     },
   });
@@ -43,6 +43,10 @@ export default function createUserTypes() {
     description: 'Facebook authentication credentials.',
     fields: {
       ...getBaseCredentialFields('Facebook'),
+      email: {
+        type: GraphQLString,
+        description: 'The Facebook user\'s email address.',
+      },
     },
   });
   const ReindexGoogleCredential = new GraphQLObjectType({
@@ -50,6 +54,10 @@ export default function createUserTypes() {
     description: 'Google authentication credentials.',
     fields: {
       ...getBaseCredentialFields('Google'),
+      email: {
+        type: GraphQLString,
+        description: 'Google account email address.',
+      },
     },
   });
   const ReindexTwitterCredential = new GraphQLObjectType({

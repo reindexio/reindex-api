@@ -1,12 +1,13 @@
+import ProviderType from './ProviderType';
+import ReindexID from './ReindexID';
+import TypeSet from '../TypeSet';
 import {
+  GraphQLBoolean,
+  GraphQLList,
+  GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
-  GraphQLBoolean,
-  GraphQLNonNull,
 } from 'graphql';
-import TypeSet from '../TypeSet';
-import ReindexID from './ReindexID';
-import ProviderType from './ProviderType';
 
 export default function createAuthenticationProvider(interfaces) {
   return new TypeSet({
@@ -56,6 +57,12 @@ Currently supported providers are:
           type: GraphQLBoolean,
           description: 'Must be set to `true` to enable user authentication ' +
             'using this provider.',
+        },
+        scopes: {
+          type: new GraphQLList(new GraphQLNonNull(GraphQLString)),
+          description: 'An array of scopes (permissions) to request from the ' +
+            'person using the authentication. Supported in Facebook, GitHub ' +
+            'and Google providers.',
         },
       },
       interfaces: [
