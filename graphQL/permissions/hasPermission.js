@@ -63,13 +63,9 @@ function hasConnectionPermissions(
   const isCurrentUser = (
     type === 'User' &&
     object.id &&
-    object.id.value === userID && (
-      permission === 'read' ||
-      permission === 'update' ||
-      permission === 'delete'
-    )
+    object.id.value === userID
   );
-  if (isCurrentUser) {
+  if (isCurrentUser && (permission === 'read' || permission === 'delete')) {
     return true;
   }
 
