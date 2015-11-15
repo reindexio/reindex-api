@@ -55,13 +55,13 @@ describe('hasPermission', () => {
       value: 'some-user-id',
     };
 
-    it('can do anything but create', () => {
+    it('can only read and delete', () => {
       assert.equal(testPermission(credentials, 'User', 'read', {}, {
         id,
       }), true);
       assert.equal(testPermission(credentials, 'User', 'update', {}, {
         id,
-      }), true);
+      }), false);
       assert.equal(testPermission(credentials, 'User', 'delete', {}, {
         id,
       }), true);
