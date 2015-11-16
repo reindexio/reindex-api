@@ -17,7 +17,18 @@ export async function getOrCreateUser(conn, providerName, credential) {
   ).coerceTo('array').run(conn);
 
   if (users.length) {
-    return users[0];
+    const user = users[0];
+    const changes = {
+      credentials: {
+        ...user.credentials,
+        [providerName]: credential,
+      },
+    };
+    await table.get(user.id.value).update(changes).run(conn);
+    return {
+      ...user,
+      ...changes,
+    };
   }
 
   return queryWithIDs(

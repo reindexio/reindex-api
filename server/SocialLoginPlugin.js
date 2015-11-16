@@ -114,6 +114,7 @@ async function authenticate(request, reply) {
       name: providerName,
       provider: bellProvider,
       providerParams: getBellProviderParams(providerName),
+      scope: authenticationProvider.scopes,
     };
 
     const authenticateWithOAuth = settings.provider.protocol === 'oauth' ?
@@ -136,6 +137,11 @@ function normalizeCredentials(credentials) {
 
   if (profile.email) {
     result.email = profile.email;
+  } else if (profile.emails) {
+    const accountEmail = profile.emails.find((email) =>
+      email.type === 'account'
+    );
+    result.email = accountEmail.value;
   }
   if (credentials.secret) {
     result.accessTokenSecret = credentials.secret;
