@@ -22,7 +22,7 @@ export default function validateSchema(
       invariantFunction(...args);
     } catch (e) {
       errors.push(e.toString().replace(
-        /Error: Invariant Violation: /,
+        /Invariant Violation: /,
         ''
       ));
     }
