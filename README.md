@@ -25,3 +25,17 @@
   ```
   npm start
   ```
+
+### Dependencies
+
+The package versions are pinned using `npm-shrinkwrap`.
+
+#### Adding a dependency
+
+```
+npm install <name> --save
+npm run shrinkwrap
+```
+
+Remember to always commit the changes to the `npm-shrinkwrap.json` file after
+modifying dependencies.

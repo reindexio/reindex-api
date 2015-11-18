@@ -43,11 +43,11 @@
     "chai-oequal": "0.0.1",
     "diff": "^1.4.0",
     "eslint": "1.3.1",
-    "eslint-plugin-arrow-function": "git://github.com/freiksenet/eslint-plugin-arrow-function.git#return-shorthand",
     "eslint-plugin-babel": "^2.1.1",
     "jsdoc": "^3.3.0-beta3",
     "mocha": "^2.2.4",
-    "nodemon": "^1.3.7"
+    "nodemon": "^1.3.7",
+    "npm-shrinkwrap": "^200.4.0"
   },
   "scripts": {
     "start": "nodemon index.js",
@@ -60,6 +60,7 @@
     "list-apps": "babel-node bin/list-apps.js",
     "delete-app": "babel-node bin/delete-app",
     "print-schema": "babel-node bin/print-schema.js",
-    "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/"
+    "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/",
+    "shrinkwrap": "npm-shrinkwrap --dev"
   }
 }
