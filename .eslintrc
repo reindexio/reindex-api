@@ -4,7 +4,6 @@ env:
   node: true
   mocha: true
 plugins:
-  - "arrow-function"
   - "babel"
 rules:
   # Possible errors
@@ -127,7 +126,5 @@ rules:
   "require-yield": 2
   # other
   "max-len": [2, 80, 2]
-  # arrow
-  "arrow-function/return-shorthand": [2, "always"]
   # eslint-plugin-babel
   "babel/arrow-parens": [2, "always"]
