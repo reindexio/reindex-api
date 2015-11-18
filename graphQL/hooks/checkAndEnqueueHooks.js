@@ -1,35 +1,32 @@
 import { get } from 'lodash';
 
-import { getConnection, releaseConnection } from '../../db/dbConnections';
-import { getMetadata } from '../../db/queries/simpleQueries';
+import getDB from '../../db/getDB';
 import getGraphQLContext from '../getGraphQLContext';
 import performHook from './performHook';
 
 export default function checkAndEnqueueHooks(
-  conn, allHooks, type, name, object
+  db, allHooks, type, name, object
 ) {
-  const db = conn.db;
   const globalHooks = get(allHooks, ['global', name]) || [];
   const typeHooks = get(allHooks, [type, name]) || [];
   const hooks = [...globalHooks, ...typeHooks];
 
   if (hooks.length > 0) {
     setImmediate(() => {
-      enqueueHooks(db, type, hooks, object);
+      enqueueHooks(db.hostname, type, hooks, object);
     });
   }
 }
 
-async function enqueueHooks(db, type, hooks, object) {
-  let conn;
+async function enqueueHooks(hostname, type, hooks, object) {
+  const db = getDB(hostname);
   try {
-    conn = await getConnection(db);
     const credentials = {
       isAdmin: true,
       userID: null,
     };
 
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
+    const context = getGraphQLContext(db, await db.getMetadata(), {
       credentials,
     }, {
       hook: {
@@ -44,6 +41,6 @@ async function enqueueHooks(db, type, hooks, object) {
   } catch (error) {
     console.error(error);
   } finally {
-    await releaseConnection(conn);
+    await db.close();
   }
 }

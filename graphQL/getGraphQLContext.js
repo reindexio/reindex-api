@@ -3,7 +3,7 @@ import { fromJS } from 'immutable';
 import createSchema from './createSchema';
 
 export default function getGraphQLContext(
-  conn, metadata, extraContext, extraRootFields,
+  db, metadata, extraContext, extraRootFields,
 ) {
   const {
     types: typeData,
@@ -18,7 +18,7 @@ export default function getGraphQLContext(
   const schema = createSchema(fromJS(typeData), extraRootFields);
   return {
     ...extraContext,
-    conn,
+    db,
     indexes,
     permissions: {
       type: typePermissions,

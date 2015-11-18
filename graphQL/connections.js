@@ -7,14 +7,6 @@ import {
   GraphQLList,
 } from 'graphql';
 
-import {
-  getNodes,
-  getEdges,
-  getCount,
-  getPageInfo,
-  getByID,
-} from '../db/queries/simpleQueries';
-import { getConnectionQueries } from '../db/queries/connectionQueries';
 import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
 import getGeneratedTypeName from './utilities/getGeneratedTypeName';
@@ -73,8 +65,8 @@ type.
 `The total number of elements in the connection.
 `,
           type: GraphQLInt,
-          resolve({ query }, args, { rootValue: { conn } }) {
-            return getCount(conn, query);
+          resolve({ query }, args, { rootValue: { db } }) {
+            return db.getCount(query);
           },
         },
         nodes: {
@@ -82,16 +74,16 @@ type.
           description:
 `A plain list of ${type.name} objects without the ${edge.name} wrapper object.`,
           type: new GraphQLList(type),
-          resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
-            return getNodes(conn, paginatedQuery);
+          resolve({ paginatedQuery }, args, { rootValue: { db } }) {
+            return db.getNodes(paginatedQuery);
           },
         },
         edges: {
           name: 'edges',
           description: 'A list of edges included in the connection.',
           type: new GraphQLList(edge),
-          resolve({ paginatedQuery }, args, { rootValue: { conn } }) {
-            return getEdges(conn, paginatedQuery);
+          resolve({ paginatedQuery }, args, { rootValue: { db } }) {
+            return db.getEdges(paginatedQuery);
           },
         },
         pageInfo: {
@@ -101,8 +93,8 @@ type.
 slice.
 `,
           type: new GraphQLNonNull(PageInfo),
-          resolve({ pageInfo }, args, { rootValue: { conn } }) {
-            return getPageInfo(conn, pageInfo);
+          resolve({ pageInfo }, args, { rootValue: { db } }) {
+            return db.getPageInfo(pageInfo);
           },
         },
       },
@@ -159,7 +151,7 @@ export function createNodeFieldResolve(ofType, fieldName) {
   return async (parent, args, context) => {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
     if (id) {
-      const result = await getByID(context.rootValue.conn, id);
+      const result = await context.rootValue.db.getByID(id);
       checkPermission(ofType, 'read', result, context);
       return result;
     } else {
@@ -198,8 +190,7 @@ export function createConnectionFieldResolve(
       orderBy: defaultOrdering,
       ...args,
     };
-    return getConnectionQueries(
-      context.rootValue.conn,
+    return context.rootValue.db.getConnectionQueries(
       ofType,
       context.rootValue.indexes[ofType],
       {

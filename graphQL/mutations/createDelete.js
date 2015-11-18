@@ -1,6 +1,4 @@
 import { GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
-import { getByID } from '../../db/queries/simpleQueries';
-import { deleteQuery } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
@@ -28,12 +26,12 @@ export default function createDelete({ type, payload }) {
       },
     },
     async resolve(parent, { input }, context) {
-      const conn = context.rootValue.conn;
+      const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
       if (input.id.type !== type.name) {
         throw new Error(`Invalid ID`);
       }
-      const object = await getByID(conn, input.id);
+      const object = await db.getByID(input.id);
 
       if (!object) {
         throw new Error(`Can not find ${type.name} object with given id.`);
@@ -45,7 +43,7 @@ export default function createDelete({ type, payload }) {
         object,
         context
       );
-      const result = await deleteQuery(conn, type.name, input.id);
+      const result = await db.deleteQuery(type.name, input.id);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,
@@ -53,7 +51,7 @@ export default function createDelete({ type, payload }) {
       );
 
       checkAndEnqueueHooks(
-        conn,
+        db,
         context.rootValue.hooks,
         type.name,
         'afterDelete',

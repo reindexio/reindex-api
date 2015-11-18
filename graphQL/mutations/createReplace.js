@@ -1,7 +1,5 @@
 import { omit } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
-import { getByID } from '../../db/queries/simpleQueries';
-import { replace } from '../../db/queries/mutationQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
@@ -42,7 +40,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const conn = context.rootValue.conn;
+      const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
 
@@ -50,7 +48,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         throw new Error(`Invalid ID`);
       }
 
-      const existing = await getByID(conn, input.id);
+      const existing = await db.getByID(input.id);
 
       if (!existing) {
         throw new Error(`Can not find ${type.name} object with given id.`);
@@ -64,14 +62,14 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       );
 
       await validate(
-        conn,
+        db,
         context,
         type,
         object,
         existing
       );
 
-      const result = await replace(conn, type.name, input.id, object);
+      const result = await db.replace(type.name, input.id, object);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,
@@ -79,7 +77,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       );
 
       checkAndEnqueueHooks(
-        conn,
+        db,
         context.rootValue.hooks,
         type.name,
         'afterUpdate',

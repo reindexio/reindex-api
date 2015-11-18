@@ -2,9 +2,7 @@ import { omit } from 'lodash';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
-import { getConnection, releaseConnection } from '../../dbConnections';
-import { getTypes } from '../simpleQueries';
-import { performMigration } from '../migrationQueries';
+import getDB from '../../../getDB';
 import {
   CreateType,
   CreateTypeData,
@@ -14,24 +12,25 @@ import {
   DeleteField,
   DeleteFieldData,
   UpdateFieldInfo,
-} from '../../migrations/commands';
-import assert from '../../../test/assert';
-import createApp from '../../../apps/createApp';
-import deleteApp from '../../../apps/deleteApp';
+} from '../../../../graphQL/migrations/commands';
+import { getTypes } from '../simpleQueries';
+import { performMigration } from '../migrationQueries';
+import assert from '../../../../test/assert';
 
-describe('Migration queries', () => {
+describe('RethinkDB: Migration queries', () => {
   const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
-  let dbName;
   let conn;
+  let db;
 
   before(async () => {
-    dbName = (await createApp(host)).dbName;
-    conn = await getConnection(dbName);
+    db = getDB(host, 'rethinkdb');
+    await db.createApp();
+    conn = await db.getConnection();
   });
 
   after(async () => {
-    await deleteApp(host);
-    await releaseConnection(conn);
+    await db.deleteApp();
+    await db.close();
   });
 
   it('creates types and table', async () => {

@@ -1,8 +1,8 @@
 import RethinkDB from 'rethinkdb';
 
-import { TIMESTAMP } from '../../graphQL/builtins/DateTime';
+import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
 import {
-  USER_TABLE,
+  USER_TABLE
 } from '../DBTableNames';
 import { queryWithIDs } from './queryUtils';
 

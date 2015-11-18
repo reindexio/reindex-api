@@ -3,13 +3,14 @@ import { fromJS, Map } from 'immutable';
 import RethinkDB from 'rethinkdb';
 
 import { getConnection, releaseConnection } from '../../dbConnections';
-import assert from '../../../test/assert';
-import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
+import assert from '../../../../test/assert';
+import injectDefaultFields
+  from '../../../../graphQL/builtins/injectDefaultFields';
 import {
   createTestDatabase,
   deleteTestDatabase,
   TEST_DATA,
-} from '../../../test/testDatabase';
+} from './testDatabase';
 import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
@@ -20,7 +21,7 @@ import * as queries from '../simpleQueries';
 import { queryWithIDs } from '../queryUtils';
 
 
-describe('Simple database queries', () => {
+describe('RethinkDB: Simple database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
 

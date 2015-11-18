@@ -1,9 +1,9 @@
 import RethinkDB from 'rethinkdb';
-import Config from '../server/Config';
+import Config from '../../server/Config';
 
 export function getConnection(db) {
   return RethinkDB.connect({
-    ...Config.get('RethinkDBPlugin'),
+    ...Config.get('RethinkDB'),
     db,
   });
 }

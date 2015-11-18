@@ -1,7 +1,6 @@
 import { GraphQLNonNull } from 'graphql';
 import { camelCase } from 'lodash';
 
-import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 
@@ -22,7 +21,7 @@ export default function createGet({ type }) {
       if (id.type !== type.name) {
         throw new Error(`Invalid ID`);
       }
-      const result = await getByID(context.rootValue.conn, id);
+      const result = await context.rootValue.db.getByID(id);
       checkPermission(type.name, 'read', result, context);
       return result;
     },

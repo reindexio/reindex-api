@@ -8,7 +8,7 @@ import {
   PERMISSION_TABLE,
   INDEX_TABLE,
   HOOK_TABLE,
-} from '../db/DBTableNames';
+} from '../../DBTableNames';
 
 export const TEST_DATA = fromJS({
   tables: {

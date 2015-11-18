@@ -1,197 +1,217 @@
-import { chain, get } from 'lodash';
-import RethinkDB from 'rethinkdb';
+import { get } from 'lodash';
 import uuid from 'uuid';
-import { graphql } from 'graphql';
 
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import { getMetadata } from '../db/queries/simpleQueries';
-import { PERMISSION_TABLE, TYPE_TABLE } from '../db/DBTableNames';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
-import { toReindexID } from '../graphQL/builtins/ReindexID';
-import assert from '../test/assert';
+import deleteApp from '../apps/deleteApp';
+import getDB from '../db/getDB';
+import { fromReindexID } from '../graphQL/builtins/ReindexID';
+
+import { TEST_SCHEMA } from '../test/fixtures';
 import {
-  createTestDatabase,
-  deleteTestDatabase,
-} from '../test/testDatabase';
+  makeRunQuery,
+  migrate,
+  createTestApp,
+  getTypesByName,
+  createFixture,
+  deleteFixture,
+} from '../test/testAppUtils';
 
+import assert from '../test/assert';
 
 describe('Permissions', () => {
-  const db = 'testdb' + uuid.v4().replace(/-/g, '_');
-  let conn;
+  const hostname = 'testdb_' + uuid.v4().replace(/-/g, '_') + '.example.com';
+  const db = getDB(hostname);
+  let runQuery;
   let typesByName;
 
-  function getTypeID(type) {
-    return {
-      type: 'ReindexType',
-      value: typesByName[type],
-    };
-  }
+  const fixtures = {
+    User: {},
+    Micropost: {},
+  };
 
   before(async function () {
-    conn = await getConnection(db);
-    await createTestDatabase(conn, db);
+    await createTestApp(hostname);
+    runQuery = makeRunQuery(db);
+    typesByName = await getTypesByName(db);
+
+    for (const handle of [
+      'vanilla',
+      'creator',
+      'banRead',
+      'micropost',
+    ]) {
+      fixtures.User[handle] = await createFixture(runQuery, 'User', {
+        handle,
+      }, 'id, handle');
+
+      fixtures.Micropost[handle] = [];
+      for (let i = 0; i < 5; i++) {
+        fixtures.Micropost[handle].push(
+          await createFixture(runQuery, 'Micropost', {
+            author: fixtures.User[handle].id,
+            text: `micropost-{i}`,
+            createdAt: '@TIMESTAMP',
+          }, `id`)
+        );
+      }
+    }
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, db);
-    await releaseConnection(conn);
+    await db.close();
+    await deleteApp(hostname);
   });
 
-  async function runQuery(query, credentials = {
-    isAdmin: false,
-    userID: null,
-  }, variables) {
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
-      credentials,
-    });
-    return await graphql(context.schema, query, context, variables);
-  }
-
   describe('type permissions', () => {
-    before(async () => {
-      const types = await RethinkDB
-        .db(db)
-        .table(TYPE_TABLE)
-        .coerceTo('array')
-        .run(conn);
-      typesByName = chain(types)
-        .groupBy((type) => type.name)
-        .mapValues((value) => value[0].id)
-        .value();
+    const permissions = [];
 
-      RethinkDB.db(db).table(PERMISSION_TABLE).insert([
+    before(async () => {
+      const defaultPermissions = (await runQuery(`{
+        viewer {
+          allReindexPermissions {
+            nodes {
+              id
+            }
+          }
+        }
+      }`)).data.viewer.allReindexPermissions.nodes;
+
+      for (const permission of defaultPermissions) {
+        await deleteFixture(runQuery, 'ReindexPermission', permission.id);
+      }
+
+      const permissionFixtures = [
         {
-          type: getTypeID('User'),
-          user: {
-            type: 'User',
-            value: 'creatorUser',
-          },
+          type: typesByName.User,
+          user: fixtures.User.creator.id,
           create: true,
           update: true,
           delete: false,
         },
         {
-          type: getTypeID('User'),
-          user: {
-            type: 'User',
-            value: 'banReadUser',
-          },
+          type: typesByName.User,
+          user: fixtures.User.banRead.id,
           read: false,
         },
         {
-          type: getTypeID('User'),
+          type: typesByName.User,
           user: null,
           read: true,
         },
         {
-          type: getTypeID('Micropost'),
-          user: {
-            type: 'User',
-            value: 'micropostReader',
-          },
+          type: typesByName.Micropost,
+          user: fixtures.User.micropost.id,
           read: true,
         },
         {
-          type: getTypeID('User'),
-          user: {
-            type: 'User',
-            value: 'micropostReader',
-          },
+          type: typesByName.User,
+          user: fixtures.User.micropost.id,
           read: false,
         },
-      ]).run(conn);
+      ];
+
+      for (const permission of permissionFixtures) {
+        permissions.push(
+          await createFixture(runQuery, 'ReindexPermission', permission, 'id')
+        );
+      }
     });
 
-    after(() => {
-      RethinkDB.db(db).table(PERMISSION_TABLE).delete().run(conn);
+    after(async () => {
+      for (const permission of permissions) {
+        await deleteFixture(runQuery, 'ReindexPermission', permission.id);
+      }
     });
 
     it('wildcard permissions', async () => {
-      const permission = await runQuery(`mutation createPermission {
-        createReindexPermission(input: {
-          read: true,
-          create: true,
-          update: true,
-          delete: true,
-        }) {
-          changedReindexPermission {
+      const permission = await createFixture(runQuery, 'ReindexPermission', {
+        read: true,
+        create: true,
+        update: true,
+        delete: true,
+      }, 'id', {
+        clearContext: true,
+      });
+
+      const micropost = fixtures.Micropost.creator[0];
+
+      assert.deepEqual(await runQuery(`
+        query node($id: ID!){
+          node(id: $id) {
             id
           }
+        }`, {
+          id: micropost.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(fixtures.User.vanilla.id),
+          },
         }
-      }`, {
-        isAdmin: true,
-      });
-
-      const permissionId = get(permission, [
-        'data', 'createReindexPermission', 'changedReindexPermission', 'id',
-      ]);
-
-      const id = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
-
-      assert.deepEqual(await runQuery(`{ node(id: "${id}") { id } }`), {
+      ), {
         data: {
           node: {
-            id,
+            id: micropost.id,
           },
         },
       });
 
-      assert.deepProperty(await runQuery(`mutation deletePermission {
-        deleteReindexPermission(input: {
-          id: "${permissionId}"
-        }) {
-          changedReindexPermission {
-            id
-          }
-        }
-      }`, {
-        isAdmin: true,
-      }), 'data.deleteReindexPermission.changedReindexPermission.id');
+      await deleteFixture(runQuery, 'ReindexPermission', permission.id, {
+        clearContext: true,
+      });
     });
 
     it('node uses permissions properly', async () => {
-      const id = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
-
-      assert.deepEqual(await runQuery(`{ node(id: "${id}") { id } }`), {
-        data: {
-          node: null,
-        },
-        errors: [
-          {
-            message: 'User lacks permissions to read records of type Micropost',
+      const micropost = fixtures.Micropost.creator[0];
+      assert.deepEqual(
+        await runQuery(`{ node(id: "${micropost.id}") { id } }`, {}, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(fixtures.User.vanilla.id),
           },
-        ],
-      });
+        }), {
+          data: {
+            node: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to read records of type Micropost'
+              ),
+            },
+          ],
+        }
+      );
 
-      const userID = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
-
-      assert.deepEqual(await runQuery(`{ node(id: "${userID}") { id } }`), {
+      const user = fixtures.User.creator;
+      assert.deepEqual(await runQuery(`{ node(id: "${user.id}") { id } }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.vanilla.id),
+        },
+      }), {
         data: {
           node: {
-            id: userID,
+            id: user.id,
           },
         },
       });
     });
 
     it('no one can read micropost', async () => {
-      const id = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
+      const micropost = fixtures.Micropost.creator[0];
 
-      assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`), {
+      assert.deepEqual(await runQuery(`{
+        micropostById(id: "${micropost.id}") {
+          id
+        }
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.vanilla.id),
+        },
+      }), {
         data: {
-          getMicropost: null,
+          micropostById: null,
         },
         errors: [
           {
@@ -202,67 +222,75 @@ describe('Permissions', () => {
     });
 
     it('admin has all permissions', async () => {
-      const id = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
+      const micropost = fixtures.Micropost.creator[0];
 
-      assert.deepEqual(await runQuery(`{ getMicropost(id: "${id}") { id } }`, {
-        isAdmin: true,
+      assert.deepEqual(await runQuery(`{
+        micropostById(id: "${micropost.id}") { id }
+      }`, {}, {
+        credentials: {
+          isAdmin: true,
+          userID: null,
+        },
       }), {
         data: {
-          getMicropost: {
-            id,
+          micropostById: {
+            id: micropost.id,
           },
         },
       });
     });
 
     it('anonymous can read user', async () => {
-      const id = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
+      const user = fixtures.User.vanilla;
 
-      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`), {
+      assert.deepEqual(await runQuery(`{
+        userById(id: "${user.id}") { id }
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+      }), {
         data: {
-          getUser: {
-            id,
+          userById: {
+            id: user.id,
           },
         },
       });
     });
 
     it('anonymous permissions propagate', async () => {
-      const id = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
+      const user = fixtures.User.vanilla;
 
-      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
-        isAdmin: false,
-        userID: 'creatorUser',
+      assert.deepEqual(await runQuery(`{
+        userById(id: "${user.id}") { id }
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.creator.id),
+        },
       }), {
         data: {
-          getUser: {
-            id,
+          userById: {
+            id: user.id,
           },
         },
       });
     });
 
     it('one of the users is forbidden from reading user', async () => {
-      const id = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
+      const user = fixtures.User.vanilla;
 
-      assert.deepEqual(await runQuery(`{ getUser(id: "${id}") { id } }`, {
-        isAdmin: false,
-        userID: 'banReadUser',
+      assert.deepEqual(await runQuery(`{
+        userById(id: "${user.id}") { id }
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.banRead.id),
+        },
       }), {
         data: {
-          getUser: null,
+          userById: null,
         },
         errors: [
           {
@@ -282,12 +310,14 @@ describe('Permissions', () => {
           }
         }
       `, {
-        isAdmin: false,
-        userID: 'creatorUser',
-      }, {
         input: {
           handle: 'immonenv',
           email: 'immonenv@example.com',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.creator.id),
         },
       });
 
@@ -314,12 +344,14 @@ describe('Permissions', () => {
           }
         }
       `, {
-        isAdmin: false,
-        userID: 'creatorUser',
-      }, {
         input: {
           id,
           handle: 'villeimmonen',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.creator.id),
         },
       });
 
@@ -344,11 +376,13 @@ describe('Permissions', () => {
           }
         }
       `, {
-        isAdmin: false,
-        userID: 'creatorUser',
-      }, {
         input: {
           id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.creator.id),
         },
       });
 
@@ -365,24 +399,24 @@ describe('Permissions', () => {
     });
 
     it('should check permissions on connections', async () => {
-      const id = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
+      const micropost = fixtures.Micropost.creator[0];
 
       assert.deepEqual(await runQuery(`{
-        getMicropost(id: "${id}") {
+        micropostById(id: "${micropost.id}") {
           id,
           author {
             id
           }
         }
-      }`, {
-        userID: 'micropostReader',
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.micropost.id),
+        },
       }), {
         data: {
-          getMicropost: {
-            id,
+          micropostById: {
+            id: micropost.id,
             author: null,
           },
         },
@@ -393,13 +427,10 @@ describe('Permissions', () => {
         ],
       });
 
-      const userID = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
+      const user = fixtures.User.creator;
 
       assert.deepEqual(await runQuery(`{
-        getUser(id: "${userID}") {
+        userById(id: "${user.id}") {
           id,
           microposts {
             nodes {
@@ -407,10 +438,15 @@ describe('Permissions', () => {
             }
           }
         }
-      }`), {
+      }`, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.vanilla.id),
+        },
+      }), {
         data: {
-          getUser: {
-            id: userID,
+          userById: {
+            id: user.id,
             microposts: null,
           },
         },
@@ -424,42 +460,51 @@ describe('Permissions', () => {
   });
 
   describe('connection permissions', () => {
-    before(() => RethinkDB
-      .db(db)
-      .table(TYPE_TABLE)
-      .filter({ name: 'Micropost' })
-      .update((obj) => ({
-        fields: obj('fields')
-          .filter((field) => field('name').ne('author'))
-          .append({
-            name: 'author',
-            type: 'User',
-            reverseName: 'microposts',
-            grantPermissions: {
-              read: true,
-              create: true,
-              update: true,
-              delete: true,
+    before(async () => {
+      const micropost = TEST_SCHEMA.find((type) => type.name === 'Micropost');
+      const micropostFields = micropost.fields.filter(
+        (field) => field.name !== 'author'
+      );
+      const rest = TEST_SCHEMA.filter((type) => type.name !== 'Micropost');
+      const newSchema = [
+        {
+          ...micropost,
+          fields: [
+            ...micropostFields,
+            {
+              name: 'author',
+              type: 'User',
+              reverseName: 'microposts',
+              grantPermissions: {
+                read: true,
+                create: true,
+                update: true,
+                delete: true,
+              },
             },
-          }),
-      }))
-      .run(conn)
-    );
+          ],
+        },
+        ...rest,
+      ];
+      await migrate(runQuery, newSchema);
+    });
 
     it('user can read himself', async () => {
-      const userID = toReindexID({
-        type: 'User',
-        value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-      });
+      const user = fixtures.User.vanilla;
 
       assert.deepEqual(await runQuery(`
         {
-          getUser(id: "${userID}") {
+          userById(id: "${user.id}") {
             id
           }
-        }`), {
+        }`, {}, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(fixtures.User.creator.id),
+          },
+        }), {
           data: {
-            getUser: null,
+            userById: null,
           },
           errors: [
             {
@@ -471,40 +516,42 @@ describe('Permissions', () => {
 
       assert.deepEqual(await runQuery(`
         {
-          getUser(id: "${userID}") {
+          userById(id: "${user.id}") {
             id
           }
         }
-      `, {
-        isAdmin: false,
-        userID: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
+      `, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
       }), {
         data: {
-          getUser: {
-            id: userID,
+          userById: {
+            id: user.id,
           },
         },
       });
     });
 
     it('can not to do stuff to microposts of other users', async () => {
-      const userID = '94b90d89-22b6-4abf-b6ad-2780bf9d0408';
-      const micropostID = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d82',
-      });
+      const user = fixtures.User.vanilla;
+      const micropost = fixtures.Micropost.creator[0];
 
       assert.deepEqual(await runQuery(`
         {
-          getMicropost(id: "${micropostID}") {
+          micropostById(id: "${micropost.id}") {
             id,
           }
         }
-      `, {
-        userID,
+      `, {}, {
+        credentials: {
+          isAdimn: false,
+          userID: fromReindexID(user.id),
+        },
       }), {
         data: {
-          getMicropost: null,
+          micropostById: null,
         },
         errors: [
           {
@@ -515,33 +562,29 @@ describe('Permissions', () => {
     });
 
     it('can read own microposts', async () => {
-      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
-      const id = toReindexID({
-        type: 'User',
-        value: userID,
-      });
-      const micropostID = toReindexID({
-        type: 'Micropost',
-        value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-      });
+      const user = fixtures.User.vanilla;
+      const micropost = fixtures.Micropost.vanilla[0];
 
       assert.deepEqual(await runQuery(`
         {
-          getMicropost(id: "${micropostID}") {
+          micropostById(id: "${micropost.id}") {
             id,
             author {
               id
             }
           }
         }
-      `, {
-        userID,
+      `, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
       }), {
         data: {
-          getMicropost: {
-            id: micropostID,
+          micropostById: {
+            id: micropost.id,
             author: {
-              id,
+              id: user.id,
             },
           },
         },
@@ -549,7 +592,7 @@ describe('Permissions', () => {
 
       assert.deepEqual(await runQuery(`
         {
-          getUser(id: "${id}") {
+          userById(id: "${user.id}") {
             id,
             microposts(orderBy: {field: "createdAt"}, first: 1)  {
               nodes {
@@ -558,16 +601,19 @@ describe('Permissions', () => {
             }
           }
         }
-      `, {
-        userID,
+      `, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
       }), {
         data: {
-          getUser: {
-            id,
+          userById: {
+            id: user.id,
             microposts: {
               nodes: [
                 {
-                  id: micropostID,
+                  id: micropost.id,
                 },
               ],
             },
@@ -577,11 +623,7 @@ describe('Permissions', () => {
     });
 
     it('can create оr update microposts only with self as user', async () => {
-      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
-      const id = toReindexID({
-        type: 'User',
-        value: userID,
-      });
+      const user = fixtures.User.vanilla;
 
       assert.deepEqual(await runQuery(`
         mutation createMicropost($input: _CreateMicropostInput!){
@@ -595,10 +637,13 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           clientMutationId: '',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -625,14 +670,16 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           clientMutationId: '',
-          author: id,
+          author: user.id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       });
-
 
       assert.deepEqual(result, {
         data: {
@@ -640,7 +687,7 @@ describe('Permissions', () => {
             changedMicropost: {
               id: result.data.createMicropost.changedMicropost.id,
               author: {
-                id,
+                id: user.id,
               },
             },
           },
@@ -661,15 +708,15 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           clientMutationId: '',
           id: micropostID,
-          author: toReindexID({
-            type: 'User',
-            id: 'someOtherId',
-          }),
+          author: fixtures.User.creator.id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -696,12 +743,15 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           clientMutationId: '',
           id: micropostID,
           text: 'foo',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -709,7 +759,7 @@ describe('Permissions', () => {
             changedMicropost: {
               id: micropostID,
               author: {
-                id,
+                id: user.id,
               },
             },
           },
@@ -728,11 +778,14 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           id: micropostID,
           text: 'foo',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -759,12 +812,15 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           id: micropostID,
           text: 'foozz',
-          author: id,
+          author: user.id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -772,7 +828,7 @@ describe('Permissions', () => {
             changedMicropost: {
               id: micropostID,
               author: {
-                id,
+                id: user.id,
               },
             },
           },
@@ -791,11 +847,14 @@ describe('Permissions', () => {
           }
         }
       `, {
-        userID,
-      }, {
         input: {
           clientMutationId: '',
           id: micropostID,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
@@ -803,7 +862,7 @@ describe('Permissions', () => {
             changedMicropost: {
               id: micropostID,
               author: {
-                id,
+                id: user.id,
               },
             },
           },
@@ -812,25 +871,18 @@ describe('Permissions', () => {
     });
 
     it('can not read posts of other users through connections', async () => {
-      const userID = 'bbd1db98-4ac4-40a7-b514-968059c3dbac';
-      const id = toReindexID({
-        type: 'User',
-        value: userID,
-      });
+      const user = fixtures.User.vanilla;
 
-      await RethinkDB
-        .db(db)
-        .table(PERMISSION_TABLE)
-        .insert({
-          type: getTypeID('User'),
-          user: null,
-          read: true,
-        })
-        .run(conn);
+      const permission = await createFixture(runQuery, 'ReindexPermission', {
+        type: typesByName.User,
+        read: true,
+      }, 'id', {
+        clearContext: true,
+      });
 
       assert.deepEqual(await runQuery(`
         {
-          getUser(id: "${id}") {
+          userById(id: "${user.id}") {
             id,
             microposts {
               nodes {
@@ -839,12 +891,15 @@ describe('Permissions', () => {
             }
           }
         }
-      `, {
-        userID: null,
+      `, {}, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User.creator.id),
+        },
       }), {
         data: {
-          getUser: {
-            id,
+          userById: {
+            id: user.id,
             microposts: null,
           },
         },
@@ -855,6 +910,10 @@ describe('Permissions', () => {
             ),
           },
         ],
+      });
+
+      await deleteFixture(runQuery, 'ReindexPermission', permission.id, {
+        clearContext: true,
       });
     });
   });

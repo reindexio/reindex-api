@@ -1,6 +1,5 @@
 import Cryptiles from 'cryptiles';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
-import { create } from '../../db/queries/mutationQueries';
 import checkPermission from '../permissions/checkPermission';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import formatMutationResult from './formatMutationResult';
@@ -32,7 +31,7 @@ export default function createCreateReindexSecret(typeSets) {
       context,
     ) {
       checkPermission('ReindexSecret', 'create', {}, context);
-      const result = await create(context.rootValue.conn, 'ReindexSecret', {
+      const result = await context.rootValue.db.create('ReindexSecret', {
         value: generateSecret(),
       });
       return formatMutationResult(clientMutationId, 'ReindexSecret', result);

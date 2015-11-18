@@ -4,32 +4,32 @@ import Promise from 'bluebird';
 import { randomString } from 'cryptiles';
 
 import assert from '../../test/assert';
-import { getConnection, releaseConnection } from '../../db/dbConnections';
-import databaseNameFromHostname from '../databaseNameFromHostname';
+import createApp from '../../apps/createApp';
+import deleteApp from '../../apps/deleteApp';
+import getDB from '../../db/getDB';
 import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
-import RethinkDBPlugin from '../RethinkDBPlugin';
-import {
-  createTestDatabase,
-  deleteTestDatabase,
-} from '../../test/testDatabase';
-import { toReindexID } from '../../graphQL/builtins/ReindexID';
+import DBPlugin from '../DBPlugin';
+import { toReindexID, fromReindexID } from '../../graphQL/builtins/ReindexID';
 
 describe('JWTAuthenticationScheme', () => {
-  const host = randomString(10) + '.example.com';
-  const db = databaseNameFromHostname(host);
-  const secret = 'secret';
-  let conn;
+  const host = 'test_' + randomString(10) + '.example.com';
+  const db = getDB(host);
   let server;
+  let secret;
+  let validToken;
+
+  const userID = toReindexID({ type: 'User', value: userID });
+  const now = Math.floor(new Date() / 1000);
+  const HOUR = 3600;
 
   before(async function () {
-    conn = await getConnection(db);
-    await createTestDatabase(conn, db);
+    ({ secret } = await createApp(host));
 
     server = new Hapi.Server();
     server.connection();
     const register = Promise.promisify(server.register, server);
 
-    await register(RethinkDBPlugin);
+    await register(DBPlugin);
     await register(JWTAuthenticationScheme);
     server.auth.strategy('token', 'jwt');
     server.route({
@@ -40,22 +40,18 @@ describe('JWTAuthenticationScheme', () => {
       },
       config: { auth: 'token' },
     });
+
+    validToken = JSONWebToken.sign({
+      sub: userID,
+      iat: now,
+      exp: now + 24 * HOUR,
+    }, secret);
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, db);
-    await releaseConnection(conn);
+    await db.close();
+    await deleteApp(host);
   });
-
-  const userID = '3c00d00d-e7d9-4cde-899f-e9c5d6400d87';
-  const now = Math.floor(new Date() / 1000);
-  const HOUR = 3600;
-
-  const validToken = JSONWebToken.sign({
-    sub: toReindexID({ type: 'User', value: userID }),
-    iat: now,
-    exp: now + 24 * HOUR,
-  }, secret);
 
   function makeRequest(headers) {
     const options = {
@@ -83,7 +79,7 @@ describe('JWTAuthenticationScheme', () => {
     assert.deepEqual(response.request.auth.credentials, {
       hostname: host,
       isAdmin: false,
-      userID,
+      userID: fromReindexID(userID),
     });
   });
 

@@ -2,7 +2,6 @@ import { graphql } from 'graphql';
 
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
 import Monitoring from '../../Monitoring';
-import { getMetadata } from '../../db/queries/simpleQueries';
 import { trackEvent } from '../../server/IntercomClient';
 
 async function handler(request, reply) {
@@ -14,10 +13,10 @@ async function handler(request, reply) {
     Monitoring.addCustomParameter('query', query);
     Monitoring.addCustomParameter('variables', variables);
 
-    const conn = await request.rethinkDBConnection;
+    const db = request.db;
     const credentials = request.auth.credentials;
 
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
+    const context = getGraphQLContext(db, await db.getMetadata(), {
       credentials,
     });
     const result = await graphql(context.schema, query, context, variables);

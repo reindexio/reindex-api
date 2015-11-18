@@ -24,7 +24,10 @@ describe('hasPermission', () => {
   describe('user is admin', () => {
     const credentials = {
       isAdmin: true,
-      userID: 'some-user-id',
+      userID: {
+        type: 'User',
+        value: 'some-user-id',
+      },
     };
 
     it('can do anything', () => {
@@ -46,13 +49,14 @@ describe('hasPermission', () => {
   });
 
   describe('user does stuff to himself', () => {
-    const credentials = {
-      isAdmin: false,
-      userID: 'some-user-id',
-    };
     const id = {
       type: 'User',
       value: 'some-user-id',
+    };
+
+    const credentials = {
+      isAdmin: false,
+      userID: id,
     };
 
     it('can only read and delete', () => {
@@ -86,7 +90,10 @@ describe('hasPermission', () => {
   describe('user has type permissions', () => {
     const credentials = {
       isAdmin: false,
-      userID: 'some-user-id',
+      userID: {
+        value: 'some-user-id',
+        type: 'User',
+      },
     };
     const anonymousCredentials = {
       isAdmin: false,
@@ -141,13 +148,13 @@ describe('hasPermission', () => {
   });
 
   describe('user has connection permissions', () => {
-    const credentials = {
-      isAdmin: false,
-      userID: 'some-user-id',
-    };
     const id = {
       type: 'User',
       value: 'some-user-id',
+    };
+    const credentials = {
+      isAdmin: false,
+      userID: id,
     };
     const connectionPermissions = {
       Post: [
