@@ -1,36 +1,43 @@
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import uuid from 'uuid';
 import { randomString } from 'cryptiles';
+import { graphql } from 'graphql';
 
-import assert from '../../test/assert';
-import { getConnection, releaseConnection } from '../../db/dbConnections';
+import getGraphQLContext from '../../graphQL/getGraphQLContext';
+import createApp from '../../apps/createApp';
+import deleteApp from '../../apps/deleteApp';
+import getDB from '../../db/getDB';
 import createServer from '../createServer';
-import databaseNameFromHostname from '../databaseNameFromHostname';
-import {
-  createTestDatabase,
-  deleteTestDatabase,
-} from '../../test/testDatabase';
-import { toReindexID } from '../../graphQL/builtins/ReindexID';
+import assert from '../../test/assert';
 
 describe('Server', () => {
-  const host = randomString(10) + '.example.com';
-  const db = databaseNameFromHostname(host);
-  const randomUserID = toReindexID({ type: 'User', value: uuid.v4() });
-  const randomSecret = 'secret';
-  const token = JSONWebToken.sign({
-    sub: randomUserID,
-    isAdmin: true,
-  }, randomSecret);
-  const query = `query seacrh {
-    getUser(id: "VXNlcjpiYmQxZGI5OC00YWM0LTQwYTctYjUxNC05NjgwNTljM2RiYWM") {
-      id,
-      handle,
+  const hostname = 'test_' + randomString(10) + '.example.com';
+  const db = getDB(hostname);
+  let server;
+  let token;
+  let userID;
+
+  const testQuery = `{
+    viewer {
+      user {
+        id
+      }
     }
   }`;
 
-  let conn;
-  let server;
+  async function runQuery(query, variables, credentials = {
+    isAdmin: true,
+    userID: null,
+  }) {
+    const context = getGraphQLContext(
+      db,
+      await db.getMetadata(),
+      {
+        credentials,
+      }
+    );
+    return await graphql(context.schema, query, context, variables);
+  }
 
   function makeRequest(options) {
     return new Promise((resolve) => server.inject(options, resolve));
@@ -38,16 +45,27 @@ describe('Server', () => {
 
   before(async function () {
     server = await createServer();
-  });
+    const { secret } = await createApp(hostname);
 
-  before(async function () {
-    conn = await getConnection(db);
-    await createTestDatabase(conn, db);
+    const userData = await runQuery(`
+      mutation user {
+        createUser(input: {}) {
+          id
+        }
+      }
+    `);
+
+    userID = userData.data.createUser.id;
+
+    token = JSONWebToken.sign({
+      sub: userID,
+      isAdmin: true,
+    }, secret);
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, db);
-    await releaseConnection(conn);
+    await db.close();
+    await deleteApp(hostname);
   });
 
   it('executes a GraphQL query', async function () {
@@ -55,19 +73,20 @@ describe('Server', () => {
       method: 'POST',
       url: '/graphql',
       payload: {
-        query,
+        query: testQuery,
       },
       headers: {
         authorization: `Bearer ${token}`,
-        host,
+        host: hostname,
       },
     });
     assert.strictEqual(response.statusCode, 200);
     assert.deepEqual(JSON.parse(response.result), {
       data: {
-        getUser: {
-          id: 'VXNlcjpiYmQxZGI5OC00YWM0LTQwYTctYjUxNC05NjgwNTljM2RiYWM',
-          handle: 'freiksenet',
+        viewer: {
+          user: {
+            id: userID,
+          },
         },
       },
     });
@@ -79,7 +98,7 @@ describe('Server', () => {
         method: 'POST',
         url: '/graphql',
         payload: {
-          query,
+          query: testQuery,
         },
         headers: {
           authorization: `Bearer ${token}`,

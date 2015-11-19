@@ -1,7 +1,6 @@
 import { GraphQLNonNull } from 'graphql';
 import { chain, capitalize, camelCase } from 'lodash';
 
-import { getByIndex } from '../../db/queries/simpleQueries';
 import checkPermission from '../permissions/checkPermission';
 
 export default function createGetByField({ type }) {
@@ -24,8 +23,7 @@ export default function createGetByField({ type }) {
         if (field.name === 'id' && value.type !== type.name) {
           throw new Error(`Invalid ID`);
         }
-        const result = await getByIndex(
-          context.rootValue.conn,
+        const result = await context.rootValue.db.getByIndex(
           type.name,
           context.rootValue.indexes[type.name],
           field.name,

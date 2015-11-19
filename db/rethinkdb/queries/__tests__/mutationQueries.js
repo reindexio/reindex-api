@@ -1,19 +1,19 @@
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
-import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
+import { TIMESTAMP } from '../../../../graphQL/builtins/DateTime';
 import { getConnection, releaseConnection } from '../../dbConnections';
 import { TYPE_TABLE } from '../../DBTableNames';
-import assert from '../../../test/assert';
+import assert from '../../../../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
-} from '../../../test/testDatabase';
+} from './testDatabase';
 import { getByID } from '../simpleQueries';
 import * as queries from '../mutationQueries';
 import { queryWithIDs } from '../queryUtils';
 
-describe('Mutatative database queries', () => {
+describe('RethinkDB: Mutatative database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
 

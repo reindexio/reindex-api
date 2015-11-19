@@ -1,67 +1,36 @@
-import { chain, get } from 'lodash';
+import { get } from 'lodash';
 import { promisify } from 'bluebird';
 import uuid from 'uuid';
 import Hapi from 'hapi';
-import RethinkDB from 'rethinkdb';
-import { graphql } from 'graphql';
 
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import { TYPE_TABLE } from '../db/DBTableNames';
-import { getMetadata } from '../db/queries/simpleQueries';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
-import { toReindexID } from '../graphQL/builtins/ReindexID';
-import assert from '../test/assert';
 import createApp from '../apps/createApp';
 import deleteApp from '../apps/deleteApp';
+import getDB from '../db/getDB';
+import { getTypesByName, makeRunQuery } from '../test/testAppUtils';
+import assert from '../test/assert';
 
 describe('Hooks', () => {
   const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
-  let dbName;
-  let conn;
+  const db = getDB(host);
+  let runQuery;
 
   let requests = [];
   const server = createTestServer(requests);
-
   let typesByName;
 
-  function getTypeID(type) {
-    return toReindexID({
-      type: 'ReindexType',
-      value: typesByName[type],
-    });
-  }
-
-  async function runQuery(query, variables, credentials = {
-    isAdmin: true,
-    userID: null,
-  }) {
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
-      credentials,
-    });
-    return await graphql(context.schema, query, context, variables);
-  }
-
-
   before(async () => {
-    dbName = (await createApp(host)).dbName;
-    conn = await getConnection(dbName);
+    await createApp(host);
     await server.start();
-
-    const types = await RethinkDB
-      .db(dbName)
-      .table(TYPE_TABLE)
-      .coerceTo('array')
-      .run(conn);
-    typesByName = chain(types)
-      .groupBy((type) => type.name)
-      .mapValues((value) => value[0].id)
-      .value();
+    runQuery = (query, variables) => makeRunQuery(db)(query, variables, {
+      newContext: true,
+    });
+    typesByName = await getTypesByName(db);
   });
 
   after(async () => {
-    await deleteApp(host);
-    await releaseConnection(conn);
     await server.stop();
+    await db.close();
+    await deleteApp(host);
   });
 
   it('Performs the hook', async () => {
@@ -76,7 +45,7 @@ describe('Hooks', () => {
       }
     `, {
       input: {
-        type: getTypeID('User'),
+        type: typesByName.User,
         trigger: 'afterCreate',
         url: 'http://localhost:8888',
         fragment: '{ id }',

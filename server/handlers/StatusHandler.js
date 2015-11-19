@@ -6,7 +6,7 @@ async function handler(request, reply) {
   Monitoring.setIgnoreTransaction(true);
 
   try {
-    await request.rethinkDBConnection;
+    await request.db.getConnection();
   } catch (e) {
     Monitoring.noticeError(e);
     return reply(Boom.serverTimeout());

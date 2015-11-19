@@ -12,12 +12,6 @@ import Monitoring from '../Monitoring';
 import escapeScriptJSON from './escapeScriptJSON';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 
-import {
-  getAuthenticationProvider,
-  getSecrets
-} from '../db/queries/simpleQueries';
-import { getOrCreateUser } from '../db/queries/mutationQueries';
-
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
 });
@@ -63,7 +57,7 @@ function renderCallbackPopup(reply, payload) {
 async function authenticate(request, reply) {
   request.isSocialLoginRequest = true;
   try {
-    const conn = await request.rethinkDBConnection;
+    const db = request.db;
     const providerName = request.params.provider;
     const bellProvider = getBellProvider(providerName);
     if (!bellProvider) {
@@ -74,8 +68,7 @@ async function authenticate(request, reply) {
       );
     }
 
-    const authenticationProvider = await getAuthenticationProvider(
-      conn,
+    const authenticationProvider = await db.getAuthenticationProvider(
       providerName,
     );
 
@@ -155,15 +148,15 @@ function normalizeCredentials(credentials) {
 
 async function handler(request, reply) {
   try {
-    const conn = await request.rethinkDBConnection;
+    const db = request.db;
     const { credentials } = request.auth;
 
     const { provider } = credentials;
     const credential = normalizeCredentials(credentials);
-    const dbUser = await getOrCreateUser(conn, provider, credential);
+    const dbUser = await db.getOrCreateUser(provider, credential);
     const user = { ...dbUser, id: toReindexID(dbUser.id) };
 
-    const secrets = await getSecrets(conn);
+    const secrets = await db.getSecrets();
     if (!secrets.length) {
       throw new Error('We are trying to sign a token but we have no secrets!');
     }

@@ -1,5 +1,4 @@
 import { GraphQLNonNull } from 'graphql';
-import { getByID } from '../../db/queries/simpleQueries';
 import ReindexID from '../builtins/ReindexID';
 import { isViewerID } from '../builtins/createViewer';
 import checkPermission from '../permissions/checkPermission';
@@ -46,7 +45,7 @@ query NodeExample {
           id,
         };
       }
-      const result = await getByID(context.rootValue.conn, id);
+      const result = await context.rootValue.db.getByID(id);
       checkPermission(id.type, 'read', result, context);
       return result;
     },

@@ -1,18 +1,10 @@
-import RethinkDB from 'rethinkdb';
+import getDB from '../db/getDB';
 
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import hostnameFromDatabaseName from '../server/hostnameFromDatabaseName';
-
-export default async function listApps() {
-  let conn;
+export default async function listApps(hostname) {
+  const db = getDB(hostname);
   try {
-    conn = await getConnection();
-    const dbList = await RethinkDB.dbList().run(conn);
-    return dbList
-      .filter((dbName) => /^reindex_/.test(dbName))
-      .map(hostnameFromDatabaseName)
-      .sort();
+    return await db.listApps();
   } finally {
-    await releaseConnection(conn);
+    db.close();
   }
 }

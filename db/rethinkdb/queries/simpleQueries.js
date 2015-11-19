@@ -1,6 +1,6 @@
 import RethinkDB from 'rethinkdb';
 
-import injectDefaultFields from '../../graphQL/builtins/injectDefaultFields';
+import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import {
   AUTHENTICATION_PROVIDER_TABLE,
   TYPE_TABLE,

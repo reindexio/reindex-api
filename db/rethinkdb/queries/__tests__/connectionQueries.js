@@ -3,16 +3,16 @@ import { fromJS, List, Range } from 'immutable';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
-import assert from '../../../test/assert';
+import assert from '../../../../test/assert';
 import {
   createTestDatabase,
   deleteTestDatabase,
-} from '../../../test/testDatabase';
+} from './testDatabase';
 import { getConnection, releaseConnection } from '../../dbConnections';
 import { getIndexes, getPageInfo } from '../simpleQueries';
 import { getConnectionQueries } from '../connectionQueries';
 
-describe('Connection database queries', () => {
+describe('RethinkDB: Connection database queries', () => {
   const db = 'testdb' + uuid.v4().replace(/-/g, '_');
   let conn;
 

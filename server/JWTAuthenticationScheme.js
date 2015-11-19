@@ -3,7 +3,6 @@ import JSONWebToken from 'jsonwebtoken';
 
 import Monitoring from '../Monitoring';
 import { fromReindexID } from '../graphQL/builtins/ReindexID';
-import { getSecrets } from '../db/queries/simpleQueries';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
 const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
@@ -42,11 +41,11 @@ async function authenticateAsync(request) {
   }
   const token = match[1];
 
-  const conn = await request.rethinkDBConnection;
+  const db = request.db;
 
   let secrets;
   try {
-    secrets = await getSecrets(conn);
+    secrets = await db.getSecrets();
   } catch (error) {
     if (error.name === 'ReqlOpFailedError' &&
         databaseDoesNotExistRegExp.test(error.msg)) {
@@ -72,9 +71,7 @@ async function authenticateAsync(request) {
     throw Boom.unauthorized();
   }
 
-  const userID = verifiedToken.sub ?
-    fromReindexID(verifiedToken.sub).value :
-    null;
+  const userID = verifiedToken.sub ? fromReindexID(verifiedToken.sub) : null;
 
   const credentials = {
     hostname,

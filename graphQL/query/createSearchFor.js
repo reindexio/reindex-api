@@ -1,4 +1,3 @@
-import { getConnectionQueries } from '../../db/queries/connectionQueries';
 import {
   createConnectionArguments,
 } from '../connections';
@@ -22,8 +21,7 @@ export default function createSearchFor(
     args: argDefs,
     resolve(parent, args, context) {
       checkPermission(type.name, 'read', {}, context);
-      return getConnectionQueries(
-        context.rootValue.conn,
+      return context.rootValue.db.getConnectionQueries(
         type.name,
         context.rootValue.indexes[type.name],
         {},

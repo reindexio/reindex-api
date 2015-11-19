@@ -1,19 +1,17 @@
 import { filter } from 'lodash';
 
-import { getByIndex } from '../../db/queries/simpleQueries';
-
 export default async function validate(
-  conn,
+  db,
   context,
   type,
   newObject,
   existingObject
 ) {
-  await validateUnique(conn, context, type, newObject, existingObject);
+  await validateUnique(db, context, type, newObject, existingObject);
 }
 
 async function validateUnique(
-  conn,
+  db,
   context,
   type,
   newObject,
@@ -27,8 +25,7 @@ async function validateUnique(
     )
   );
 
-  const uniqueChecks = await* uniqueFields.map((field) => getByIndex(
-    conn,
+  const uniqueChecks = await* uniqueFields.map((field) => db.getByIndex(
     type.name,
     context.rootValue.indexes[type.name],
     field.name,

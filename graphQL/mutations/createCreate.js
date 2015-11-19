@@ -2,7 +2,6 @@ import { omit } from 'lodash';
 
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 
-import { create } from '../../db/queries/mutationQueries';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
@@ -40,7 +39,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const conn = context.rootValue.conn;
+      const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['clientMutationId']);
 
@@ -52,13 +51,13 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       );
 
       await validate(
-        conn,
+        db,
         context,
         type,
         object
       );
 
-      const result = await create(conn, type.name, object);
+      const result = await db.create(type.name, object);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,
@@ -66,7 +65,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       );
 
       checkAndEnqueueHooks(
-        conn,
+        db,
         context.rootValue.hooks,
         type.name,
         'afterCreate',

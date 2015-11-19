@@ -10,7 +10,7 @@ import StatusHandler from './handlers/StatusHandler';
 import GraphQLHandler from './handlers/GraphQLHandler';
 import GraphiQLHandler from './handlers/GraphiQLHandler';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
-import RethinkDBPlugin from './RethinkDBPlugin';
+import DBPlugin from './DBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
 
 const loggingOptions = {
@@ -36,8 +36,7 @@ export default async function createServer() {
     await server.register(HapiRequireHttpsPlugin);
   }
   await server.register({
-    register: RethinkDBPlugin,
-    options: Config.get('RethinkDBPlugin'),
+    register: DBPlugin,
   });
   await server.register({
     register: SocialLoginPlugin,

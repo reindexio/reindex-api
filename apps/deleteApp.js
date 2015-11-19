@@ -1,15 +1,10 @@
-import RethinkDB from 'rethinkdb';
-
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import databaseNameFromHostname from '../server/databaseNameFromHostname';
+import getDB from '../db/getDB';
 
 export default async function deleteApp(hostname) {
-  const dbName = databaseNameFromHostname(hostname);
-  let conn;
+  const db = getDB(hostname);
   try {
-    conn = await getConnection();
-    return await RethinkDB.dbDrop(dbName).run(conn);
+    await db.deleteApp();
   } finally {
-    await releaseConnection(conn);
+    db.close();
   }
 }

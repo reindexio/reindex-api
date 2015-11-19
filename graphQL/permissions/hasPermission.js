@@ -11,7 +11,9 @@ export default function hasPermission(type, permission, object, {
     },
   },
 }) {
-  const { isAdmin, userID } = credentials;
+  const { isAdmin, userID: id } = credentials;
+  const userID = id && id.value;
+
   if (isAdmin) {
     return true;
   }

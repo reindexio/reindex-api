@@ -1,54 +1,119 @@
-import { get } from 'lodash';
+import { get, values, sortBy } from 'lodash';
 import uuid from 'uuid';
-import { graphql } from 'graphql';
 
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import { getMetadata } from '../db/queries/simpleQueries';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
-import { fromReindexID, toReindexID } from '../graphQL/builtins/ReindexID';
+import deleteApp from '../apps/deleteApp';
+import getDB from '../db/getDB';
+import { fromReindexID } from '../graphQL/builtins/ReindexID';
 import { toCursor } from '../graphQL/builtins/Cursor';
-import assert from '../test/assert';
 import {
-  createTestDatabase,
-  deleteTestDatabase,
-  TEST_DATA,
-} from '../test/testDatabase';
+  makeRunQuery,
+  createTestApp,
+  createFixture,
+} from '../test/testAppUtils';
+import assert from '../test/assert';
 
 describe('Integration Tests', () => {
-  const db = 'testdb' + uuid.v4().replace(/-/g, '_');
-  let conn;
+  const hostname = 'testdb_' + uuid.v4().replace(/-/g, '_') + '.example.com';
+  const db = getDB(hostname);
+  let runQuery;
+
+  const fixtures = {
+    User: {},
+    Micropost: {},
+    ReindexAuthenticationProvider: {},
+  };
 
   before(async function () {
-    conn = await getConnection(db);
-    return await createTestDatabase(conn, db);
+    await createTestApp(hostname);
+    runQuery = makeRunQuery(db);
+
+    const createdProvider = await createFixture(
+      runQuery,
+      'ReindexAuthenticationProvider',
+      {
+        type: 'github',
+        clientId: 'fakeClientId',
+        clientSecret: 'fakeClientSecret',
+        isEnabled: true,
+      },
+      'id, type, clientId, clientSecret, isEnabled,'
+    );
+
+    fixtures.ReindexAuthenticationProvider[
+      createdProvider.id
+    ] = createdProvider;
+
+    for (let i = 0; i < 2; i++) {
+      const createdUser = await createFixture(runQuery, 'User', {
+        handle: `user-${i}`,
+      }, 'id, handle');
+
+      fixtures.User[createdUser.id] = createdUser;
+    }
+
+    for (let i = 0; i < 20; i++) {
+      const createdMicropost = await createFixture(runQuery, 'Micropost', {
+        text: `micropost-${i}`,
+        createdAt: '@TIMESTAMP',
+        author: values(fixtures.User)[0].id,
+        tags: [`tag-${i}`, `tag-${i + 1}`],
+        mainCategory: {
+          name: `category-${i}`,
+        },
+        categories: [
+          {
+            name: `category-${i}`,
+          },
+          {
+            name: `category-${i + 1}`,
+          },
+        ],
+      }, `
+        id,
+        text,
+        createdAt,
+        author {
+          id
+        },
+        tags,
+        categories {
+          name
+        },
+        mainCategory {
+          name
+        },
+      `);
+
+      fixtures.Micropost[createdMicropost.id] = createdMicropost;
+    }
   });
 
   after(async function () {
-    await deleteTestDatabase(conn, db);
-    await releaseConnection(conn);
+    await db.close();
+    await deleteApp(hostname);
   });
 
-  async function runQuery(query, variables, credentials = {
-    isAdmin: true,
-    userID: null,
-  }) {
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
-      credentials,
-    });
-    return await graphql(context.schema, query, context, variables);
-  }
-
   it('queries with node', async function() {
-    const id = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
+    const micropost = values(fixtures.Micropost)[0];
+    const id = micropost.id;
 
     const result = await runQuery(`
       query nodetest($id: ID!) {
         node(id: $id) {
+          id,
           ... on Micropost {
-            text
+            text,
+            createdAt,
+            author {
+              id
+            }
+            tags,
+            categories {
+              name
+            },
+            mainCategory {
+              name
+            },
           }
         }
       }
@@ -58,23 +123,23 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(result, {
       data: {
-        node: {
-          text: 'Test text',
-        },
+        node: micropost,
       },
     });
 
-    const builtinID = toReindexID({
-      type: 'ReindexAuthenticationProvider',
-      value: 'f2f7fb49-3581-4eou-b84b-e9489eb47d80',
-    });
+    const authProvider = values(fixtures.ReindexAuthenticationProvider)[0];
+
+    const builtinID = authProvider.id;
 
     const builtinResult = await runQuery(`
       query nodetest($id: ID!) {
         node(id: $id) {
+          id
           ... on ReindexAuthenticationProvider {
             type,
-            isEnabled
+            isEnabled,
+            clientId,
+            clientSecret,
           }
         }
       }
@@ -84,19 +149,14 @@ describe('Integration Tests', () => {
 
     assert.deepEqual(builtinResult, {
       data: {
-        node: {
-          type: 'github',
-          isEnabled: true,
-        },
+        node: authProvider,
       },
     });
   });
 
   it('queries by id', async function() {
-    const micropostId = toReindexID({
-      type: 'Micropost',
-      value: 'f2f7fb49-3581-4caa-b84b-e9489eb47d84',
-    });
+    const micropost = values(fixtures.Micropost)[0];
+    const micropostId = micropost.id;
     const micropostResult = await runQuery(`{
       micropostById(id: "${micropostId}") {
         text,
@@ -112,19 +172,20 @@ describe('Integration Tests', () => {
       data: {
         micropostById: {
           beautifulPerson: {
-            nickname: 'freiksenet',
+            nickname: 'user-0',
           },
-          createdAt: '2015-04-10T10:24:52.163Z',
-          text: 'Test text',
-          tags: [],
+          createdAt: micropost.createdAt,
+          text: micropost.text,
+          tags: micropost.tags,
         },
       },
     });
 
-    const userId = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
+    const user = values(fixtures.User)[0];
+    const firstMicropost = sortBy(values(fixtures.Micropost),
+      (post) => post.createdAt
+    )[0];
+    const userId = user.id;
 
     const userResult = await runQuery(`
       query userById($id: ID!) {
@@ -149,18 +210,18 @@ describe('Integration Tests', () => {
     assert.deepEqual(userResult, {
       data: {
         userById: {
-          handle: 'freiksenet',
+          handle: user.handle,
           posts: {
-            count: 7,
+            count: 20,
             nodes: [
               {
-                createdAt: '2015-04-10T10:24:52.163Z',
-                text: 'Test text',
+                createdAt: firstMicropost.createdAt,
+                text: firstMicropost.text,
               },
             ],
           },
           microposts: {
-            count: 7,
+            count: 20,
           },
         },
       },
@@ -170,7 +231,7 @@ describe('Integration Tests', () => {
   it('queries through unique fields', async () => {
     const result = await runQuery(`
       {
-        userByHandle(handle: "freiksenet") {
+        userByHandle(handle: "user-0") {
           handle
         }
       }`
@@ -179,7 +240,7 @@ describe('Integration Tests', () => {
     assert.deepEqual(result, {
       data: {
         userByHandle: {
-          handle: 'freiksenet',
+          handle: 'user-0',
         },
       },
     });
@@ -198,24 +259,32 @@ describe('Integration Tests', () => {
   });
 
   it('queries viewer for user', async function () {
-    const user = TEST_DATA.getIn(['tables', 'User', 0]).toJS();
-    const credentials = { isAdmin: true, userID: user.id };
+    const user = values(fixtures.User)[0];
+    const credentials = { isAdmin: true, userID: fromReindexID(user.id) };
     assert.deepEqual(
-      await runQuery(`{ viewer { user { handle } } }`, null, credentials),
+      await runQuery(`{ viewer { user { handle } } }`, null, { credentials }),
       { data: { viewer: { user: { handle: user.handle } } } }
     );
   });
 
   it('queries viewer list', async function() {
+    const microposts = sortBy(
+      values(fixtures.Micropost), (post) => post.createdAt
+    ).map((post) => ({
+      text: post.text,
+    }));
     assert.deepEqual(
       await runQuery(`{
         viewer {
           allReindexTypes {
             count
           }
-          allMicroposts(first: 1) {
+          allMicroposts(first: 20, orderBy: {
+            field: "createdAt",
+            order: ASC
+           }) {
             nodes {
-              text
+              text,
             }
           }
         }
@@ -227,11 +296,7 @@ describe('Integration Tests', () => {
               count: 3,
             },
             allMicroposts: {
-              nodes: [
-                {
-                  text: 'Test text 4',
-                },
-              ],
+              nodes: microposts,
             },
           },
         },
@@ -240,10 +305,9 @@ describe('Integration Tests', () => {
   });
 
   it('works with edges and cursor', async function () {
-    const userId = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
+    const user = values(fixtures.User)[0];
+    const micropost = values(fixtures.Micropost)[0];
+    const userId = user.id;
 
     const result = await runQuery(`
       {
@@ -266,7 +330,7 @@ describe('Integration Tests', () => {
             edges: [
               {
                 node: {
-                  text: 'Test text',
+                  text: micropost.text,
                 },
               },
             ],
@@ -441,10 +505,8 @@ describe('Integration Tests', () => {
   });
 
   it('saves connections correctly', async function() {
-    const authorID = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
+    const author = values(fixtures.User)[0];
+    const authorID = author.id;
     const micropost = {
       text: 'Sample text',
       createdAt: '2014-05-12T18:00:00.000Z',
@@ -491,10 +553,9 @@ describe('Integration Tests', () => {
   });
 
   it('validates uniqueness', async () => {
-    const id = toReindexID({
-      type: 'User',
-      value: 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
-    });
+    const user1 = values(fixtures.User)[0];
+    const user2 = values(fixtures.User)[1];
+    const id = user1.id;
 
     let result = await runQuery(`
       mutation createDuplicateUser($input: _CreateUserInput!) {
@@ -506,7 +567,7 @@ describe('Integration Tests', () => {
       }
     `, {
       input: {
-        handle: 'freiksenet',
+        handle: user2.handle,
       },
     });
 
@@ -516,7 +577,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got "freiksenet"',
+          message: `User.handle: value must be unique, got "${user2.handle}"`,
         },
       ],
     });
@@ -532,7 +593,7 @@ describe('Integration Tests', () => {
     `, {
       input: {
         id,
-        handle: 'fson',
+        handle: user2.handle,
       },
     });
 
@@ -542,7 +603,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got "fson"',
+          message: `User.handle: value must be unique, got "${user2.handle}"`,
         },
       ],
     });
@@ -558,7 +619,7 @@ describe('Integration Tests', () => {
     `, {
       input: {
         id,
-        handle: 'fson',
+        handle: user2.handle,
       },
     });
 
@@ -568,7 +629,7 @@ describe('Integration Tests', () => {
       },
       errors: [
         {
-          message: 'User.handle: value must be unique, got "fson"',
+          message: `User.handle: value must be unique, got "${user2.handle}"`,
         },
       ],
     });
@@ -584,7 +645,7 @@ describe('Integration Tests', () => {
     `, {
       input: {
         id,
-        handle: 'freiksenet',
+        handle: user1.handle,
       },
     });
 
@@ -592,7 +653,7 @@ describe('Integration Tests', () => {
       data: {
         updateUser: {
           changedUser: {
-            handle: 'freiksenet',
+            handle: user1.handle,
           },
         },
       },

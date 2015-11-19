@@ -1,10 +1,7 @@
-import { difference } from 'lodash';
 import uuid from 'uuid';
-import RethinkDB from 'rethinkdb';
 import { graphql } from 'graphql';
 
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import { getMetadata } from '../db/queries/simpleQueries';
+import getDB from '../db/getDB';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
 import assert from '../test/assert';
 import createApp from '../apps/createApp';
@@ -12,21 +9,19 @@ import deleteApp from '../apps/deleteApp';
 
 describe('Migrations', () => {
   const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
-  let dbName;
-  let conn;
+  const db = getDB(host);
 
   before(async () => {
-    dbName = (await createApp(host)).dbName;
-    conn = await getConnection(dbName);
+    await createApp(host);
   });
 
   after(async () => {
+    await db.close();
     await deleteApp(host);
-    await releaseConnection(conn);
   });
 
   async function runMigration(input) {
-    const context = getGraphQLContext(conn, await getMetadata(conn), {
+    const context = getGraphQLContext(db, await db.getMetadata(), {
       credentials: {
         isAdmin: true,
         userID: 'admin',
@@ -172,10 +167,6 @@ describe('Migrations', () => {
         },
       },
     });
-
-    const tables = await RethinkDB.tableList().run(conn);
-    assert(difference(['User', 'Micropost'], tables),
-      'Both tables are created');
   });
 
   it('requires force to migrate with destructive operations', async () => {

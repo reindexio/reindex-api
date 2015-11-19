@@ -5,9 +5,9 @@ import {
   GraphQLInputObjectType,
   GraphQLNonNull,
 } from 'graphql';
-import validateSchema from '../../db/migrations/validateSchema';
-import buildSchemaMigration from '../../db/migrations/buildSchemaMigration';
-import { performMigration } from '../../db/queries/migrationQueries';
+import validateSchema from '../../graphQL/migrations/validateSchema';
+import buildSchemaMigration from
+  '../../graphQL/migrations/buildSchemaMigration';
 import createInputObjectFields from '../createInputObjectFields';
 import checkPermission from '../permissions/checkPermission';
 import clientMutationIdField from '../utilities/clientMutationIdField';
@@ -86,7 +86,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
       },
     },
     async resolve(parent, { input }, context) {
-      const conn = context.rootValue.conn;
+      const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
 
       checkPermission(
@@ -124,7 +124,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
             isExecuted: false,
           };
         } else {
-          await performMigration(conn, commands);
+          await db.performMigration(commands);
           return {
             clientMutationId,
             commands,

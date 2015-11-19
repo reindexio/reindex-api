@@ -4,7 +4,6 @@ import checkPermission from '../permissions/checkPermission';
 import createSearchFor from '../query/createSearchFor';
 import ReindexID, { ID } from './ReindexID';
 import { getIntercomSettings } from './IntercomSettings';
-import { getByID } from '../../db/queries/simpleQueries';
 
 export default function createViewer(typeSets, interfaces) {
   const allObjectsFields = typeSets
@@ -46,10 +45,7 @@ of the type.
           if (!userID) {
             return null;
           }
-          const result = await getByID(
-            context.rootValue.conn,
-            new ID({ type: 'User', value: userID }),
-          );
+          const result = await context.rootValue.db.getByID(userID);
           checkPermission('User', 'read', result, context);
           return result;
         },

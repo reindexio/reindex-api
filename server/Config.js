@@ -3,6 +3,8 @@ import Path from 'path';
 import convict from 'convict';
 import Cryptiles from 'cryptiles';
 
+import DatabaseTypes from '../db/DatabaseTypes';
+
 const Config = convict({
   connection: {
     port: {
@@ -38,7 +40,14 @@ const Config = convict({
       format: String,
     },
   },
-  RethinkDBPlugin: {
+  Database: {
+    type: {
+      default: DatabaseTypes.RethinkDB,
+      doc: 'Database engine to use. Possible values in db/DatabaseTypes.js.',
+      format: String,
+    },
+  },
+  RethinkDB: {
     authKey: {
       default: undefined,
       doc: 'The RethinkDB authentication key',
