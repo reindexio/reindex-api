@@ -1,10 +1,8 @@
 import getDB from '../db/getDB';
 
-function makeRequestHandler() {
-  return function openConnection(request, reply) {
-    request.db = getDB(request.info.hostname);
-    reply.continue();
-  };
+function onRequest(request, reply) {
+  request.db = getDB(request.info.hostname);
+  reply.continue();
 }
 
 async function close(request) {
@@ -12,13 +10,13 @@ async function close(request) {
 }
 
 function register(server, options, next) {
-  server.ext('onRequest', makeRequestHandler());
+  server.ext('onRequest', onRequest);
   server.on('tail', close);
   next();
 }
 
 register.attributes = {
-  name: 'RethinkDBPlugin',
+  name: 'DBPlugin',
 };
 
 const DBPlugin = { register };

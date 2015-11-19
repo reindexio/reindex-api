@@ -1,6 +1,6 @@
 import { forEach, merge } from 'lodash';
 
-import databaseNameFromHostname from '../../server/databaseNameFromHostname';
+import databaseNameFromHostname from './databaseNameFromHostname';
 
 import { getConnection, releaseConnection } from './dbConnections';
 import * as simpleQueries from './queries/simpleQueries';
@@ -13,13 +13,6 @@ export default class RethinkDBClient {
   constructor(hostname) {
     this.hostname = hostname;
     this.dbName = databaseNameFromHostname(hostname);
-  }
-
-  setDbName(dbName) {
-    if (this.conn) {
-      this.conn.use(dbName);
-    }
-    this.dbName = dbName;
   }
 
   async getConnection() {

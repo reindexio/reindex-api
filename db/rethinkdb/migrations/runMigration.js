@@ -1,6 +1,9 @@
-import listApps from '../apps/listApps';
-import { getConnection, releaseConnection } from '../db/dbConnections';
-import databaseNameFromHostname from '../server/databaseNameFromHostname';
+import { listApps } from '../queries/appQueries';
+import {
+  getConnection,
+  releaseConnection
+} from '../dbConnections';
+import databaseNameFromHostname from '../databaseNameFromHostname';
 
 /**
  * Tool for running multiple RethinkDB queries against all apps. To be used for
@@ -17,11 +20,11 @@ import databaseNameFromHostname from '../server/databaseNameFromHostname';
  * and description inside in comments.
  **/
 export default async function runMigration(queries) {
-  const apps = await listApps();
   let conn;
-  console.log('Running migrations.');
   try {
     conn = await getConnection();
+    const apps = await listApps(conn);
+    console.log('Running migrations.');
     for (const app of apps) {
       console.log(`Migrating ${app}...`);
       await migrateApp(conn, app, queries);

@@ -1,13 +1,10 @@
 import Config from '../server/Config';
-import RethinkDBClient from './rethinkdb';
-
-export const DATABASE_TYPES = [
-  'rethinkdb',
-];
+import DatabaseTypes from './DatabaseTypes';
+import RethinkDBClient from './rethinkdb/RethinkDBClient';
 
 export default function getDB(hostname, databaseType) {
   databaseType = databaseType || Config.get('Database.type');
-  if (databaseType === 'rethinkdb') {
+  if (databaseType === DatabaseTypes.RethinkDB) {
     return new RethinkDBClient(hostname);
   }
 }

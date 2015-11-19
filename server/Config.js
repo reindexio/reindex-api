@@ -3,6 +3,8 @@ import Path from 'path';
 import convict from 'convict';
 import Cryptiles from 'cryptiles';
 
+import DatabaseTypes from '../db/DatabaseTypes';
+
 const Config = convict({
   connection: {
     port: {
@@ -40,8 +42,8 @@ const Config = convict({
   },
   Database: {
     type: {
-      default: 'rethinkdb',
-      doc: 'Database engine to use. Possible values: "rethinkdb".',
+      default: DatabaseTypes.RethinkDB,
+      doc: 'Database engine to use. Possible values in db/DatabaseTypes.js.',
       format: String,
     },
   },
@@ -73,38 +75,6 @@ const Config = convict({
       format: String,
     },
   },
-  AWS: {
-    DynamoDBEndpoint: {
-      default: 'localhost:7777',
-      doc: 'AWS region endpoint',
-      env: 'DYNAMODB_ENDPOINT',
-    },
-    DynamoDBRootStorage: {
-      default: 'reindex_kv',
-      doc: 'table name for root k/v storage',
-      env: 'DYNAMODB_ROOT_STORAGE',
-    },
-    DynamoDBTypeIndex: {
-      default: 'reindex_typeindex',
-      doc: 'name of index for types',
-      env: 'DYNAMODB_TYPE_INDEX_NAME',
-    },
-    DynamoDBIndexTable: {
-      default: 'reindex_indexes',
-      doc: 'name for index table',
-      env: 'DYNAMODB_INDEX_TABLE',
-    },
-    accessKeyId: {
-      default: undefined,
-      doc: 'AWS Access Key Id',
-      env: 'AWS_ACCESS_KEY',
-    },
-    accessKeySecret: {
-      default: undefined,
-      doc: 'AWS Access Key Secret',
-      env: 'AWS_SECRET_KEY',
-    },
-  },
 });
 
 Config.load({}).validate();
@@ -120,18 +90,6 @@ Config.resetTestConfig = function() {
   Config.set(
     'SocialLoginPlugin.cookiePassword',
     Config.default('SocialLoginPlugin.cookiePassword')
-  );
-  Config.set(
-    'AWS.DynamoDBEndpoint',
-    Config.default('AWS.DynamoDBEndpoint'),
-  );
-  Config.set(
-    'AWS.accessKeyId',
-    undefined,
-  );
-  Config.set(
-    'AWS.accessKeySecret',
-    undefined
   );
   Config.validate();
 };

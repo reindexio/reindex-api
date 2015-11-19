@@ -3,7 +3,7 @@ import { values } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import JSONWebToken from 'jsonwebtoken';
 
-import hostnameFromDatabaseName from '../../../server/hostnameFromDatabaseName';
+import hostnameFromDatabaseName from '../hostnameFromDatabaseName';
 import * as DBTableNames from '../DBTableNames';
 import { getSecrets } from './simpleQueries';
 
@@ -40,7 +40,6 @@ export async function createApp(conn, dbName) {
   const secret = await createSecret(conn);
 
   return {
-    dbName,
     secret,
   };
 }

@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 import uuid from 'uuid';
 import RethinkDB from 'rethinkdb';
 
+import DatabaseTypes from '../../../DatabaseTypes';
 import getDB from '../../../getDB';
 import {
   CreateType,
@@ -23,7 +24,7 @@ describe('RethinkDB: Migration queries', () => {
   let db;
 
   before(async () => {
-    db = getDB(host, 'rethinkdb');
+    db = getDB(host, DatabaseTypes.RethinkDB);
     await db.createApp();
     conn = await db.getConnection();
   });

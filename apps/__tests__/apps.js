@@ -2,14 +2,11 @@ import uuid from 'uuid';
 import JSONWebToken from 'jsonwebtoken';
 
 import assert from '../../test/assert';
-import databaseNameFromHostname from '../../server/databaseNameFromHostname';
 
 import createApp from '../createApp';
 import createToken from '../createToken';
 import hasApp from '../hasApp';
 import deleteApp from '../deleteApp';
-
-
 
 describe('Application management', () => {
   it('creates, deletes and checks existance of the app.', async () => {
@@ -22,7 +19,6 @@ describe('Application management', () => {
     assert.deepEqual(appInfo, {
       secret: appInfo.secret,
       hostname: host,
-      dbName: databaseNameFromHostname(host),
     }, 'valid app is created');
 
     assert(await hasApp(host), 'app is there now');
