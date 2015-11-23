@@ -1,7 +1,7 @@
 import { forEach, merge } from 'lodash';
 
 import databaseNameFromHostname from './databaseNameFromHostname';
-
+import Metrics from '../../server/Metrics';
 import { getConnection, releaseConnection } from './dbConnections';
 import * as simpleQueries from './queries/simpleQueries';
 import * as mutationQueries from './queries/mutationQueries';
@@ -36,6 +36,7 @@ forEach(merge(
 ), (query, name) => {
   RethinkDBClient.prototype[name] = async function(...args) {
     const conn = await this.getConnection();
+    Metrics.increment('rethinkdb.queries', 1, this.hostname);
     return query(conn, ...args);
   };
 });
@@ -44,11 +45,13 @@ forEach(appQueries, (query, name) => {
   if (name === 'createToken') {
     RethinkDBClient.prototype[name] = async function(...args) {
       const conn = await this.getConnection();
+      Metrics.increment('rethinkdb.queries', 1, this.hostname);
       return query(conn, ...args);
     };
   } else {
     RethinkDBClient.prototype[name] = async function(...args) {
       const conn = await this.getConnection();
+      Metrics.increment('rethinkdb.queries', 1, this.hostname);
       return query(conn, this.dbName, ...args);
     };
   }

@@ -1,8 +1,9 @@
 import { graphql } from 'graphql';
 
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
+import Metrics from '../Metrics';
 import Monitoring from '../../Monitoring';
-import { trackEvent } from '../../server/IntercomClient';
+import { trackEvent } from '../IntercomClient';
 
 async function handler(request, reply) {
   try {
@@ -37,6 +38,8 @@ async function handler(request, reply) {
     if (result.errors) {
       Monitoring.addCustomParameter('errors', result.errors);
     }
+
+    Metrics.increment('graphql.requests', 1, request.db.hostname);
 
     reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
