@@ -81,9 +81,9 @@ Config.load({}).validate();
 
 Config.resetTestConfig = function() {
   Config.set('connection.port', 5000);
-  Config.set('RethinkDBPlugin.authKey', undefined);
-  Config.set('RethinkDBPlugin.host', 'localhost');
-  Config.set('RethinkDBPlugin.port', 28015);
+  Config.set('RethinkDB.authKey', undefined);
+  Config.set('RethinkDB.host', 'localhost');
+  Config.set('RethinkDB.port', 28015);
   Config.set('Intercom.appId', undefined);
   Config.set('Intercom.appApiKey', undefined);
   Config.set('Intercom.secretKey', undefined);
