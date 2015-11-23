@@ -67,6 +67,32 @@ const Config = convict({
       format: 'port',
     },
   },
+  RethinkDB2: {
+    authKey: {
+      default: undefined,
+      doc: 'The RethinkDB authentication key',
+      env: 'RETHINKDB2_AUTH_KEY',
+      format: String,
+    },
+    databases: {
+      default: [],
+      doc: 'Database names for this cluster',
+      env: 'RETHINKDB2_DATABASES',
+      format: Array,
+    },
+    host: {
+      default: 'localhost',
+      doc: 'The host of RethinkDB to connect to.',
+      env: 'RETHINKDB2_HOST',
+      format: String,
+    },
+    port: {
+      default: 28015,
+      doc: 'The port of RethinkDB to connect to.',
+      env: 'RETHINKDB2_PORT',
+      format: 'port',
+    },
+  },
   SocialLoginPlugin: {
     cookiePassword: {
       default: Cryptiles.randomString(40),
