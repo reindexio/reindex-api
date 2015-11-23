@@ -1,1 +1,1 @@
-web: bash bin/tunnel.sh && node index.js
+web: bash bin/tunnel.sh && bash bin/tunnel2.sh && node index.js
