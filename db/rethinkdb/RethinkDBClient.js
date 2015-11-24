@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { forEach, merge } from 'lodash';
 
 import databaseNameFromHostname from './databaseNameFromHostname';
@@ -11,8 +12,13 @@ import * as appQueries from './queries/appQueries';
 
 export default class RethinkDBClient {
   constructor(hostname) {
-    this.hostname = hostname;
-    this.dbName = databaseNameFromHostname(hostname);
+    if (hostname) {
+      this.hostname = hostname;
+      this.dbName = databaseNameFromHostname(hostname);
+    } else {
+      this.hostname = null;
+      this.dbName = null;
+    }
   }
 
   async getConnection() {
@@ -35,6 +41,7 @@ forEach(merge(
   migrationQueries,
 ), (query, name) => {
   RethinkDBClient.prototype[name] = async function(...args) {
+    assert(this.hostname, 'Hostname must be defined.');
     const conn = await this.getConnection();
     Metrics.increment('rethinkdb.queries', 1, this.hostname);
     return query(conn, ...args);
@@ -42,16 +49,21 @@ forEach(merge(
 });
 
 forEach(appQueries, (query, name) => {
-  if (name === 'createToken') {
+  if (name === 'listApps') {
     RethinkDBClient.prototype[name] = async function(...args) {
       const conn = await this.getConnection();
-      Metrics.increment('rethinkdb.queries', 1, this.hostname);
+      return query(conn, ...args);
+    };
+  } else if (name === 'createToken') {
+    RethinkDBClient.prototype[name] = async function(...args) {
+      assert(this.hostname, 'Hostname must be defined.');
+      const conn = await this.getConnection();
       return query(conn, ...args);
     };
   } else {
     RethinkDBClient.prototype[name] = async function(...args) {
+      assert(this.hostname, 'Hostname must be defined.');
       const conn = await this.getConnection();
-      Metrics.increment('rethinkdb.queries', 1, this.hostname);
       return query(conn, this.dbName, ...args);
     };
   }
