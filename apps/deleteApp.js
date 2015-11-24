@@ -5,6 +5,6 @@ export default async function deleteApp(hostname) {
   try {
     await db.deleteApp();
   } finally {
-    db.close();
+    await db.close();
   }
 }

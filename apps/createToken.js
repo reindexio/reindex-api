@@ -1,10 +1,10 @@
 import getDB from '../db/getDB';
 
-export default function createToken(hostname, params) {
+export default async function createToken(hostname, params) {
   const db = getDB(hostname);
   try {
-    return db.createToken(params);
+    return await db.createToken(params);
   } finally {
-    db.close();
+    await db.close();
   }
 }
