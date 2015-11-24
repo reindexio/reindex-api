@@ -2,7 +2,7 @@ import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
 
 import checkPermission from '../permissions/checkPermission';
 import createSearchFor from '../query/createSearchFor';
-import ReindexID, { ID } from './ReindexID';
+import ReindexID from './ReindexID';
 import { getIntercomSettings } from './IntercomSettings';
 
 export default function createViewer(typeSets, interfaces) {
@@ -61,10 +61,10 @@ of the type.
   });
 }
 
-export const VIEWER_ID = new ID({
+export const VIEWER_ID = {
   type: 'ReindexViewer',
   value: 'viewer',
-});
+};
 
 export function isViewerID(id) {
   return (

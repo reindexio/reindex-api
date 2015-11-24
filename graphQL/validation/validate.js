@@ -25,11 +25,11 @@ async function validateUnique(
     )
   );
 
-  const uniqueChecks = await* uniqueFields.map((field) => db.getByIndex(
+  const uniqueChecks = await* uniqueFields.map((field) => db.getByField(
     type.name,
-    context.rootValue.indexes[type.name],
     field.name,
-    newObject[field.name]
+    newObject[field.name],
+    context.rootValue.indexes[type.name],
   ));
 
   for (const index in uniqueFields) {

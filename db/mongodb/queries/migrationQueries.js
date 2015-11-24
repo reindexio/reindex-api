@@ -1,60 +1,62 @@
-import { chain, remove, groupBy, sortBy, map, set } from 'lodash';
-import RethinkDB from 'rethinkdb';
+import { chain, remove, groupBy, sortBy, map } from 'lodash';
+import { ObjectId } from 'mongodb';
 
-import { TYPE_TABLE } from '../DBTableNames';
-
-export async function performMigration(conn, commands) {
+export async function performMigration(db, commands) {
   const commandsByType = groupBy(commands, (command) => command.commandType);
 
   if (commandsByType.DeleteType) {
-    await deleteTypes(conn, commandsByType.DeleteType);
+    await deleteTypes(db, commandsByType.DeleteType);
   }
   if (commandsByType.DeleteTypeData) {
-    await deleteTypesData(conn, commandsByType.DeleteTypeData);
+    await deleteTypesData(db, commandsByType.DeleteTypeData);
   }
   if (commandsByType.DeleteFieldData) {
-    await deleteFieldsData(conn, commandsByType.DeleteFieldData);
+    await deleteFieldsData(db, commandsByType.DeleteFieldData);
   }
   if (commandsByType.CreateTypeData) {
-    await createNewTypeData(conn, commandsByType.CreateTypeData);
+    await createNewTypeData(db, commandsByType.CreateTypeData);
   }
-  await updateTypes(conn, commands);
+  await updateTypes(db, commands);
 }
 
-function deleteTypes(conn, commands) {
-  const typeIds = commands.map((command) => command.type.id.value);
-  return RethinkDB.table(TYPE_TABLE).getAll(...typeIds).delete().run(conn);
+function deleteTypes(db, commands) {
+  const typeIds = commands.map((command) => ObjectId(command.type.id.value));
+  return db
+    .collection('ReindexType')
+    .deleteMany({
+      _id: { $in: typeIds },
+    });
 }
 
-function deleteTypesData(conn, commands) {
+async function deleteTypesData(db, commands) {
   const names = commands.map((command) => command.type.name);
-  return RethinkDB.expr(names).forEach((name) => (
-    RethinkDB.tableDrop(name)
-  )).run(conn);
+  return await* names.map((name) => db.dropCollection(name));
 }
 
-function deleteFieldsData(conn, commands) {
+async function deleteFieldsData(db, commands) {
   const fieldsByType = groupBy(commands, (command) => command.type.name);
   const typeData = map(fieldsByType, (fields, typeName) => ({
-    name: typeName,
-    fields: fields.map((field) => set({}, field.path, true)),
+    type: typeName,
+    update: {
+      $unset: chain(fields)
+        .map((field) => field.path.join('.'))
+        .indexBy()
+        .mapValues(() => true)
+        .value(),
+    },
   }));
 
-  return RethinkDB.expr(typeData).forEach((type) =>
-    RethinkDB.table(type('name')).replace((row) =>
-      row.without(RethinkDB.args(type('fields')))
-    )
-  ).run(conn);
+  return await* typeData.map(({ type, update }) =>
+    db.collection(type).updateMany({}, update)
+  );
 }
 
-function createNewTypeData(conn, commands) {
-  const names = commands.map((command) => command.type.name);
-  return RethinkDB.expr(names).forEach((name) => (
-    RethinkDB.tableCreate(name)
-  )).run(conn);
+function createNewTypeData() {
+  // NOOP for Mongo, collections are created implicitely
+  return Promise.resolve(true);
 }
 
-function updateTypes(conn, commands) {
+function updateTypes(db, commands) {
   const commandsByTypeName = chain(commands)
     .filter((command) => (
       [
@@ -72,9 +74,19 @@ function updateTypes(conn, commands) {
 
   const updatedTypes = map(commandsByTypeName, createUpdatedType);
 
-  return RethinkDB.table(TYPE_TABLE).insert(updatedTypes, {
-    conflict: 'replace',
-  }).run(conn);
+  if (updatedTypes.length) {
+    const batch = db.collection('ReindexType').initializeUnorderedBulkOp();
+    for (const type of updatedTypes) {
+      if (type.id) {
+        batch.find({ _id: ObjectId(type.id.value) }).replaceOne(type);
+      } else {
+        batch.insert(type);
+      }
+    }
+    return batch.execute();
+  } else {
+    return Promise.resolve(true);
+  }
 }
 
 function createUpdatedType(commands) {
@@ -120,10 +132,6 @@ function createUpdatedType(commands) {
   }
 
   fields = sortBy(fields, (field) => field.name);
-
-  if (type.id) {
-    type.id = type.id.value;
-  }
 
   return {
     ...type,

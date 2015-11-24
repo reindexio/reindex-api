@@ -44,6 +44,7 @@ const Config = convict({
     type: {
       default: DatabaseTypes.RethinkDB,
       doc: 'Database engine to use. Possible values in db/DatabaseTypes.js.',
+      env: 'DATABASE_TYPE',
       format: String,
     },
   },
@@ -93,6 +94,14 @@ const Config = convict({
       format: 'port',
     },
   },
+  MongoDB: {
+    connectionString: {
+      default: 'mongodb://localhost',
+      doc: 'MongoDB connection string',
+      env: 'MONGODB_CONNECTION_STRING',
+      format: String,
+    },
+  },
   SocialLoginPlugin: {
     cookiePassword: {
       default: Cryptiles.randomString(40),
@@ -110,6 +119,7 @@ Config.resetTestConfig = function() {
   Config.set('RethinkDB.authKey', undefined);
   Config.set('RethinkDB.host', 'localhost');
   Config.set('RethinkDB.port', 28015);
+  Config.set('MongoDB.connectionString', 'mongodb://localhost');
   Config.set('Intercom.appId', undefined);
   Config.set('Intercom.appApiKey', undefined);
   Config.set('Intercom.secretKey', undefined);

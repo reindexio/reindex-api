@@ -8,4 +8,7 @@ before(() => {
     host: 'localhost',
     port: 28015,
   });
+  assert.deepEqual(Config.get('MongoDB'), {
+    connectionString: 'mongodb://localhost',
+  });
 });

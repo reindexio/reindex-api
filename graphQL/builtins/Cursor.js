@@ -3,21 +3,15 @@ import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 
 export function toCursor({ value }) {
-  return Base64URL.encode(value);
+  return Base64URL.encode(value.toString());
 }
 
 export function fromCursor(string) {
   const value = Base64URL.decode(string);
   if (value) {
-    return value;
+    return { value };
   } else {
     return null;
-  }
-}
-
-export class Cursor {
-  constructor({ value }) {
-    this.value = value;
   }
 }
 

@@ -105,14 +105,14 @@ describe('RethinkDB: Simple database queries', () => {
     );
   });
 
-  it('getByIndex', async () => {
+  it('getByField', async () => {
     assert.deepEqual(
-      await queries.getByIndex(
+      await queries.getByField(
         conn,
         'User',
-        {},
         'handle',
-        'fson'
+        'fson',
+        {},
       ),
       {
         id: {
@@ -124,15 +124,15 @@ describe('RethinkDB: Simple database queries', () => {
     );
 
     assert.deepEqual(
-      await queries.getByIndex(
+      await queries.getByField(
         conn,
         'User',
-        {},
         'id',
         {
           value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
           type: 'User',
         },
+        {},
       ),
       {
         id: {

@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { promisify } from 'bluebird';
+import { promisify, delay } from 'bluebird';
 import uuid from 'uuid';
 import Hapi from 'hapi';
 
@@ -113,6 +113,8 @@ describe('Hooks', () => {
     ]);
 
     requests = [];
+
+    await delay(500);
 
     assert.deepEqual(await runQuery(`
       query getLog($id: ID!) {

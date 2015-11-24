@@ -23,11 +23,11 @@ export default function createGetByField({ type }) {
         if (field.name === 'id' && value.type !== type.name) {
           throw new Error(`Invalid ID`);
         }
-        const result = await context.rootValue.db.getByIndex(
+        const result = await context.rootValue.db.getByField(
           type.name,
-          context.rootValue.indexes[type.name],
           field.name,
-          value
+          value,
+          context.rootValue.indexes[type.name],
         );
         checkPermission(type.name, 'read', result, context);
         return result;

@@ -1,5 +1,3 @@
-import { Cursor } from '../builtins/Cursor';
-
 export default function formatMutationResult(
   clientMutationId, typeName, result
 ) {
@@ -8,9 +6,9 @@ export default function formatMutationResult(
     ['changed' + typeName]: result,
     ['changed' + typeName + 'Edge']: {
       node: result,
-      cursor: new Cursor({
+      cursor: {
         value: result.id.value,
-      }),
+      },
     },
     id: result.id,
   };

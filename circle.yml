@@ -11,8 +11,15 @@ checkout:
 dependencies:
   pre:
     - bin/ci-install-rethinkdb
+    - bin/ci-install-mongodb
     - rethinkdb:
         background: true
+    - sudo service mongod restart
+
+test:
+  override:
+    - DATABASE_TYPE=RethinkDB npm test
+    - DATABASE_TYPE=MongoDB npm test
 
 deployment:
   production:

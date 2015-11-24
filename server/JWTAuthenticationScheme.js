@@ -56,6 +56,12 @@ async function authenticateAsync(request) {
     }
   }
 
+  if (!secrets || secrets.length === 0) {
+    if (!await db.hasApp()) {
+      throw Boom.notFound();
+    }
+  }
+
   let verifiedToken;
   try {
     verifiedToken = verifyToken(token, secrets);

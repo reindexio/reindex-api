@@ -36,7 +36,7 @@ function extractIndexes(indexes) {
 
 function extractPermissions(permissions, types) {
   const typesByID = chain(types)
-    .groupBy((type) => type.id)
+    .groupBy((type) => type.id.value)
     .mapValues((value) => value[0].name)
     .value();
 
@@ -93,7 +93,7 @@ function combinePermissions(left, right) {
 
 function extractHooks(hookData, typeData) {
   const typesByID = chain(typeData)
-    .groupBy((type) => type.id)
+    .groupBy((type) => type.id.value)
     .mapValues((value) => value[0])
     .value();
 
