@@ -1,7 +1,13 @@
 import {
+  GraphQLEnumType,
+  GraphQLInt,
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
+import Qs from 'qs';
+import Url from 'url';
+import { pick } from 'lodash';
+
 import TypeSet from '../TypeSet';
 
 function getBaseCredentialFields(providerName) {
@@ -22,7 +28,7 @@ function getBaseCredentialFields(providerName) {
   };
 }
 
-export default function createUserTypes() {
+export default function createCredentialTypes() {
   const ReindexGithubCredential = new GraphQLObjectType({
     name: 'ReindexGithubCredential',
     description: 'GitHub authentication credentials.',
@@ -31,6 +37,10 @@ export default function createUserTypes() {
       email: {
         type: GraphQLString,
         description: 'The GitHub user\'s (public) email address.',
+      },
+      picture: {
+        type: GraphQLString,
+        description: `The URL of the person's profile picture.`,
       },
       username: {
         type: GraphQLString,
@@ -47,6 +57,34 @@ export default function createUserTypes() {
         type: GraphQLString,
         description: 'The Facebook user\'s email address.',
       },
+      picture: {
+        type: GraphQLString,
+        description: `The URL of the person's profile picture.`,
+        args: {
+          height: {
+            type: GraphQLInt,
+            description: 'The height of this picture in pixels.',
+          },
+          width: {
+            type: GraphQLInt,
+            description: 'The width of this picture in pixels.',
+          },
+        },
+        metadata: {
+          computed: true,
+        },
+        resolve(parent, args) {
+          let url = `https://graph.facebook.com/v2.3/${parent.id}/picture`;
+          const queryString = Qs.stringify(
+            pick(args, 'width', 'height'),
+            { skipNulls: true }
+          );
+          if (queryString) {
+            url += '?' + queryString;
+          }
+          return url;
+        },
+      },
     },
   });
   const ReindexGoogleCredential = new GraphQLObjectType({
@@ -57,6 +95,49 @@ export default function createUserTypes() {
       email: {
         type: GraphQLString,
         description: 'Google account email address.',
+      },
+      picture: {
+        type: GraphQLString,
+        description: `The URL of the person's profile picture.`,
+        args: {
+          size: {
+            type: GraphQLInt,
+            description: 'Dimension of each side in pixels. If given, the ' +
+              'image will be resized and cropped to a square.',
+          },
+        },
+        resolve(parent, args) {
+          const url = parent.picture;
+          if (!url) {
+            return null;
+          }
+          const urlObject = Url.parse(url, true);
+          if (args.size) {
+            urlObject.query.sz = args.size;
+          } else {
+            delete urlObject.query.sz;
+          }
+          delete urlObject.search;
+          return Url.format(urlObject);
+        },
+      },
+    },
+  });
+  const ReindexTwitterPictureSize = new GraphQLEnumType({
+    name: 'ReindexTwitterPictureSize',
+    description: 'Size variant of a Twitter profile picture.',
+    values: {
+      normal: {
+        description: '48px by 48px',
+      },
+      bigger: {
+        description: '73px by 73px',
+      },
+      mini: {
+        description: '24px by 24px',
+      },
+      original: {
+        description: 'Original size',
       },
     },
   });
@@ -69,6 +150,28 @@ export default function createUserTypes() {
         type: GraphQLString,
         description: 'The OAuth token secret obtained for the Twitter user ' +
           'during authentication.',
+      },
+      picture: {
+        type: GraphQLString,
+        description: `The URL of the person's profile picture.`,
+        args: {
+          size: {
+            type: ReindexTwitterPictureSize,
+            description: 'Size of the profile picture.',
+            defaultValue: 'original',
+          },
+        },
+        resolve(parent, args) {
+          const url = parent.picture;
+          if (!url) {
+            return null;
+          }
+          if (args.size === 'original') {
+            return url.replace(/_normal\./, '.');
+          } else {
+            return url.replace(/_normal\./, '_' + args.size + '.');
+          }
+        },
       },
       username: {
         type: GraphQLString,
