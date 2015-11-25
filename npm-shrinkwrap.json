@@ -7073,6 +7073,10 @@
       "version": "0.8.0",
       "resolved": "https://registry.npmjs.org/pegjs/-/pegjs-0.8.0.tgz"
     },
+    "qs": {
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/qs/-/qs-6.0.1.tgz"
+    },
     "rethinkdb": {
       "version": "2.2.0",
       "resolved": "https://registry.npmjs.org/rethinkdb/-/rethinkdb-2.2.0.tgz"

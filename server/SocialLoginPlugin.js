@@ -128,19 +128,29 @@ function normalizeCredentials(credentials) {
     id: profile.id,
   };
 
-  if (profile.email) {
+  if (profile.email) {  // Facebook, GitHub
     result.email = profile.email;
-  } else if (profile.emails) {
+  } else if (profile.emails) {  // Google
     const accountEmail = profile.emails.find((email) =>
       email.type === 'account'
     );
     result.email = accountEmail.value;
   }
+
   if (credentials.secret) {
     result.accessTokenSecret = credentials.secret;
   }
+
   if (profile.username) {
     result.username = profile.username;
+  }
+
+  if (profile.raw.profile_image_url_https) {  // Twitter
+    result.picture = profile.raw.profile_image_url_https;
+  } else if (profile.raw.avatar_url) {  // GitHub
+    result.picture = profile.raw.avatar_url;
+  } else if (profile.raw.image && profile.raw.image.url) {  // Google
+    result.picture = profile.raw.image.url;
   }
   return result;
 }

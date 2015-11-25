@@ -1,4 +1,4 @@
-import { mapValues } from 'lodash';
+import { chain } from 'lodash';
 
 import {
   GraphQLNonNull,
@@ -14,9 +14,12 @@ export default function createInputObjectFields(
   getTypeSet,
   interfaces
 ) {
-  return mapValues(fields, (field) => convertInputObjectField(
-    field, preserveNonNull, getTypeSet, interfaces
-  ));
+  return chain(fields)
+    .pick((field) => !(field.metadata && field.metadata.computed))
+    .mapValues((field) =>
+      convertInputObjectField(field, preserveNonNull, getTypeSet, interfaces)
+    )
+    .value();
 }
 
 function convertInputObjectField(
