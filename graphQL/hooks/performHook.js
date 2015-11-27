@@ -40,10 +40,7 @@ export default async function performHook(context, hook) {
       }
     `, context, {
       input: {
-        hook: toReindexID({
-          type: 'ReindexHook',
-          value: hook.id,
-        }),
+        hook: toReindexID(hook.id),
         createdAt: '@TIMESTAMP',
         type: !result || result.errors ? 'error' : 'success',
         errors: result && result.errors,

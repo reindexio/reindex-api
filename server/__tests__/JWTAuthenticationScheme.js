@@ -18,7 +18,7 @@ describe('JWTAuthenticationScheme', () => {
   let secret;
   let validToken;
 
-  const userID = toReindexID({ type: 'User', value: userID });
+  const userID = toReindexID({ type: 'User', value: 'someUserID' });
   const now = Math.floor(new Date() / 1000);
   const HOUR = 3600;
 

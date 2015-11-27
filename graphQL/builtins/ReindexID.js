@@ -3,25 +3,18 @@ import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 
 export function toReindexID({ type, value }) {
-  return Base64URL.encode(type + ':' + value);
+  return Base64URL.encode(type + ':' + value.toString());
 }
 
 export function fromReindexID(string) {
   const parts = Base64URL.decode(string).split(':');
   if (parts.length === 2) {
-    return new ID({
+    return {
       type: parts[0],
       value: parts[1],
-    });
+    };
   } else {
     return null;
-  }
-}
-
-export class ID {
-  constructor({ value, type }) {
-    this.value = value;
-    this.type = type;
   }
 }
 

@@ -1,4 +1,4 @@
-import { get, values, sortBy } from 'lodash';
+import { get, values, sortBy, last } from 'lodash';
 import uuid from 'uuid';
 
 import deleteApp from '../apps/deleteApp';
@@ -306,17 +306,26 @@ describe('Integration Tests', () => {
 
   it('works with edges and cursor', async function () {
     const user = values(fixtures.User)[0];
-    const micropost = values(fixtures.Micropost)[0];
+    const microposts = values(fixtures.Micropost);
+    const cursors = microposts.map((post) => toCursor({
+      value: fromReindexID(post.id).value,
+    }));
     const userId = user.id;
 
     const result = await runQuery(`
       {
         userById(id: "${userId}") {
           microposts(first: 1) {
+            count,
             edges {
+              cursor,
               node {
                 text
               }
+            },
+            pageInfo {
+              hasPreviousPage,
+              hasNextPage,
             }
           }
         }
@@ -327,17 +336,128 @@ describe('Integration Tests', () => {
       data: {
         userById: {
           microposts: {
+            count: 20,
             edges: [
               {
+                cursor: cursors[0],
                 node: {
-                  text: micropost.text,
+                  text: microposts[0].text,
                 },
               },
             ],
+            pageInfo: {
+              hasPreviousPage: false,
+              hasNextPage: true,
+            },
           },
         },
       },
     });
+
+    const lastResult = await runQuery(`
+      {
+        userById(id: "${userId}") {
+          microposts(last: 1) {
+            count,
+            edges {
+              cursor,
+              node {
+                text
+              }
+            },
+            pageInfo {
+              hasPreviousPage,
+              hasNextPage,
+            }
+          }
+        }
+      }
+    `);
+
+    assert.deepEqual(lastResult, {
+      data: {
+        userById: {
+          microposts: {
+            count: 20,
+            edges: [
+              {
+                cursor: last(cursors),
+                node: {
+                  text: last(microposts).text,
+                },
+              },
+            ],
+            pageInfo: {
+              hasPreviousPage: true,
+              hasNextPage: false,
+            },
+          },
+        },
+      },
+    });
+
+    const paginatedResult = await runQuery(`
+      {
+        userById(id: "${userId}") {
+          microposts(first: 1, after: "${cursors[0]}") {
+            count,
+            edges {
+              cursor,
+              node {
+                text
+              }
+            },
+            pageInfo {
+              hasPreviousPage,
+              hasNextPage,
+            }
+          }
+        }
+      }
+    `);
+
+    assert.deepEqual(paginatedResult, {
+      data: {
+        userById: {
+          microposts: {
+            count: 20,
+            edges: [
+              {
+                cursor: cursors[1],
+                node: {
+                  text: microposts[1].text,
+                },
+              },
+            ],
+            pageInfo: {
+              hasPreviousPage: false,
+              hasNextPage: true,
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('always returns the total count for a connection', async function () {
+    const query = `
+      query ($after: Cursor) {
+        viewer {
+          allMicroposts(after: $after) {
+            count
+            edges { cursor }
+          }
+        }
+      }
+    `;
+    const result = await runQuery(query, { after: null });
+    const microposts = get(result, ['data', 'viewer', 'allMicroposts']);
+    const cursor = microposts.edges[0].cursor;
+    const paginatedResult = await runQuery(query, { after: cursor });
+    assert.equal(
+      microposts.count,
+      get(paginatedResult, ['data', 'viewer', 'allMicroposts', 'count']),
+    );
   });
 
   it('does crud', async function() {

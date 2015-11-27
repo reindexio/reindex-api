@@ -69,7 +69,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         existing
       );
 
-      const result = await db.replace(type.name, input.id, object);
+      const result = await db.replace(type.name, input.id, object, existing);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,

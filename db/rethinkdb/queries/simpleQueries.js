@@ -24,11 +24,9 @@ export async function getSecrets(conn) {
 }
 
 export async function getTypes(conn) {
-  const types = await RethinkDB
-    .table(TYPE_TABLE)
-    .orderBy('name')
-    .coerceTo('array')
-    .run(conn);
+  const types = await queryWithIDs(
+    TYPE_TABLE, RethinkDB.table(TYPE_TABLE).orderBy('name')
+  ).coerceTo('array').run(conn);
   return types.map((type) => {
     type.fields = injectDefaultFields(type);
     return type;
@@ -43,10 +41,13 @@ export function getIndexes(conn) {
 
 export async function getMetadata(conn) {
   const result = await RethinkDB.do(
-    RethinkDB.table(TYPE_TABLE).coerceTo('array'),
-    RethinkDB.table(INDEX_TABLE).coerceTo('array'),
-    RethinkDB.table(PERMISSION_TABLE).coerceTo('array'),
-    RethinkDB.table(HOOK_TABLE).coerceTo('array'),
+    queryWithIDs(TYPE_TABLE, RethinkDB.table(TYPE_TABLE)).coerceTo('array'),
+    queryWithIDs(INDEX_TABLE, RethinkDB.table(INDEX_TABLE)).coerceTo('array'),
+    queryWithIDs(
+      PERMISSION_TABLE,
+      RethinkDB.table(PERMISSION_TABLE)
+    ).coerceTo('array'),
+    queryWithIDs(HOOK_TABLE, RethinkDB.table(HOOK_TABLE)).coerceTo('array'),
     (types, indexes, permissions, hooks) => ({
       types,
       indexes,
@@ -79,7 +80,7 @@ export function getByID(conn, id) {
   ).run(conn);
 }
 
-export async function getByIndex(conn, type, indexes = {}, field, value) {
+export async function getByField(conn, type, field, value, indexes = {}) {
   let index = getIndexFromFields(indexes, [[field]]);
   if (!index) {
     index = await ensureIndex(conn, type, [[field]]);

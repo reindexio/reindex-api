@@ -77,10 +77,7 @@ export async function getTypesByName(db) {
   const types = await db.getTypes();
   return chain(types)
     .indexBy((type) => type.name)
-    .mapValues((value) => toReindexID({
-      type: 'ReindexType',
-      value: value.id,
-    }))
+    .mapValues((value) => toReindexID(value.id))
     .value();
 }
 
@@ -102,7 +99,7 @@ export async function createFixture(
   `, {
     input,
   }, options);
-  assert.isUndefined(result.errors,
+  assert.deepEqual(result.errors, undefined,
     `Failed to create fixture: ${result.errors}`);
   return get(result, [
     'data',
@@ -121,6 +118,6 @@ export async function deleteFixture(runQuery, type, id, options = {}) {
   `, {
     id,
   }, options);
-  assert.isUndefined(result.errors,
+  assert.deepEqual(result.errors, undefined,
     `Failed to delete fixture: ${result.errors}`);
 }

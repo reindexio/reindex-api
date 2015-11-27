@@ -143,7 +143,7 @@ function createObjectType(type, getTypeSet, interfaces) {
     interfaces: [...type.get('interfaces').map((name) => interfaces[name])],
   };
   if (config.interfaces.includes(interfaces.Node)) {
-    config.isTypeOf = (value) => value.id.type === type.get('name');
+    config.isTypeOf = (value) => value.id && value.id.type === type.get('name');
   }
 
   return new GraphQLObjectType(config);

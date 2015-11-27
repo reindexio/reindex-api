@@ -4,7 +4,10 @@ import assert from '../../test/assert';
 
 describe('getGraphQLContext', () => {
   const micropostType = {
-    id: '91ffff68-50ec-403d-9d55-1d1fdc86b335',
+    id: {
+      value: '91ffff68-50ec-403d-9d55-1d1fdc86b335',
+      type: 'Micropost',
+    },
     name: 'Micropost',
     kind: 'OBJECT',
     interfaces: ['Node'],
@@ -25,7 +28,10 @@ describe('getGraphQLContext', () => {
     ],
   };
   const userType = {
-    id: '3992ff9a-637b-4e67-aeee-34b02d9c99ab',
+    id: {
+      value: '3992ff9a-637b-4e67-aeee-34b02d9c99ab',
+      type: 'User',
+    },
     name: 'User',
     kind: 'OBJECT',
     interfaces: ['Node'],
@@ -100,10 +106,7 @@ describe('getGraphQLContext', () => {
         indexes: [],
         permissions: [
           {
-            type: {
-              type: 'ReindexType',
-              value: micropostType.id,
-            },
+            type: micropostType.id,
             user: null,
             read: true,
           },
@@ -141,10 +144,7 @@ describe('getGraphQLContext', () => {
         indexes: [],
         permissions: [
           {
-            type: {
-              type: 'ReindexType',
-              value: micropostType.id,
-            },
+            type: micropostType.id,
             user: {
               type: 'User',
               value: 'user1',
@@ -188,10 +188,7 @@ describe('getGraphQLContext', () => {
         indexes: [],
         permissions: [
           {
-            type: {
-              type: 'ReindexType',
-              value: micropostType.id,
-            },
+            type: micropostType.id,
             user: {
               type: 'User',
               value: 'user1',
@@ -200,10 +197,7 @@ describe('getGraphQLContext', () => {
             update: true,
           },
           {
-            type: {
-              type: 'ReindexType',
-              value: micropostType.id,
-            },
+            type: micropostType.id,
             user: {
               type: 'User',
               value: 'user1',
@@ -267,10 +261,7 @@ describe('getGraphQLContext', () => {
             fragment: '{ id, foo }',
           },
           {
-            type: {
-              type: 'ReindexType',
-              value: micropostType.id,
-            },
+            type: micropostType.id,
             trigger: 'afterUpdate',
             url: 'http://example.com/micropost',
             fragment: '{ id }',
