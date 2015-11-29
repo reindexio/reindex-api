@@ -1,11 +1,8 @@
 import RethinkDB from 'rethinkdb';
 
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
-import {
-  USER_TABLE
-} from '../DBTableNames';
+import { USER_TABLE } from '../DBTableNames';
 import { queryWithIDs } from './queryUtils';
-
 
 export async function getOrCreateUser(conn, providerName, credential) {
   const table = RethinkDB.table(USER_TABLE);

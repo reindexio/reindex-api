@@ -6,7 +6,7 @@ import hasApp from '../apps/hasApp';
 import {
   hasIntercom,
   createIntercomUser,
-  sendWelcomeEmail
+  sendWelcomeEmail,
 } from '../server/IntercomClient';
 import { yesOrNo } from '../utilities';
 

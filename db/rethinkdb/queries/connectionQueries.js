@@ -4,7 +4,7 @@ import { getAllQuery } from './simpleQueries';
 import {
   getIndexFromFields,
   ensureIndex,
-  cursorToIndexKey
+  cursorToIndexKey,
 } from './indexes';
 import { queryWithIDs } from './queryUtils';
 
