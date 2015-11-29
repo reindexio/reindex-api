@@ -1,7 +1,7 @@
 import { listApps } from '../queries/appQueries';
 import {
   getConnection,
-  releaseConnection
+  releaseConnection,
 } from '../dbConnections';
 import databaseNameFromHostname from '../databaseNameFromHostname';
 

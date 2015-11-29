@@ -1,5 +1,6 @@
 import Bassmaster from 'bassmaster';
 import Hapi from 'hapi';
+import Inert from 'inert';
 import Promise from 'bluebird';
 import HapiRequireHttpsPlugin from 'hapi-require-https';
 
@@ -35,9 +36,8 @@ export default async function createServer() {
   if (process.env.NODE_ENV === 'production') {
     await server.register(HapiRequireHttpsPlugin);
   }
-  await server.register({
-    register: DBPlugin,
-  });
+  await server.register(Inert);
+  await server.register(DBPlugin);
   await server.register({
     register: SocialLoginPlugin,
     options: Config.get('SocialLoginPlugin'),
