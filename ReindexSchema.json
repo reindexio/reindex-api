@@ -1,0 +1,99 @@
+[
+  {
+    "name": "App",
+    "kind": "OBJECT",
+    "interfaces": [
+      "Node"
+    ],
+    "fields": [
+      {
+        "name": "createdAt",
+        "type": "DateTime"
+      },
+      {
+        "name": "database",
+        "type": "Database"
+      },
+      {
+        "name": "domains",
+        "type": "Connection",
+        "ofType": "Domain",
+        "reverseName": "app"
+      },
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime"
+      }
+    ]
+  },
+  {
+    "name": "Database",
+    "kind": "OBJECT",
+    "interfaces": [],
+    "fields": [
+      {
+        "name": "cluster",
+        "type": "String"
+      },
+      {
+        "name": "name",
+        "type": "String"
+      }
+    ]
+  },
+  {
+    "name": "Domain",
+    "kind": "OBJECT",
+    "interfaces": [
+      "Node"
+    ],
+    "fields": [
+      {
+        "name": "app",
+        "type": "App",
+        "reverseName": "domains"
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime"
+      },
+      {
+        "name": "hostname",
+        "type": "String",
+        "nonNull": true,
+        "unique": true
+      },
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime"
+      }
+    ]
+  },
+  {
+    "name": "User",
+    "kind": "OBJECT",
+    "interfaces": [
+      "Node"
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true
+      }
+    ]
+  }
+]

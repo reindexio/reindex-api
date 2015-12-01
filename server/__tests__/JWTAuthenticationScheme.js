@@ -1,19 +1,17 @@
 import Hapi from 'hapi';
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import { randomString } from 'cryptiles';
+import uuid from 'uuid';
 
 import assert from '../../test/assert';
 import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
-import getDB from '../../db/getDB';
 import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
 import DBPlugin from '../DBPlugin';
 import { toReindexID, fromReindexID } from '../../graphQL/builtins/ReindexID';
 
 describe('JWTAuthenticationScheme', () => {
-  const host = 'test_' + randomString(10) + '.example.com';
-  const db = getDB(host);
+  const host = `test.${uuid.v4()}.example.com`;
   let server;
   let secret;
   let validToken;
@@ -49,7 +47,6 @@ describe('JWTAuthenticationScheme', () => {
   });
 
   after(async function () {
-    await db.close();
     await deleteApp(host);
   });
 
@@ -84,9 +81,7 @@ describe('JWTAuthenticationScheme', () => {
   });
 
   it('uses anonymous credentials when header not given', async function() {
-    const response = await makeRequest({
-      host,
-    });
+    const response = await makeRequest({ host });
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.request.auth.credentials, {
       hostname: host,
@@ -101,7 +96,7 @@ describe('JWTAuthenticationScheme', () => {
       'Bearer',
       `Basic ${validToken}`,
     ]) {
-      const response = await makeRequest({ authorization });
+      const response = await makeRequest({ authorization, host });
       assert.equal(response.statusCode, 401);
     }
   });

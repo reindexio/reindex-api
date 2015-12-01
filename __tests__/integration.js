@@ -13,8 +13,8 @@ import {
 import assert from '../test/assert';
 
 describe('Integration Tests', () => {
-  const hostname = 'testdb_' + uuid.v4().replace(/-/g, '_') + '.example.com';
-  const db = getDB(hostname);
+  const hostname = `test.${uuid.v4()}.example.com`;
+  let db;
   let runQuery;
 
   const fixtures = {
@@ -25,6 +25,7 @@ describe('Integration Tests', () => {
 
   before(async function () {
     await createTestApp(hostname);
+    db = await getDB(hostname);
     runQuery = makeRunQuery(db);
 
     const createdProvider = await createFixture(
