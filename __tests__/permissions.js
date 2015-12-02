@@ -595,7 +595,7 @@ describe('Permissions', () => {
         {
           userById(id: "${user.id}") {
             id,
-            microposts(orderBy: {field: "createdAt"}, first: 1)  {
+            microposts(orderBy: CREATED_AT_ASC, first: 1)  {
               nodes {
                 id
               }

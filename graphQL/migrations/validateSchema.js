@@ -97,8 +97,8 @@ const TYPE_NAME_PATTERN = /^[A-Z][_0-9A-Za-z]*$/;
 
 function validateType(type, typesByName, interfaces, invariant) {
   invariant(
-    isString(type.name),
-    'Expected `name` of a type to be a string. Found: %s',
+    isString(type.name) && type.name.length > 0,
+    'Expected `name` of a type to be a non-empty string. Found: %s',
     type.name,
   );
   ['name', 'pluralName'].forEach((property) => {
@@ -147,17 +147,20 @@ function validateType(type, typesByName, interfaces, invariant) {
     '%s: Expected `fields` to be an array of field objects.',
     type.name,
   );
-  invariant(
-    type.fields.length > 0,
-    '%s: Expected `fields` to be an array with at least one element',
-    type.name,
-  );
-  invariant(
-    uniq(type.fields, 'name').length === type.fields.length,
-    '%s: Expected field names to be unique within a type.',
-    type.name,
-  );
-
+  if (Array.isArray(type.fields)) {
+    invariant(
+      type.fields.length > 0,
+      '%s: Expected `fields` to be an array with at least one element.',
+      type.name,
+    );
+    invariant(
+      uniq(type.fields, (field) =>
+        field.name && field.name.toLowerCase()
+      ).length === type.fields.length,
+      '%s: Expected field names to be unique within a type.',
+      type.name,
+    );
+  }
 }
 
 function validateFields(type, invariant) {
@@ -178,8 +181,8 @@ function validateFields(type, invariant) {
 
 function validateField(type, field, typesByName, invariant) {
   invariant(
-    isString(field.name),
-    '%s: Expected field name to be a string.',
+    isString(field.name) && field.name.length > 0,
+    '%s: Expected field name to be a non-empty string.',
     type.name
   );
   invariant(
@@ -242,7 +245,14 @@ function validateField(type, field, typesByName, invariant) {
   // only scalar uniques
   invariant(
     !field.unique || field.type in ScalarTypes,
-    '%s.%s: Expected unique field to be a scalar type. Found: %s.',
+    '%s.%s: Expected unique field to have a scalar type. Found: %s.',
+    type.name, field.name, field.type
+  );
+
+  // only scalar sortables
+  invariant(
+    !field.orderable || field.type in ScalarTypes,
+    '%s.%s: Expected orderable field to have a scalar type. Found: %s.',
     type.name, field.name, field.type
   );
 
@@ -281,6 +291,7 @@ function validateReverseField(
       name === field.reverseName
     );
   }
+
   invariant(
     reverseField,
     '%s.%s: Expected `reverseName` to be a name of a %s field in type %s. ' +
@@ -307,6 +318,30 @@ function validateReverseField(
         '%s.%s: Expected reverse field of %s.%s to have ofType %s. Found: %s.',
         reverseType, reverseField.name, type.name, field.name,
         expectedFieldOfType, reverseField.ofType,
+      );
+    }
+
+    let defaultOrderingField;
+    if (field.defaultOrdering) {
+      defaultOrderingField = typesByName[reverseType].fields.find(({ name }) =>
+        name === field.defaultOrdering.field
+      );
+    }
+
+    invariant(
+      !field.defaultOrdering || defaultOrderingField,
+      '%s.%s: Expected default ordering field %s.%s to be field in type %s. ' +
+      'Found %s.',
+      reverseType, reverseField.name, type.name, field.name,
+      field.defaultOrdering && field.defaultOrdering.field
+    );
+
+    if (defaultOrderingField) {
+      invariant(
+        defaultOrderingField.orderable,
+        '%s.%s: Expected default ordering field %s.%s to be orderable.',
+        reverseType, reverseField.name, type.name, field.name,
+        field.defaultOrdering.field
       );
     }
   }

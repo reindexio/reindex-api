@@ -9,22 +9,9 @@ import Config from '../server/Config';
 import getCluster from '../db/getCluster';
 import getAdminDB from '../db/getAdminDB';
 import { TIMESTAMP } from '../graphQL/builtins/DateTime';
+import DefaultUserType from '../graphQL/builtins/DefaultUserType';
 
 const hostnamePattern = /^[0-9a-z.\-]+$/;
-
-const defaultUserType = {
-  name: 'User',
-  fields: [
-    {
-      name: 'id',
-      type: 'ID',
-      nonNull: true,
-      unique: true,
-    },
-  ],
-  kind: 'OBJECT',
-  interfaces: ['Node'],
-};
 
 export default function createApp(
   hostname,
@@ -81,7 +68,7 @@ async function _createApp(
 
 async function createEmptyDatabase(db, types, addWildcardPermission) {
   await db.createStorageForApp();
-  await db.create('ReindexType', defaultUserType);
+  await db.create('ReindexType', DefaultUserType);
   if (addWildcardPermission) {
     await db.create('ReindexPermission', {
       type: null,
@@ -95,7 +82,11 @@ async function createEmptyDatabase(db, types, addWildcardPermission) {
   const secret = Cryptiles.randomString(40);
   await db.create('ReindexSecret', { value: secret });
   if (types) {
-    await db.performMigration(buildSchemaMigration([defaultUserType], types));
+    await db.performMigration(
+      buildSchemaMigration([DefaultUserType], types),
+      types,
+      { indexes: {} }
+    );
   }
 
   return { secret };

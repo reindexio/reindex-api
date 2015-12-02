@@ -129,7 +129,7 @@ not have a name. Can include typed inline fragments.`,
           },
           log: {
             type: getTypeSet('ReindexHookLog').connection,
-            args: createConnectionArguments(getTypeSet, interfaces),
+            args: createConnectionArguments('ReindexHookLog', getTypeSet),
             resolve: createConnectionFieldResolve('ReindexHookLog', 'hook'),
           },
           logLevel: {
@@ -166,6 +166,9 @@ not have a name. Can include typed inline fragments.`,
           createdAt: {
             type: DateTime,
             description: 'When log happened.',
+            metadata: {
+              orderable: true,
+            },
           },
           type: {
             type: new GraphQLNonNull(eventType),

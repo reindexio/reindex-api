@@ -120,7 +120,7 @@ describe('Hooks', () => {
     assert.deepEqual(await runQuery(`
       query getLog($id: ID!) {
         reindexHookById(id: $id) {
-          log(orderBy: { field: "createdAt" }) {
+          log(orderBy: CREATED_AT_ASC) {
             nodes {
               type,
               errors,

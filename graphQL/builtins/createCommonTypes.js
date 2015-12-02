@@ -15,7 +15,7 @@ export default function createCommonTypes(interfaces, getTypeSet) {
     ...createMigrationTypes(interfaces, getTypeSet),
     ...createHook(interfaces, getTypeSet),
     ReindexSecret: createSecret(interfaces),
-    ReindexAuthethenticationProvider: createAuthenticationProvider(interfaces),
+    ReindexAuthenticationProvider: createAuthenticationProvider(interfaces),
     ReindexPermission: createPermission(interfaces, getTypeSet),
     ReindexIntercomSettings: createIntercomSettings(),
   });

@@ -1,7 +1,9 @@
 import { chain, remove, groupBy, sortBy, map } from 'lodash';
 import { ObjectId } from 'mongodb';
 
-export async function performMigration(db, commands) {
+import { constructMissingIndexes } from './indexes';
+
+export async function performMigration(db, commands, types, { indexes }) {
   const commandsByType = groupBy(commands, (command) => command.commandType);
 
   if (commandsByType.DeleteType) {
@@ -17,6 +19,7 @@ export async function performMigration(db, commands) {
     await createNewTypeData(db, commandsByType.CreateTypeData);
   }
   await updateTypes(db, commands);
+  await constructMissingIndexes(db, types, indexes);
 }
 
 function deleteTypes(db, commands) {

@@ -192,7 +192,7 @@ describe('Integration Tests', () => {
       query userById($id: ID!) {
         userById(id: $id) {
           handle,
-          posts: microposts(orderBy: {field: "createdAt"}, first: 1) {
+          posts: microposts(orderBy: CREATED_AT_ASC, first: 1) {
             count,
             nodes {
               createdAt,
@@ -280,10 +280,7 @@ describe('Integration Tests', () => {
           allReindexTypes {
             count
           }
-          allMicroposts(first: 20, orderBy: {
-            field: "createdAt",
-            order: ASC
-           }) {
+          allMicroposts(first: 20, orderBy: CREATED_AT_ASC) {
             nodes {
               text,
             }
