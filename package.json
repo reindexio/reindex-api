@@ -5,7 +5,7 @@
   "private": true,
   "repository": "reindexio/reindex-api",
   "engines": {
-    "node": "4.1.2"
+    "node": "4.2.3"
   },
   "dependencies": {
     "babel": "^5.8.34",
