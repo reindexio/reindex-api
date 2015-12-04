@@ -1,19 +1,19 @@
-import hasApp from '../apps/hasApp';
 import deleteApp from '../apps/deleteApp';
-import { yesOrNo } from '../utilities';
+import getApp from '../apps/getApp';
+import { confirm } from '../utilities';
 
 function usage() {
   process.stdout.write(`Usage: ${process.argv[1]} HOSTNAME\n`);
 }
 
-const warningMessage = (hostname) => `
+const warningMessage = (hostname, app) => `
 ###########################################################
 # DANGER!
 # This will PERMANENTLY delete the app
-# "${hostname}"
+# "${hostname}" in cluster "${app.database.cluster}"
 # and all its data. Are you sure you want to continue?
 ###########################################################
-Delete ${hostname}?`;
+Delete ${hostname}? (y/N)`;
 
 async function main() {
   const hostname = process.argv[2];
@@ -23,11 +23,12 @@ async function main() {
   }
 
   try {
-    if (!(await hasApp(hostname))) {
-      console.log('No such app!');
+    const app = await getApp(hostname);
+    if (!app) {
+      console.error('No such app!');
       process.exit(1);
     }
-    if (await yesOrNo(warningMessage(hostname), false)) {
+    if (await confirm(warningMessage(hostname, app), { default: false })) {
       console.log(`Deleting ${hostname}... `);
       await deleteApp(hostname);
       console.log('Done!');

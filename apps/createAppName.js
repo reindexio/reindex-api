@@ -192,5 +192,5 @@ export default function createAppName() {
   const adjective = sample(adjectives);
   const noun = sample(nouns);
   const number = random(1, 1000);
-  return `${adjective}-${noun}-${number}`;
+  return `${adjective}-${noun}-${number}.myreindex.com`;
 }

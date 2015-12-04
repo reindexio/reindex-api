@@ -68,7 +68,7 @@ export async function migrate(runQuery, newTypes, force) {
 
 export async function createTestApp(hostname) {
   await createApp(hostname);
-  const db = getDB(hostname);
+  const db = await getDB(hostname);
   const runQuery = makeRunQuery(db);
   await migrate(runQuery, TEST_SCHEMA);
 }

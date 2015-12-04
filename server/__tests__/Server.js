@@ -1,6 +1,6 @@
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
-import { randomString } from 'cryptiles';
+import uuid from 'uuid';
 import { graphql } from 'graphql';
 
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
@@ -11,8 +11,8 @@ import createServer from '../createServer';
 import assert from '../../test/assert';
 
 describe('Server', () => {
-  const hostname = 'test_' + randomString(10) + '.example.com';
-  const db = getDB(hostname);
+  const hostname = `test.${uuid.v4()}.example.com`;
+  let db;
   let server;
   let token;
   let userID;
@@ -46,6 +46,7 @@ describe('Server', () => {
   before(async function () {
     server = await createServer();
     const { secret } = await createApp(hostname);
+    db = await getDB(hostname);
 
     const userData = await runQuery(`
       mutation user {

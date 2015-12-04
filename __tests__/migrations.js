@@ -8,11 +8,12 @@ import createApp from '../apps/createApp';
 import deleteApp from '../apps/deleteApp';
 
 describe('Migrations', () => {
-  const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
-  const db = getDB(host);
+  const host = `test.${uuid.v4()}.example.com`;
+  let db;
 
   before(async () => {
     await createApp(host);
+    db = await getDB(host);
   });
 
   after(async () => {

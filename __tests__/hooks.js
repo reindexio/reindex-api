@@ -10,8 +10,8 @@ import { getTypesByName, makeRunQuery } from '../test/testAppUtils';
 import assert from '../test/assert';
 
 describe('Hooks', () => {
-  const host = 'testdb.' + uuid.v4().replace(/-/g, '_') + 'example.com';
-  const db = getDB(host);
+  const host = `test.${uuid.v4()}.example.com`;
+  let db;
   let runQuery;
 
   let requests = [];
@@ -21,6 +21,7 @@ describe('Hooks', () => {
   before(async () => {
     await createApp(host);
     await server.start();
+    db = await getDB(host);
     runQuery = (query, variables) => makeRunQuery(db)(query, variables, {
       newContext: true,
     });

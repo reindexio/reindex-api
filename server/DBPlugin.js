@@ -1,12 +1,25 @@
-import getDB from '../db/getDB';
+import Boom from 'boom';
 
-function onRequest(request, reply) {
-  request.db = getDB(request.info.hostname);
-  reply.continue();
+import getDB from '../db/getDB';
+import Monitoring from '../Monitoring';
+
+async function onRequest(request, reply) {
+  try {
+    request.db = await getDB(request.info.hostname);
+    reply.continue();
+  } catch (error) {
+    if (error.name === 'AppNotFound') {
+      return reply(Boom.notFound());
+    }
+    Monitoring.noticeError(error);
+    reply(error);
+  }
 }
 
 async function close(request) {
-  await request.db.close();
+  if (request.db) {
+    await request.db.close();
+  }
 }
 
 function register(server, options, next) {

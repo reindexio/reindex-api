@@ -4,9 +4,7 @@ import getDB from '../../db/getDB';
 import getGraphQLContext from '../getGraphQLContext';
 import performHook from './performHook';
 
-export default function checkAndEnqueueHooks(
-  db, allHooks, type, name, object
-) {
+export default function checkAndEnqueueHooks(db, allHooks, type, name, object) {
   const globalHooks = get(allHooks, ['global', name]) || [];
   const typeHooks = get(allHooks, [type, name]) || [];
   const hooks = [...globalHooks, ...typeHooks];
@@ -19,8 +17,9 @@ export default function checkAndEnqueueHooks(
 }
 
 async function enqueueHooks(hostname, type, hooks, object) {
-  const db = getDB(hostname);
+  let db;
   try {
+    db = await getDB(hostname);
     const credentials = {
       isAdmin: true,
       userID: null,

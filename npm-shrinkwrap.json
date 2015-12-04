@@ -2,7 +2,7 @@
   "name": "reindex-api",
   "version": "0.1.0",
   "npm-shrinkwrap-version": "200.4.0",
-  "node-version": "v4.1.2",
+  "node-version": "v4.2.3",
   "dependencies": {
     "babel": {
       "version": "5.8.34",
@@ -7064,6 +7064,22 @@
         "string-template": {
           "version": "0.2.1",
           "resolved": "https://registry.npmjs.org/string-template/-/string-template-0.2.1.tgz"
+        }
+      }
+    },
+    "promptly": {
+      "version": "0.2.1",
+      "resolved": "https://registry.npmjs.org/promptly/-/promptly-0.2.1.tgz",
+      "dependencies": {
+        "read": {
+          "version": "1.0.7",
+          "resolved": "https://registry.npmjs.org/read/-/read-1.0.7.tgz",
+          "dependencies": {
+            "mute-stream": {
+              "version": "0.0.5",
+              "resolved": "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.5.tgz"
+            }
+          }
         }
       }
     },

@@ -1,4 +1,4 @@
-import parseArgs from 'minimist';
+import Config from '../server/Config';
 import createApp from '../apps/createApp';
 import createToken from '../apps/createToken';
 import createAppName from '../apps/createAppName';
@@ -8,64 +8,50 @@ import {
   createIntercomUser,
   sendWelcomeEmail,
 } from '../server/IntercomClient';
-import { yesOrNo } from '../utilities';
+import { choose, confirm, prompt } from '../utilities';
 
-async function main() {
-  const args = parseArgs(process.argv.slice(2), {
-    boolean: ['n'],
-  });
-  const email = args._[0];
-  const name = args._[1];
-  const dontPrompt = args.n;
-  if (email) {
-    try {
-      await createAppForUser(email, name, dontPrompt);
-      process.exit(0);
-    } catch (e) {
-      console.log('Failure!');
-      console.error(e);
-      process.exit(1);
-    }
-  } else {
-    usage();
-  }
-}
-
-function usage() {
-  console.log(`Usage: ${process.argv[1]} [-n] "email" "name"`);
-}
-
-async function createAppForUser(email, name, dontPrompt) {
+async function createAppForUser() {
   try {
     if (!hasIntercom() &&
-        !dontPrompt &&
-        !(await yesOrNo('Intercom is not set up, continue?'))) {
+        !(await confirm('Intercom is not set up, continue? (y/n)'))) {
       return;
     }
-    console.log(`Creating app for user ${name || ''} <${email}>`);
-    let appName = createAppName();
-    let hostname = `${appName}.myreindex.com`;
-    while ((await hasApp(hostname)) ||
-           (!dontPrompt && !(await promptIfAppNameIsFine(appName)))) {
-      appName = createAppName();
-      hostname = `${appName}.myreindex.com`;
-    }
-    console.log(`Creating app ${hostname}...`);
-    await createApp(hostname);
-    const token = await createToken(hostname, {
-      admin: true,
+    let hostname;
+    let exists;
+    do {
+      const defaultHostname = createAppName();
+      hostname = await prompt(`Hostname: (${defaultHostname})`, {
+        default: defaultHostname,
+      });
+      exists = await hasApp(hostname);
+      if (exists) {
+        console.warn(`Hostname "${hostname}" is already taken.`);
+      }
+    } while (exists);
+    const defaultCluster = Config.get('database.defaultCluster');
+    const clusters = Object.keys(JSON.parse(Config.get('database.clusters')));
+    const choices = clusters.map((name) =>
+      name === defaultCluster ? `[${name}]` : name
+    ).join(', ');
+    const cluster = await choose(`Cluster name: (${choices})`, clusters, {
+      default: defaultCluster,
     });
+    console.log(`Creating app ${hostname} in cluster ${cluster}...`);
+    await createApp(hostname, cluster);
+    const token = await createToken(hostname, { admin: true });
 
     console.log(`
   URL: https://${hostname}
   Admin token: ${token}
   `);
 
-    if (hasIntercom() &&
-        (dontPrompt || await yesOrNo('Create intercom user?'))) {
-      console.log('Creating intercom user...');
+    if (hasIntercom()) {
+      console.log('Please enter the details for Intercom...');
+      const name = await prompt('Full name:', { default: '' });
+      const email = await prompt('Email:');
+      console.log(`Creating user ${name || ''} <${email}>`);
       const user = await createIntercomUser(email, name, hostname);
-      if (dontPrompt || await yesOrNo('Send welcome email?')) {
+      if (await confirm('Send welcome email? (y/n)', { default: true })) {
         console.log('Sending welcome email...');
         await sendWelcomeEmail(user.id, name, hostname, token);
       }
@@ -78,10 +64,4 @@ async function createAppForUser(email, name, dontPrompt) {
   }
 }
 
-
-function promptIfAppNameIsFine(appName) {
-  console.log(`Generated app name: ${appName}`);
-  return yesOrNo('App name ok?');
-}
-
-main();
+createAppForUser();

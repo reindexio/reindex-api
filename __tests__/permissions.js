@@ -18,8 +18,8 @@ import {
 import assert from '../test/assert';
 
 describe('Permissions', () => {
-  const hostname = 'testdb_' + uuid.v4().replace(/-/g, '_') + '.example.com';
-  const db = getDB(hostname);
+  const hostname = `test.${uuid.v4()}.example.com`;
+  let db;
   let runQuery;
   let typesByName;
 
@@ -30,6 +30,7 @@ describe('Permissions', () => {
 
   before(async function () {
     await createTestApp(hostname);
+    db = await getDB(hostname);
     runQuery = makeRunQuery(db);
     typesByName = await getTypesByName(db);
 

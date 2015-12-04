@@ -5,7 +5,6 @@ import Monitoring from '../Monitoring';
 import { fromReindexID } from '../graphQL/builtins/ReindexID';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
-const databaseDoesNotExistRegExp = /^Database `[^`]+` does not exist.$/;
 
 function verifyToken(token, secrets) {
   for (const secret of secrets) {
@@ -47,19 +46,8 @@ async function authenticateAsync(request) {
   try {
     secrets = await db.getSecrets();
   } catch (error) {
-    if (error.name === 'ReqlOpFailedError' &&
-        databaseDoesNotExistRegExp.test(error.msg)) {
-      throw Boom.notFound();
-    } else {
-      Monitoring.noticeError(error);
-      throw error;
-    }
-  }
-
-  if (!secrets || secrets.length === 0) {
-    if (!await db.hasApp()) {
-      throw Boom.notFound();
-    }
+    Monitoring.noticeError(error);
+    throw error;
   }
 
   let verifiedToken;

@@ -16,8 +16,9 @@ async function main() {
     return;
   }
 
-  const db = getDB(hostname);
+  let db;
   try {
+    db = await getDB(hostname);
     const types = await db.getTypes();
     const schema = createSchema(Immutable.fromJS(types));
     console.log(printSchema(schema));
