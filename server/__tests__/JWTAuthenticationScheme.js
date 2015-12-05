@@ -6,22 +6,27 @@ import uuid from 'uuid';
 import assert from '../../test/assert';
 import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
+import getDB from '../../db/getDB';
 import JWTAuthenticationScheme from '../JWTAuthenticationScheme';
 import DBPlugin from '../DBPlugin';
-import { toReindexID, fromReindexID } from '../../graphQL/builtins/ReindexID';
+import { createFixture, makeRunQuery } from '../../test/testAppUtils';
+import { fromReindexID } from '../../graphQL/builtins/ReindexID';
 
 describe('JWTAuthenticationScheme', () => {
   const host = `test.${uuid.v4()}.example.com`;
+  let db;
   let server;
   let secret;
+  let user;
   let validToken;
 
-  const userID = toReindexID({ type: 'User', value: 'someUserID' });
   const now = Math.floor(new Date() / 1000);
   const HOUR = 3600;
 
   before(async function () {
     ({ secret } = await createApp(host));
+    db = await getDB(host);
+    user = await createFixture(makeRunQuery(db), 'User', {}, 'id');
 
     server = new Hapi.Server();
     server.connection();
@@ -40,13 +45,14 @@ describe('JWTAuthenticationScheme', () => {
     });
 
     validToken = JSONWebToken.sign({
-      sub: userID,
+      sub: user.id,
       iat: now,
       exp: now + 24 * HOUR,
     }, secret);
   });
 
   after(async function () {
+    await db.close();
     await deleteApp(host);
   });
 
@@ -76,7 +82,7 @@ describe('JWTAuthenticationScheme', () => {
     assert.deepEqual(response.request.auth.credentials, {
       hostname: host,
       isAdmin: false,
-      userID: fromReindexID(userID),
+      userID: fromReindexID(user.id),
     });
   });
 
@@ -103,7 +109,7 @@ describe('JWTAuthenticationScheme', () => {
 
   it('returns an error for an expired token', async function () {
     const expiredToken = JSONWebToken.sign({
-      sub: toReindexID({ type: 'User', value: userID }),
+      sub: user.id,
       iat: now - 48 * HOUR,
       exp: now - 24 * HOUR,
     }, secret);

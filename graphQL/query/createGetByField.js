@@ -19,11 +19,12 @@ export default function createGetByField({ type }) {
         },
       },
       async resolve(parent, args, context) {
+        const { db } = context.rootValue;
         const value = args[field.name];
-        if (field.name === 'id' && value.type !== type.name) {
-          throw new Error(`Invalid ID`);
+        if (field.name === 'id' && !db.isValidID(type.name, value)) {
+          throw new Error(`id: Invalid ID for type ${type.name}`);
         }
-        const result = await context.rootValue.db.getByField(
+        const result = await db.getByField(
           type.name,
           field.name,
           value,

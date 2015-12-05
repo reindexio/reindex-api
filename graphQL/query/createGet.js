@@ -18,10 +18,11 @@ export default function createGet({ type }) {
       },
     },
     async resolve(parent, { id }, context) {
-      if (id.type !== type.name) {
-        throw new Error(`Invalid ID`);
+      const { db } = context.rootValue;
+      if (!db.isValidID(type.name, id)) {
+        throw new Error(`id: Invalid ID for type ${type.name}`);
       }
-      const result = await context.rootValue.db.getByID(id);
+      const result = await db.getByID(type.name, id);
       checkPermission(type.name, 'read', result, context);
       return result;
     },

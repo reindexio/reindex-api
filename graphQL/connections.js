@@ -151,7 +151,7 @@ export function createNodeFieldResolve(ofType, fieldName) {
   return async (parent, args, context) => {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
     if (id) {
-      const result = await context.rootValue.db.getByID(id);
+      const result = await context.rootValue.db.getByID(ofType, id);
       checkPermission(ofType, 'read', result, context);
       return result;
     } else {

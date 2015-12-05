@@ -91,6 +91,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
       assert.deepEqual(
         await queries.getByID(
           conn,
+          'User',
           {
             value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
             type: 'User',
@@ -103,6 +104,12 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           },
           handle: 'fson',
         }
+      );
+      assert.throws(() =>
+        queries.getByID('User', {
+          value: '94b90d89-22b6-4abf-b6ad-2780bf9d0408',
+          type: 'NotUser',
+        })
       );
     });
 

@@ -37,7 +37,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           handle: 'villeimmonen',
         });
         id = result.id;
-        const resultInDb = await getByID(conn, id);
+        const resultInDb = await getByID(conn, 'User', id);
         assert.deepEqual(
           result,
           resultInDb
@@ -53,7 +53,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           handle: 'immonenville',
           email: 'immonenv@example.com',
         });
-        const resultInDb = await getByID(conn, id);
+        const resultInDb = await getByID(conn, 'User', id);
         assert.deepEqual(
           result,
           resultInDb
@@ -69,7 +69,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
         const result = await queries.replace(conn, 'User', id, {
           handle: 'villeimmonen',
         });
-        const resultInDb = await getByID(conn, id);
+        const resultInDb = await getByID(conn, 'User', id);
         assert.deepEqual(
           result,
           resultInDb
@@ -84,7 +84,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
         const result = await queries.deleteQuery(conn, 'User', id, {
           handle: 'villeimmonen',
         });
-        const resultInDb = await getByID(conn, id);
+        const resultInDb = await getByID(conn, 'User', id);
         assert.isNull(
           resultInDb
         );

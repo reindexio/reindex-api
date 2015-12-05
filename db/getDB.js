@@ -13,7 +13,7 @@ async function fetchApp(adminDB, hostname) {
   if (!domain) {
     throw appNotFoundError(hostname);
   }
-  return await adminDB.getByID(domain.app);
+  return await adminDB.getByID('App', domain.app);
 }
 
 const appsByHostname = {};

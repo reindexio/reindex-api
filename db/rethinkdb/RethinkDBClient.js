@@ -1,12 +1,13 @@
 import { forEach, merge } from 'lodash';
 
 import Metrics from '../../server/Metrics';
-import { getConnection, releaseConnection } from './dbConnections';
 import * as simpleQueries from './queries/simpleQueries';
 import * as mutationQueries from './queries/mutationQueries';
 import * as connectionQueries from './queries/connectionQueries';
 import * as migrationQueries from './queries/migrationQueries';
 import * as appQueries from './queries/appQueries';
+import { getConnection, releaseConnection } from './dbConnections';
+import { isValidID } from './queries/queryUtils';
 
 export default class RethinkDBClient {
   constructor(hostname, dbName, cluster) {
@@ -24,6 +25,10 @@ export default class RethinkDBClient {
 
   async close() {
     await releaseConnection(this.conn);
+  }
+
+  isValidID(type, id) {
+    return isValidID(type, id);
   }
 }
 

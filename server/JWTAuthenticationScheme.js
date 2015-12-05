@@ -66,6 +66,9 @@ async function authenticateAsync(request) {
   }
 
   const userID = verifiedToken.sub ? fromReindexID(verifiedToken.sub) : null;
+  if (!db.isValidID('User', userID)) {
+    throw Boom.unauthorized();
+  }
 
   const credentials = {
     hostname,

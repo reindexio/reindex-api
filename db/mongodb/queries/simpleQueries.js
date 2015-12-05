@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
-import { addID, addTransform } from './queryUtils';
+import { addID, addTransform, isValidID } from './queryUtils';
 
 export function getAllQuery(db, type) {
   const cursor = db.collection(type).find();
@@ -40,11 +40,12 @@ export async function getMetadata(db) {
   };
 }
 
-export async function getByID(db, id) {
-  const result = await db.collection(id.type).findOne({
-    _id: ObjectId(id.value),
-  });
-  return addID(id.type, result);
+export async function getByID(db, type, id) {
+  if (!isValidID(type, id)) {
+    throw new Error(`Invalid ID for type ${type}`);
+  }
+  const result = await db.collection(type).findOne({ _id: ObjectId(id.value) });
+  return addID(type, result);
 }
 
 export async function getByField(db, type, field, value) {

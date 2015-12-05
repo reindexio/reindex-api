@@ -12,6 +12,7 @@ import {
 import { getIndexFromFields, ensureIndex } from './indexes';
 import {
   getFirstOrNullQuery,
+  isValidID,
   queryWithIDs,
 } from './queryUtils';
 
@@ -74,9 +75,12 @@ export function getAllQuery(type) {
   return RethinkDB.table(type);
 }
 
-export function getByID(conn, id) {
+export function getByID(conn, type, id) {
+  if (!isValidID(type, id)) {
+    throw new Error(`Invalid ID for type ${type}`);
+  }
   return getFirstOrNullQuery(
-    queryWithIDs(id.type, RethinkDB.table(id.type).getAll(id.value))
+    queryWithIDs(id.type, RethinkDB.table(type).getAll(id.value))
   ).run(conn);
 }
 
