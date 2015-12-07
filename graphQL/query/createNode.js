@@ -45,8 +45,12 @@ query NodeExample {
           id,
         };
       }
-      const result = await context.rootValue.db.getByID(id);
-      checkPermission(id.type, 'read', result, context);
+      const type = context.schema.getType(id.type);
+      if (!type || !type.getInterfaces().includes(interfaces.Node)) {
+        return null;
+      }
+      const result = await context.rootValue.db.getByID(type.name, id);
+      checkPermission(type.name, 'read', result, context);
       return result;
     },
   };

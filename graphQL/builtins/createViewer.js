@@ -45,7 +45,7 @@ of the type.
           if (!userID) {
             return null;
           }
-          const result = await context.rootValue.db.getByID(userID);
+          const result = await context.rootValue.db.getByID('User', userID);
           checkPermission('User', 'read', result, context);
           return result;
         },

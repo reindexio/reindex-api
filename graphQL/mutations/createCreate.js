@@ -54,7 +54,9 @@ export default function createCreate(typeSet, interfaces, typeSets) {
         db,
         context,
         type,
-        object
+        object,
+        undefined,
+        interfaces,
       );
 
       const result = await db.create(type.name, object);

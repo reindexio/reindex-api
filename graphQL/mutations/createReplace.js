@@ -44,14 +44,17 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
 
-      if (input.id.type !== type.name) {
-        throw new Error(`Invalid ID`);
+      if (!db.isValidID(type.name, input.id)) {
+        throw new Error(`input.id: Invalid ID for type ${type.name}`);
       }
 
-      const existing = await db.getByID(input.id);
+      const existing = await db.getByID(type.name, input.id);
 
       if (!existing) {
-        throw new Error(`Can not find ${type.name} object with given id.`);
+        throw new Error(
+          `input.id: Can not find ${type.name} object with given ID: ` +
+          input.id
+        );
       }
 
       checkPermission(
@@ -66,7 +69,8 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         context,
         type,
         object,
-        existing
+        existing,
+        interfaces,
       );
 
       const result = await db.replace(type.name, input.id, object, existing);

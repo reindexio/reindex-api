@@ -9,6 +9,7 @@ import * as simpleQueries from './queries/simpleQueries';
 import * as connectionQueries from './queries/connectionQueries';
 import * as mutationQueries from './queries/mutationQueries';
 import * as migrationQueries from './queries/migrationQueries';
+import { isValidID } from './queries/queryUtils';
 
 export default class MongoDBClient {
   constructor(
@@ -33,6 +34,10 @@ export default class MongoDBClient {
       const db = await this.db;
       await db.close();
     }
+  }
+
+  isValidID(type, id) {
+    return isValidID(type, id);
   }
 }
 

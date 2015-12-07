@@ -28,10 +28,10 @@ export default function createDelete({ type, payload }) {
     async resolve(parent, { input }, context) {
       const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
-      if (input.id.type !== type.name) {
-        throw new Error(`Invalid ID`);
+      if (!db.isValidID(type.name, input.id)) {
+        throw new Error(`input.id: Invalid ID for type ${type.name}`);
       }
-      const object = await db.getByID(input.id);
+      const object = await db.getByID(type.name, input.id);
 
       if (!object) {
         throw new Error(`Can not find ${type.name} object with given id.`);

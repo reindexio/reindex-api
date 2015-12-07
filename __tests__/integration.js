@@ -3,7 +3,7 @@ import uuid from 'uuid';
 
 import deleteApp from '../apps/deleteApp';
 import getDB from '../db/getDB';
-import { fromReindexID } from '../graphQL/builtins/ReindexID';
+import { fromReindexID, toReindexID } from '../graphQL/builtins/ReindexID';
 import { toCursor } from '../graphQL/builtins/Cursor';
 import {
   makeRunQuery,
@@ -153,6 +153,16 @@ describe('Integration Tests', () => {
         node: authProvider,
       },
     });
+
+    const bogusID = toReindexID({
+      ...fromReindexID(micropost.id),
+      type: 'Bogus',
+    });
+    const notFoundResult = await runQuery(
+      'query ($id: ID!) { node(id: $id) { id } }',
+      { id: bogusID },
+    );
+    assert.deepEqual(notFoundResult, { data: { node: null } });
   });
 
   it('queries by id', async function() {
@@ -303,6 +313,18 @@ describe('Integration Tests', () => {
         },
       }
     );
+  });
+
+  it('treats ReindexViewer as a Node', async () => {
+    const result = await runQuery(`{ viewer { id }}`);
+    assert.deepProperty(result, 'data.viewer.id', 'viewer should have an ID');
+    const viewer = get(result, ['data', 'viewer']);
+
+    const nodeResult = await runQuery(
+      `query ($id: ID!) { node(id: $id) { id } }`,
+      { id: viewer.id },
+    );
+    assert.deepEqual(nodeResult, { data: { node: viewer } });
   });
 
   it('works with edges and cursor', async function () {
@@ -670,6 +692,71 @@ describe('Integration Tests', () => {
           },
         },
       },
+    });
+  });
+
+  it('validates that related nodes exist', async function () {
+    const micropost = values(fixtures.Micropost)[0];
+    const idNotFound = toReindexID({
+      ...fromReindexID(micropost.id),
+      type: 'User',
+    });
+    const idInvalidType = toReindexID({
+      type: 'ReindexViewer',
+      value: 'viewer',
+    });
+    const idMalformed = toReindexID({
+      type: 'User',
+      value: 'bogus',
+    });
+    const result = await runQuery(`
+      mutation postMicropost(
+        $post1: _CreateMicropostInput!
+        $post2: _CreateMicropostInput!
+        $post3: _CreateMicropostInput!
+      ) {
+        post1: createMicropost(input: $post1) { id }
+        post2: createMicropost(input: $post2) { id }
+        post3: createMicropost(input: $post3) { id }
+      }
+    `, {
+      post1: {
+        text: 'Post 1',
+        createdAt: '2016-05-12T18:00:00.000Z',
+        author: idNotFound,
+      },
+      post2: {
+        text: 'Post 2',
+        createdAt: '2016-06-12T18:00:00.000Z',
+        author: idInvalidType,
+      },
+      post3: {
+        text: 'Post 3',
+        createdAt: '2016-07-12T18:00:00.000Z',
+        author: idMalformed,
+      },
+    });
+
+    assert.deepEqual(result, {
+      data: {
+        post1: null,
+        post2: null,
+        post3: null,
+      },
+      errors: [
+        {
+          message:
+            `Micropost.author: User with ID "${idNotFound}" does not exist.`,
+        },
+        {
+          message:
+            `Micropost.author: Invalid ID for type User: ${idInvalidType}`,
+        },
+        {
+          message:
+            `Micropost.author: Invalid ID for type User: ${idMalformed}`,
+        },
+      ],
     });
   });
 

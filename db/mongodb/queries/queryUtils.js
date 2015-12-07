@@ -1,4 +1,5 @@
 import { get } from 'lodash';
+import { ObjectId } from 'mongodb';
 
 export function addID(type, object) {
   if (object && object._id) {
@@ -19,4 +20,17 @@ export function addTransform(cursor, transform) {
     finalTransform = transform;
   }
   return cursor.map(finalTransform);
+}
+
+export function isValidID(type, id) {
+  if (!id) {
+    return false;
+  }
+  if (id.type !== type) {
+    return false;
+  }
+  if (!ObjectId.isValid(id.value)) {
+    return false;
+  }
+  return true;
 }

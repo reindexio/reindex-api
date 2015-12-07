@@ -1,13 +1,17 @@
 import { filter } from 'lodash';
 
+import { toReindexID } from '../builtins/ReindexID';
+
 export default async function validate(
   db,
   context,
   type,
   newObject,
-  existingObject
+  existingObject,
+  interfaces,
 ) {
   await validateUnique(db, context, type, newObject, existingObject);
+  await validateNodesExist(db, interfaces, type, newObject, existingObject);
 }
 
 async function validateUnique(
@@ -42,4 +46,39 @@ async function validateUnique(
       );
     }
   }
+}
+
+async function validateNodesExist(
+  db,
+  interfaces,
+  type,
+  newObject,
+  existingObject = {},
+) {
+  const nodeFields = filter(type.getFields(), (field) =>
+    newObject[field.name] &&
+    newObject[field.name] !== existingObject[field.name] &&
+    field.type.getInterfaces &&
+    field.type.getInterfaces().includes(interfaces.Node)
+  );
+  const nodes = await* nodeFields.map((field) => {
+    const id = newObject[field.name];
+    if (!db.isValidID(field.type.name, id)) {
+      const reindexID = toReindexID(id);
+      throw new Error(
+        `${type.name}.${field.name}: Invalid ID for type ${field.type.name}: ` +
+        reindexID
+      );
+    }
+    return db.getByID(field.type.name, id);
+  });
+  nodeFields.forEach((field, index) => {
+    if (!nodes[index]) {
+      const reindexID = toReindexID(newObject[field.name]);
+      throw new Error(
+        `${type.name}.${field.name}: ${field.type.name} with ID ` +
+        `"${reindexID}" does not exist.`
+      );
+    }
+  });
 }
