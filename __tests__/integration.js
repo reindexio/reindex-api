@@ -315,6 +315,18 @@ describe('Integration Tests', () => {
     );
   });
 
+  it('treats ReindexViewer as a Node', async () => {
+    const result = await runQuery(`{ viewer { id }}`);
+    assert.deepProperty(result, 'data.viewer.id', 'viewer should have an ID');
+    const viewer = get(result, ['data', 'viewer']);
+
+    const nodeResult = await runQuery(
+      `query ($id: ID!) { node(id: $id) { id } }`,
+      { id: viewer.id },
+    );
+    assert.deepEqual(nodeResult, { data: { node: viewer } });
+  });
+
   it('works with edges and cursor', async function () {
     const user = values(fixtures.User)[0];
     const microposts = values(fixtures.Micropost);
