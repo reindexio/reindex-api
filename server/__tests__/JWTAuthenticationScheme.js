@@ -86,6 +86,29 @@ describe('JWTAuthenticationScheme', () => {
     });
   });
 
+  it('accepts tokens without subject', async function() {
+    const anonymousToken = JSONWebToken.sign({ iat: now }, secret);
+    const anonymousResponse = await makeRequest({
+      authorization: `Bearer ${anonymousToken}`,
+      host,
+    });
+    assert.deepEqual(anonymousResponse.request.auth.credentials, {
+      hostname: host,
+      isAdmin: false,
+      userID: null,
+    });
+    const adminToken = JSONWebToken.sign({ isAdmin: true, iat: now }, secret);
+    const adminResponse = await makeRequest({
+      authorization: `Bearer ${adminToken}`,
+      host,
+    });
+    assert.deepEqual(adminResponse.request.auth.credentials, {
+      hostname: host,
+      isAdmin: true,
+      userID: null,
+    });
+  });
+
   it('uses anonymous credentials when header not given', async function() {
     const response = await makeRequest({ host });
     assert.equal(response.statusCode, 200);
