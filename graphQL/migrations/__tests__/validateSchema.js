@@ -67,9 +67,19 @@ const invalidSchemas = {
       fields: [],
     }),
   ],
+  'field without name': [
+    type('T', {
+      fields: [field('')],
+    }),
+  ],
   'duplicated field name': [
     type('T', {
       fields: [field('a'), field('a')],
+    }),
+  ],
+  'duplicated field name in different case': [
+    type('T', {
+      fields: [field('a'), field('A')],
     }),
   ],
   'field shadows field built-in field for type': [
@@ -246,6 +256,64 @@ const invalidSchemas = {
           type: 'Connection',
           ofType: 'Foo',
           reverseName: 'bars',
+        },
+      ],
+    }),
+  ],
+  'missing default ordering field': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'Connection',
+          ofType: 'Bar',
+          reverseName: 'foos',
+          defaultOrdering: {
+            field: 'zoos',
+          },
+        },
+      ],
+    }),
+  ],
+  'non-orderable default ordering field': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'bars',
+        },
+        {
+          name: 'zoos',
+          type: 'String',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'Connection',
+          ofType: 'Bar',
+          reverseName: 'foos',
+          defaultOrdering: {
+            field: 'zoos',
+          },
         },
       ],
     }),

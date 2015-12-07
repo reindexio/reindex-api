@@ -114,8 +114,8 @@ export const PageInfo = new GraphQLObjectType({
   },
 });
 
-export function createConnectionArguments(getTypeSet, interfaces) {
-  return {
+export function createConnectionArguments(typeName, getTypeSet) {
+  const args = {
     first: {
       name: 'first',
       description:
@@ -138,13 +138,18 @@ export function createConnectionArguments(getTypeSet, interfaces) {
       description: 'Only return edges after given cursor.',
       type: Cursor,
     },
-    orderBy: {
+  };
+
+  const ordering = getTypeSet(typeName).getOrdering();
+  if (ordering) {
+    args.orderBy = {
       name: 'orderBy',
       description: 'The ordering to sort the results by.',
-      type: getTypeSet('ReindexOrdering')
-        .getInputObject(getTypeSet, interfaces),
-    },
-  };
+      type: ordering,
+    };
+  }
+
+  return args;
 }
 
 export function createNodeFieldResolve(ofType, fieldName) {

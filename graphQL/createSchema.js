@@ -56,7 +56,14 @@ export default function createSchema(dbMetadata, extraRootFields) {
         const type = createObjectType(typeMetadata, getTypeSet, interfaces);
         return [
           typeMetadata.get('name'),
-          new TypeSet({ type, pluralName: typeMetadata.get('pluralName') }),
+          new TypeSet({
+            type,
+            pluralName: typeMetadata.get('pluralName'),
+            orderableFields: typeMetadata.get('fields')
+              .filter((field) => field.get('orderable'))
+              .map((field) => field.get('name'))
+              .toArray(),
+          }),
         ];
       }
     }))
@@ -161,7 +168,7 @@ function createField(field, getTypeSet, interfaces) {
     const reverseName = field.get('reverseName');
     const defaultOrdering = field.get('defaultOrdering', Map()).toJS();
     type = getTypeSet(ofType).connection;
-    argDef = createConnectionArguments(getTypeSet, interfaces);
+    argDef = createConnectionArguments(ofType, getTypeSet);
     resolve = createConnectionFieldResolve(
       ofType, reverseName, defaultOrdering
     );
@@ -190,8 +197,7 @@ function createField(field, getTypeSet, interfaces) {
     deprecationReason: field.get('deprecationReason', null),
     description: field.get('description', null),
     metadata: {
-      builtin: field.get('builtin'),
-      unique: field.get('unique') || fieldType === 'ID',
+      ...field.toJS(),
     },
   };
 }

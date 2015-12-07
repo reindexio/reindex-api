@@ -4,33 +4,21 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLBoolean,
-  GraphQLEnumType,
 } from 'graphql';
+
 import createCreate from '../mutations/createCreate';
 import createUpdate from '../mutations/createUpdate';
 import createReplace from '../mutations/createReplace';
 import createDelete from '../mutations/createDelete';
 import TypeSet from '../TypeSet';
 import ReindexID from './ReindexID';
+import Order from './Order';
 import {
   createConnectionFieldResolve,
   createConnectionArguments,
 } from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
-  const OrderEnum = new GraphQLEnumType({
-    name: 'ReindexOrder',
-    description: 'A sort order (ascending/descending).',
-    values: {
-      ASC: {
-        value: 'ASC',
-      },
-      DESC: {
-        value: 'DESC',
-      },
-    },
-  });
-
   const permissionSet = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexPermissionSet',
@@ -65,7 +53,7 @@ export default function createTypeTypes(interfaces, getTypeSet) {
 `,
       fields: {
         order: {
-          type: OrderEnum,
+          type: Order,
           description: 'A sorting order, either ASC or DESC.',
         },
         field: {
@@ -133,6 +121,11 @@ export default function createTypeTypes(interfaces, getTypeSet) {
 Unique fields are validated on mutation. In addition, for each unique field a
 new root query field is created to get values based on that field.`,
         },
+        orderable: {
+          type: GraphQLBoolean,
+          description:
+`If set, orderBy can be used on this field. Can be only set on scalar fields.`,
+        },
       },
     }),
   });
@@ -171,6 +164,7 @@ creating a migration with the CLI tool.
           description: 'The name of the type.',
           metadata: {
             unique: true,
+            orderable: true,
           },
         },
         description: {
@@ -188,7 +182,7 @@ creating a migration with the CLI tool.
         },
         permissions: {
           type: getTypeSet('ReindexPermission').connection,
-          args: createConnectionArguments(getTypeSet, interfaces),
+          args: createConnectionArguments('ReindexPermission', getTypeSet),
           resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
           description: 'All the permissions defined for this type.',
         },
@@ -200,7 +194,7 @@ creating a migration with the CLI tool.
         },
         hooks: {
           type: getTypeSet('ReindexHook').connection,
-          args: createConnectionArguments(getTypeSet, interfaces),
+          args: createConnectionArguments('ReindexHook', getTypeSet),
           resolve: createConnectionFieldResolve('ReindexHook', 'type'),
           description: '',
         },

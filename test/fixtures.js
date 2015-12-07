@@ -7,6 +7,7 @@ export const TEST_SCHEMA = [
       {
         name: 'name',
         type: 'String',
+        orderable: true,
       },
     ],
   },
@@ -24,10 +25,12 @@ export const TEST_SCHEMA = [
       {
         name: 'text',
         type: 'String',
+        orderable: true,
       },
       {
         name: 'createdAt',
         type: 'DateTime',
+        orderable: true,
       },
       {
         name: 'author',
