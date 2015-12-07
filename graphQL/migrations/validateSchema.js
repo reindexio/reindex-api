@@ -330,18 +330,17 @@ function validateReverseField(
 
     invariant(
       !field.defaultOrdering || defaultOrderingField,
-      '%s.%s: Expected default ordering field %s.%s to be field in type %s. ' +
-      'Found %s.',
-      reverseType, reverseField.name, type.name, field.name,
-      field.defaultOrdering && field.defaultOrdering.field
+      '%s.%s: Expected `defaultOrdering.field` to be field in type %s. ' +
+      'Found "%s".',
+      type.name, field.name, reverseType,
+      field.defaultOrdering && field.defaultOrdering.field,
     );
 
     if (defaultOrderingField) {
       invariant(
         defaultOrderingField.orderable,
         '%s.%s: Expected default ordering field %s.%s to be orderable.',
-        reverseType, reverseField.name, type.name, field.name,
-        field.defaultOrdering.field
+        type.name, field.name, reverseType, field.defaultOrdering.field,
       );
     }
   }
