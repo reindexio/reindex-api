@@ -2,7 +2,6 @@ import RethinkDB from 'rethinkdb';
 
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import {
-  AUTHENTICATION_PROVIDER_TABLE,
   TYPE_TABLE,
   SECRET_TABLE,
   INDEX_TABLE,
@@ -61,14 +60,6 @@ export async function getMetadata(conn) {
     return type;
   });
   return result;
-}
-
-export function getAuthenticationProvider(conn, providerType) {
-  return getFirstOrNullQuery(queryWithIDs(AUTHENTICATION_PROVIDER_TABLE,
-    RethinkDB.table(AUTHENTICATION_PROVIDER_TABLE).filter({
-      type: providerType,
-    })
-  )).run(conn);
 }
 
 export function getAllQuery(type) {

@@ -11,6 +11,7 @@ export async function getOrCreateUser(db, providerName, credential) {
     $set: { [`credentials.${providerName}`]: credential },
   }, {
     upsert: true,
+    returnOriginal: false,
   });
 
   return addID('User', result.value);
