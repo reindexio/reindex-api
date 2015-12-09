@@ -13,7 +13,6 @@ import {
   TEST_DATA,
 } from './testDatabase';
 import {
-  AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
   INDEX_TABLE,
@@ -63,16 +62,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           .map((type) => type.delete('id'))
           .toSet(),
         TEST_DATA.getIn(['tables', INDEX_TABLE]).toSet(),
-      );
-    });
-
-    it('getAuthenticationProvider', async function() {
-      assert.deepEqual(
-        await queries.getAuthenticationProvider(conn, 'github'),
-        processIds(
-          AUTHENTICATION_PROVIDER_TABLE,
-          TEST_DATA.getIn(['tables', AUTHENTICATION_PROVIDER_TABLE])
-        ).toJS()[0],
       );
     });
 

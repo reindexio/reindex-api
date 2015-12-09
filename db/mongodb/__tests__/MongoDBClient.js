@@ -15,7 +15,8 @@ import getDB from '../../getDB';
 import { addTransform } from '../queries/queryUtils';
 import DatabaseTypes from '../../DatabaseTypes';
 
-if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
+if (!process.env.DATABASE_TYPE ||
+    process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
   describe('MongoDBClient', () => {
     const hostname = `test.${uuid.v4()}.example.com`;
     let db;
@@ -509,6 +510,23 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
           sort.inputStages.map((stage) => stage.stage),
           ['IXSCAN', 'IXSCAN', 'IXSCAN']
         );
+      });
+    });
+
+    describe('getOrCreateUser', () => {
+      it('upserts users', async () => {
+        const credentials = {
+          id: '4',
+          accessToken: 'BLOBBLOBBLOBBLOB',
+          displayName: 'Mark Zuckerberg',
+          email: 'zuck@example.com',
+        };
+        const zuck = await db.getOrCreateUser('facebook', credentials);
+        assert.equal(zuck.id.type, 'User');
+        assert.deepEqual(zuck.credentials.facebook, credentials);
+
+        const zuck2 = await db.getOrCreateUser('facebook', credentials);
+        assert.deepEqual(zuck.id, zuck2.id);
       });
     });
   });

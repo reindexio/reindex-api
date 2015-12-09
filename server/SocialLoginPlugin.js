@@ -68,7 +68,9 @@ async function authenticate(request, reply) {
       );
     }
 
-    const authenticationProvider = await db.getAuthenticationProvider(
+    const authenticationProvider = await db.getByField(
+      'ReindexAuthenticationProvider',
+      'type',
       providerName,
     );
 
