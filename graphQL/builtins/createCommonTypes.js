@@ -1,4 +1,3 @@
-import { Map } from 'immutable';
 import createAuthenticationProvider from './createAuthenticationProvider';
 import createIntercomSettings from './createIntercomSettings';
 import createTypeTypes from './createTypeTypes';
@@ -9,7 +8,7 @@ import createMigrationTypes from './createMigrationTypes';
 import createHook from './createHook';
 
 export default function createCommonTypes(interfaces, getTypeSet) {
-  return Map({
+  return {
     ...createTypeTypes(interfaces, getTypeSet),
     ...createCredentialTypes(interfaces, getTypeSet),
     ...createMigrationTypes(interfaces, getTypeSet),
@@ -18,5 +17,5 @@ export default function createCommonTypes(interfaces, getTypeSet) {
     ReindexAuthenticationProvider: createAuthenticationProvider(interfaces),
     ReindexPermission: createPermission(interfaces, getTypeSet),
     ReindexIntercomSettings: createIntercomSettings(),
-  });
+  };
 }

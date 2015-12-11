@@ -1,5 +1,4 @@
 import { chain, groupBy } from 'lodash';
-import { fromJS } from 'immutable';
 import createSchema from './createSchema';
 
 export default function getGraphQLContext(
@@ -15,7 +14,7 @@ export default function getGraphQLContext(
   const typePermissions = extractPermissions(permissionData, typeData);
   const connectionPermissions = extractConnectionPermissions(typeData);
   const hooks = extractHooks(hookData, typeData);
-  const schema = createSchema(fromJS(typeData), extraRootFields);
+  const schema = createSchema(typeData, extraRootFields);
   return {
     ...extraContext,
     db,

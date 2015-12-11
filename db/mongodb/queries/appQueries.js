@@ -1,5 +1,3 @@
-import { fromJS } from 'immutable';
-
 import createSchema from '../../../graphQL/createSchema';
 import toReindexSchema from '../../../graphQL/toReindexSchema';
 import DefaultUserType from '../../../graphQL/builtins/DefaultUserType';
@@ -10,7 +8,7 @@ export async function createStorageForApp(db) {
 }
 
 export async function createBuiltInIndexesForApp(db) {
-  const schema = createSchema(fromJS([DefaultUserType]));
+  const schema = createSchema([DefaultUserType]);
   const types = toReindexSchema(schema);
   await constructMissingIndexes(db, types, {});
 }

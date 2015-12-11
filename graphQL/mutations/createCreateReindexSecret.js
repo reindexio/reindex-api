@@ -9,7 +9,7 @@ function generateSecret() {
 }
 
 export default function createCreateReindexSecret(typeSets) {
-  const secretPayload = typeSets.get('ReindexSecret').payload;
+  const secretPayload = typeSets.ReindexSecret.payload;
   const input = new GraphQLInputObjectType({
     name: '_CreateReindexSecretInput',
     fields: {

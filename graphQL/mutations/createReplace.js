@@ -14,7 +14,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
   const objectFields = createInputObjectFields(
     typeSet.getInputObjectFields(),
     true,
-    (name) => typeSets.get(name),
+    (name) => typeSets[name],
     interfaces
   );
 

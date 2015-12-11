@@ -1,3 +1,5 @@
+import { chain } from 'lodash';
+
 import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
 
 import checkPermission from '../permissions/checkPermission';
@@ -6,13 +8,11 @@ import ReindexID from './ReindexID';
 import { getIntercomSettings } from './IntercomSettings';
 
 export default function createViewer(typeSets, interfaces) {
-  const allObjectsFields = typeSets
-    .filter((typeSet) => typeSet.connection)
-    .mapEntries(([, typeSet]) => {
-      const field = createSearchFor(typeSet, interfaces, typeSets);
-      return [field.name, field];
-    })
-    .toObject();
+  const allObjectsFields = chain(typeSets)
+    .pick((typeSet) => typeSet.connection)
+    .map((typeSet) => createSearchFor(typeSet, interfaces, typeSets))
+    .indexBy((field) => field.name)
+    .value();
 
   return new GraphQLObjectType({
     name: 'ReindexViewer',
@@ -37,7 +37,7 @@ of the type.
         description: 'The ID of the global viewer node.',
       },
       user: {
-        type: typeSets.get('User').type,
+        type: typeSets.User.type,
         description: 'The signed in user. Returned for requests made as a ' +
           'user signed in using Reindex authentication.',
         async resolve(parent, args, context) {
@@ -51,7 +51,7 @@ of the type.
         },
       },
       __intercomSettings: {
-        type: typeSets.get('ReindexIntercomSettings').type,
+        type: typeSets.ReindexIntercomSettings.type,
         description: 'INTERNAL',
         resolve(parent, args, context) {
           return getIntercomSettings(context.rootValue.credentials);

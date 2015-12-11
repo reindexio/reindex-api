@@ -1,5 +1,4 @@
 /* eslint comma-dangle: 0, quotes: 0, quote-props: 0 */
-import { fromJS, Map } from 'immutable';
 import { graphql } from 'graphql';
 
 import assert from '../../test/assert';
@@ -7,9 +6,9 @@ import createSchema from '../../graphQL/createSchema';
 import injectDefaultFields from '../../graphQL/builtins/injectDefaultFields';
 import typeFixtures from './fixtures/types.json';
 
-const types = fromJS(typeFixtures.map((type) => {
-  type.fields = injectDefaultFields(type);
-  return type;
+const types = typeFixtures.map((type) => ({
+  ...type,
+  fields: injectDefaultFields(type),
 }));
 
 const CURSOR_TYPE_NAME = 'Cursor';
@@ -26,7 +25,7 @@ describe('Relay Cursor Connections Specification', () => {
   const schema = createSchema(types);
   const rootValue = {
     conn: new MockConnection(),
-    indexes: Map(),
+    indexes: {},
   };
 
   function runQuery(query, variables) {

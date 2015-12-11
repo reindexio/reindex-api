@@ -14,8 +14,8 @@ import clientMutationIdField from '../utilities/clientMutationIdField';
 import { trackEvent } from '../../server/IntercomClient';
 
 export default function createMigrate(typeSets, interfaces) {
-  const ReindexTypeSet = typeSets.get('ReindexType');
-  const ReindexMigrationCommandSet = typeSets.get('ReindexMigrationCommand');
+  const ReindexTypeSet = typeSets.ReindexType;
+  const ReindexMigrationCommandSet = typeSets.ReindexMigrationCommand;
 
   const payload = new GraphQLObjectType({
     name: 'ReindexMigrationPayload',
@@ -38,7 +38,7 @@ export default function createMigrate(typeSets, interfaces) {
     fields: createInputObjectFields(
       ReindexTypeSet.getInputObjectFields(),
       false,
-      (name) => typeSets.get(name),
+      (name) => typeSets[name],
       interfaces
     ),
   });
