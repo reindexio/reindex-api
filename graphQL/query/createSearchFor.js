@@ -10,7 +10,7 @@ export default function createSearchFor(
 ) {
   const argDefs = createConnectionArguments(
     type.name,
-    (name) => typeSets.get(name),
+    (name) => typeSets[name],
   );
   argDefs.first.defaultValue = 10;
 

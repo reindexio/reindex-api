@@ -182,7 +182,7 @@ function checkConnectionPermissions(type, reverseName, parent, context) {
 export function createConnectionFieldResolve(
   ofType,
   reverseName,
-  defaultOrdering
+  defaultOrdering,
 ) {
   return (parent, args, context) => {
     checkConnectionPermissions(ofType, reverseName, parent, context);

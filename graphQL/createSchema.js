@@ -4,8 +4,7 @@ import {
   GraphQLNonNull,
   GraphQLList,
 } from 'graphql';
-import { Map } from 'immutable';
-import { chain } from 'lodash';
+import { chain, mapValues, forEach } from 'lodash';
 
 import TypeSet from './TypeSet';
 import getGeneratedTypeName from './utilities/getGeneratedTypeName';
@@ -20,8 +19,6 @@ import ScalarTypes from './builtins/ScalarTypes';
 import TypeQueryFieldCreators from './builtins/TypeQueryFieldCreators';
 import TypeMutationFieldCreators from './builtins/TypeMutationFieldCreators';
 import clientMutationIdField from './utilities/clientMutationIdField';
-import createCommonRootFields from './createCommonRootFields';
-import createRootFieldsForTypes from './createRootFieldsForTypes';
 import {
   createConnection,
   createConnectionArguments,
@@ -46,67 +43,69 @@ export default function createSchema(dbMetadata, extraRootFields) {
   let viewer;
 
   function getTypeSet(name) {
-    return typeSets.get(name);
+    return typeSets[name];
   }
 
-  typeSets = createCommonTypes(interfaces, getTypeSet)
-    .merge(dbMetadata.toKeyedSeq().mapEntries(([, typeMetadata]) => {
-      const kind = typeMetadata.get('kind');
-      if (kind === 'OBJECT') {
-        const type = createObjectType(typeMetadata, getTypeSet, interfaces);
-        return [
-          typeMetadata.get('name'),
-          new TypeSet({
+  typeSets = {
+    ...createCommonTypes(interfaces, getTypeSet),
+    ...chain(dbMetadata)
+      .map((typeMetadata) => {
+        const kind = typeMetadata.kind;
+        if (kind === 'OBJECT') {
+          const type = createObjectType(typeMetadata, getTypeSet, interfaces);
+          return new TypeSet({
             type,
-            pluralName: typeMetadata.get('pluralName'),
-            orderableFields: typeMetadata.get('fields')
-              .filter((field) => field.get('orderable'))
-              .map((field) => field.get('name'))
-              .toArray(),
-          }),
-        ];
-      }
-    }))
-    .map((typeSet) => {
-      if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
-        const { connection, edge } = createConnection(typeSet, interfaces);
-        typeSet.connection = connection;
-        typeSet.edge = edge;
-        typeSet.payload = createPayload(typeSet, interfaces, () => viewer);
-      }
-      return typeSet;
-    });
+            pluralName: typeMetadata.pluralName,
+            orderableFields: chain(typeMetadata.fields)
+              .filter((field) => field.orderable)
+              .map((field) => field.name)
+              .value(),
+          });
+        }
+      })
+      .indexBy((typeSet) => typeSet.type.name)
+      .value(),
+  };
+
+  forEach(typeSets, (typeSet) => {
+    if (typeSet.type.getInterfaces().includes(interfaces.Node)) {
+      const { connection, edge } = createConnection(typeSet, interfaces);
+      typeSet.connection = connection;
+      typeSet.edge = edge;
+      typeSet.payload = createPayload(typeSet, interfaces, () => viewer);
+    }
+  });
 
   viewer = createViewer(typeSets, interfaces);
 
-  const queryFields = createCommonRootFields(
-    CommonQueryFieldCreators,
-    typeSets,
-    interfaces,
-    viewer
-  ).merge(createRootFieldsForTypes(
-    TypeQueryFieldCreators,
-    typeSets,
-    interfaces,
-    viewer
-  )).toObject();
+  const queryFields = {
+    ...mapValues(CommonQueryFieldCreators, (creator) =>
+      creator(typeSets, interfaces, viewer)
+    ),
+    ...createRootFieldsForTypes(
+      TypeQueryFieldCreators,
+      typeSets,
+      interfaces,
+      viewer
+    ),
+  };
 
-  const mutationFields = createCommonRootFields(
-    CommonMutationFieldCreators,
-    typeSets,
-    interfaces,
-    viewer
-  ).merge(createRootFieldsForTypes(
-    TypeMutationFieldCreators,
-    typeSets,
-    interfaces,
-    viewer
-  )).toObject();
+  const mutationFields = {
+    ...mapValues(CommonMutationFieldCreators, (creator) =>
+      creator(typeSets, interfaces, viewer)
+    ),
+    ...createRootFieldsForTypes(
+      TypeMutationFieldCreators,
+      typeSets,
+      interfaces,
+      viewer
+    ),
+  };
 
   if (extraRootFields) {
     for (const fieldName in extraRootFields) {
       const field = extraRootFields[fieldName];
-      const type = typeSets.get(field.returnTypeName);
+      const type = typeSets[field.returnTypeName];
       const typeType = field.returnTypeType;
       if (!queryFields[fieldName] && type && type[typeType]) {
         queryFields[fieldName] = {
@@ -135,46 +134,56 @@ export default function createSchema(dbMetadata, extraRootFields) {
   });
 }
 
+function createRootFieldsForTypes(creators, typeSets, interfaces, viewer) {
+  return chain(typeSets)
+    .filter((typeSet) => typeSet.type.getInterfaces().includes(interfaces.Node))
+    .map((typeSet) => chain(creators)
+      .filter((creator) => !typeSet.blacklistedRootFields.includes(creator))
+      .map((creator) => creator(typeSet, interfaces, typeSets, viewer))
+      .flatten()
+      .indexBy((query) => query.name)
+      .value())
+    .reduce((all, queries) => Object.assign(all, queries))
+    .value();
+}
+
 function createObjectType(type, getTypeSet, interfaces) {
   const config = {
-    name: type.get('name'),
-    description: type.get('description', null),
-    fields: () => type
-      .get('fields')
-      .toKeyedSeq()
-      .mapEntries(([, field]) => [
-        field.get('name'),
-        createField(field, getTypeSet, interfaces),
-      ])
-      .toObject(),
-    interfaces: [...type.get('interfaces').map((name) => interfaces[name])],
+    name: type.name,
+    description: type.description || null,
+    fields: () => chain(type.fields)
+      .map((field) => createField(field, getTypeSet, interfaces))
+      .indexBy((field) => field.name)
+      .value(),
+    interfaces: type.interfaces.map((name) => interfaces[name]),
   };
   if (config.interfaces.includes(interfaces.Node)) {
-    config.isTypeOf = (value) => value.id && value.id.type === type.get('name');
+    config.isTypeOf = (value) => value.id && value.id.type === type.name;
   }
 
   return new GraphQLObjectType(config);
 }
 
 function createField(field, getTypeSet, interfaces) {
-  const fieldName = field.get('name');
-  const fieldType = field.get('type');
+  const fieldName = field.name;
+  const fieldType = field.type;
 
   let type;
   let resolve;
   let argDef = {};
   if (fieldType === 'Connection') {
-    const ofType = field.get('ofType');
-    const reverseName = field.get('reverseName');
-    const defaultOrdering = field.get('defaultOrdering', Map()).toJS();
+    const ofType = field.ofType;
+    const reverseName = field.reverseName;
+    const defaultOrdering = field.defaultOrdering || {};
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments(ofType, getTypeSet);
     resolve = createConnectionFieldResolve(
       ofType, reverseName, defaultOrdering
     );
   } else if (fieldType === 'List') {
-    const innerType = ScalarTypes[field.get('ofType')] ||
-      getTypeSet(field.get('ofType')).type;
+    const innerType = (
+      ScalarTypes[field.ofType] || getTypeSet(field.ofType).type
+    );
     type = new GraphQLList(innerType);
   } else if (fieldType in ScalarTypes) {
     type = ScalarTypes[fieldType];
@@ -185,7 +194,7 @@ function createField(field, getTypeSet, interfaces) {
     }
   }
 
-  if (field.get('nonNull')) {
+  if (field.nonNull) {
     type = new GraphQLNonNull(type);
   }
 
@@ -194,10 +203,10 @@ function createField(field, getTypeSet, interfaces) {
     type,
     args: argDef,
     resolve,
-    deprecationReason: field.get('deprecationReason', null),
-    description: field.get('description', null),
+    deprecationReason: field.deprecationReason || null,
+    description: field.description || null,
     metadata: {
-      ...field.toJS(),
+      ...field,
     },
   };
 }

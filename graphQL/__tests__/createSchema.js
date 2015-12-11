@@ -1,4 +1,3 @@
-import { fromJS } from 'immutable';
 import {
   GraphQLInterfaceType,
   GraphQLObjectType,
@@ -34,10 +33,9 @@ describe('createSchema', () => {
         ],
       }]);
     }
-    return createSchema(fromJS(data.map((type) => {
-      type.fields = injectDefaultFields(type);
-
-      return type;
+    return createSchema(data.map((type) => ({
+      ...type,
+      fields: injectDefaultFields(type),
     })));
   }
 

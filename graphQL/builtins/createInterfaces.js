@@ -18,6 +18,11 @@ export default function createInterfaces() {
           },
         },
       },
+      resolveType(object, { schema }) {
+        if (object && object.id && object.id.type) {
+          return schema.getType(object.id.type);
+        }
+      },
     }),
   };
 }

@@ -1,4 +1,3 @@
-import Immutable from 'immutable';
 import { printSchema } from 'graphql/utilities';
 
 import createSchema from '../graphQL/createSchema';
@@ -20,7 +19,7 @@ async function main() {
   try {
     db = await getDB(hostname);
     const types = await db.getTypes();
-    const schema = createSchema(Immutable.fromJS(types));
+    const schema = createSchema(types);
     console.log(printSchema(schema));
   } catch (e) {
     console.error(e.stack);

@@ -14,7 +14,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
   const objectFields = createInputObjectFields(
     typeSet.getInputObjectFields(),
     false,
-    (name) => typeSets.get(name),
+    (name) => typeSets[name],
     interfaces
   );
 
