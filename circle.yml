@@ -12,6 +12,7 @@ dependencies:
   pre:
     - bin/ci-install-rethinkdb
     - bin/ci-install-mongodb
+    - npm install -g npm
     - rethinkdb:
         background: true
     - sudo service mongod restart
