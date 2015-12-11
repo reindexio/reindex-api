@@ -25,6 +25,15 @@ describe('getGraphQLContext', () => {
           read: true,
         },
       },
+      {
+        name: 'favoritedBy',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'favorites',
+        grantPermissions: {
+          read: true,
+        },
+      },
     ],
   };
   const userType = {
@@ -44,8 +53,14 @@ describe('getGraphQLContext', () => {
       {
         name: 'microposts',
         type: 'Connection',
-        ofType: 'User',
+        ofType: 'Micropost',
         reverseName: 'author',
+      },
+      {
+        name: 'favorites',
+        type: 'Connection',
+        ofType: 'Micropost',
+        reverseName: 'favoritedBy',
       },
     ],
   };
@@ -240,6 +255,15 @@ describe('getGraphQLContext', () => {
             name: 'author',
             reverseName: 'microposts',
             type: 'User',
+          },
+          {
+            grantPermissions: {
+              read: true,
+            },
+            name: 'favoritedBy',
+            reverseName: 'favorites',
+            type: 'Connection',
+            ofType: 'User',
           },
         ],
         User: [],

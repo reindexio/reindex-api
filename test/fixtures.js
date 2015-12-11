@@ -38,6 +38,12 @@ export const TEST_SCHEMA = [
         reverseName: 'microposts',
       },
       {
+        name: 'favoritedBy',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'favorites',
+      },
+      {
         name: 'tags',
         type: 'List',
         ofType: 'String',
@@ -82,6 +88,12 @@ export const TEST_SCHEMA = [
           field: 'createdAt',
           order: 'ASC',
         },
+      },
+      {
+        name: 'favorites',
+        type: 'Connection',
+        ofType: 'Micropost',
+        reverseName: 'favoritedBy',
       },
     ],
   },

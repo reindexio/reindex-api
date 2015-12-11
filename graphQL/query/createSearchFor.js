@@ -23,9 +23,9 @@ export default function createSearchFor(
       checkPermission(type.name, 'read', {}, context);
       return context.rootValue.db.getConnectionQueries(
         type.name,
-        context.rootValue.indexes[type.name],
         {},
-        args
+        args,
+        context.rootValue,
       );
     },
   };

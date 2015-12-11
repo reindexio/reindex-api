@@ -52,12 +52,12 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       await deleteApp(hostname);
     });
 
-    async function getIDs(prefix, pagination) {
+    async function getIDs(filter, args) {
       const {
         paginatedQuery,
         query,
         pageInfo,
-      } = await db.getConnectionQueries('Micropost', {}, prefix, pagination);
+      } = await db.getConnectionQueries('Micropost', filter, args);
       const result = {
         paginated: await addTransform(
           paginatedQuery,
@@ -308,12 +308,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
 
     describe('indexes', () => {
       it('uses index for unfiltered query', async () => {
-        const { paginatedQuery } = await db.getConnectionQueries(
-          'Micropost',
-          {},
-          {},
-          {},
-        );
+        const { paginatedQuery } = await db.getConnectionQueries('Micropost');
 
         const explain = await paginatedQuery.explain();
         assert.equal(
@@ -324,7 +319,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for ordered unfiltered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {},
           {
             orderBy: {
@@ -344,7 +338,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
         const { paginatedQuery } = await db.getConnectionQueries(
           'ReindexType',
           {},
-          {},
           {
             orderBy: {
               field: 'name',
@@ -362,10 +355,8 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for filtered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: [fromReindexID(user.id).value],
+            'author.value': fromReindexID(user.id).value,
           },
           {
             orderBy: {
@@ -384,7 +375,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for paginated query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {},
           {
             after: {
@@ -413,7 +403,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for paginated from two sides query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {},
           {
             after: {
@@ -445,10 +434,8 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for filtered paginated query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: [fromReindexID(user.id).value],
+            'author.value': fromReindexID(user.id).value,
           },
           {
             after: {
@@ -478,10 +465,8 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
       it('uses index for filtered paginated from two sides query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
           {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: [fromReindexID(user.id).value],
+            'author.value': fromReindexID(user.id).value,
           },
           {
             after: {

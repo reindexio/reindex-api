@@ -16,6 +16,10 @@ export default class RethinkDBClient {
     this.cluster = cluster;
   }
 
+  hasSupport() {
+    return false;
+  }
+
   async getConnection() {
     if (!this.conn) {
       this.conn = await getConnection(this.dbName, this.cluster);

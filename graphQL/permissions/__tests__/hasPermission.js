@@ -155,6 +155,7 @@ describe('hasPermission', () => {
     const credentials = {
       isAdmin: false,
       userID: id,
+
     };
     const connectionPermissions = {
       Post: [
@@ -162,6 +163,12 @@ describe('hasPermission', () => {
           name: 'author',
           grantPermissions: {
             read: true,
+          },
+        },
+        {
+          name: 'editors',
+          grantPermissions: {
+            write: true,
           },
         },
       ],
@@ -180,6 +187,18 @@ describe('hasPermission', () => {
           value: 'some-other-id',
         },
       }, connectionPermissions), false);
+    });
+
+    it('can write if an editor', () => {
+      assert.equal(testPermission(credentials, 'Post', 'write', {}, {
+        author: {
+          type: 'User',
+          value: 'some-other-id',
+        },
+        editors: [
+          id,
+        ],
+      }, connectionPermissions), true);
     });
   });
 });

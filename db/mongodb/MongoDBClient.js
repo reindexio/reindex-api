@@ -22,6 +22,13 @@ export default class MongoDBClient {
     this.connectionString = format(connectionString, this.dbName);
   }
 
+  hasSupport(feature) {
+    if (feature === 'manyToMany') {
+      return true;
+    }
+    return false;
+  }
+
   getDB() {
     if (!this.db) {
       this.db = MongoClient.connect(this.connectionString);

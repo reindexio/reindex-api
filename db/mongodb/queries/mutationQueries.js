@@ -54,6 +54,74 @@ export async function deleteQuery(db, type, id) {
   return addID(type, deleted.value);
 }
 
+export async function addToConnection(
+  db,
+  {
+    fromType,
+    fromId,
+    fromField,
+    toType,
+    toId,
+    toField,
+  },
+) {
+  const [from, to] = await* [
+    db.collection(fromType).findOneAndUpdate({
+      _id: ObjectId(fromId.value),
+    }, {
+      $addToSet: {
+        [fromField]: toId,
+      },
+    }),
+    db.collection(toType).findOneAndUpdate({
+      _id: ObjectId(toId.value),
+    }, {
+      $addToSet: {
+        [toField]: fromId,
+      },
+    }),
+  ];
+
+  return {
+    from: addID(fromType, from.value),
+    to: addID(toType, to.value),
+  };
+}
+
+export async function removeFromConnection(
+  db,
+  {
+    fromType,
+    fromId,
+    fromField,
+    toType,
+    toId,
+    toField,
+  },
+) {
+  const [from, to] = await* [
+    db.collection(fromType).findOneAndUpdate({
+      _id: ObjectId(fromId.value),
+    }, {
+      $pullAll: {
+        [fromField]: [toId],
+      },
+    }),
+    db.collection(toType).findOneAndUpdate({
+      _id: ObjectId(toId.value),
+    }, {
+      $pullAll: {
+        [toField]: [fromId],
+      },
+    }),
+  ];
+
+  return {
+    from: addID(fromType, from.value),
+    to: addID(toType, to.value),
+  };
+}
+
 function prepareDocument(object, oldObject = {}) {
   const fields = flattenUpdate(object);
   const oldFields = flattenUpdate(omit(oldObject, ['_id', 'id']));

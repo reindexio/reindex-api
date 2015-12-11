@@ -1,26 +1,15 @@
 import { ObjectId } from 'mongodb';
-import { zipObject, isString } from 'lodash';
 
 import { addID, addTransform } from './queryUtils';
 
 export function getConnectionQueries(
   db,
   type,
-  indexes = {},
-  {
-    keyPrefixFields = [],
-    keyPrefix,
-  },
-  options = {},
+  filter = {},
+  args = {},
 ) {
-  const filter = zipObject(
-    keyPrefixFields.map(
-      (prefix) => isString(prefix) ? prefix : prefix.join('.')
-    ),
-    keyPrefix && keyPrefix.map((prefix) => prefix.toString())
-  );
   return getPaginatedQuery(
-    db, type, filter, options
+    db, type, filter, args
   );
 }
 

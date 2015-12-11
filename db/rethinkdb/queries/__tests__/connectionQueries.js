@@ -28,11 +28,11 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
       await releaseConnection(conn);
     });
 
-    async function getDBIndexes(table) {
+    async function getDBIndexes() {
       return groupBy(
         await getIndexes(conn),
         (index) => index.type
-      )[table] || {};
+      ) || {};
     }
 
     function makeCursor(obj) {
@@ -57,9 +57,9 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
         return fromJS(await (await getConnectionQueries(
             conn,
             'Micropost',
-            indexes,
             indexOptions,
-            args
+            args,
+            { indexes },
           ))[queryType]
           .map((item) => item('id')('value'))
           .coerceTo('array')
@@ -72,7 +72,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           .table('Micropost')
           .indexList()
           .run(conn);
-        const indexes = await getDBIndexes('Micropost');
+        const indexes = await getDBIndexes();
 
         await runAndGivePositions(
           indexes,
@@ -82,12 +82,12 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           .table('Micropost')
           .indexList()
           .run(conn);
-        const newIndexes = await getDBIndexes('Micropost');
+        const newIndexes = await getDBIndexes();
 
         assert.equal(newIndexList.length, indexList.length + 1,
           'one index is created');
         assert.deepEqual(
-          newIndexes[newIndexes.length - 1].fields,
+          newIndexes.Micropost[newIndexes.Micropost.length - 1].fields,
           [['createdAt']]
         );
 
@@ -99,15 +99,15 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
           .table('Micropost')
           .indexList()
           .run(conn);
-        const newestIndexes = await getDBIndexes('Micropost');
+        const newestIndexes = await getDBIndexes();
 
         assert.deepEqual(newestIndexList, newIndexList, 'index created once');
-        assert.deepEqual(newestIndexes, newIndexes,
+        assert.deepEqual(newestIndexes.Micropost, newIndexes.Micropost,
           'index stored in metadata once');
       });
 
       it('orders query', async function() {
-        const indexes = await getDBIndexes('Micropost');
+        const indexes = await getDBIndexes();
         assert.oequal(
           await runAndGivePositions(
             indexes,
@@ -127,13 +127,13 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
         let cursors;
         let indexes;
         it('creates cursors', async function() {
-          indexes = await getDBIndexes('Micropost');
+          indexes = await getDBIndexes();
           const result = await getConnectionQueries(
             conn,
             'Micropost',
-            indexes,
             {},
-            { orderBy: { field: 'createdAt' } }
+            { orderBy: { field: 'createdAt' } },
+            { indexes },
           );
           cursors = List(await result.paginatedQuery
             .map(makeCursor)
@@ -265,9 +265,9 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
             const result = await getConnectionQueries(
               conn,
               'Micropost',
-              indexes,
               {},
               args,
+              { indexes },
             );
             return getPageInfo(conn, result.pageInfo);
           }
@@ -352,7 +352,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
       });
 
       it('returns both sliced and unsliced query', async function() {
-        const indexes = await getDBIndexes('Micropost');
+        const indexes = await getDBIndexes();
         assert.oequal(
           await runAndGivePositions(indexes, {
             first: 1,
@@ -371,27 +371,25 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
       });
 
       it('works with indexOptions', async function() {
-        let indexes = await getDBIndexes('Micropost');
+        let indexes = await getDBIndexes();
         assert.oequal(
           await runAndGivePositions(indexes, {
             orderBy: { field: 'createdAt' },
           }, 'paginatedQuery', {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
+            'author.value': 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
           }),
           Range(0, 7),
         );
 
-        indexes = await getDBIndexes('Micropost');
+        indexes = await getDBIndexes();
         const result = await getConnectionQueries(
           conn,
           'Micropost',
-          indexes,
           {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
+            'author.value': 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
           },
-          { orderBy: { field: 'createdAt' } }
+          { orderBy: { field: 'createdAt' } },
+          { indexes },
         );
         const cursors = List(await result.paginatedQuery
           .map(makeCursor)
@@ -405,8 +403,7 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
             after: cursors.get(2),
             before: cursors.get(5),
           }, 'paginatedQuery', {
-            keyPrefixFields: [['author', 'value']],
-            keyPrefix: ['bbd1db98-4ac4-40a7-b514-968059c3dbac'],
+            'author.value': 'bbd1db98-4ac4-40a7-b514-968059c3dbac',
           }),
           Range(3, 5),
         );

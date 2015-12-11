@@ -223,6 +223,19 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'reverse type points to itself': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Bar',
+          reverseName: 'foos',
+        },
+      ],
+    }),
+  ],
   'non-matching type in reverse field': [
     type('Bar', {
       interfaces: ['Node'],
@@ -256,6 +269,33 @@ const invalidSchemas = {
           type: 'Connection',
           ofType: 'Foo',
           reverseName: 'bars',
+        },
+      ],
+    }),
+  ],
+  'grant perrmissions not for User': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'Connection',
+          ofType: 'Bar',
+          reverseName: 'foos',
+          grantPermissions: {
+            read: true,
+          },
         },
       ],
     }),

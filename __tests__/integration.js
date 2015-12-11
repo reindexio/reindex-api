@@ -3,6 +3,7 @@ import uuid from 'uuid';
 
 import deleteApp from '../apps/deleteApp';
 import getDB from '../db/getDB';
+import DatabaseTypes from '../db/DatabaseTypes';
 import { fromReindexID, toReindexID } from '../graphQL/builtins/ReindexID';
 import { toCursor } from '../graphQL/builtins/Cursor';
 import {
@@ -333,8 +334,8 @@ describe('Integration Tests', () => {
     const userId = user.id;
 
     const result = await runQuery(`
-      {
-        userById(id: "${userId}") {
+      query userById($id: ID!) {
+        userById(id: $id) {
           microposts(first: 1) {
             count,
             edges {
@@ -350,7 +351,9 @@ describe('Integration Tests', () => {
           }
         }
       }
-    `);
+    `, {
+      id: userId,
+    });
 
     assert.deepEqual(result, {
       data: {
@@ -375,8 +378,8 @@ describe('Integration Tests', () => {
     });
 
     const lastResult = await runQuery(`
-      {
-        userById(id: "${userId}") {
+      query userById($id: ID!) {
+        userById(id: $id) {
           microposts(last: 1) {
             count,
             edges {
@@ -392,7 +395,9 @@ describe('Integration Tests', () => {
           }
         }
       }
-    `);
+    `, {
+      id: userId,
+    });
 
     assert.deepEqual(lastResult, {
       data: {
@@ -417,8 +422,8 @@ describe('Integration Tests', () => {
     });
 
     const paginatedResult = await runQuery(`
-      {
-        userById(id: "${userId}") {
+      query userById($id: ID!) {
+        userById(id: $id) {
           microposts(first: 1, after: "${cursors[0]}") {
             count,
             edges {
@@ -434,7 +439,9 @@ describe('Integration Tests', () => {
           }
         }
       }
-    `);
+    `, {
+      id: userId,
+    });
 
     assert.deepEqual(paginatedResult, {
       data: {
@@ -1026,4 +1033,279 @@ describe('Integration Tests', () => {
       },
     });
   });
+
+  if (!process.env.DATABASE_TYPE ||
+      process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
+    it('handles many-to-many connections', async () => {
+      const user1 = values(fixtures.User)[0];
+      const user2 = values(fixtures.User)[1];
+      const micropost = values(fixtures.Micropost)[0];
+
+      const fragment = `
+        changedUser {
+          id,
+          favorites {
+            count,
+            nodes {
+              id,
+            }
+          }
+        },
+        changedMicropost {
+          id,
+          favoritedBy {
+            count,
+            nodes {
+              id,
+            }
+          }
+        }
+      `;
+      const query = `
+        mutation favorite($input: _MicropostUserFavoritesConnectionInput!) {
+          addMicropostToUserFavorites(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+
+      let result = await runQuery(query, {
+        input: {
+          micropostId: micropost.id,
+          userId: user1.id,
+        },
+      });
+
+      const sampleResult = {
+        data: {
+          addMicropostToUserFavorites: {
+            changedUser: {
+              id: user1.id,
+              favorites: {
+                count: 1,
+                nodes: [
+                  {
+                    id: micropost.id,
+                  },
+                ],
+              },
+            },
+            changedMicropost: {
+              id: micropost.id,
+              favoritedBy: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+      assert.deepEqual(result, sampleResult, 'Adding works');
+
+      result = await runQuery(query, {
+        input: {
+          micropostId: micropost.id,
+          userId: user1.id,
+        },
+      });
+
+      assert.deepEqual(result, sampleResult, 'Repeated adding is noop');
+
+      result = await runQuery(query, {
+        input: {
+          micropostId: micropost.id,
+          userId: user1.id,
+        },
+      });
+
+      const micropostFetchResult = await runQuery(`
+        query micropostById($id: ID!){
+          micropostById(id: $id) {
+            id,
+            favoritedBy {
+              count,
+              nodes {
+                id,
+              }
+            }
+          }
+        }
+      `, {
+        id: micropost.id,
+      });
+
+      assert.deepEqual(micropostFetchResult, {
+        data: {
+          micropostById: {
+            id: micropost.id,
+            favoritedBy: {
+              count: 1,
+              nodes: [
+                {
+                  id: user1.id,
+                },
+              ],
+            },
+          },
+        },
+      }, 'fetching returns same data');
+
+      const userFetchResult = await runQuery(`
+        query userById($id: ID!){
+          userById(id: $id) {
+            id,
+            favorites {
+              count,
+              nodes {
+                id,
+              }
+            }
+          }
+        }
+      `, {
+        id: user1.id,
+      });
+
+      assert.deepEqual(userFetchResult, {
+        data: {
+          userById: {
+            id: user1.id,
+            favorites: {
+              count: 1,
+              nodes: [
+                {
+                  id: micropost.id,
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      result = await runQuery(query, {
+        input: {
+          micropostId: micropost.id,
+          userId: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          addMicropostToUserFavorites: {
+            changedUser: {
+              id: user2.id,
+              favorites: {
+                count: 1,
+                nodes: [
+                  {
+                    id: micropost.id,
+                  },
+                ],
+              },
+            },
+            changedMicropost: {
+              id: micropost.id,
+              favoritedBy: {
+                count: 2,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                  {
+                    id: user2.id,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      }, 'added second');
+
+      const removeQuery = `
+        mutation unfavorite($input: _MicropostUserFavoritesConnectionInput!) {
+          removeMicropostFromUserFavorites(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+
+      const removeSampleResult = {
+        data: {
+          removeMicropostFromUserFavorites: {
+            changedUser: {
+              id: user2.id,
+              favorites: {
+                count: 0,
+                nodes: [],
+              },
+            },
+            changedMicropost: {
+              id: micropost.id,
+              favoritedBy: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      };
+
+
+      result = await runQuery(removeQuery, {
+        input: {
+          micropostId: micropost.id,
+          userId: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, removeSampleResult, 'Removing works');
+
+      result = await runQuery(removeQuery, {
+        input: {
+          micropostId: micropost.id,
+          userId: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, removeSampleResult,
+        'Removing second time does nothing works');
+
+      result = await runQuery(removeQuery, {
+        input: {
+          micropostId: micropost.id,
+          userId: user1.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          removeMicropostFromUserFavorites: {
+            changedUser: {
+              id: user1.id,
+              favorites: {
+                count: 0,
+                nodes: [],
+              },
+            },
+            changedMicropost: {
+              id: micropost.id,
+              favoritedBy: {
+                count: 0,
+                nodes: [],
+              },
+            },
+          },
+        },
+      });
+    });
+  }
 });

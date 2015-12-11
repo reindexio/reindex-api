@@ -1,3 +1,4 @@
+import { keys, values, isEmpty } from 'lodash';
 import RethinkDB from 'rethinkdb';
 
 import { getAllQuery } from './simpleQueries';
@@ -35,18 +36,20 @@ import { queryWithIDs } from './queryUtils';
 export async function getConnectionQueries(
   conn,
   type,
-  indexes = {},
-  {
-    keyPrefixFields = [],
-    keyPrefix,
-  },
+  filter = {},
   {
     orderBy,
     before,
     after,
     ...args,
+  },
+  {
+    indexes: allIndexes,
   }
 ) {
+  const indexes = allIndexes[type] || {};
+  const keyPrefixFields = keys(filter).map((key) => key.split('.'));
+  const keyPrefix = isEmpty(filter) ? null : values(filter);
   const query = getAllQuery(type);
   // Select index fields by combining known index fields and ordering,
   // falling back to id if ordering is not provided.
