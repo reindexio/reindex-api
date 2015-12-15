@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
-import ReindexID from '../builtins/ReindexID';
+import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
@@ -52,7 +52,10 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
       const existing = await db.getByID(type.name, input.id);
 
       if (!existing) {
-        throw new Error(`Can not find ${type.name} object with given id.`);
+        throw new Error(
+          `input.id: Can not find ${type.name} object with given ID: ` +
+          toReindexID(input.id)
+        );
       }
 
       const checkObject = {
