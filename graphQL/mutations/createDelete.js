@@ -1,5 +1,5 @@
 import { GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
-import ReindexID from '../builtins/ReindexID';
+import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
@@ -34,7 +34,10 @@ export default function createDelete({ type, payload }) {
       const object = await db.getByID(type.name, input.id);
 
       if (!object) {
-        throw new Error(`Can not find ${type.name} object with given id.`);
+        throw new Error(
+          `input.id: Can not find ${type.name} object with given ID: ` +
+          toReindexID(input.id)
+        );
       }
 
       checkPermission(

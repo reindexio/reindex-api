@@ -692,6 +692,34 @@ describe('Integration Tests', () => {
     });
   });
 
+  it('checks that the object to mutate exists', async () => {
+    const micropost = values(fixtures.Micropost)[0];
+    const nonExistentId = toReindexID({
+      ...fromReindexID(micropost.id),
+      type: 'User',
+    });
+    const result = await runQuery(`
+      mutation ($id: ID!) {
+        updateUser(input: { id: $id }) { id }
+        replaceUser(input: { id: $id }) { id }
+        deleteUser(input: { id: $id }) { id }
+      }
+    `, { id: nonExistentId });
+
+    const error = {
+      message: 'input.id: Can not find User object with given ID: ' +
+        nonExistentId,
+    };
+    assert.deepEqual(result, {
+      data: {
+        updateUser: null,
+        replaceUser: null,
+        deleteUser: null,
+      },
+      errors: [error, error, error],
+    });
+  });
+
   it('validates that related nodes exist', async function () {
     const micropost = values(fixtures.Micropost)[0];
     const idNotFound = toReindexID({
