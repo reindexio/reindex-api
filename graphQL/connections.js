@@ -197,12 +197,11 @@ export function createConnectionFieldResolve(
     };
     return context.rootValue.db.getConnectionQueries(
       ofType,
-      context.rootValue.indexes[ofType],
       {
-        keyPrefixFields: [[reverseName, 'value']],
-        keyPrefix: [parent.id.value],
+        [`${reverseName}.value`]: parent.id.value,
       },
-      processedArgs
+      processedArgs,
+      context.rootValue,
     );
   };
 }

@@ -272,18 +272,7 @@ function validateReverseField(
   typesByName,
   invariant
 ) {
-  let reverseType;
-  let expectedFieldType;
-  let expectedFieldOfType;
-  if (field.type === 'Connection') {
-    reverseType = field.ofType;
-    expectedFieldType = type.name;
-    expectedFieldOfType = null;
-  } else {
-    reverseType = field.type;
-    expectedFieldType = 'Connection';
-    expectedFieldOfType = type.name;
-  }
+  const reverseType = field.type === 'Connection' ? field.ofType : field.type;
 
   let reverseField;
   if (field.reverseName) {
@@ -294,11 +283,18 @@ function validateReverseField(
 
   invariant(
     reverseField,
-    '%s.%s: Expected `reverseName` to be a name of a %s field in type %s. ' +
-    'Found: %s.',
-    type.name, field.name, expectedFieldType, reverseType, field.reverseName,
+    '%s.%s: Expected `reverseName` to be a name of a %s or %s ' +
+    'field in type %s. Found: %s.',
+    type.name, field.name, type.name, 'Connection',
+    reverseType, field.reverseName,
   );
   if (reverseField) {
+    invariant(
+      field.type !== 'Connection' || reverseField.type !== 'Connection' ||
+      reverseType !== type.name,
+      '%s.%s: Expected `%s` to be a different Node type',
+      type.name, field.name, field.type === 'Connection' ? 'ofType' : 'type'
+    );
     invariant(
       reverseField.reverseName === field.name,
       '%s.%s: Expected reverse field of %s.%s to have matching `reverseName` ' +
@@ -307,17 +303,29 @@ function validateReverseField(
       reverseField.reverseName,
     );
     invariant(
-      reverseField.type === expectedFieldType,
-      '%s.%s: Expected reverse field of %s.%s to have type %s. Found: %s.',
-      reverseType, reverseField.name, type.name, field.name, expectedFieldType,
+      reverseField.type === type.name ||
+      reverseField.type === 'Connection',
+      '%s.%s: Expected reverse field of %s.%s to have type %s or %s. ' +
+      'Found: %s.',
+      reverseType, reverseField.name, type.name, field.name,
+      type.name, type.name,
       reverseField.type,
     );
-    if (expectedFieldOfType) {
+    if (reverseField.type === 'Connection') {
       invariant(
-        reverseField.ofType === expectedFieldOfType,
+        reverseField.ofType === type.name,
         '%s.%s: Expected reverse field of %s.%s to have ofType %s. Found: %s.',
         reverseType, reverseField.name, type.name, field.name,
-        expectedFieldOfType, reverseField.ofType,
+        type.name, reverseField.ofType,
+      );
+    }
+
+    if (field.grantPermissions) {
+      invariant(
+        reverseType === 'User',
+        '%s.%s: Expected reverse type to be `User` if grantPermissions is ' +
+        'used. Found: %s',
+        type.name, field.name, reverseType,
       );
     }
 

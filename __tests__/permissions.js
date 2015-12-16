@@ -3,6 +3,7 @@ import uuid from 'uuid';
 
 import deleteApp from '../apps/deleteApp';
 import getDB from '../db/getDB';
+import DatabaseTypes from '../db/DatabaseTypes';
 import { fromReindexID } from '../graphQL/builtins/ReindexID';
 
 import { TEST_SCHEMA } from '../test/fixtures';
@@ -464,7 +465,7 @@ describe('Permissions', () => {
     before(async () => {
       const micropost = TEST_SCHEMA.find((type) => type.name === 'Micropost');
       const micropostFields = micropost.fields.filter(
-        (field) => field.name !== 'author'
+        (field) => field.name !== 'author' && field.name !== 'favoritedBy'
       );
       const rest = TEST_SCHEMA.filter((type) => type.name !== 'Micropost');
       const newSchema = [
@@ -476,6 +477,18 @@ describe('Permissions', () => {
               name: 'author',
               type: 'User',
               reverseName: 'microposts',
+              grantPermissions: {
+                read: true,
+                create: true,
+                update: true,
+                delete: true,
+              },
+            },
+            {
+              name: 'favoritedBy',
+              type: 'Connection',
+              ofType: 'User',
+              reverseName: 'favorites',
               grantPermissions: {
                 read: true,
                 create: true,
@@ -917,5 +930,67 @@ describe('Permissions', () => {
         clearContext: true,
       });
     });
+
+    if (!process.env.DATABASE_TYPE ||
+        process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
+      it('works with many to many', async () => {
+        const user = fixtures.User.vanilla;
+        const micropost = fixtures.Micropost.creator[0];
+
+        await runQuery(`
+          mutation favorite($input: _AddMicropostToUserFavoritesInput!) {
+            addMicropostToUserFavorites(input: $input) {
+              changedUser {
+                id
+              },
+              changedMicropost {
+                id
+              }
+            }
+          }
+        `, {
+          input: {
+            micropostId: micropost.id,
+            userId: user.id,
+          },
+        });
+
+        const result = await runQuery(`
+          {
+            micropostById(id: "${micropost.id}") {
+              id
+            }
+          }
+        `);
+
+        assert.deepEqual(result, {
+          data: {
+            micropostById: {
+              id: micropost.id,
+            },
+          },
+        });
+
+        await runQuery(`
+          mutation unfavorite(
+            $input: _MicropostUserFavoritesConnectionInput!
+          ) {
+            removeMicropostFromUserFavorites(input: $input) {
+              changedUser {
+                id
+              },
+              changedMicropost {
+                id
+              }
+            }
+          }
+        `, {
+          input: {
+            micropostId: micropost.id,
+            userId: user.id,
+          },
+        });
+      });
+    }
   });
 });

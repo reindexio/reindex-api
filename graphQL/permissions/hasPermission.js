@@ -1,3 +1,5 @@
+import { isArray } from 'lodash';
+
 // Check if user has a certain permission for type
 //
 // First check if user has a global type permission and if not, whether
@@ -62,6 +64,10 @@ function hasConnectionPermissions(
   type,
   userID
 ) {
+  if (!userID) {
+    return false;
+  }
+
   const isCurrentUser = (
     type === 'User' &&
     object.id &&
@@ -75,7 +81,15 @@ function hasConnectionPermissions(
 
   for (const field of userFields) {
     const name = field.name;
-    if (object[name] && object[name].value === userID) {
+    const value = object[name];
+    let isConnectedToUser = false;
+    if (isArray(value)) {
+      isConnectedToUser = value.some((id) => id.value === userID);
+    } else if (value && value.value) {
+      isConnectedToUser = value.value === userID;
+    }
+
+    if (isConnectedToUser) {
       const grants = field.grantPermissions[permission];
       if (grants) {
         return true;

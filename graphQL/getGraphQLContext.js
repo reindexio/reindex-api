@@ -69,8 +69,9 @@ function extractConnectionPermissions(types) {
     .groupBy((type) => type.name)
     .mapValues((type) => (
       type[0].fields.filter((field) => (
-        field.type === 'User' &&
-        field.grantPermissions
+        field.grantPermissions &&
+        (field.type === 'User' ||
+         field.type === 'Connection' && field.ofType === 'User')
       ))
     ))
     .value();
