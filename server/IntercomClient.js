@@ -61,7 +61,7 @@ You can make queries and view your API docs in GraphiQL.
 Use this link to sign in:
 https://${hostname}/?token=${token}
 
-Install [Reindex CLI](https://www.reindex.io/docs/reindex-cli/) with:
+Install Reindex CLI with:
 
     npm install -g reindex-cli
 
