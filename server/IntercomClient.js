@@ -58,17 +58,17 @@ You've got access to the private beta of Reindex.
 To learn how to get started, check out the tutorial at https://www.reindex.io/docs/
 
 You can make queries and view your API docs in GraphiQL.
-Use this link to sign in: [GraphiQL (${hostname})](https://${hostname}/?token=${token})
+Use this link to sign in:
+https://${hostname}/?token=${token}
 
 Install [Reindex CLI](https://www.reindex.io/docs/reindex-cli/) with:
-\`\`\`
-npm install -g reindex-cli
-\`\`\`
+
+    npm install -g reindex-cli
+
 and configure your environment:
-\`\`\`
-export REINDEX_URL="https://${hostname}"
-export REINDEX_TOKEN="${token}"
-\`\`\`
+
+    export REINDEX_URL="https://${hostname}"
+    export REINDEX_TOKEN="${token}"
 
 If you have any questions, problems or feedback please email us at
 support@reindex.io or click the "?" button in GraphiQL to chat with us.
@@ -77,7 +77,8 @@ Happy hacking!
 
 Ville Immonen
 CEO
-Reindex`;
+Reindex
+`;
   /* eslint-enable */
 
   try {
