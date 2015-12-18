@@ -11,6 +11,9 @@ import * as mutationQueries from './queries/mutationQueries';
 import * as migrationQueries from './queries/migrationQueries';
 import { isValidID } from './queries/queryUtils';
 
+const clusterConnections = {
+};
+
 export default class MongoDBClient {
   constructor(
     hostname,
@@ -19,7 +22,12 @@ export default class MongoDBClient {
   ) {
     this.hostname = hostname;
     this.dbName = dbName;
-    this.connectionString = format(connectionString, this.dbName);
+    if (!clusterConnections[connectionString]) {
+      clusterConnections[connectionString] = MongoClient.connect(
+        format(connectionString, '')
+      );
+    }
+    this.pool = clusterConnections[connectionString];
   }
 
   hasSupport(feature) {
@@ -29,18 +37,16 @@ export default class MongoDBClient {
     return false;
   }
 
-  getDB() {
+  async getDB() {
     if (!this.db) {
-      this.db = MongoClient.connect(this.connectionString);
+      const pool = await this.pool;
+      this.db = pool.db(this.dbName);
     }
     return this.db;
   }
 
-  async close() {
-    if (this.db) {
-      const db = await this.db;
-      await db.close();
-    }
+  close() {
+    return Promise.resolve();
   }
 
   isValidID(type, id) {
