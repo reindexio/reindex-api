@@ -38,7 +38,7 @@ const Config = convict({
       default: JSON.stringify({
         mongodb: {
           type: DatabaseTypes.MongoDB,
-          connectionString: 'mongodb://localhost/%s',
+          connectionString: 'mongodb://localhost/',
         },
         rethinkdb: {
           type: DatabaseTypes.RethinkDB,
