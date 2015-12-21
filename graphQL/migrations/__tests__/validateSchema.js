@@ -223,19 +223,6 @@ const invalidSchemas = {
       ],
     }),
   ],
-  'reverse type points to itself': [
-    type('Bar', {
-      interfaces: ['Node'],
-      fields: [
-        {
-          name: 'foos',
-          type: 'Connection',
-          ofType: 'Bar',
-          reverseName: 'foos',
-        },
-      ],
-    }),
-  ],
   'non-matching type in reverse field': [
     type('Bar', {
       interfaces: ['Node'],

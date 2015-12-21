@@ -58,7 +58,8 @@ export default function createDelete({ type, payload }) {
         context.rootValue.hooks,
         type.name,
         'afterDelete',
-        formattedResult
+        clientMutationId,
+        result,
       );
 
       return formattedResult;

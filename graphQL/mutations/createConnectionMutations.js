@@ -1,9 +1,9 @@
+import { chain, capitalize, camelCase, isEqual } from 'lodash';
 import {
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLInputObjectType,
 } from 'graphql';
-import { chain, capitalize, camelCase } from 'lodash';
 
 import checkPermission from '../permissions/checkPermission';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
@@ -42,12 +42,31 @@ function createMutationsFromConnectionField(field, toType, toEdge, typeSets) {
   const { type: fromType, edge: fromEdge } = fromTypeSet;
   const reverseName = field.metadata.reverseName;
 
-  const fromArg = camelCase(`${fromTypeName} id`);
-  const toArg = camelCase(`${toTypeName} id`);
+  let fromArg;
+  let toArg;
+  let name;
+  let fromChangedName;
+  let toChangedName;
 
-  const name = capitalize(camelCase(
-    `${fromTypeName} ${toTypeName} ${field.name}`
-  ));
+  if (toTypeName === fromTypeName && field.name === reverseName) {
+    fromArg = camelCase(`${fromTypeName} 1 id`);
+    fromChangedName = camelCase(`changed ${fromTypeName} 1`);
+    toArg = camelCase(`${toTypeName} 2 id`);
+    toChangedName = camelCase(`changed ${toTypeName} 2`);
+    name = capitalize(camelCase(`${fromTypeName} ${field.name}`));
+  } else if (toTypeName === fromTypeName) {
+    fromArg = camelCase(`${reverseName} id`);
+    fromChangedName = camelCase(`changed ${reverseName} ${fromTypeName}`);
+    toArg = camelCase(`${field.name} id`);
+    toChangedName = camelCase(`changed ${field.name} ${toTypeName}`);
+    name = capitalize(camelCase(`${fromTypeName} ${field.name}`));
+  } else {
+    fromArg = camelCase(`${fromTypeName} id`);
+    fromChangedName = `changed${fromTypeName}`;
+    toArg = camelCase(`${toTypeName} id`);
+    toChangedName = `changed${toTypeName}`;
+    name = capitalize(camelCase(`${fromTypeName} ${toTypeName} ${field.name}`));
+  }
 
   const inputType = new GraphQLInputObjectType({
     name: `_${name}ConnectionInput`,
@@ -78,19 +97,19 @@ function createMutationsFromConnectionField(field, toType, toEdge, typeSets) {
 `,
     fields: {
       clientMutationId: clientMutationIdField,
-      [`changed${fromTypeName}`]: {
+      [fromChangedName]: {
         type: fromType,
-        description: 'The ${fromTypeName} object.',
+        description: `The ${fromTypeName} object.`,
       },
-      [`changed${fromTypeName}Edge`]: {
+      [`${fromChangedName}Edge`]: {
         type: fromEdge,
         description: `A connection edge containing the ${fromTypeName} object.`,
       },
-      [`changed${toTypeName}`]: {
+      [toChangedName]: {
         type: toType,
-        description: 'The ${toTypeName} object.',
+        description: `The ${toTypeName} object.`,
       },
-      [`changed${toTypeName}Edge`]: {
+      [`${toChangedName}Edge`]: {
         type: toEdge,
         description: `A connection edge containing the ${toTypeName} object.`,
       },
@@ -102,60 +121,45 @@ function createMutationsFromConnectionField(field, toType, toEdge, typeSets) {
       fromType: fromTypeName,
       fromField: reverseName,
       fromArg,
+      fromChangedName,
       toType: toTypeName,
       toField: field.name,
       toArg,
+      toChangedName,
     }),
     createRemoveMutation(inputType, payload, {
       fromType: fromTypeName,
       fromField: reverseName,
       fromArg,
+      fromChangedName,
       toType: toTypeName,
       toField: field.name,
       toArg,
+      toChangedName,
     }),
   ];
 }
 
-function createAddMutation(inputType, payload, {
-  fromType,
-  fromField,
-  fromArg,
-  toType,
-  toField,
-  toArg,
-}) {
+function createAddMutation(inputType, payload, options) {
+  const { fromType, toType, toField } = options;
   const name = camelCase(`add ${fromType} to ${toType} ${toField}`);
 
   return {
     name,
     type: payload,
     description:
-`Add \`${fromType}\` object to connection ${toField} of ${toType} object.`,
+`Add \`${fromType}\` object to \`${toField}\` of \`${toType}\` object.`,
     args: {
       input: {
         type: new GraphQLNonNull(inputType),
       },
     },
-    resolve: createResolveFunction('addToConnection', true, {
-      fromType,
-      fromField,
-      toType,
-      toField,
-      fromArg,
-      toArg,
-    }),
+    resolve: createResolveFunction('addToConnection', true, options),
   };
 }
 
-function createRemoveMutation(inputType, payload, {
-  fromType,
-  fromField,
-  fromArg,
-  toType,
-  toField,
-  toArg,
-}) {
+function createRemoveMutation(inputType, payload, options) {
+  const { fromType, toType, toField } = options;
   const name = camelCase(
     `remove ${fromType} from ${toType} ${toField}`
   );
@@ -164,20 +168,13 @@ function createRemoveMutation(inputType, payload, {
     name,
     type: payload,
     description:
-`Remove \`${fromType}\` object from connection ${toField} of ${toType} object.`,
+`Remove \`${fromType}\` object from \`${toField}\` of \`${toType}\` object.`,
     args: {
       input: {
         type: new GraphQLNonNull(inputType),
       },
     },
-    resolve: createResolveFunction('removeFromConnection', true, {
-      fromType,
-      fromField,
-      toType,
-      toField,
-      fromArg,
-      toArg,
-    }),
+    resolve: createResolveFunction('removeFromConnection', true, options),
   };
 }
 
@@ -188,9 +185,11 @@ function createResolveFunction(
     fromType,
     fromField,
     fromArg,
+    fromChangedName,
     toType,
     toField,
     toArg,
+    toChangedName,
   },
 ) {
   return async (parent, { input }, context) => {
@@ -247,25 +246,38 @@ function createResolveFunction(
     });
 
     const output = {};
-    for (const [typeName, object] of [
-      [fromType, from],
-      [toType, to],
+    for (const [typeName, object, changedName] of [
+      [fromType, from, fromChangedName],
+      [toType, to, toChangedName],
     ]) {
       const formattedResult = formatMutationResult(
         clientMutationId,
         typeName,
         object,
-      );
-
-      checkAndEnqueueHooks(
-        db,
-        context.rootValue.hooks,
-        typeName,
-        'afterUpdate',
-        formattedResult,
+        changedName,
       );
 
       Object.assign(output, formattedResult);
+    }
+
+    checkAndEnqueueHooks(
+      db,
+      context.rootValue.hooks,
+      fromType,
+      'afterUpdate',
+      clientMutationId,
+      from,
+    );
+
+    if (!isEqual(fromId, toId)) {
+      checkAndEnqueueHooks(
+        db,
+        context.rootValue.hooks,
+        toType,
+        'afterUpdate',
+        clientMutationId,
+        to,
+      );
     }
 
     return output;

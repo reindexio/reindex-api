@@ -1335,5 +1335,300 @@ describe('Integration Tests', () => {
         },
       });
     });
+
+    it('handles many-to-many connections to itself', async () => {
+      const user1 = values(fixtures.User)[0];
+      const user2 = values(fixtures.User)[1];
+
+      const fragment = `
+        changedFollowersUser {
+          id
+          followers {
+            count
+            nodes {
+              id
+            }
+          }
+          following {
+            count
+            nodes {
+              id
+            }
+          }
+        }
+        changedFollowingUser {
+          id,
+          followers {
+            count
+            nodes {
+              id
+            }
+          }
+          following {
+            count
+            nodes {
+              id
+            }
+          }
+        }
+      `;
+      const query = `
+        mutation follow($input: _UserFollowingConnectionInput!) {
+          addUserToUserFollowing(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+      const removeQuery = `
+        mutation follow($input: _UserFollowingConnectionInput!) {
+          removeUserFromUserFollowing(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+
+      let result = await runQuery(query, {
+        input: {
+          followingId: user1.id,
+          followersId: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          addUserToUserFollowing: {
+            changedFollowingUser: {
+              id: user1.id,
+              followers: {
+                count: 0,
+                nodes: [],
+              },
+              following: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user2.id,
+                  },
+                ],
+              },
+            },
+            changedFollowersUser: {
+              id: user2.id,
+              followers: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+              following: {
+                count: 0,
+                nodes: [],
+              },
+            },
+          },
+        },
+      });
+
+      result = await runQuery(query, {
+        input: {
+          followingId: user2.id,
+          followersId: user1.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          addUserToUserFollowing: {
+            changedFollowingUser: {
+              id: user2.id,
+              followers: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+              following: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+            },
+            changedFollowersUser: {
+              id: user1.id,
+              followers: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user2.id,
+                  },
+                ],
+              },
+              following: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user2.id,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      await runQuery(removeQuery, {
+        input: {
+          followingId: user2.id,
+          followersId: user1.id,
+        },
+      });
+
+      result = await runQuery(removeQuery, {
+        input: {
+          followingId: user1.id,
+          followersId: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          removeUserFromUserFollowing: {
+            changedFollowingUser: {
+              id: user1.id,
+              followers: {
+                count: 0,
+                nodes: [],
+              },
+              following: {
+                count: 0,
+                nodes: [],
+              },
+            },
+            changedFollowersUser: {
+              id: user2.id,
+              followers: {
+                count: 0,
+                nodes: [],
+              },
+              following: {
+                count: 0,
+                nodes: [],
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('handles symmetrical many-to-many connections to itself', async () => {
+      const user1 = values(fixtures.User)[0];
+      const user2 = values(fixtures.User)[1];
+
+      const fragment = `
+        changedUser1 {
+          id
+          friends {
+            count
+            nodes {
+              id
+            }
+          }
+        }
+        changedUser2 {
+          id
+          friends {
+            count
+            nodes {
+              id
+            }
+          }
+        }
+      `;
+      const query = `
+        mutation friend($input: _UserFriendsConnectionInput!) {
+          addUserToUserFriends(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+      const removeQuery = `
+        mutation unfriend($input: _UserFriendsConnectionInput!) {
+          removeUserFromUserFriends(input: $input) {
+            ${fragment}
+          }
+        }
+      `;
+
+      let result = await runQuery(query, {
+        input: {
+          user1Id: user1.id,
+          user2Id: user2.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          addUserToUserFriends: {
+            changedUser1: {
+              id: user1.id,
+              friends: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user2.id,
+                  },
+                ],
+              },
+            },
+            changedUser2: {
+              id: user2.id,
+              friends: {
+                count: 1,
+                nodes: [
+                  {
+                    id: user1.id,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      result = await runQuery(removeQuery, {
+        input: {
+          user1Id: user2.id,
+          user2Id: user1.id,
+        },
+      });
+
+      assert.deepEqual(result, {
+        data: {
+          removeUserFromUserFriends: {
+            changedUser1: {
+              id: user2.id,
+              friends: {
+                count: 0,
+                nodes: [],
+              },
+            },
+            changedUser2: {
+              id: user1.id,
+              friends: {
+                count: 0,
+                nodes: [],
+              },
+            },
+          },
+        },
+      });
+    });
   }
 });
