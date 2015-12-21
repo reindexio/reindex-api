@@ -1,4 +1,4 @@
-import { format } from 'util';
+import { parse as parseQs, stringify as stringifyQs } from 'qs';
 
 import { forEach, merge } from 'lodash';
 import { MongoClient } from 'mongodb';
@@ -18,13 +18,30 @@ export default class MongoDBClient {
   constructor(
     hostname,
     dbName,
-    { connectionString },
+    {
+      connectionString,
+    },
   ) {
     this.hostname = hostname;
     this.dbName = dbName;
+
+    let passedOptions = {};
+    const [queryLessConnectionString, qs] = connectionString.split('?');
+    if (qs) {
+      passedOptions = parseQs(qs);
+    }
+
+    const options = {
+      w: 1,
+      journal: true,
+      ...passedOptions,
+    };
+
+    const fullQs = stringifyQs(options);
+
     if (!clusterConnections[connectionString]) {
       clusterConnections[connectionString] = MongoClient.connect(
-        format(connectionString, '')
+        `${queryLessConnectionString}?${fullQs}`
       );
     }
     this.pool = clusterConnections[connectionString];
