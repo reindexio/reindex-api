@@ -85,7 +85,8 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         context.rootValue.hooks,
         type.name,
         'afterUpdate',
-        formattedResult
+        clientMutationId,
+        result,
       );
 
       return formattedResult;

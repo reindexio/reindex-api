@@ -290,12 +290,6 @@ function validateReverseField(
   );
   if (reverseField) {
     invariant(
-      field.type !== 'Connection' || reverseField.type !== 'Connection' ||
-      reverseType !== type.name,
-      '%s.%s: Expected `%s` to be a different Node type',
-      type.name, field.name, field.type === 'Connection' ? 'ofType' : 'type'
-    );
-    invariant(
       reverseField.reverseName === field.name,
       '%s.%s: Expected reverse field of %s.%s to have matching `reverseName` ' +
       '%s. Found: %s.',

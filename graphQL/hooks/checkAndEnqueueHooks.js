@@ -2,15 +2,28 @@ import { get } from 'lodash';
 
 import getDB from '../../db/getDB';
 import getGraphQLContext from '../getGraphQLContext';
+import formatMutationResult from '../mutations/formatMutationResult';
 import performHook from './performHook';
 
-export default function checkAndEnqueueHooks(db, allHooks, type, name, object) {
+export default function checkAndEnqueueHooks(
+  db,
+  allHooks,
+  type,
+  name,
+  clientMutationId,
+  data,
+) {
   const globalHooks = get(allHooks, ['global', name]) || [];
   const typeHooks = get(allHooks, [type, name]) || [];
   const hooks = [...globalHooks, ...typeHooks];
 
   if (hooks.length > 0) {
     setImmediate(() => {
+      const object = formatMutationResult(
+        clientMutationId,
+        type,
+        data,
+      );
       enqueueHooks(db.hostname, type, hooks, object);
     });
   }

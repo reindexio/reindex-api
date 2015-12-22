@@ -1,10 +1,14 @@
 export default function formatMutationResult(
-  clientMutationId, typeName, result
+  clientMutationId, typeName, result, changedName
 ) {
+  if (!changedName) {
+    changedName = `changed${typeName}`;
+  }
+
   return {
     clientMutationId,
-    ['changed' + typeName]: result,
-    ['changed' + typeName + 'Edge']: {
+    [changedName]: result,
+    [`${changedName}Edge`]: {
       node: result,
       cursor: {
         value: result.id.value,

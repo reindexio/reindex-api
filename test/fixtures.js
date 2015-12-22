@@ -80,6 +80,24 @@ export const TEST_SCHEMA = [
         type: 'String',
       },
       {
+        name: 'friends',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'friends',
+      },
+      {
+        name: 'following',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'followers',
+      },
+      {
+        name: 'followers',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'following',
+      },
+      {
         name: 'microposts',
         type: 'Connection',
         ofType: 'Micropost',

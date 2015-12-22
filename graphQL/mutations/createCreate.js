@@ -71,7 +71,8 @@ export default function createCreate(typeSet, interfaces, typeSets) {
         context.rootValue.hooks,
         type.name,
         'afterCreate',
-        formattedResult
+        clientMutationId,
+        result,
       );
 
       return formattedResult;
