@@ -7,11 +7,36 @@ export async function constructMissingIndexes(db, types, indexes) {
   await createIndexes(db, missingIndexes);
 }
 
+export async function deleteTypeIndexes(db, type, indexes, fields) {
+  if (fields) {
+    const typeIndexes = indexes[type];
+    const indexesToDelete = typeIndexes.filter((index) =>
+      fields.some((field) => isEqual(index.fields, field))
+    );
+    const indexIds = indexesToDelete.map((index) => index.id.value);
+    const indexNames = indexesToDelete.map((index) => index.name);
+    await* indexNames.map((indexName) =>
+      db.collection(type).dropIndex(indexName
+    ));
+    return db.collection('ReindexIndex').deleteMany({
+      _id: {
+        $in: indexIds,
+      },
+    });
+  } else {
+    return db.collection('ReindexIndex').deleteMany({ type });
+  }
+}
+
 function findPotentialIndexes(types) {
   return flatten(types.map(findIndexesInType));
 }
 
 function findIndexesInType(type) {
+  if (!type.interfaces.includes('Node')) {
+    return [];
+  }
+
   const orderableFields = type.fields.filter((field) => field.orderable);
   return flatten(type.fields.map((field) => {
     if (field.name === 'id') {

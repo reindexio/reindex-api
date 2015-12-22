@@ -1,10 +1,12 @@
 import uuid from 'uuid';
+import { isEqual } from 'lodash';
 
 import assert from '../../../test/assert';
 import {
   createTestApp,
   createFixture,
   deleteFixture,
+  migrate,
   makeRunQuery,
 } from '../../../test/testAppUtils';
 import {
@@ -495,6 +497,62 @@ if (!process.env.DATABASE_TYPE ||
           sort.inputStages.map((stage) => stage.stage),
           ['IXSCAN', 'IXSCAN', 'IXSCAN']
         );
+      });
+
+      it('deletes indexes', async () => {
+        const indexes = (await db.getIndexes())
+          .filter((index) => !index.type.startsWith('Reindex'));
+
+        await migrate(runQuery, [
+          {
+            kind: 'OBJECT',
+            name: 'User',
+            interfaces: ['Node'],
+            fields: [
+              {
+                name: 'id',
+                type: 'ID',
+                nonNull: true,
+                unique: true,
+              },
+              {
+                name: 'handle',
+                type: 'String',
+                unique: true,
+              },
+            ],
+          },
+        ], true);
+
+        const newIndexes = (await db.getIndexes())
+          .filter((index) => !index.type.startsWith('Reindex'));
+
+        assert.sameDeepMembers(newIndexes, indexes.filter((index) =>
+          index.type === 'User' && isEqual(index.fields, ['handle', '_id']),
+        ));
+
+        const rawDB = await db.getDB();
+        const rawIndexes = (await rawDB.collection('User').indexes())
+          .map((index) => ({
+            key: index.key,
+            unique: index.unique,
+          }));
+
+        assert.sameDeepMembers(rawIndexes, [
+          {
+            key: {
+              _id: 1,
+            },
+            unique: undefined,
+          },
+          {
+            key: {
+              handle: 1,
+              _id: 1,
+            },
+            unique: true,
+          },
+        ]);
       });
     });
 
