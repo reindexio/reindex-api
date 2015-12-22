@@ -1,7 +1,10 @@
 import { chain, remove, groupBy, sortBy, map } from 'lodash';
 import { ObjectId } from 'mongodb';
 
-import { constructMissingIndexes } from './indexes';
+import {
+  constructMissingIndexes,
+  deleteTypeIndexes,
+} from './indexes';
 
 export async function performMigration(db, commands, types, { indexes }) {
   const commandsByType = groupBy(commands, (command) => command.commandType);
@@ -10,10 +13,10 @@ export async function performMigration(db, commands, types, { indexes }) {
     await deleteTypes(db, commandsByType.DeleteType);
   }
   if (commandsByType.DeleteTypeData) {
-    await deleteTypesData(db, commandsByType.DeleteTypeData);
+    await deleteTypesData(db, commandsByType.DeleteTypeData, indexes);
   }
   if (commandsByType.DeleteFieldData) {
-    await deleteFieldsData(db, commandsByType.DeleteFieldData);
+    await deleteFieldsData(db, commandsByType.DeleteFieldData, indexes);
   }
   if (commandsByType.CreateTypeData) {
     await createNewTypeData(db, commandsByType.CreateTypeData);
@@ -31,15 +34,19 @@ function deleteTypes(db, commands) {
     });
 }
 
-async function deleteTypesData(db, commands) {
+async function deleteTypesData(db, commands, indexes) {
   const names = commands.map((command) => command.type.name);
-  return await* names.map((name) => db.dropCollection(name));
+  await* names.map(async (name) => {
+    await deleteTypeIndexes(db, name, indexes);
+    await db.dropCollection(name);
+  });
 }
 
-async function deleteFieldsData(db, commands) {
+async function deleteFieldsData(db, commands, indexes) {
   const fieldsByType = groupBy(commands, (command) => command.type.name);
   const typeData = map(fieldsByType, (fields, typeName) => ({
     type: typeName,
+    fields: fields.map((field) => field.path),
     update: {
       $unset: chain(fields)
         .map((field) => field.path.join('.'))
@@ -49,9 +56,10 @@ async function deleteFieldsData(db, commands) {
     },
   }));
 
-  return await* typeData.map(({ type, update }) =>
-    db.collection(type).updateMany({}, update)
-  );
+  return await* typeData.map(async ({ type, fields, update }) => {
+    await deleteTypeIndexes(db, type, indexes, fields);
+    await db.collection(type).updateMany({}, update);
+  });
 }
 
 function createNewTypeData() {
