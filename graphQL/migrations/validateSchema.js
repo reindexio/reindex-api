@@ -179,11 +179,15 @@ function validateFields(type, invariant) {
   });
 }
 
+const FIELD_NAME_PATTERN = /^[a-z][_0-9A-Za-z]*$/;
+
 function validateField(type, field, typesByName, invariant) {
   invariant(
-    isString(field.name) && field.name.length > 0,
-    '%s: Expected field name to be a non-empty string.',
-    type.name
+    FIELD_NAME_PATTERN.test(field.name),
+    '%s: Expected field names to be strings starting with a lower case ' +
+    'letter. Allowed characters are letters A-Z, a-z, 0-9 and underscore (_).' +
+    ' Found: %s',
+    type.name, field.name,
   );
   invariant(
     field.description == null || isString(field.description),
