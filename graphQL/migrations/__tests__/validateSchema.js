@@ -72,6 +72,21 @@ const invalidSchemas = {
       fields: [field('')],
     }),
   ],
+  'invalid field name': [
+    type('T', {
+      fields: [field('Aueou')],
+    }),
+  ],
+  'invalid field name 2': [
+    type('T', {
+      fields: [field('aueou  ')],
+    }),
+  ],
+  'invalid field name 3': [
+    type('T', {
+      fields: [field('aue-ou-oueuoeue')],
+    }),
+  ],
   'duplicated field name': [
     type('T', {
       fields: [field('a'), field('a')],
