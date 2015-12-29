@@ -2,6 +2,7 @@ import { get } from 'lodash';
 import { promisify, delay } from 'bluebird';
 import uuid from 'uuid';
 import Hapi from 'hapi';
+import Boom from 'boom';
 
 import createApp from '../apps/createApp';
 import deleteApp from '../apps/deleteApp';
@@ -36,7 +37,11 @@ describe('Hooks', () => {
 
   it('Performs the hook', async () => {
     const requestMade = new Promise((resolve) => {
-      server.once('tail', resolve);
+      server.on('tail', () => {
+        if (server.count && server.count > 0) {
+          resolve();
+        }
+      });
     });
     const result = await runQuery(`
       mutation createHook($input: _CreateReindexHookInput!) {
@@ -70,6 +75,20 @@ describe('Hooks', () => {
     });
 
     const userId = get(user, ['data', 'createUser', 'id']);
+
+    const user2 = await runQuery(`
+      mutation User(
+        $input: _CreateUserInput!
+      ) {
+        createUser(input: $input) {
+          id,
+        }
+      }
+    `, {
+      input: {},
+    });
+
+    const userId2 = get(user2, ['data', 'createUser', 'id']);
 
     await runQuery(`
       mutation update($input: _UpdateReindexHookInput!) {
@@ -111,6 +130,17 @@ describe('Hooks', () => {
           },
         },
       },
+      {
+        method: 'post',
+        path: '/',
+        body: {
+          data: {
+            hook: {
+              id: userId2,
+            },
+          },
+        },
+      },
     ]);
 
     requests = [];
@@ -124,6 +154,11 @@ describe('Hooks', () => {
             nodes {
               type,
               errors,
+              response {
+                status,
+                statusText,
+                body
+              }
             }
           }
         }
@@ -138,9 +173,25 @@ describe('Hooks', () => {
               {
                 type: 'success',
                 errors: null,
+                response: {
+                  body: 'ok',
+                  status: 200,
+                  statusText: 'OK',
+                },
               },
               {
                 type: 'error',
+                errors: null,
+                response: {
+                  body:
+'{"statusCode":400,"error":"Bad Request","message":"IMMA ERROR"}',
+                  status: 400,
+                  statusText: 'Bad Request',
+                },
+              },
+              {
+                type: 'error',
+                response: null,
                 errors: [
                   'Error: Cannot query field "invalidField" on "_UserPayload".',
                 ],
@@ -178,7 +229,13 @@ function createTestServer(requestStore) {
         path: request.path,
         body: request.payload,
       });
-      reply('ok');
+      if (server.count && server.count > 0) {
+        server.count++;
+        reply(Boom.badRequest('IMMA ERROR'));
+      } else {
+        server.count = 1;
+        reply('ok');
+      }
     },
   });
 

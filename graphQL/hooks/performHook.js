@@ -5,6 +5,7 @@ import { toReindexID } from '../builtins/ReindexID';
 
 export default async function performHook(context, hook) {
   let result;
+  let httpResult;
   try {
     const query = (`
       {
@@ -15,7 +16,7 @@ export default async function performHook(context, hook) {
     result = await graphql(context.schema, query, context);
 
     if (!result.errors) {
-      await fetch(hook.url, {
+      httpResult = await fetch(hook.url, {
         method: 'post',
         headers: {
           Accept: 'application/json',
@@ -30,8 +31,18 @@ export default async function performHook(context, hook) {
     };
   }
 
+  const error = (
+    !result || result.errors ||
+    !(httpResult.status >= 200 && httpResult.status < 300)
+  );
+
   if (hook.logLevel === 'all' ||
-      result.errors && hook.logLevel !== 'none') {
+      (error && hook.logLevel !== 'none')) {
+    const response = httpResult && {
+      status: httpResult.status,
+      statusText: httpResult.statusText,
+      body: await httpResult.text(),
+    };
     const hookLogResult = await graphql(context.schema, `
       mutation createLog($input: _CreateReindexHookLogInput!) {
         createReindexHookLog(input: $input) {
@@ -42,7 +53,8 @@ export default async function performHook(context, hook) {
       input: {
         hook: toReindexID(hook.id),
         createdAt: '@TIMESTAMP',
-        type: !result || result.errors ? 'error' : 'success',
+        response,
+        type: error ? 'error' : 'success',
         errors: result && result.errors,
       },
     });

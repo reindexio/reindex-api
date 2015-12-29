@@ -1,6 +1,7 @@
 import {
   GraphQLObjectType,
   GraphQLString,
+  GraphQLInt,
   GraphQLNonNull,
   GraphQLEnumType,
   GraphQLList,
@@ -87,6 +88,26 @@ Possible values:
   });
 
   return {
+    ReindexHttpResponse: new TypeSet({
+      type: new GraphQLObjectType({
+        name: 'ReindexHttpResponse',
+        description: 'A response from an HTTP endpoint',
+        fields: {
+          status: {
+            type: GraphQLInt,
+            description: 'response status code',
+          },
+          statusText: {
+            type: GraphQLString,
+            description: 'response status text',
+          },
+          body: {
+            type: GraphQLString,
+            description: 'response body',
+          },
+        },
+      }),
+    }),
     ReindexHook: new TypeSet({
       type: new GraphQLObjectType({
         name: 'ReindexHook',
@@ -162,6 +183,10 @@ not have a name. Can include typed inline fragments.`,
           hook: {
             type: getTypeSet('ReindexHook').type,
             description: 'Hook for which this log entry is for.',
+          },
+          response: {
+            type: getTypeSet('ReindexHttpResponse').type,
+            description: 'HTTP response from the endpoint, if any.',
           },
           createdAt: {
             type: DateTime,
