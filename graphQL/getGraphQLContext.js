@@ -66,13 +66,18 @@ function extractPermissions(permissions, types) {
 
 function extractConnectionPermissions(types) {
   return chain(types)
-    .groupBy((type) => type.name)
-    .mapValues((type) => (
-      type[0].fields.filter((field) => (
-        field.grantPermissions &&
-        (field.type === 'User' ||
-         field.type === 'Connection' && field.ofType === 'User')
-      ))
+    .indexBy((type) => type.name)
+    .mapValues((type) => (type.permissions || []).concat(
+      type.fields
+        .filter((field) => (
+          field.grantPermissions &&
+          (field.type === 'User' ||
+          field.type === 'Connection' && field.ofType === 'User')
+        ))
+        .map((field) => ({
+          ...field.grantPermissions,
+          path: [field.name],
+        }))
     ))
     .value();
 }

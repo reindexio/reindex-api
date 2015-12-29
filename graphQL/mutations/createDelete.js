@@ -40,7 +40,7 @@ export default function createDelete({ type, payload }) {
         );
       }
 
-      checkPermission(
+      await checkPermission(
         type.name,
         'delete',
         object,

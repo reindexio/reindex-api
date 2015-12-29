@@ -21,9 +21,6 @@ describe('getGraphQLContext', () => {
         name: 'author',
         type: 'User',
         reverseName: 'microposts',
-        grantPermissions: {
-          read: true,
-        },
       },
       {
         name: 'favoritedBy',
@@ -33,6 +30,15 @@ describe('getGraphQLContext', () => {
         grantPermissions: {
           read: true,
         },
+      },
+    ],
+    permissions: [
+      {
+        path: ['author'],
+        read: true,
+        create: true,
+        update: true,
+        delete: true,
       },
     ],
   };
@@ -249,21 +255,15 @@ describe('getGraphQLContext', () => {
       assert.deepEqual(result.permissions.connection, {
         Micropost: [
           {
-            grantPermissions: {
-              read: true,
-            },
-            name: 'author',
-            reverseName: 'microposts',
-            type: 'User',
+            path: ['author'],
+            read: true,
+            create: true,
+            update: true,
+            delete: true,
           },
           {
-            grantPermissions: {
-              read: true,
-            },
-            name: 'favoritedBy',
-            reverseName: 'favorites',
-            type: 'Connection',
-            ofType: 'User',
+            path: ['favoritedBy'],
+            read: true,
           },
         ],
         User: [],

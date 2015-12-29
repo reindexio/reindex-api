@@ -228,7 +228,7 @@ function createResolveFunction(
         );
       }
 
-      checkPermission(
+      await checkPermission(
         typeName,
         'update',
         object,

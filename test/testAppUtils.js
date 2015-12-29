@@ -14,6 +14,7 @@ export function makeRunQuery(db) {
     credentials,
     newContext,
     clearContext,
+    printErrors = true,
   } = {}) {
     if (!credentials) {
       credentials = {
@@ -34,6 +35,12 @@ export function makeRunQuery(db) {
 
     if (clearContext) {
       metadata = null;
+    }
+
+    if (printErrors) {
+      for (const error of result.errors || []) {
+        console.log(error.stack);
+      }
     }
 
     return result;

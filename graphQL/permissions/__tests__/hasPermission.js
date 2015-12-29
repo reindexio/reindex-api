@@ -1,3 +1,5 @@
+import { get, chain, indexBy } from 'lodash';
+
 import assert from '../../../test/assert';
 import hasPermission from '../hasPermission';
 
@@ -6,12 +8,16 @@ describe('hasPermission', () => {
     credentials,
     type,
     permission,
-    typePermissions = {},
-    object = {},
-    connectionPermissions = {},
+    {
+      db = {},
+      typePermissions = {},
+      object = {},
+      connectionPermissions = {},
+    } = {},
   ) {
     return hasPermission(type, permission, object, {
       rootValue: {
+        db,
         credentials,
         permissions: {
           type: typePermissions,
@@ -30,18 +36,20 @@ describe('hasPermission', () => {
       },
     };
 
-    it('can do anything', () => {
-      assert.equal(testPermission(credentials, 'Post', 'read'), true);
-      assert.equal(testPermission(credentials, 'Post', 'update'), true);
-      assert.equal(testPermission(credentials, 'Post', 'delete'), true);
-      assert.equal(testPermission(credentials, 'Post', 'create'), true);
+    it('can do anything', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'read'), true);
+      assert.equal(await testPermission(credentials, 'Post', 'update'), true);
+      assert.equal(await testPermission(credentials, 'Post', 'delete'), true);
+      assert.equal(await testPermission(credentials, 'Post', 'create'), true);
     });
 
-    it('can do stuff even if banned from doing so by permissions', () => {
-      assert.equal(testPermission(credentials, 'Post', 'delete', {
-        Post: {
-          'some-user-id': {
-            delete: false,
+    it('can do stuff even if banned from doing so by permissions', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'delete', {
+        typePermissions: {
+          Post: {
+            'some-user-id': {
+              delete: false,
+            },
           },
         },
       }), true);
@@ -59,30 +67,41 @@ describe('hasPermission', () => {
       userID: id,
     };
 
-    it('can only read and delete', () => {
-      assert.equal(testPermission(credentials, 'User', 'read', {}, {
-        id,
+    it('can only read and delete', async () => {
+      assert.equal(await testPermission(credentials, 'User', 'read', {
+        object: {
+          id,
+        },
       }), true);
-      assert.equal(testPermission(credentials, 'User', 'update', {}, {
-        id,
+      assert.equal(await testPermission(credentials, 'User', 'update', {
+        object: {
+          id,
+        },
       }), false);
-      assert.equal(testPermission(credentials, 'User', 'delete', {}, {
-        id,
+      assert.equal(await testPermission(credentials, 'User', 'delete', {
+        object: {
+          id,
+        },
       }), true);
-      assert.equal(testPermission(credentials, 'User', 'create', {}, {
-        id,
+      assert.equal(await testPermission(credentials, 'User', 'create', {
+        object: {
+          id,
+        },
       }), false);
     });
 
-    it('can do stuff even if banned from doing so by permissions', () => {
-      assert.equal(testPermission(credentials, 'User', 'read', {
-        User: {
-          'some-user-id': {
-            read: false,
+    it('can do stuff even if banned from doing so by permissions', async () => {
+      assert.equal(await testPermission(credentials, 'User', 'read', {
+        typePermissions: {
+          User: {
+            'some-user-id': {
+              read: false,
+            },
           },
         },
-      }, {
-        id,
+        object: {
+          id,
+        },
       }), true);
     });
   });
@@ -99,51 +118,54 @@ describe('hasPermission', () => {
       isAdmin: false,
       userID: null,
     };
-    const typePermissions = {
-      Post: {
-        'some-user-id': {
-          read: true,
+    const options = {
+      typePermissions: {
+        Post: {
+          'some-user-id': {
+            read: true,
+          },
         },
-      },
-      Comment: {
-        'some-user-id': {
-          read: false,
-        },
-        anonymous: {
-          read: true,
+        Comment: {
+          'some-user-id': {
+            read: false,
+          },
+          anonymous: {
+            read: true,
+          },
         },
       },
     };
 
-    it('can do stuff allowed by permissions', () => {
+    it('can do stuff allowed by permissions', async () => {
       assert.equal(
-        testPermission(credentials, 'Post', 'read', typePermissions),
+        await testPermission(credentials, 'Post', 'read', options),
         true
       );
     });
 
-    it('everything not allowed is banned by default', () => {
+    it('everything not allowed is banned by default', async () => {
       assert.equal(
-        testPermission(credentials, 'Post', 'update', typePermissions),
+        await testPermission(credentials, 'Post', 'update', options),
         false
       );
       assert.equal(
-        testPermission(anonymousCredentials, 'Post', 'read', typePermissions),
-        false
-      );
-    });
-
-    it('anonymous user can have permissions too', () => {
-      assert.equal(
-        testPermission(credentials, 'Comment', 'read', typePermissions),
+        await testPermission(anonymousCredentials, 'Post', 'read', options),
         false
       );
     });
 
-    it('individual ban permissions trump general ones', () => {
-      assert.equal(testPermission(
-        anonymousCredentials, 'Comment', 'read', typePermissions
-      ), true);
+    it('anonymous user can have permissions too', async () => {
+      assert.equal(
+        await testPermission(credentials, 'Comment', 'read', options),
+        false
+      );
+    });
+
+    it('individual ban permissions trump general ones', async () => {
+      assert.equal(
+        await testPermission(anonymousCredentials, 'Comment', 'read', options),
+        true
+      );
     });
   });
 
@@ -155,50 +177,103 @@ describe('hasPermission', () => {
     const credentials = {
       isAdmin: false,
       userID: id,
-
     };
     const connectionPermissions = {
       Post: [
         {
-          name: 'author',
-          grantPermissions: {
-            read: true,
-          },
+          path: ['author'],
+          read: true,
         },
         {
-          name: 'editors',
-          grantPermissions: {
-            write: true,
-          },
+          path: ['editors'],
+          update: true,
+        },
+        {
+          path: ['author', 'supervisor'],
+          update: true,
         },
       ],
     };
 
-    it('can read own stuff', () => {
-      assert.equal(testPermission(credentials, 'Post', 'read', {}, {
-        author: id,
+
+    class MockDB {
+      constructor(objects) {
+        this.objects = chain(objects)
+          .groupBy((object) => object.type)
+          .mapValues((typeObjects) => indexBy(
+            typeObjects,
+            (object) => object.id)
+          )
+          .value();
+      }
+
+      getByID(type, value) {
+        return Promise.resolve(get(this.objects, [type, value.value]));
+      }
+    }
+
+    const db = new MockDB([
+      {
+        id: 'some-supervised-id',
+        type: 'User',
+        supervisor: {
+          type: 'User',
+          value: 'some-user-id',
+        },
+      },
+    ]);
+
+    const options = {
+      db,
+      connectionPermissions,
+    };
+
+    it('can read own stuff', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'read', {
+        ...options,
+        object: {
+          author: id,
+        },
+      }), true);
+    });
+
+    it('can not read other stuff', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'read', {
+        ...options,
+        object: {
+          author: {
+            type: 'User',
+            value: 'some-other-id',
+          },
+        },
+      }), false);
+    });
+
+    it('can write if an editor', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'update', {
+        ...options,
+        object: {
+          author: {
+            type: 'User',
+            value: 'some-other-id',
+          },
+          editors: [
+            id,
+          ],
+        },
       }, connectionPermissions), true);
     });
 
-    it('can not read other stuff', () => {
-      assert.equal(testPermission(credentials, 'Post', 'read', {}, {
-        author: {
-          type: 'User',
-          value: 'some-other-id',
+    it('can write if supervisor', async () => {
+      assert.equal(await testPermission(credentials, 'Post', 'update', {
+        ...options,
+        object: {
+          author: {
+            type: 'User',
+            value: 'some-supervised-id',
+          },
         },
-      }, connectionPermissions), false);
-    });
-
-    it('can write if an editor', () => {
-      assert.equal(testPermission(credentials, 'Post', 'write', {}, {
-        author: {
-          type: 'User',
-          value: 'some-other-id',
-        },
-        editors: [
-          id,
-        ],
-      }, connectionPermissions), true);
+      }), true);
     });
   });
 });

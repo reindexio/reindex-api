@@ -57,7 +57,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         );
       }
 
-      checkPermission(
+      await checkPermission(
         type.name,
         'update',
         object,

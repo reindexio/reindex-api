@@ -1,4 +1,4 @@
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 import uuid from 'uuid';
 
 import deleteApp from '../apps/deleteApp';
@@ -170,6 +170,7 @@ describe('Permissions', () => {
             isAdmin: false,
             userID: fromReindexID(fixtures.User.vanilla.id),
           },
+          printErrors: false,
         }), {
           data: {
             node: null,
@@ -211,6 +212,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.vanilla.id),
         },
+        printErrors: false,
       }), {
         data: {
           micropostById: null,
@@ -290,6 +292,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.banRead.id),
         },
+        printErrors: false,
       }), {
         data: {
           userById: null,
@@ -386,6 +389,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.creator.id),
         },
+        printErrors: false,
       });
 
       assert.deepEqual(deleted, {
@@ -415,6 +419,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.micropost.id),
         },
+        printErrors: false,
       }), {
         data: {
           micropostById: {
@@ -445,6 +450,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.vanilla.id),
         },
+        printErrors: false,
       }), {
         data: {
           userById: {
@@ -464,37 +470,24 @@ describe('Permissions', () => {
   describe('connection permissions', () => {
     before(async () => {
       const micropost = TEST_SCHEMA.find((type) => type.name === 'Micropost');
-      const micropostFields = micropost.fields.filter(
-        (field) => field.name !== 'author' && field.name !== 'favoritedBy'
-      );
       const rest = TEST_SCHEMA.filter((type) => type.name !== 'Micropost');
       const newSchema = [
         {
           ...micropost,
-          fields: [
-            ...micropostFields,
+          permissions: [
             {
-              name: 'author',
-              type: 'User',
-              reverseName: 'microposts',
-              grantPermissions: {
-                read: true,
-                create: true,
-                update: true,
-                delete: true,
-              },
+              path: ['author'],
+              read: true,
+              create: true,
+              update: true,
+              delete: true,
             },
             {
-              name: 'favoritedBy',
-              type: 'Connection',
-              ofType: 'User',
-              reverseName: 'favorites',
-              grantPermissions: {
-                read: true,
-                create: true,
-                update: true,
-                delete: true,
-              },
+              path: ['favoritedBy'],
+              read: true,
+              create: true,
+              update: true,
+              delete: true,
             },
           ],
         },
@@ -516,6 +509,7 @@ describe('Permissions', () => {
             isAdmin: false,
             userID: fromReindexID(fixtures.User.creator.id),
           },
+          printErrors: false,
         }), {
           data: {
             userById: null,
@@ -563,6 +557,7 @@ describe('Permissions', () => {
           isAdimn: false,
           userID: fromReindexID(user.id),
         },
+        printErrors: false,
       }), {
         data: {
           micropostById: null,
@@ -602,7 +597,7 @@ describe('Permissions', () => {
             },
           },
         },
-      });
+      }, 'reading by id');
 
       assert.deepEqual(await runQuery(`
         {
@@ -633,7 +628,7 @@ describe('Permissions', () => {
             },
           },
         },
-      });
+      }, 'reading via connection');
     });
 
     it('can create оr update microposts only with self as user', async () => {
@@ -659,6 +654,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(user.id),
         },
+        printErrors: false,
       }), {
         data: {
           createMicropost: null,
@@ -732,6 +728,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(user.id),
         },
+        printErrors: false,
       }), {
         data: {
           updateMicropost: null,
@@ -801,6 +798,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(user.id),
         },
+        printErrors: false,
       }), {
         data: {
           replaceMicropost: null,
@@ -910,6 +908,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User.creator.id),
         },
+        printErrors: false,
       }), {
         data: {
           userById: {
@@ -938,7 +937,7 @@ describe('Permissions', () => {
         const micropost = fixtures.Micropost.creator[0];
 
         await runQuery(`
-          mutation favorite($input: _AddMicropostToUserFavoritesInput!) {
+          mutation favorite($input: _MicropostUserFavoritesConnectionInput!) {
             addMicropostToUserFavorites(input: $input) {
               changedUser {
                 id
@@ -961,7 +960,12 @@ describe('Permissions', () => {
               id
             }
           }
-        `);
+        `, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(user.id),
+          },
+        });
 
         assert.deepEqual(result, {
           data: {
@@ -989,6 +993,379 @@ describe('Permissions', () => {
             micropostId: micropost.id,
             userId: user.id,
           },
+        });
+      });
+
+      describe('works with distant paths', () => {
+        let author;
+        let friend;
+        let micropost;
+
+        before(async () => {
+          author = fixtures.User.vanilla;
+          friend = fixtures.User.creator;
+          micropost = fixtures.Micropost.vanilla[0];
+
+          const schema = (await db.getTypes())
+            .map((type) => omit(type, ['id', '_id']));
+
+          const micropostType = schema.find(
+            (type) => type.name === 'Micropost'
+          );
+          const userType = schema.find(
+            (type) => type.name === 'User'
+          );
+          const rest = schema.filter(
+            (type) => !(['Micropost', 'User'].includes(type.name))
+          );
+          const newSchema = [
+            ...rest,
+            {
+              ...micropostType,
+              fields: [
+                ...micropostType.fields,
+                {
+                  name: 'comments',
+                  type: 'Connection',
+                  ofType: 'Comment',
+                  reverseName: 'micropost',
+                },
+              ],
+              permissions: [
+                ...micropostType.permissions,
+                {
+                  path: ['author', 'friends'],
+                  read: true,
+                },
+              ],
+            },
+            {
+              ...userType,
+              fields: [
+                ...userType.fields.filter((field) =>
+                  !(['credentials', 'permissions'].includes(field.name)
+                )),
+                {
+                  name: 'ownComments',
+                  type: 'Connection',
+                  ofType: 'Comment',
+                  reverseName: 'author',
+                },
+              ],
+            },
+            {
+              kind: 'OBJECT',
+              name: 'Comment',
+              interfaces: ['Node'],
+              fields: [
+                {
+                  name: 'id',
+                  type: 'ID',
+                  nonNull: true,
+                  unique: true,
+                },
+                {
+                  name: 'text',
+                  type: 'String',
+                },
+                {
+                  name: 'author',
+                  type: 'User',
+                  reverseName: 'ownComments',
+                },
+                {
+                  name: 'micropost',
+                  type: 'Micropost',
+                  reverseName: 'comments',
+                },
+              ],
+              permissions: [
+                {
+                  path: ['author'],
+                  read: true,
+                  create: true,
+                  update: true,
+                  delete: true,
+                },
+                {
+                  path: ['micropost', 'author'],
+                  read: true,
+                  create: true,
+                  update: true,
+                  delete: true,
+                },
+                {
+                  path: ['micropost', 'author', 'friends'],
+                  create: true,
+                  read: true,
+                },
+              ],
+            },
+          ];
+          await migrate(runQuery, newSchema);
+
+          await runQuery(`
+            mutation friend($input: _UserFriendsConnectionInput!) {
+              addUserToUserFriends(input: $input) {
+                clientMutationId
+              }
+            }
+          `, {
+            input: {
+              user1Id: author.id,
+              user2Id: friend.id,
+            },
+          });
+        });
+
+        let authorComment;
+        let friendComment;
+
+        it('author and friend can create comment', async () => {
+          const query = `
+            mutation addComment($input: _CreateCommentInput!) {
+              createComment(input: $input) {
+                changedComment {
+                  id,
+                  text
+                  author {
+                    id
+                  }
+                  micropost {
+                    id
+                  }
+                }
+              }
+            }
+          `;
+
+          const authorCommentResult = await runQuery(query, {
+            input: {
+              text: 'I am awesome!',
+              author: author.id,
+              micropost: micropost.id,
+            },
+          }, {
+            credentials: {
+              userID: fromReindexID(author.id),
+            },
+          });
+
+          const authorCommentId = get(authorCommentResult, [
+            'data', 'createComment', 'changedComment', 'id',
+          ]);
+
+          assert.deepEqual(authorCommentResult, {
+            data: {
+              createComment: {
+                changedComment: {
+                  id: authorCommentId,
+                  text: 'I am awesome!',
+                  author: {
+                    id: author.id,
+                  },
+                  micropost: {
+                    id: micropost.id,
+                  },
+                },
+              },
+            },
+          });
+
+          authorComment = authorCommentResult.data.createComment.changedComment;
+
+          const friendCommentResult = await runQuery(query, {
+            input: {
+              text: 'Yes you are awesome, good sir!',
+              author: friend.id,
+              micropost: micropost.id,
+            },
+          }, {
+            credentials: {
+              userID: fromReindexID(friend.id),
+            },
+          });
+
+          const friendCommentId = get(friendCommentResult, [
+            'data', 'createComment', 'changedComment', 'id',
+          ]);
+
+          assert.deepEqual(friendCommentResult, {
+            data: {
+              createComment: {
+                changedComment: {
+                  id: friendCommentId,
+                  text: 'Yes you are awesome, good sir!',
+                  author: {
+                    id: friend.id,
+                  },
+                  micropost: {
+                    id: micropost.id,
+                  },
+                },
+              },
+            },
+          });
+
+          friendComment = friendCommentResult.data.createComment.changedComment;
+        });
+
+
+        it('author and friend can read comments via connection', async () => {
+          const query = `
+            query($id: ID!){
+              micropostById(id: $id) {
+                id,
+                comments {
+                  count,
+                  nodes {
+                    text
+                  }
+                }
+              }
+            }
+          `;
+
+          const ownerResult = await runQuery(query, {
+            id: micropost.id,
+          }, {
+            credentials: {
+              userID: fromReindexID(author.id),
+            },
+          });
+
+          assert.deepEqual(ownerResult, {
+            data: {
+              micropostById: {
+                id: micropost.id,
+                comments: {
+                  count: 2,
+                  nodes: [
+                    {
+                      text: 'I am awesome!',
+                    },
+                    {
+                      text: 'Yes you are awesome, good sir!',
+                    },
+                  ],
+                },
+              },
+            },
+          });
+
+          const friendResult = await runQuery(query, {
+            id: micropost.id,
+          }, {
+            credentials: {
+              userID: fromReindexID(friend.id),
+            },
+          });
+
+          assert.deepEqual(ownerResult, friendResult);
+        });
+
+        it('author and friend can read comment directly', async () => {
+          const query = `
+            query($id: ID!) {
+              commentById(id: $id) {
+                id
+              }
+            }
+          `;
+
+          assert.deepEqual(await runQuery(query, {
+            id: authorComment.id,
+          }, {
+            credentials: {
+              userID: fromReindexID(author.id),
+            },
+          }), {
+            data: {
+              commentById: {
+                id: authorComment.id,
+              },
+            },
+          });
+
+          assert.deepEqual(await runQuery(query, {
+            id: authorComment.id,
+          }, {
+            credentials: {
+              userID: fromReindexID(friend.id),
+            },
+          }), {
+            data: {
+              commentById: {
+                id: authorComment.id,
+              },
+            },
+          });
+
+          assert.deepEqual(await runQuery(query, {
+            id: authorComment.id,
+          }, {
+            credentials: {
+              userID: fromReindexID(fixtures.User.banRead.id),
+            },
+            printErrors: false,
+          }), {
+            data: {
+              commentById: null,
+            },
+            errors: [
+              {
+                message:
+'User lacks permissions to read records of type Comment',
+              },
+            ],
+          });
+        });
+
+        it('can delete own comments, but not author\'s', async () => {
+          const query = `
+            mutation($input: _DeleteCommentInput!) {
+              deleteComment(input: $input) {
+                id
+              }
+            }
+          `;
+
+          assert.deepEqual(await runQuery(query, {
+            input: {
+              id: authorComment.id,
+            },
+          }, {
+            credentials: {
+              userID: fromReindexID(friend.id),
+            },
+            printErrors: false,
+          }), {
+            data: {
+              deleteComment: null,
+            },
+            errors: [
+              {
+                message:
+'User lacks permissions to delete records of type Comment',
+              },
+            ],
+          });
+
+          assert.deepEqual(await runQuery(query, {
+            input: {
+              id: friendComment.id,
+            },
+          }, {
+            credentials: {
+              userID: fromReindexID(friend.id),
+            },
+          }), {
+            data: {
+              deleteComment: {
+                id: friendComment.id,
+              },
+            },
+          });
         });
       });
     }

@@ -14,7 +14,7 @@ export function byName(objects) {
 
 
 export function extractTypeOptions(type) {
-  return pick(type, ['description', 'pluralName']);
+  return pick(type, ['description', 'pluralName', 'permissions']);
 }
 
 export function extractFieldOptions(field) {

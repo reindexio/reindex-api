@@ -4,8 +4,9 @@ import { isArray } from 'lodash';
 //
 // First check if user has a global type permission and if not, whether
 // there is a connection that grants him permission
-export default function hasPermission(type, permission, object, {
+export default async function hasPermission(type, permission, object, {
   rootValue: {
+    db,
     credentials,
     permissions: {
       type: permissionsByType,
@@ -30,7 +31,8 @@ export default function hasPermission(type, permission, object, {
   if (typePermission) {
     return true;
   } else {
-    return hasConnectionPermissions(
+    return await hasConnectionPermissions(
+      db,
       permissionsByConnection,
       permission,
       object,
@@ -57,7 +59,8 @@ function hasTypePermissions(permissions, permission, type, userID) {
   return userPermission || false;
 }
 
-function hasConnectionPermissions(
+async function hasConnectionPermissions(
+  db,
   permissions,
   permission,
   object,
@@ -77,11 +80,26 @@ function hasConnectionPermissions(
     return true;
   }
 
-  const userFields = permissions[type] || [];
+  const validConnections = (permissions[type] || []).filter((connection) =>
+    connection[permission]
+  );
 
-  for (const field of userFields) {
-    const name = field.name;
-    const value = object[name];
+  for (const connection of validConnections) {
+    let path = connection.path;
+    let currentObject = object;
+    while (path.length > 1) {
+      let name;
+      [name, ...path] = path;
+      const pathValue = currentObject && currentObject[name];
+      if (pathValue) {
+        currentObject = await db.getByID(pathValue.type, pathValue);
+      } else {
+        currentObject = null;
+      }
+    }
+
+    const value = currentObject && currentObject[path[0]];
+
     let isConnectedToUser = false;
     if (isArray(value)) {
       isConnectedToUser = value.some((id) => id.value === userID);
@@ -90,10 +108,7 @@ function hasConnectionPermissions(
     }
 
     if (isConnectedToUser) {
-      const grants = field.grantPermissions[permission];
-      if (grants) {
-        return true;
-      }
+      return true;
     }
   }
 

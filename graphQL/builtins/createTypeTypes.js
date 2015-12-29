@@ -19,11 +19,15 @@ import {
 } from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
-  const permissionSet = new TypeSet({
+  const objectPermission = new TypeSet({
     type: new GraphQLObjectType({
-      name: 'ReindexPermissionSet',
-      description: 'A set of granted permissions.',
+      name: 'ReindexObjectPermission',
+      description: 'A path to `User` object and a set of granted permissions.',
       fields: {
+        path: {
+          type: new GraphQLList(GraphQLString),
+          description: 'Path to `User` object.',
+        },
         read: {
           type: GraphQLBoolean,
           description: 'If true, grants a read permission.',
@@ -106,7 +110,8 @@ export default function createTypeTypes(interfaces, getTypeSet) {
             'related field in the connected type.',
         },
         grantPermissions: {
-          type: permissionSet.type,
+          type: objectPermission.type,
+          deprecationReason: 'Use type `permissions` field',
           description: 'For fields of type `User`, the permissions granted ' +
             'to the user connected using this field.',
         },
@@ -181,10 +186,14 @@ creating a migration with the CLI tool.
           description: 'A list of fields for the type.',
         },
         permissions: {
+          type: new GraphQLList(objectPermission.type),
+          description: 'All the object-level permissions for the type',
+        },
+        typePermissions: {
           type: getTypeSet('ReindexPermission').connection,
           args: createConnectionArguments('ReindexPermission', getTypeSet),
           resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
-          description: 'All the permissions defined for this type.',
+          description: 'All the type-level permissions defined for this type.',
         },
         pluralName: {
           type: GraphQLString,
@@ -213,7 +222,7 @@ creating a migration with the CLI tool.
   });
 
   return {
-    ReindexPermissionSet: permissionSet,
+    ReindexObjectPermission: objectPermission,
     ReindexField: field,
     ReindexType: type,
     ReindexOrdering: ordering,

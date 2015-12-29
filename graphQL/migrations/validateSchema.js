@@ -90,6 +90,14 @@ export default function validateSchema(
     ));
   }
 
+  if (errors.length > 0) {
+    return errors;
+  }
+
+  types.forEach((type) =>
+    validatePermissions(type, typesByName, invariant)
+  );
+
   return errors;
 }
 
@@ -347,6 +355,50 @@ function validateReverseField(
         defaultOrderingField.orderable,
         '%s.%s: Expected default ordering field %s.%s to be orderable.',
         type.name, field.name, reverseType, field.defaultOrdering.field,
+      );
+    }
+  }
+}
+
+function validatePermissions(type, typesByName, invariant) {
+  const permissions = type.permissions || [];
+  for (const permission of permissions) {
+    const path = permission.path;
+    let currentType = type;
+    const currentPath = [];
+    let failure = false;
+    for (const element of path.slice(0, path.length - 1)) {
+      currentPath.push(element);
+      const field = currentType.fields.find(
+        (typeField) => typeField.name === element
+      );
+      const nextType = field && typesByName[field.type];
+      invariant(
+        field && nextType && isNodeType(nextType),
+        '%s.permissions: %s Expected field to be of `Node` type. Found %s.',
+        type.name, currentPath.join('.'), field ? field.type : 'nothing'
+      );
+      if (field && nextType && isNodeType(nextType)) {
+        currentType = nextType;
+      } else {
+        failure = true;
+        break;
+      }
+    }
+    if (!failure) {
+      const fieldName = path[path.length - 1];
+      currentPath.push(fieldName);
+      const field = currentType.fields.find(
+        (typeField) => typeField.name === fieldName
+      );
+      const fieldType = field && (
+        field.type === 'Connection' ? field.ofType : field.type
+      );
+      invariant(
+        field && fieldType === 'User',
+        '%s.permissions %s: Expected field to be a User or a connection to ' +
+        'User. Found %s.',
+        type.name, currentPath.join('.'), field ? field.type : 'nothing',
       );
     }
   }

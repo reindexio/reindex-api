@@ -412,6 +412,64 @@ const invalidSchemas = {
       ],
     },
   ],
+  'invalid permissions, not a user type': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'foo',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foo',
+          type: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+      permissions: [
+        {
+          path: ['foo'],
+          read: true,
+        },
+      ],
+    }),
+  ],
+  'invalid permissions, error somewhere in chain': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'foo',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foo',
+          type: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+      permissions: [
+        {
+          path: ['foo', 'faulty'],
+          read: true,
+        },
+      ],
+    }),
+  ],
 };
 
 
