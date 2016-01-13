@@ -1,4 +1,4 @@
-import { pick, omit, indexBy } from 'lodash';
+import { indexBy } from 'lodash';
 
 export function getName(object) {
   return object.name;
@@ -12,11 +12,32 @@ export function byName(objects) {
   return indexBy(objects, getName);
 }
 
+function fieldsOrNull(type, fields) {
+  const result = {};
+  for (const field of fields) {
+    result[field] = type[field] || null;
+  }
+  return result;
+}
 
 export function extractTypeOptions(type) {
-  return pick(type, ['description', 'pluralName', 'permissions']);
+  return fieldsOrNull(type, [
+    'description',
+    'pluralName',
+    'permissions',
+  ]);
 }
 
 export function extractFieldOptions(field) {
-  return omit(field, ['name', 'type']);
+  return fieldsOrNull(field, [
+    'description',
+    'nonNull',
+    'deprecationReason',
+    'ofType',
+    'reverseName',
+    'grantPermissions',
+    'defaultOrdering',
+    'unique',
+    'orderable',
+  ]);
 }

@@ -46,8 +46,9 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       await checkPermission(
         type.name,
         'create',
+        {},
         object,
-        context
+        context,
       );
 
       await validate(

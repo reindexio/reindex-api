@@ -46,7 +46,7 @@ of the type.
             return null;
           }
           const result = await context.rootValue.db.getByID('User', userID);
-          await checkPermission('User', 'read', result, context);
+          await checkPermission('User', 'read', {}, result, context);
           return result;
         },
       },

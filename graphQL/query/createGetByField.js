@@ -30,7 +30,7 @@ export default function createGetByField({ type }) {
           value,
           context.rootValue.indexes[type.name],
         );
-        await checkPermission(type.name, 'read', result, context);
+        await checkPermission(type.name, 'read', {}, result, context);
         return result;
       },
     }))

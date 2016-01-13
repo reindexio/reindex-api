@@ -93,6 +93,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
         'ReindexType',
         'create',
         {},
+        {},
         context,
       );
 

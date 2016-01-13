@@ -44,6 +44,7 @@ export default function createDelete({ type, payload }) {
         type.name,
         'delete',
         object,
+        {},
         context
       );
       const result = await db.deleteQuery(type.name, input.id);

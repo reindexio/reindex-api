@@ -1,4 +1,4 @@
-import { chain, get } from 'lodash';
+import { chain, get, indexBy, values } from 'lodash';
 import { graphql } from 'graphql';
 
 import createApp from '../apps/createApp';
@@ -127,4 +127,48 @@ export async function deleteFixture(runQuery, type, id, options = {}) {
   }, options);
   assert.deepEqual(result.errors, undefined,
     `Failed to delete fixture: ${result.errors}`);
+}
+
+// Given a list of objects with each having at least `name` field, update
+// current schema by merging types by name and adding types that don't have
+// a match in base schema
+//
+// Fields and permissions are also combined, fields are merged by name.
+export function augmentSchema(baseSchema, augmentation) {
+  const baseByName = indexBy(baseSchema, (type) => type.name);
+  for (const updatedType of augmentation) {
+    if (baseByName[updatedType.name]) {
+      const oldType = baseByName[updatedType.name];
+      baseByName[oldType.name] = {
+        ...oldType,
+        ...updatedType,
+        permissions: [
+          ...oldType.permissions || [],
+          ...updatedType.permissions || [],
+        ],
+        fields: mergeFields(oldType.fields, updatedType.fields || []),
+      };
+    } else {
+      baseByName[updatedType.name] = updatedType;
+    }
+  }
+
+  return values(baseByName);
+}
+
+function mergeFields(oldFields, newFields) {
+  const oldByName = indexBy(oldFields, (field) => field.name);
+  for (const newField of newFields) {
+    if (oldByName[newField.name]) {
+      const oldField = oldByName[newField.name];
+      oldByName[oldField.name] = {
+        ...oldField,
+        ...newField,
+      };
+    } else {
+      oldByName[newField.name] = newField;
+    }
+  }
+
+  return values(oldByName);
 }

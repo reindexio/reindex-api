@@ -1,10 +1,11 @@
+import { uniq } from 'lodash';
 import hasPermission from './hasPermission';
 
 export default async function checkPermission(type, permission, ...args) {
   const result = await hasPermission(type, permission, ...args);
-  if (!result) {
+  if (result.errors) {
     throw new Error(
-      `User lacks permissions to ${permission} records of type ${type}`
+      uniq(result.errors).join('\n')
     );
   }
 }

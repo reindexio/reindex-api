@@ -157,7 +157,7 @@ export function createNodeFieldResolve(ofType, fieldName) {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
     if (id) {
       const result = await context.rootValue.db.getByID(ofType, id);
-      await checkPermission(ofType, 'read', result, context);
+      await checkPermission(ofType, 'read', {}, result, context);
       return result;
     } else {
       return null;
@@ -169,7 +169,7 @@ async function checkConnectionPermissions(type, reverseName, parent, context) {
   const object = {
     [reverseName]: parent.id,
   };
-  await checkPermission(type, 'read', object, context);
+  await checkPermission(type, 'read', {}, object, context);
 }
 
 export function createConnectionFieldResolve(

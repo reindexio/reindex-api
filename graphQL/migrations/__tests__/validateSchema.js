@@ -99,7 +99,7 @@ const invalidSchemas = {
   ],
   'field shadows field built-in field for type': [
     type('User', {
-      fields: [field('permissions')],
+      fields: [field('credentials')],
     }),
   ],
   'field shadows field built-in field for interface': [
@@ -412,6 +412,65 @@ const invalidSchemas = {
       ],
     },
   ],
+  'invalid permissions, grantee not USER and path': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'foo',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foo',
+          type: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+      permissions: [
+        {
+          grantee: 'EVERYONE',
+          userPath: ['foo'],
+          read: true,
+        },
+      ],
+    }),
+  ],
+  'invalid permissions, grantee USER and no path': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'foo',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foo',
+          type: 'Foo',
+          reverseName: 'bars',
+        },
+      ],
+      permissions: [
+        {
+          grantee: 'USER',
+          read: true,
+        },
+      ],
+    }),
+  ],
   'invalid permissions, not a user type': [
     type('Bar', {
       interfaces: ['Node'],
@@ -435,7 +494,8 @@ const invalidSchemas = {
       ],
       permissions: [
         {
-          path: ['foo'],
+          grantee: 'USER',
+          userPath: ['foo'],
           read: true,
         },
       ],
@@ -464,7 +524,8 @@ const invalidSchemas = {
       ],
       permissions: [
         {
-          path: ['foo', 'faulty'],
+          grantee: 'USER',
+          userPath: ['foo', 'faulty'],
           read: true,
         },
       ],

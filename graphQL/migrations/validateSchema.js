@@ -1,5 +1,7 @@
 import invariantFunction from 'invariant';
-import { chain, groupBy, isEqual, isPlainObject, isString, uniq } from 'lodash';
+import {
+  chain, groupBy, isEqual, isPlainObject, isString, uniq, isArray,
+} from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
@@ -363,7 +365,24 @@ function validateReverseField(
 function validatePermissions(type, typesByName, invariant) {
   const permissions = type.permissions || [];
   for (const permission of permissions) {
-    const path = permission.path;
+    const grantee = permission.grantee;
+    const path = permission.userPath;
+    invariant(
+      grantee !== 'USER' || (isArray(path) && path.length > 0),
+      '%s.permissions: Expected `userPath` to be a non-empty list ' +
+      'if grantee is `USER`.',
+      type.name,
+    );
+    invariant(
+      grantee === 'USER' || !path,
+      '%s.permissions: Expected `userPath` to be null if grantee is not `USER`',
+      type.name
+    );
+
+    if (!(isArray(path) && path.length > 0)) {
+      continue;
+    }
+
     let currentType = type;
     const currentPath = [];
     let failure = false;
@@ -375,8 +394,10 @@ function validatePermissions(type, typesByName, invariant) {
       const nextType = field && typesByName[field.type];
       invariant(
         field && nextType && isNodeType(nextType),
-        '%s.permissions: %s Expected field to be of `Node` type. Found %s.',
-        type.name, currentPath.join('.'), field ? field.type : 'nothing'
+        '%s.permissions: Expected `userPath` to be of `Node` ' +
+        'type. Found %s (%s).',
+        type.name, JSON.stringify(path),
+        field ? `"${element}" of type \`${field.type}\`` : `"${element}"`
       );
       if (field && nextType && isNodeType(nextType)) {
         currentType = nextType;
@@ -395,10 +416,14 @@ function validatePermissions(type, typesByName, invariant) {
         field.type === 'Connection' ? field.ofType : field.type
       );
       invariant(
-        field && fieldType === 'User',
-        '%s.permissions %s: Expected field to be a User or a connection to ' +
-        'User. Found %s.',
-        type.name, currentPath.join('.'), field ? field.type : 'nothing',
+        (path.length === 1 &&
+         currentType.name === 'User' &&
+         field && field.name === 'id') ||
+        (field && fieldType === 'User'),
+        '%s.permissions: Expected `userPath` to be a User or a connection ' +
+        'to User. Found %s (%s).',
+        type.name, JSON.stringify(path),
+        field ? `"${fieldName}" of type \`${fieldType}\`` : `"${fieldName}"`
       );
     }
   }

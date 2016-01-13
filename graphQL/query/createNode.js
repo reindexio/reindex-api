@@ -50,7 +50,7 @@ query NodeExample {
         return null;
       }
       const result = await context.rootValue.db.getByID(type.name, id);
-      await checkPermission(type.name, 'read', result, context);
+      await checkPermission(type.name, 'read', {}, result, context);
       return result;
     },
   };

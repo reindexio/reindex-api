@@ -20,7 +20,7 @@ export default function createSearchFor(
     type: connection,
     args: argDefs,
     async resolve(parent, args, context) {
-      await checkPermission(type.name, 'read', {}, context);
+      await checkPermission(type.name, 'read', {}, {}, context);
       return context.rootValue.db.getConnectionQueries(
         type.name,
         {},

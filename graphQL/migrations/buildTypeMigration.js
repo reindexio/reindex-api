@@ -72,7 +72,7 @@ function buildFieldsMigration(type, nextType) {
   difference(nextFieldNames, previousFieldNames).forEach((name) => {
     const nextField = nextFields[name];
     commands.push(new CreateField(
-      type || nextType, name, nextField.type, extractFieldOptions(nextField),
+      type || nextType, name, nextField.type, nextField,
     ));
   });
   difference(previousFieldNames, nextFieldNames).forEach((name) => {
@@ -82,20 +82,21 @@ function buildFieldsMigration(type, nextType) {
   intersection(previousFieldNames, nextFieldNames).forEach((name) => {
     const previousField = previousFields[name];
     const nextField = nextFields[name];
+    const previousOptions = extractFieldOptions(previousField);
+    const nextOptions = extractFieldOptions(nextField);
     if (previousField.type !== nextField.type ||
-        previousField.ofType !== nextField.ofType ||
-        (!previousField.unique &&
-          nextField.unique &&
+        previousOptions.ofType !== nextOptions.ofType ||
+        previousOptions.reverseName !== nextOptions.reverseName ||
+        (!previousOptions.unique &&
+          nextOptions.unique &&
           nextField.type !== 'ID')) {
       commands.push(new DeleteFieldData(type, [name]));
       commands.push(new DeleteField(type, name));
       commands.push(new CreateField(
-        type, name, nextField.type, extractFieldOptions(nextField)
+        type, name, nextField.type, nextField
       ));
-    } else if (!isEqual(previousField, nextField)) {
-      commands.push(new UpdateFieldInfo(type, name, extractFieldOptions(
-        nextField
-      )));
+    } else if (!isEqual(previousOptions, nextOptions)) {
+      commands.push(new UpdateFieldInfo(type, name, nextField));
     }
   });
   return commands;

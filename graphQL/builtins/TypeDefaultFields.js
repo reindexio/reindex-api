@@ -7,14 +7,6 @@ export default function getTypeDefaultFields() {
         type: 'ReindexCredentialCollection',
         builtin: true,
       },
-      {
-        name: 'permissions',
-        description: 'The permissions granted to this user.',
-        type: 'Connection',
-        ofType: 'ReindexPermission',
-        reverseName: 'user',
-        builtin: true,
-      },
     ],
   };
 }

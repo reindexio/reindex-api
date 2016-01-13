@@ -23,7 +23,7 @@ export default function createGet({ type }) {
         throw new Error(`id: Invalid ID for type ${type.name}`);
       }
       const result = await db.getByID(type.name, id);
-      await checkPermission(type.name, 'read', result, context);
+      await checkPermission(type.name, 'read', {}, result, context);
       return result;
     },
   };

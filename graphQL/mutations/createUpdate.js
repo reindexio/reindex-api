@@ -66,7 +66,8 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
       await checkPermission(
         type.name,
         'update',
-        checkObject,
+        existing,
+        object,
         context
       );
 
