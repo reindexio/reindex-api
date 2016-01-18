@@ -37,7 +37,14 @@ export default async function listApps() {
     return result.data.viewer.allApps.nodes.map((app) => {
       const { id, database } = app;
       const { hostname } = app.domains.nodes[0];
-      return `${id}\t${hostname}\t${database.name}\t${database.cluster}`;
+      return {
+        id,
+        hostname,
+        database: {
+          name: database.name,
+          cluster: database.cluster,
+        },
+      };
     });
   } finally {
     db.close();

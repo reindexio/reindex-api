@@ -21,6 +21,14 @@ const Config = convict({
       },
     },
   },
+  app: {
+    key: {
+      default: undefined,
+      doc: 'API key for app management auth',
+      env: 'APP_KEY',
+      format: String,
+    },
+  },
   database: {
     adminCluster: {
       default: 'mongodb',
