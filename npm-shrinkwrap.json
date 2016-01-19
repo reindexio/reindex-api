@@ -1393,6 +1393,18 @@
         }
       }
     },
+    "hapi-auth-basic": {
+      "version": "4.1.0",
+      "from": "hapi-auth-basic@latest",
+      "resolved": "https://registry.npmjs.org/hapi-auth-basic/-/hapi-auth-basic-4.1.0.tgz",
+      "dependencies": {
+        "hoek": {
+          "version": "3.0.4",
+          "from": "hoek@>=3.0.0 <4.0.0",
+          "resolved": "https://registry.npmjs.org/hoek/-/hoek-3.0.4.tgz"
+        }
+      }
+    },
     "hapi-require-https": {
       "version": "2.0.3",
       "from": "hapi-require-https@>=2.0.2 <3.0.0",

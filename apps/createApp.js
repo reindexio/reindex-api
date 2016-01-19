@@ -97,10 +97,15 @@ async function createAppMetadata(adminDB, hostname, database) {
     createdAt: TIMESTAMP,
     database,
   });
-  await adminDB.create('Domain', {
+  const domain = await adminDB.create('Domain', {
     app: app.id,
     createdAt: TIMESTAMP,
     hostname,
   });
-  return app;
+  return {
+    ...app,
+    domains: [
+      domain,
+    ],
+  };
 }

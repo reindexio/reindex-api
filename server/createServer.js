@@ -10,6 +10,7 @@ import GoodConsole from 'good-console';
 import StatusHandler from './handlers/StatusHandler';
 import GraphQLHandler from './handlers/GraphQLHandler';
 import GraphiQLHandler from './handlers/GraphiQLHandler';
+import AppPlugin from './AppPlugin';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import DBPlugin from './DBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
@@ -45,6 +46,8 @@ export default async function createServer() {
   await server.register(JWTAuthenticationScheme);
   server.auth.strategy('token', 'jwt');
 
+  await server.register(AppPlugin);
+
   server.route(StatusHandler);
   server.route(GraphQLHandler);
   server.route(GraphiQLHandler);
@@ -63,5 +66,6 @@ export default async function createServer() {
     register: Good,
     options: loggingOptions,
   });
+
   return server;
 }
