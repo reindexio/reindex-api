@@ -48,30 +48,39 @@ export async function createIntercomUser(email, name, hostname) {
   }
 }
 
-export async function sendWelcomeEmail(userId, name, hostname, token) {
+export async function sendWelcomeEmail(userId) {
   const client = getClient();
   /* eslint-disable max-len */
-  const body = `Hi${name ? ' ' + name : ''},
+  const body = `Hi there,
 
-You've got access to the private beta of Reindex.
+It's great to have you on board! Reindex will enable you to develop apps fast
+using GraphQL, a data query language designed for building client-side web
+and mobile apps.
 
-To learn how to get started, check out the tutorial at https://www.reindex.io/docs/
+Here's how you can get started:
 
-You can make queries and view your API docs in GraphiQL.
-Use this link to sign in:
-https://${hostname}/?token=${token}
+1) Check your new Reindex app:
+We have automatically created a Reindex app for you. Go to your dashboard at
+https://accounts.reindex.io, click "Open GraphiQL" and start firing GraphQL
+queries at it. GraphiQL is a powerful in-browser tool that makes it very easy to
+write GraphQL.
 
-Install Reindex CLI with:
+2) Make it your own:
+The heart of your app is it's schema. By editing the schema you can add your
+own types of data and define the relationships between them. When you edit the
+schema a GraphQL API will be created automatically for accessing the data in
+your client-side apps.
+Learn how to define your schema and build an app with Reindex: https://www.reindex.io/docs/tutorial/
 
-    npm install -g reindex-cli
+3) Explore Reindex:
+Reindex lets you build whole applications without having to develop and deploy
+server-side code. You can easily enable authentication with Facebook, Google,
+Twitter and GitHub, add permissions to protect access to your data, integrate
+with 3rd party services using hooks and more.
+Learn about all the features in the docs: https://www.reindex.io/docs/
 
-and configure your environment:
-
-    export REINDEX_URL="https://${hostname}"
-    export REINDEX_TOKEN="${token}"
-
-If you have any questions, problems or feedback please email us at
-support@reindex.io or click the "?" button in GraphiQL to chat with us.
+If you have any questions, feel free to contact us at support@reindex.io
+or click the "?" button in GraphiQL to chat with us. We're always here to help!
 
 Happy hacking!
 
@@ -84,7 +93,7 @@ Reindex
   try {
     const result = await fromNode((callback) => client.messages.create({
       message_type: 'email',
-      subject: 'Welcome to Reindex beta',
+      subject: 'Welcome to Reindex!',
       template: 'plain',
       body,
       from: {
