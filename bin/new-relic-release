@@ -2,7 +2,6 @@
 
 set -e
 
-NEW_RELIC_API_KEY="4956f88a89bd79c5c437a589493edffeb5d527190822adf"
 REVISION=`git rev-parse HEAD`
 
 curl -H "x-api-key:$NEW_RELIC_API_KEY" \
