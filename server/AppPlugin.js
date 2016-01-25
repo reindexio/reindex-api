@@ -35,7 +35,7 @@ async function createAppHandler(request, reply) {
 
   if (hasIntercom()) {
     const user = await createIntercomUser(email, null, hostname);
-    await sendWelcomeEmail(user.id, null, hostname, token);
+    await sendWelcomeEmail(user.id);
   }
 
   reply({

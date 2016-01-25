@@ -53,7 +53,7 @@ async function createAppForUser() {
       const user = await createIntercomUser(email, name, hostname);
       if (await confirm('Send welcome email? (y/n)', { default: true })) {
         console.log('Sending welcome email...');
-        await sendWelcomeEmail(user.id, name, hostname, token);
+        await sendWelcomeEmail(user.id);
       }
     }
 
