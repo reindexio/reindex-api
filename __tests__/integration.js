@@ -1161,7 +1161,7 @@ describe('Integration Tests', () => {
         },
       });
 
-      const micropostFetchResult = await runQuery(`
+      let micropostFetchResult = await runQuery(`
         query micropostById($id: ID!){
           micropostById(id: $id) {
             id,
@@ -1223,7 +1223,97 @@ describe('Integration Tests', () => {
             },
           },
         },
+      }, 'fetching returns same data');
+
+      await runQuery(`
+        mutation($input: _UpdateUserInput!) {
+          updateUser(input: $input) {
+            id
+          }
+        }
+      `, {
+        input: {
+          id: user1.id,
+          handle: 'new-handle',
+        },
       });
+
+      micropostFetchResult = await runQuery(`
+        query micropostById($id: ID!){
+          micropostById(id: $id) {
+            id,
+            favoritedBy {
+              count,
+              nodes {
+                id,
+              }
+            }
+          }
+        }
+      `, {
+        id: micropost.id,
+      });
+
+      assert.deepEqual(micropostFetchResult, {
+        data: {
+          micropostById: {
+            id: micropost.id,
+            favoritedBy: {
+              count: 1,
+              nodes: [
+                {
+                  id: user1.id,
+                },
+              ],
+            },
+          },
+        },
+      }, 'updating does not affect related');
+
+      await runQuery(`
+        mutation($input: _ReplaceUserInput!) {
+          replaceUser(input: $input) {
+            id
+          }
+        }
+      `, {
+        input: {
+          id: user1.id,
+          handle: 'user-0',
+        },
+      });
+
+      micropostFetchResult = await runQuery(`
+        query micropostById($id: ID!){
+          micropostById(id: $id) {
+            id,
+            favoritedBy {
+              count,
+              nodes {
+                id,
+              }
+            }
+          }
+        }
+      `, {
+        id: micropost.id,
+      });
+
+      assert.deepEqual(micropostFetchResult, {
+        data: {
+          micropostById: {
+            id: micropost.id,
+            favoritedBy: {
+              count: 1,
+              nodes: [
+                {
+                  id: user1.id,
+                },
+              ],
+            },
+          },
+        },
+      }, 'replacing does not affect related');
 
       result = await runQuery(query, {
         input: {

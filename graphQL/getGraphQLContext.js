@@ -27,6 +27,7 @@ export default function getGraphQLContext(
     },
     hooks,
     types: typeData,
+    typeInfoByName,
     schema,
   };
 }
