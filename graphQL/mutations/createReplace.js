@@ -43,6 +43,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
+      const typeInfo = context.rootValue.typeInfoByName[type.name];
 
       if (!db.isValidID(type.name, input.id)) {
         throw new Error(`input.id: Invalid ID for type ${type.name}`);
@@ -74,7 +75,20 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         interfaces,
       );
 
-      const result = await db.replace(type.name, input.id, object, existing);
+      const cleanedExisting = omit(
+        existing,
+        Object.values(typeInfo.fields)
+          .filter((field) => field.connectionType === 'MANY_TO_MANY')
+          .map((field) => field.name)
+      );
+
+      const result = await db.replace(
+        type.name,
+        input.id,
+        object,
+        cleanedExisting
+      );
+
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,
