@@ -157,7 +157,7 @@ export function createNodeFieldResolve(ofType, fieldName) {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
     if (id) {
       const result = await context.rootValue.db.getByID(ofType, id);
-      checkPermission(ofType, 'read', result, context);
+      await checkPermission(ofType, 'read', {}, result, context);
       return result;
     } else {
       return null;
@@ -165,18 +165,11 @@ export function createNodeFieldResolve(ofType, fieldName) {
   };
 }
 
-function checkConnectionPermissions(type, reverseName, parent, context) {
-  const userFields = context.rootValue.permissions.connection[type];
-  const object = {};
-  if (userFields) {
-    const userField = userFields.find((field) => (
-      field.name === reverseName
-    ));
-    if (userField) {
-      object[reverseName] = parent.id;
-    }
-  }
-  checkPermission(type, 'read', object, context);
+async function checkConnectionPermissions(type, reverseName, parent, context) {
+  const object = {
+    [reverseName]: parent.id,
+  };
+  await checkPermission(type, 'read', {}, object, context);
 }
 
 export function createConnectionFieldResolve(
@@ -184,8 +177,8 @@ export function createConnectionFieldResolve(
   reverseName,
   defaultOrdering,
 ) {
-  return (parent, args, context) => {
-    checkConnectionPermissions(ofType, reverseName, parent, context);
+  return async (parent, args, context) => {
+    await checkConnectionPermissions(ofType, reverseName, parent, context);
     if (!defaultOrdering) {
       defaultOrdering = {
         field: 'id',

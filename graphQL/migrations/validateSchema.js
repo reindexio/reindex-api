@@ -1,5 +1,7 @@
 import invariantFunction from 'invariant';
-import { chain, groupBy, isEqual, isPlainObject, isString, uniq } from 'lodash';
+import {
+  chain, groupBy, isEqual, isPlainObject, isString, uniq, isArray,
+} from 'lodash';
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
@@ -89,6 +91,14 @@ export default function validateSchema(
       type, field, typesByName, invariant
     ));
   }
+
+  if (errors.length > 0) {
+    return errors;
+  }
+
+  types.forEach((type) =>
+    validatePermissions(type, typesByName, invariant)
+  );
 
   return errors;
 }
@@ -347,6 +357,73 @@ function validateReverseField(
         defaultOrderingField.orderable,
         '%s.%s: Expected default ordering field %s.%s to be orderable.',
         type.name, field.name, reverseType, field.defaultOrdering.field,
+      );
+    }
+  }
+}
+
+function validatePermissions(type, typesByName, invariant) {
+  const permissions = type.permissions || [];
+  for (const permission of permissions) {
+    const grantee = permission.grantee;
+    const path = permission.userPath;
+    invariant(
+      grantee !== 'USER' || (isArray(path) && path.length > 0),
+      '%s.permissions: Expected `userPath` to be a non-empty list ' +
+      'if grantee is `USER`.',
+      type.name,
+    );
+    invariant(
+      grantee === 'USER' || !path,
+      '%s.permissions: Expected `userPath` to be null if grantee is not `USER`',
+      type.name
+    );
+
+    if (!(isArray(path) && path.length > 0)) {
+      continue;
+    }
+
+    let currentType = type;
+    const currentPath = [];
+    let failure = false;
+    for (const element of path.slice(0, path.length - 1)) {
+      currentPath.push(element);
+      const field = currentType.fields.find(
+        (typeField) => typeField.name === element
+      );
+      const nextType = field && typesByName[field.type];
+      invariant(
+        field && nextType && isNodeType(nextType),
+        '%s.permissions: Expected `userPath` to be of `Node` ' +
+        'type. Found %s (%s).',
+        type.name, JSON.stringify(path),
+        field ? `"${element}" of type \`${field.type}\`` : `"${element}"`
+      );
+      if (field && nextType && isNodeType(nextType)) {
+        currentType = nextType;
+      } else {
+        failure = true;
+        break;
+      }
+    }
+    if (!failure) {
+      const fieldName = path[path.length - 1];
+      currentPath.push(fieldName);
+      const field = currentType.fields.find(
+        (typeField) => typeField.name === fieldName
+      );
+      const fieldType = field && (
+        field.type === 'Connection' ? field.ofType : field.type
+      );
+      invariant(
+        (path.length === 1 &&
+         currentType.name === 'User' &&
+         field && field.name === 'id') ||
+        (field && fieldType === 'User'),
+        '%s.permissions: Expected `userPath` to be a User or a connection ' +
+        'to User. Found %s (%s).',
+        type.name, JSON.stringify(path),
+        field ? `"${fieldName}" of type \`${fieldType}\`` : `"${fieldName}"`
       );
     }
   }

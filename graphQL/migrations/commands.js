@@ -1,3 +1,5 @@
+import { extractTypeOptions, extractFieldOptions } from './utilities';
+
 export class CreateType {
   commandType = 'CreateType';
   isDestructive = false;
@@ -36,7 +38,7 @@ export class UpdateTypeInfo {
 
   constructor(type, metadata) {
     this.type = type;
-    this.metadata = metadata;
+    this.metadata = extractTypeOptions(metadata);
   }
 
   description() {
@@ -86,7 +88,7 @@ export class CreateField {
     this.type = type;
     this.fieldName = fieldName;
     this.fieldType = fieldType;
-    this.options = options;
+    this.options = extractFieldOptions(options);
   }
 
   description() {
@@ -142,7 +144,7 @@ export class UpdateFieldInfo {
   constructor(type, fieldName, options) {
     this.type = type;
     this.fieldName = fieldName;
-    this.options = options;
+    this.options = extractFieldOptions(options);
   }
 
   description() {

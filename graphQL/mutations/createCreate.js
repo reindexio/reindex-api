@@ -43,11 +43,12 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['clientMutationId']);
 
-      checkPermission(
+      await checkPermission(
         type.name,
         'create',
+        {},
         object,
-        context
+        context,
       );
 
       await validate(

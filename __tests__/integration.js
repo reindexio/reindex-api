@@ -711,7 +711,9 @@ describe('Integration Tests', () => {
         replaceUser(input: { id: $id }) { id }
         deleteUser(input: { id: $id }) { id }
       }
-    `, { id: nonExistentId });
+    `, { id: nonExistentId }, {
+      printErrors: false,
+    });
 
     const error = {
       message: 'input.id: Can not find User object with given ID: ' +
@@ -767,6 +769,8 @@ describe('Integration Tests', () => {
         createdAt: '2016-07-12T18:00:00.000Z',
         author: idMalformed,
       },
+    }, {
+      printErrors: false,
     });
 
     assert.deepEqual(result, {
@@ -809,6 +813,8 @@ describe('Integration Tests', () => {
       input: {
         handle: user2.handle,
       },
+    }, {
+      printErrors: false,
     });
 
     assert.deepEqual(result, {
@@ -835,6 +841,8 @@ describe('Integration Tests', () => {
         id,
         handle: user2.handle,
       },
+    }, {
+      printErrors: false,
     });
 
     assert.deepEqual(result, {
@@ -861,6 +869,8 @@ describe('Integration Tests', () => {
         id,
         handle: user2.handle,
       },
+    }, {
+      printErrors: false,
     });
 
     assert.deepEqual(result, {

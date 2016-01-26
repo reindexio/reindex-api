@@ -19,8 +19,8 @@ export default function createSearchFor(
     description: `A connection with all objects of type \`${type.name}\``,
     type: connection,
     args: argDefs,
-    resolve(parent, args, context) {
-      checkPermission(type.name, 'read', {}, context);
+    async resolve(parent, args, context) {
+      await checkPermission(type.name, 'read', {}, {}, context);
       return context.rootValue.db.getConnectionQueries(
         type.name,
         {},

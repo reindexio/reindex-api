@@ -38,7 +38,7 @@ export async function update(db, type, id, data) {
 }
 
 export async function replace(db, type, id, data, oldObject) {
-  const replaced = await db.collection(type).findOneAndReplace({
+  const replaced = await db.collection(type).findOneAndUpdate({
     _id: ObjectId(id.value),
   }, prepareDocument(data, oldObject), {
     returnOriginal: false,

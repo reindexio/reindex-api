@@ -4,6 +4,7 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLBoolean,
+  GraphQLEnumType,
 } from 'graphql';
 
 import createCreate from '../mutations/createCreate';
@@ -19,18 +20,59 @@ import {
 } from '../connections';
 
 export default function createTypeTypes(interfaces, getTypeSet) {
-  const permissionSet = new TypeSet({
+  const permissionGrantee = new GraphQLEnumType({
+    name: 'ReindexGranteeType',
+    description:
+`Who to grant the permission to.
+
+Possible values:
+
+* \`USER\` - user pointed to by userPath
+* \`AUTHENTICATED\` - any authenticated user
+* \`EVERYONE\` - everyone
+`,
+    values: {
+      USER: {
+        value: 'USER',
+      },
+      AUTHENTICATED: {
+        value: 'AUTHENTICATED',
+      },
+      EVERYONE: {
+        value: 'EVERYONE',
+      },
+    },
+  });
+
+  const permission = new TypeSet({
     type: new GraphQLObjectType({
-      name: 'ReindexPermissionSet',
-      description: 'A set of granted permissions.',
+      name: 'ReindexPermission',
+      description:
+`Permission. Depending on the \`grantee\` applies to either user pointed through
+\`userPath\`, authenticated users or anyone.
+
+\`grantee\` is either \`USER\`, \`AUTHENTICATED\` or \`EVERYONE\`. If
+\`grantee\` is \`USER\`, userPath MUST be specified. Otherwise \`userPath\`
+ MUST NOT be specified.
+ `,
       fields: {
-        read: {
-          type: GraphQLBoolean,
-          description: 'If true, grants a read permission.',
+        grantee: {
+          type: new GraphQLNonNull(permissionGrantee),
+          description: 'Who to grant permission to.',
+        },
+        userPath: {
+          type: new GraphQLList(GraphQLString),
+          description:
+`Path to \`User\` object or a many-to-many connection of \`User\` objects. Must
+be null if grantee is not \`USER\`.`,
         },
         create: {
           type: GraphQLBoolean,
           description: 'If true, grants a create permission.',
+        },
+        read: {
+          type: GraphQLBoolean,
+          description: 'If true, grants a read permission.',
         },
         update: {
           type: GraphQLBoolean,
@@ -40,6 +82,12 @@ export default function createTypeTypes(interfaces, getTypeSet) {
           type: GraphQLBoolean,
           description: 'If true, grants a delete permission.',
         },
+        permittedFields: {
+          type: new GraphQLList(GraphQLString),
+          description:
+`List of fields which can be modified when creating, updating or replacing.`,
+        },
+
       },
     }),
   });
@@ -106,7 +154,8 @@ export default function createTypeTypes(interfaces, getTypeSet) {
             'related field in the connected type.',
         },
         grantPermissions: {
-          type: permissionSet.type,
+          type: permission.type,
+          deprecationReason: 'Use type `permissions` field',
           description: 'For fields of type `User`, the permissions granted ' +
             'to the user connected using this field.',
         },
@@ -181,10 +230,8 @@ creating a migration with the CLI tool.
           description: 'A list of fields for the type.',
         },
         permissions: {
-          type: getTypeSet('ReindexPermission').connection,
-          args: createConnectionArguments('ReindexPermission', getTypeSet),
-          resolve: createConnectionFieldResolve('ReindexPermission', 'type'),
-          description: 'All the permissions defined for this type.',
+          type: new GraphQLList(permission.type),
+          description: 'All the object-level permissions for the type',
         },
         pluralName: {
           type: GraphQLString,
@@ -213,7 +260,7 @@ creating a migration with the CLI tool.
   });
 
   return {
-    ReindexPermissionSet: permissionSet,
+    ReindexPermission: permission,
     ReindexField: field,
     ReindexType: type,
     ReindexOrdering: ordering,

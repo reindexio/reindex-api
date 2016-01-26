@@ -89,9 +89,10 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
       const db = context.rootValue.db;
       const clientMutationId = input.clientMutationId;
 
-      checkPermission(
+      await checkPermission(
         'ReindexType',
         'create',
+        {},
         {},
         context,
       );

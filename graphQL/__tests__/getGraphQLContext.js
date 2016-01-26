@@ -21,9 +21,6 @@ describe('getGraphQLContext', () => {
         name: 'author',
         type: 'User',
         reverseName: 'microposts',
-        grantPermissions: {
-          read: true,
-        },
       },
       {
         name: 'favoritedBy',
@@ -33,6 +30,16 @@ describe('getGraphQLContext', () => {
         grantPermissions: {
           read: true,
         },
+      },
+    ],
+    permissions: [
+      {
+        grantee: 'USER',
+        userPath: ['author'],
+        read: true,
+        create: true,
+        update: true,
+        delete: true,
       },
     ],
   };
@@ -115,83 +122,74 @@ describe('getGraphQLContext', () => {
   });
 
   describe('extractPermissions', () => {
-    it('applies wildcard permissions to all types', () => {
+    it('applies wildcard permissions to type with no permissions', () => {
       const result = getGraphQLContext(null, {
         types: testTypes,
         indexes: [],
-        permissions: [
-          {
-            type: micropostType.id,
-            user: null,
-            read: true,
-          },
-          {
-            type: null,
-            user: null,
-            update: true,
-          },
-        ],
       });
 
       assert.deepEqual(result.permissions.type, {
         Micropost: {
-          anonymous: {
-            read: true,
-            update: true,
-            create: undefined,
-            delete: undefined,
-          },
         },
         User: {
-          anonymous: {
+          EVERYONE: {
+            grantee: 'EVERYONE',
+            userPath: null,
+            read: true,
             update: true,
-            read: undefined,
-            create: undefined,
-            delete: undefined,
+            create: true,
+            delete: true,
+            permittedFields: null,
           },
         },
       });
     });
 
-    it('extracts type specific permissions per user', () => {
+    it('extracts type permissions', () => {
       const result = getGraphQLContext(null, {
-        types: testTypes,
-        indexes: [],
-        permissions: [
+        types: [
+          micropostType,
           {
-            type: micropostType.id,
-            user: {
-              type: 'User',
-              value: 'user1',
-            },
-            read: true,
-          },
-          {
-            type: null,
-            user: {
-              type: 'User',
-              value: 'user1',
-            },
-            update: true,
+            ...userType,
+            permissions: [
+              {
+                grantee: 'EVERYONE',
+                read: true,
+              },
+              {
+                grantee: 'AUTHENTICATED',
+                read: true,
+                update: true,
+                create: true,
+                delete: true,
+              },
+            ],
           },
         ],
+        indexes: [],
       });
 
       assert.deepEqual(result.permissions.type, {
         Micropost: {
-          user1: {
-            read: true,
-            update: true,
-            create: undefined,
-            delete: undefined,
-          },
         },
         User: {
-          user1: {
+          AUTHENTICATED: {
+            grantee: 'AUTHENTICATED',
+            userPath: null,
+            read: true,
             update: true,
-            read: undefined,
-            create: undefined,
-            delete: undefined,
+            create: true,
+            delete: true,
+            permittedFields: null,
+          },
+          EVERYONE: {
+            grantee: 'EVERYONE',
+            userPath: null,
+            read: true,
+            update: false,
+            create: false,
+            delete: false,
+            permittedFields: null,
           },
         },
       });
@@ -199,41 +197,42 @@ describe('getGraphQLContext', () => {
 
     it('combines permissions correctly', () => {
       const result = getGraphQLContext(null, {
-        types: testTypes,
-        indexes: [],
-        permissions: [
+        types: [
+          micropostType,
           {
-            type: micropostType.id,
-            user: {
-              type: 'User',
-              value: 'user1',
-            },
-            read: true,
-            update: true,
-          },
-          {
-            type: micropostType.id,
-            user: {
-              type: 'User',
-              value: 'user1',
-            },
-            update: false,
-            create: false,
+            ...userType,
+            permissions: [
+              {
+                grantee: 'AUTHENTICATED',
+                read: true,
+                update: true,
+                permittedFields: ['someOtherField'],
+              },
+              {
+                grantee: 'AUTHENTICATED',
+                create: true,
+                delete: true,
+                permittedFields: ['someField'],
+              },
+            ],
           },
         ],
+        indexes: [],
       });
 
-
       assert.deepEqual(result.permissions.type, {
-        Micropost: {
-          user1: {
+        Micropost: {},
+        User: {
+          AUTHENTICATED: {
+            grantee: 'AUTHENTICATED',
+            userPath: null,
             read: true,
-            update: false,
-            create: false,
-            delete: undefined,
+            update: true,
+            create: true,
+            delete: true,
+            permittedFields: ['someOtherField', 'someField'],
           },
         },
-        User: {},
       });
     });
   });
@@ -242,31 +241,75 @@ describe('getGraphQLContext', () => {
     it('extracts connection permissions', () => {
       const result = getGraphQLContext(null, {
         types: testTypes,
-        permissions: [],
         indexes: [],
       });
 
       assert.deepEqual(result.permissions.connection, {
         Micropost: [
           {
-            grantPermissions: {
-              read: true,
-            },
-            name: 'author',
+            grantee: 'USER',
+            userPath: ['author'],
+            read: true,
+            create: true,
+            update: true,
+            delete: true,
+            permittedFields: null,
+            connectionType: 'MANY_TO_ONE',
             reverseName: 'microposts',
-            type: 'User',
           },
           {
-            grantPermissions: {
-              read: true,
-            },
-            name: 'favoritedBy',
+            grantee: 'USER',
+            userPath: ['favoritedBy'],
+            read: true,
+            create: false,
+            update: false,
+            delete: false,
+            permittedFields: null,
+            connectionType: 'MANY_TO_MANY',
             reverseName: 'favorites',
-            type: 'Connection',
-            ofType: 'User',
           },
         ],
         User: [],
+      });
+    });
+  });
+
+  describe('extractRelatedPermissions', () => {
+    it('extracts related permissions', () => {
+      const result = getGraphQLContext(null, {
+        types: testTypes,
+        indexes: [],
+      });
+
+      assert.deepEqual(result.permissions.related, {
+        Micropost: [
+          {
+            type: 'User',
+            name: 'author',
+            reverseName: 'microposts',
+            connectionType: 'ONE_TO_MANY',
+          },
+          {
+            name: 'favoritedBy',
+            reverseName: 'favorites',
+            type: 'User',
+            connectionType: 'MANY_TO_MANY',
+          },
+        ],
+        User: [
+          {
+            name: 'microposts',
+            type: 'Micropost',
+            reverseName: 'author',
+            connectionType: 'MANY_TO_ONE',
+          },
+          {
+            name: 'favorites',
+            reverseName: 'favoritedBy',
+            type: 'Micropost',
+            connectionType: 'MANY_TO_MANY',
+          },
+        ],
       });
     });
   });

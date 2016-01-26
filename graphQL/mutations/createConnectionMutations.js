@@ -227,14 +227,17 @@ function createResolveFunction(
           toReindexID(oId)
         );
       }
-
-      checkPermission(
-        typeName,
-        'update',
-        object,
-        context
-      );
     }
+
+    await checkPermission(fromType, 'update',
+      {
+        [fromField]: fromObject[fromField],
+      },
+      {
+        [fromField]: toId,
+      },
+      context,
+    );
 
     const { from, to } = await db[operation]({
       fromType,

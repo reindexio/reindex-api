@@ -40,10 +40,11 @@ export default function createDelete({ type, payload }) {
         );
       }
 
-      checkPermission(
+      await checkPermission(
         type.name,
         'delete',
         object,
+        {},
         context
       );
       const result = await db.deleteQuery(type.name, input.id);

@@ -1,3 +1,4 @@
+import { transform } from 'lodash';
 import { ObjectId } from 'mongodb';
 
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
@@ -29,14 +30,12 @@ export async function getMetadata(db) {
   const metadata = await* [
     getTypes(db),
     getIndexes(db),
-    getAllQuery(db, 'ReindexPermission').toArray(),
     getAllQuery(db, 'ReindexHook').toArray(),
   ];
   return {
     types: metadata[0],
     indexes: metadata[1],
-    permissions: metadata[2],
-    hooks: metadata[3],
+    hooks: metadata[2],
   };
 }
 
@@ -55,6 +54,22 @@ export async function getByField(db, type, field, value) {
     [actualField]: actualValue,
   });
   return addID(type, result);
+}
+
+function getAllByFilter(db, type, filter) {
+  const cleanFilter = transform(filter, (result, value, key) => {
+    if (key === 'id') {
+      result._id = new ObjectId(value.value);
+    } else {
+      result[key] = value;
+    }
+  });
+  return db.collection(type).find(cleanFilter);
+}
+
+export async function hasByFilter(db, type, filter) {
+  const result = await getAllByFilter(db, type, filter).limit(1).count();
+  return result > 0;
 }
 
 export function getCount(db, cursor) {

@@ -1,3 +1,4 @@
+import { transform } from 'lodash';
 import RethinkDB from 'rethinkdb';
 
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
@@ -88,6 +89,22 @@ export async function getByField(conn, type, field, value, indexes = {}) {
       index: index.name,
     }))
   ).run(conn);
+}
+
+export async function hasByFilter(conn, type, filter) {
+  const cleanFilter = transform(filter, (result, value, key) => {
+    if (key === 'id') {
+      result.id = value.value;
+    } else {
+      result[key] = value;
+    }
+  });
+  const result = await RethinkDB
+    .table(type)
+    .filter(cleanFilter)
+    .limit(1)
+    .count();
+  return result > 0;
 }
 
 export function getCount(conn, query) {

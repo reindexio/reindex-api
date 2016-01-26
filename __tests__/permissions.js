@@ -11,9 +11,8 @@ import {
   makeRunQuery,
   migrate,
   createTestApp,
-  getTypesByName,
   createFixture,
-  deleteFixture,
+  augmentSchema,
 } from '../test/testAppUtils';
 
 import assert from '../test/assert';
@@ -22,7 +21,6 @@ describe('Permissions', () => {
   const hostname = `test.${uuid.v4()}.example.com`;
   let db;
   let runQuery;
-  let typesByName;
 
   const fixtures = {
     User: {},
@@ -33,26 +31,20 @@ describe('Permissions', () => {
     await createTestApp(hostname);
     db = await getDB(hostname);
     runQuery = makeRunQuery(db);
-    typesByName = await getTypesByName(db);
 
-    for (const handle of [
-      'vanilla',
-      'creator',
-      'banRead',
-      'micropost',
-    ]) {
-      fixtures.User[handle] = await createFixture(runQuery, 'User', {
-        handle,
+    for (let i = 0; i < 4; i++) {
+      fixtures.User[i] = await createFixture(runQuery, 'User', {
+        handle: `user-${i}`,
       }, 'id, handle');
 
-      fixtures.Micropost[handle] = [];
-      for (let i = 0; i < 5; i++) {
-        fixtures.Micropost[handle].push(
+      fixtures.Micropost[i] = [];
+      for (let m = 0; m < 5; m++) {
+        fixtures.Micropost[i].push(
           await createFixture(runQuery, 'Micropost', {
-            author: fixtures.User[handle].id,
-            text: `micropost-{i}`,
+            author: fixtures.User[i].id,
+            text: `micropost-${i}-${m}`,
             createdAt: '@TIMESTAMP',
-          }, `id`)
+          }, `id, text, createdAt`)
         );
       }
     }
@@ -63,587 +55,676 @@ describe('Permissions', () => {
     await deleteApp(hostname);
   });
 
-  describe('type permissions', () => {
-    const permissions = [];
-
+  describe('read permissions', () => {
     before(async () => {
-      const defaultPermissions = (await runQuery(`{
-        viewer {
-          allReindexPermissions {
-            nodes {
-              id
-            }
-          }
-        }
-      }`)).data.viewer.allReindexPermissions.nodes;
-
-      for (const permission of defaultPermissions) {
-        await deleteFixture(runQuery, 'ReindexPermission', permission.id);
-      }
-
-      const permissionFixtures = [
-        {
-          type: typesByName.User,
-          user: fixtures.User.creator.id,
-          create: true,
-          update: true,
-          delete: false,
-        },
-        {
-          type: typesByName.User,
-          user: fixtures.User.banRead.id,
-          read: false,
-        },
-        {
-          type: typesByName.User,
-          user: null,
-          read: true,
-        },
-        {
-          type: typesByName.Micropost,
-          user: fixtures.User.micropost.id,
-          read: true,
-        },
-        {
-          type: typesByName.User,
-          user: fixtures.User.micropost.id,
-          read: false,
-        },
-      ];
-
-      for (const permission of permissionFixtures) {
-        permissions.push(
-          await createFixture(runQuery, 'ReindexPermission', permission, 'id')
-        );
-      }
+      await migrate(runQuery, augmentSchema(
+        TEST_SCHEMA,
+        [
+          {
+            name: 'User',
+            permissions: [
+              {
+                grantee: 'EVERYONE',
+                read: true,
+              },
+            ],
+          },
+          {
+            name: 'Micropost',
+            permissions: [
+              {
+                grantee: 'AUTHENTICATED',
+                read: true,
+              },
+            ],
+          },
+          {
+            kind: 'OBJECT',
+            name: 'EmptyPermissions',
+            interfaces: ['Node'],
+            fields: [
+              {
+                name: 'id',
+                type: 'ID',
+                nonNull: true,
+                unique: true,
+              },
+            ],
+          },
+        ],
+      ), true);
     });
 
     after(async () => {
-      for (const permission of permissions) {
-        await deleteFixture(runQuery, 'ReindexPermission', permission.id);
-      }
+      await migrate(runQuery, TEST_SCHEMA, true);
     });
 
-    it('wildcard permissions', async () => {
-      const permission = await createFixture(runQuery, 'ReindexPermission', {
-        read: true,
-        create: true,
-        update: true,
-        delete: true,
-      }, 'id', {
-        clearContext: true,
-      });
-
-      const micropost = fixtures.Micropost.creator[0];
-
-      assert.deepEqual(await runQuery(`
-        query node($id: ID!){
-          node(id: $id) {
-            id
+    it('grants wildcard permission with empty permissions', async () => {
+      const emptyPermissionResult = await runQuery(`
+        mutation {
+          createEmptyPermissions(input: {}) {
+            id,
           }
-        }`, {
-          id: micropost.id,
-        }, {
+        }`, {}, {
           credentials: {
             isAdmin: false,
-            userID: fromReindexID(fixtures.User.vanilla.id),
+            userID: null,
           },
-        }
-      ), {
+        },
+      );
+
+      assert.deepEqual(emptyPermissionResult, {
         data: {
-          node: {
-            id: micropost.id,
+          createEmptyPermissions: {
+            id: get(emptyPermissionResult, [
+              'data',
+              'createEmptyPermissions',
+              'id',
+            ]),
           },
         },
       });
 
-      await deleteFixture(runQuery, 'ReindexPermission', permission.id, {
-        clearContext: true,
-      });
-    });
+      const emptyPermission = emptyPermissionResult.data.createEmptyPermissions;
 
-    it('node uses permissions properly', async () => {
-      const micropost = fixtures.Micropost.creator[0];
-      assert.deepEqual(
-        await runQuery(`{ node(id: "${micropost.id}") { id } }`, {}, {
-          credentials: {
-            isAdmin: false,
-            userID: fromReindexID(fixtures.User.vanilla.id),
-          },
-        }), {
-          data: {
-            node: null,
-          },
-          errors: [
-            {
-              message: (
-                'User lacks permissions to read records of type Micropost'
-              ),
-            },
-          ],
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          emptyPermissionsById(id: $id) {
+            id,
+          }
         }
-      );
-
-      const user = fixtures.User.creator;
-      assert.deepEqual(await runQuery(`{ node(id: "${user.id}") { id } }`, {}, {
+      `, {
+        id: emptyPermission.id,
+      }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(fixtures.User.vanilla.id),
+          userID: null,
         },
       }), {
         data: {
-          node: {
-            id: user.id,
+          emptyPermissionsById: emptyPermission,
+        },
+      }, 'wildcard grants to anonymous');
+
+      assert.deepEqual(await runQuery(`
+        mutation($id: ID!) {
+          deleteEmptyPermissions(input: { id: $id }) {
+            id
+          }
+        }`, {
+          id: emptyPermission.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: null,
           },
+        },
+      ), {
+        data: {
+          deleteEmptyPermissions: emptyPermission,
         },
       });
     });
 
-    it('no one can read micropost', async () => {
-      const micropost = fixtures.Micropost.creator[0];
+    it('checks permissions on gets, lists and node', async () => {
+      const user = fixtures.User[0];
+      const micropost = fixtures.Micropost[0][0];
 
-      assert.deepEqual(await runQuery(`{
-        micropostById(id: "${micropost.id}") {
-          id
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          userById(id: $id) {
+            id,
+            handle
+          }
         }
-      }`, {}, {
+      `, {
+        id: user.id,
+      }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(fixtures.User.vanilla.id),
+          userID: fromReindexID(user.id),
         },
+      }), {
+        data: {
+          userById: user,
+        },
+      }, 'non-anonymous can read user');
+
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          userById(id: $id) {
+            id,
+            handle
+          }
+        }
+      `, {
+        id: user.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+      }), {
+        data: {
+          userById: user,
+        },
+      }, 'anonymous can read user');
+
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          micropostById(id: $id) {
+            id
+            text
+            createdAt
+          }
+        }
+      `, {
+        id: micropost.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
+      }), {
+        data: {
+          micropostById: micropost,
+        },
+      }, 'non-anonymous can read micropost');
+
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          micropostById(id: $id) {
+            id
+            text
+            createdAt
+          }
+        }
+      `, {
+        id: micropost.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+        printErrors: false,
       }), {
         data: {
           micropostById: null,
         },
         errors: [
           {
-            message: 'User lacks permissions to read records of type Micropost',
+            message: (
+              'User lacks permissions to read nodes of type `Micropost`.'
+            ),
           },
         ],
-      });
-    });
+      }, 'anonymous can not read micropost');
 
-    it('admin has all permissions', async () => {
-      const micropost = fixtures.Micropost.creator[0];
-
-      assert.deepEqual(await runQuery(`{
-        micropostById(id: "${micropost.id}") { id }
-      }`, {}, {
-        credentials: {
-          isAdmin: true,
-          userID: null,
-        },
-      }), {
-        data: {
-          micropostById: {
-            id: micropost.id,
-          },
-        },
-      });
-    });
-
-    it('anonymous can read user', async () => {
-      const user = fixtures.User.vanilla;
-
-      assert.deepEqual(await runQuery(`{
-        userById(id: "${user.id}") { id }
-      }`, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: null,
-        },
-      }), {
-        data: {
-          userById: {
-            id: user.id,
-          },
-        },
-      });
-    });
-
-    it('anonymous permissions propagate', async () => {
-      const user = fixtures.User.vanilla;
-
-      assert.deepEqual(await runQuery(`{
-        userById(id: "${user.id}") { id }
-      }`, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(fixtures.User.creator.id),
-        },
-      }), {
-        data: {
-          userById: {
-            id: user.id,
-          },
-        },
-      });
-    });
-
-    it('one of the users is forbidden from reading user', async () => {
-      const user = fixtures.User.vanilla;
-
-      assert.deepEqual(await runQuery(`{
-        userById(id: "${user.id}") { id }
-      }`, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(fixtures.User.banRead.id),
-        },
-      }), {
-        data: {
-          userById: null,
-        },
-        errors: [
-          {
-            message: 'User lacks permissions to read records of type User',
-          },
-        ],
-      });
-    });
-
-    it('one user can create, read, but not delete', async () => {
-      const created = await runQuery(`
-        mutation createUser($input: _CreateUserInput!) {
-          createUser(input: $input) {
-            changedUser {
-              id,
+      assert.deepEqual(await runQuery(`
+        {
+          viewer {
+            allMicroposts {
+              count
             }
           }
         }
-      `, {
-        input: {
-          handle: 'immonenv',
-          email: 'immonenv@example.com',
-        },
-      }, {
+      `, {}, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(fixtures.User.creator.id),
+          userID: fromReindexID(user.id),
         },
-      });
-
-      const id = get(created, ['data', 'createUser', 'changedUser', 'id']);
-
-      assert.deepEqual(created, {
+      }), {
         data: {
-          createUser: {
-            changedUser: {
-              id,
+          viewer: {
+            allMicroposts: {
+              count: 20,
             },
           },
         },
-      });
+      }, 'non-anonymous can read micropost listings');
 
-      assert.isDefined(id, 'created with proper id');
-
-      const updated = await runQuery(`
-        mutation updateUser($input: _UpdateUserInput!) {
-          updateUser(input: $input) {
-            changedUser {
-              id
+      assert.deepEqual(await runQuery(`
+        {
+          viewer {
+            allMicroposts {
+              count
             }
           }
         }
-      `, {
-        input: {
-          id,
-          handle: 'villeimmonen',
-        },
-      }, {
+      `, {}, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(fixtures.User.creator.id),
+          userID: null,
         },
-      });
-
-      assert.deepEqual(updated, {
-        data: {
-          updateUser: {
-            changedUser: {
-              id,
-            },
-          },
-        },
-      });
-
-      const deleted = await runQuery(`
-        mutation deleteUser($input: _DeleteUserInput!) {
-          deleteUser(input: $input) {
-            changedUser {
-              id,
-              handle,
-              email
-            }
-          }
-        }
-      `, {
-        input: {
-          id,
-        },
-      }, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(fixtures.User.creator.id),
-        },
-      });
-
-      assert.deepEqual(deleted, {
-        data: {
-          deleteUser: null,
-        },
-        errors: [
-          {
-            message: 'User lacks permissions to delete records of type User',
-          },
-        ],
-      });
-    });
-
-    it('should check permissions on connections', async () => {
-      const micropost = fixtures.Micropost.creator[0];
-
-      assert.deepEqual(await runQuery(`{
-        micropostById(id: "${micropost.id}") {
-          id,
-          author {
-            id
-          }
-        }
-      }`, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(fixtures.User.micropost.id),
-        },
+        printErrors: false,
       }), {
         data: {
-          micropostById: {
-            id: micropost.id,
-            author: null,
+          viewer: {
+            allMicroposts: null,
           },
         },
         errors: [
           {
-            message: 'User lacks permissions to read records of type User',
+            message: (
+              'User lacks permissions to read nodes of type `Micropost`.'
+            ),
           },
         ],
-      });
+      }, 'anonymous can not read micropost listings');
+    });
 
-      const user = fixtures.User.creator;
+    it('checks permissions on connection boundaries', async () => {
+      const user = fixtures.User[0];
 
-      assert.deepEqual(await runQuery(`{
-        userById(id: "${user.id}") {
-          id,
-          microposts {
-            nodes {
-              id
+      assert.deepEqual(await runQuery(`
+        query($id: ID!){
+          userById(id: $id) {
+            id,
+            handle,
+            microposts {
+              count
             }
           }
         }
-      }`, {}, {
+      `, {
+        id: user.id,
+      }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(fixtures.User.vanilla.id),
+          userID: fromReindexID(user.id),
         },
       }), {
         data: {
           userById: {
-            id: user.id,
+            ...user,
+            microposts: {
+              count: 5,
+            },
+          },
+        },
+      }, 'non-anonymous can read microposts');
+
+      assert.deepEqual(await runQuery(`
+        query($id: ID!){
+          userById(id: $id) {
+            id,
+            handle,
+            microposts {
+              count
+            }
+          }
+        }
+      `, {
+        id: user.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+        printErrors: false,
+      }), {
+        data: {
+          userById: {
+            ...user,
             microposts: null,
           },
         },
         errors: [
           {
-            message: 'User lacks permissions to read records of type Micropost',
+            message: (
+              'User lacks permissions to read nodes of type `Micropost`.'
+            ),
           },
         ],
-      });
+      }, 'anonymous can not read microposts');
     });
   });
 
-  describe('connection permissions', () => {
+  describe('mutation permissions', () => {
     before(async () => {
-      const micropost = TEST_SCHEMA.find((type) => type.name === 'Micropost');
-      const micropostFields = micropost.fields.filter(
-        (field) => field.name !== 'author' && field.name !== 'favoritedBy'
-      );
-      const rest = TEST_SCHEMA.filter((type) => type.name !== 'Micropost');
-      const newSchema = [
-        {
-          ...micropost,
-          fields: [
-            ...micropostFields,
-            {
-              name: 'author',
-              type: 'User',
-              reverseName: 'microposts',
-              grantPermissions: {
+      await migrate(runQuery, augmentSchema(
+        TEST_SCHEMA,
+        [
+          {
+            name: 'User',
+            permissions: [
+              {
+                grantee: 'AUTHENTICATED',
+                update: true,
+                permittedFields: [
+                  'microposts',
+                  'favorites',
+                  'following',
+                  'followers',
+                ],
+              },
+              {
+                grantee: 'EVERYONE',
+                read: true,
+              },
+            ],
+          },
+          {
+            name: 'Micropost',
+            permissions: [
+              {
+                grantee: 'EVERYONE',
                 read: true,
                 create: true,
                 update: true,
                 delete: true,
               },
-            },
-            {
-              name: 'favoritedBy',
-              type: 'Connection',
-              ofType: 'User',
-              reverseName: 'favorites',
-              grantPermissions: {
+            ],
+          },
+          {
+            kind: 'OBJECT',
+            name: 'Test',
+            interfaces: ['Node'],
+            fields: [
+              {
+                name: 'id',
+                type: 'ID',
+                nonNull: true,
+                unique: true,
+              },
+              {
+                name: 'test',
+                type: 'String',
+              },
+            ],
+            permissions: [
+              {
+                grantee: 'AUTHENTICATED',
                 read: true,
                 create: true,
                 update: true,
                 delete: true,
               },
-            },
-          ],
-        },
-        ...rest,
-      ];
-      await migrate(runQuery, newSchema);
+            ],
+          },
+        ],
+      ), true);
     });
 
-    it('user can read himself', async () => {
-      const user = fixtures.User.vanilla;
+    after(async () => {
+      await migrate(runQuery, TEST_SCHEMA, true);
+    });
+
+    it('requires permissions to do mutations', async () => {
+      const user = fixtures.User[0];
 
       assert.deepEqual(await runQuery(`
-        {
-          userById(id: "${user.id}") {
-            id
-          }
-        }`, {}, {
-          credentials: {
-            isAdmin: false,
-            userID: fromReindexID(fixtures.User.creator.id),
-          },
-        }), {
-          data: {
-            userById: null,
-          },
-          errors: [
-            {
-              message: 'User lacks permissions to read records of type User',
-            },
-          ],
-        }
-      );
-
-      assert.deepEqual(await runQuery(`
-        {
-          userById(id: "${user.id}") {
-            id
+        mutation($input: _CreateTestInput!) {
+          createTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
           }
         }
-      `, {}, {
+      `, {
+        input: {
+          test: '1234',
+        },
+      }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
+        printErrors: false,
       }), {
         data: {
-          userById: {
-            id: user.id,
-          },
-        },
-      });
-    });
-
-    it('can not to do stuff to microposts of other users', async () => {
-      const user = fixtures.User.vanilla;
-      const micropost = fixtures.Micropost.creator[0];
-
-      assert.deepEqual(await runQuery(`
-        {
-          micropostById(id: "${micropost.id}") {
-            id,
-          }
-        }
-      `, {}, {
-        credentials: {
-          isAdimn: false,
-          userID: fromReindexID(user.id),
-        },
-      }), {
-        data: {
-          micropostById: null,
+          createTest: null,
         },
         errors: [
           {
-            message: 'User lacks permissions to read records of type Micropost',
+            message: (
+              'User lacks permissions to create nodes of type `Test` ' +
+              'with fields `test`.'
+            ),
           },
         ],
-      });
-    });
+      }, 'anonymous can not create');
 
-    it('can read own microposts', async () => {
-      const user = fixtures.User.vanilla;
-      const micropost = fixtures.Micropost.vanilla[0];
-
-      assert.deepEqual(await runQuery(`
-        {
-          micropostById(id: "${micropost.id}") {
-            id,
-            author {
+      const testResult = await runQuery(`
+        mutation($input: _CreateTestInput!) {
+          createTest(input: $input) {
+            changedTest {
               id
+              test
             }
           }
-        }
-      `, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(user.id),
+        }`, {
+          input: {
+            test: '1234',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(user.id),
+          },
         },
-      }), {
+      );
+
+      assert.deepEqual(testResult, {
         data: {
-          micropostById: {
-            id: micropost.id,
-            author: {
-              id: user.id,
+          createTest: {
+            changedTest: {
+              id: get(testResult, [
+                'data',
+                'createTest',
+                'changedTest',
+                'id',
+              ]),
+              test: '1234',
             },
           },
         },
       });
 
+      const test = testResult.data.createTest.changedTest;
+
       assert.deepEqual(await runQuery(`
-        {
-          userById(id: "${user.id}") {
-            id,
-            microposts(orderBy: CREATED_AT_ASC, first: 1)  {
-              nodes {
-                id
-              }
+        mutation($input: _UpdateTestInput!) {
+          updateTest(input: $input) {
+            changedTest {
+              id
+              test
             }
           }
         }
-      `, {}, {
+      `, {
+        input: {
+          id: test.id,
+          test: '2345',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: false,
+        },
+        printErrors: false,
+      }), {
+        data: {
+          updateTest: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to update nodes of type `Test` ' +
+              'with fields `test`.'
+            ),
+          },
+        ],
+      }, 'anonymous can not update');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _ReplaceTestInput!) {
+          replaceTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
+          }
+        }
+      `, {
+        input: {
+          id: test.id,
+          test: '2345',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+        printErrors: false,
+      }), {
+        data: {
+          replaceTest: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to replace nodes of type `Test` ' +
+              'with fields `id`, `test`.'
+            ),
+          },
+        ],
+      }, 'anonymous can not replace');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _DeleteTestInput!) {
+          deleteTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
+          }
+        }
+      `, {
+        input: {
+          id: test.id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+        printErrors: false,
+      }), {
+        data: {
+          deleteTest: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to delete nodes of type `Test`.'
+            ),
+          },
+        ],
+      }, 'anonymous can not delete');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _UpdateTestInput!) {
+          updateTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
+          }
+        }
+      `, {
+        input: {
+          id: test.id,
+          test: '2345',
+        },
+      }, {
         credentials: {
           isAdmin: false,
           userID: fromReindexID(user.id),
         },
       }), {
         data: {
-          userById: {
-            id: user.id,
-            microposts: {
-              nodes: [
-                {
-                  id: micropost.id,
-                },
-              ],
+          updateTest: {
+            changedTest: {
+              id: test.id,
+              test: '2345',
             },
           },
         },
-      });
+      }, 'non-anonymous can update');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _ReplaceTestInput!) {
+          replaceTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
+          }
+        }
+      `, {
+        input: {
+          id: test.id,
+          test: '3456',
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
+      }), {
+        data: {
+          replaceTest: {
+            changedTest: {
+              id: test.id,
+              test: '3456',
+            },
+          },
+        },
+      }, 'non-anonymous can replace');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _DeleteTestInput!) {
+          deleteTest(input: $input) {
+            changedTest {
+              id
+              test
+            }
+          }
+        }
+      `, {
+        input: {
+          id: test.id,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
+      }), {
+        data: {
+          deleteTest: {
+            changedTest: {
+              id: test.id,
+              test: '3456',
+            },
+          },
+        },
+      }, 'non-anonymous can delete');
     });
 
-    it('can create оr update microposts only with self as user', async () => {
-      const user = fixtures.User.vanilla;
+    it('requires related permissions', async () => {
+      const user = fixtures.User[0];
+      const user2 = fixtures.User[1];
+      const micropost = fixtures.Micropost[0][0];
 
       assert.deepEqual(await runQuery(`
-        mutation createMicropost($input: _CreateMicropostInput!){
+        mutation($input: _CreateMicropostInput!) {
           createMicropost(input: $input) {
             changedMicropost {
               id,
+              text
               author {
                 id
               }
@@ -652,13 +733,15 @@ describe('Permissions', () => {
         }
       `, {
         input: {
-          clientMutationId: '',
+          text: 'Test',
+          author: user.id,
         },
       }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
+        printErrors: false,
       }), {
         data: {
           createMicropost: null,
@@ -666,55 +749,19 @@ describe('Permissions', () => {
         errors: [
           {
             message: (
-              'User lacks permissions to create records of type Micropost'
+              'User lacks permissions to update nodes of type `User` ' +
+              'with fields `microposts`.'
             ),
           },
         ],
-      });
-
-      const result = await runQuery(`
-        mutation createMicropost($input: _CreateMicropostInput!) {
-          createMicropost(input: $input) {
-            changedMicropost {
-              id,
-              author {
-                id
-              }
-            }
-          }
-        }
-      `, {
-        input: {
-          clientMutationId: '',
-          author: user.id,
-        },
-      }, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(user.id),
-        },
-      });
-
-      assert.deepEqual(result, {
-        data: {
-          createMicropost: {
-            changedMicropost: {
-              id: result.data.createMicropost.changedMicropost.id,
-              author: {
-                id: user.id,
-              },
-            },
-          },
-        },
-      });
-
-      const micropostID = result.data.createMicropost.changedMicropost.id;
+      }, 'anonymous can not create without permissions to Connection');
 
       assert.deepEqual(await runQuery(`
-        mutation updateMicropost($input: _UpdateMicropostInput!) {
+        mutation($input: _UpdateMicropostInput!) {
           updateMicropost(input: $input) {
             changedMicropost {
               id,
+              text
               author {
                 id
               }
@@ -723,15 +770,16 @@ describe('Permissions', () => {
         }
       `, {
         input: {
-          clientMutationId: '',
-          id: micropostID,
-          author: fixtures.User.creator.id,
+          id: micropost.id,
+          text: 'Test',
+          author: user2.id,
         },
       }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
+        printErrors: false,
       }), {
         data: {
           updateMicropost: null,
@@ -739,17 +787,19 @@ describe('Permissions', () => {
         errors: [
           {
             message: (
-              'User lacks permissions to update records of type Micropost'
+              'User lacks permissions to update nodes of type `User` ' +
+              'with fields `microposts`.'
             ),
           },
         ],
-      });
+      }, 'anonymous can not update author without permissions to Connection');
 
       assert.deepEqual(await runQuery(`
-        mutation updateMicropost($input: _UpdateMicropostInput!) {
+        mutation($input: _UpdateMicropostInput!) {
           updateMicropost(input: $input) {
             changedMicropost {
               id,
+              text
               author {
                 id
               }
@@ -758,33 +808,35 @@ describe('Permissions', () => {
         }
       `, {
         input: {
-          clientMutationId: '',
-          id: micropostID,
-          text: 'foo',
+          id: micropost.id,
+          text: 'New Text',
+          author: user.id,
         },
       }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
       }), {
         data: {
           updateMicropost: {
             changedMicropost: {
-              id: micropostID,
+              id: micropost.id,
+              text: 'New Text',
               author: {
                 id: user.id,
               },
             },
           },
         },
-      });
+      }, 'anonymous can update without changing author');
 
       assert.deepEqual(await runQuery(`
-        mutation replaceMicropost($input: _ReplaceMicropostInput!) {
-          replaceMicropost(input: $input) {
+        mutation($input: _UpdateMicropostInput!) {
+          updateMicropost(input: $input) {
             changedMicropost {
               id,
+              text
               author {
                 id
               }
@@ -793,14 +845,52 @@ describe('Permissions', () => {
         }
       `, {
         input: {
-          id: micropostID,
-          text: 'foo',
+          id: micropost.id,
+          text: micropost.text,
         },
       }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
+      }), {
+        data: {
+          updateMicropost: {
+            changedMicropost: {
+              id: micropost.id,
+              text: micropost.text,
+              author: {
+                id: user.id,
+              },
+            },
+          },
+        },
+      }, 'anonymous can update without changing author (omit field)');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _ReplaceMicropostInput!) {
+          replaceMicropost(input: $input) {
+            changedMicropost {
+              id,
+              text
+              author {
+                id
+              }
+            }
+          }
+        }
+      `, {
+        input: {
+          id: micropost.id,
+          text: 'Test',
+          author: null,
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: null,
+        },
+        printErrors: false,
       }), {
         data: {
           replaceMicropost: null,
@@ -808,52 +898,19 @@ describe('Permissions', () => {
         errors: [
           {
             message: (
-              'User lacks permissions to update records of type Micropost'
+              'User lacks permissions to update nodes of type `User` ' +
+              'with fields `microposts`.'
             ),
           },
         ],
-      });
+      }, 'anonymous can not replace author without permissions to Connection');
 
       assert.deepEqual(await runQuery(`
-        mutation replaceMicropost($input: _ReplaceMicropostInput!) {
-          replaceMicropost(input: $input) {
-            changedMicropost {
-              id,
-              author {
-                id
-              }
-            }
-          }
-        }
-      `, {
-        input: {
-          id: micropostID,
-          text: 'foozz',
-          author: user.id,
-        },
-      }, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(user.id),
-        },
-      }), {
-        data: {
-          replaceMicropost: {
-            changedMicropost: {
-              id: micropostID,
-              author: {
-                id: user.id,
-              },
-            },
-          },
-        },
-      });
-
-      assert.deepEqual(await runQuery(`
-        mutation deleteMicropost($input: _DeleteMicropostInput!) {
+        mutation($input: _DeleteMicropostInput!) {
           deleteMicropost(input: $input) {
             changedMicropost {
               id,
+              text
               author {
                 id
               }
@@ -862,135 +919,738 @@ describe('Permissions', () => {
         }
       `, {
         input: {
-          clientMutationId: '',
-          id: micropostID,
+          id: micropost.id,
         },
       }, {
         credentials: {
           isAdmin: false,
-          userID: fromReindexID(user.id),
+          userID: null,
         },
+        printErrors: false,
       }), {
         data: {
-          deleteMicropost: {
-            changedMicropost: {
-              id: micropostID,
-              author: {
-                id: user.id,
-              },
-            },
-          },
-        },
-      });
-    });
-
-    it('can not read posts of other users through connections', async () => {
-      const user = fixtures.User.vanilla;
-
-      const permission = await createFixture(runQuery, 'ReindexPermission', {
-        type: typesByName.User,
-        read: true,
-      }, 'id', {
-        clearContext: true,
-      });
-
-      assert.deepEqual(await runQuery(`
-        {
-          userById(id: "${user.id}") {
-            id,
-            microposts {
-              nodes {
-                id
-              }
-            }
-          }
-        }
-      `, {}, {
-        credentials: {
-          isAdmin: false,
-          userID: fromReindexID(fixtures.User.creator.id),
-        },
-      }), {
-        data: {
-          userById: {
-            id: user.id,
-            microposts: null,
-          },
+          deleteMicropost: null,
         },
         errors: [
           {
             message: (
-              'User lacks permissions to read records of type Micropost'
+              'User lacks permissions to update nodes of type `User` ' +
+              'with fields `microposts`.'
             ),
           },
         ],
-      });
-
-      await deleteFixture(runQuery, 'ReindexPermission', permission.id, {
-        clearContext: true,
-      });
+      }, 'anonymous can not delete without permissions to Connection');
     });
 
     if (!process.env.DATABASE_TYPE ||
         process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
-      it('works with many to many', async () => {
-        const user = fixtures.User.vanilla;
-        const micropost = fixtures.Micropost.creator[0];
+      it('works with many-to-many', async () => {
+        const user1 = fixtures.User[0];
+        const user2 = fixtures.User[1];
 
-        await runQuery(`
-          mutation favorite($input: _AddMicropostToUserFavoritesInput!) {
-            addMicropostToUserFavorites(input: $input) {
-              changedUser {
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UserFollowersConnectionInput!) {
+            addUserToUserFollowers(input: $input) {
+              changedFollowersUser {
                 id
-              },
-              changedMicropost {
+              }
+              changedFollowingUser {
                 id
               }
             }
           }
         `, {
           input: {
-            micropostId: micropost.id,
-            userId: user.id,
+            followersId: user1.id,
+            followingId: user2.id,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: null,
+          },
+          printErrors: false,
+        }), {
+          data: {
+            addUserToUserFollowers: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `User` ' +
+                'with fields `following`.\nUser lacks permissions to ' +
+                'update nodes of type `User` with fields `followers`.'
+              ),
+            },
+          ],
+        }, 'anonymous can not follow');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UserFollowersConnectionInput!) {
+            addUserToUserFollowers(input: $input) {
+              changedFollowersUser {
+                id
+              }
+              changedFollowingUser {
+                id
+              }
+            }
+          }
+        `, {
+          input: {
+            followersId: user1.id,
+            followingId: user2.id,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(user1.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            addUserToUserFollowers: {
+              changedFollowersUser: {
+                id: user1.id,
+              },
+              changedFollowingUser: {
+                id: user2.id,
+              },
+            },
+          },
+        }, 'non-anonymous can follow');
+      });
+    }
+  });
+
+
+  if (!process.env.DATABASE_TYPE ||
+      process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
+    describe('connection permissions', () => {
+      before(async () => {
+        await migrate(runQuery, augmentSchema(
+          TEST_SCHEMA,
+          [
+            {
+              name: 'User',
+              fields: [
+                {
+                  name: 'comments',
+                  type: 'Connection',
+                  ofType: 'Comment',
+                  reverseName: 'author',
+                },
+              ],
+              permissions: [
+                {
+                  grantee: 'USER',
+                  userPath: ['id'],
+                  read: true,
+                  update: true,
+                  permittedFields: [
+                    'handle',
+                    'email',
+                    'friends',
+                    'microposts',
+                    'comments',
+                  ],
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['friends'],
+                  read: true,
+                },
+              ],
+            },
+            {
+              name: 'Micropost',
+              fields: [
+                {
+                  name: 'comments',
+                  type: 'Connection',
+                  ofType: 'Comment',
+                  reverseName: 'micropost',
+                },
+              ],
+              permissions: [
+                {
+                  grantee: 'AUTHENTICATED',
+                  create: true,
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['author'],
+                  read: true,
+                  update: true,
+                  delete: true,
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['author', 'friends'],
+                  read: true,
+                  update: true,
+                  permittedFields: ['comments'],
+                },
+              ],
+            },
+            {
+              kind: 'OBJECT',
+              name: 'Comment',
+              interfaces: ['Node'],
+              fields: [
+                {
+                  name: 'id',
+                  type: 'ID',
+                  nonNull: true,
+                  unique: true,
+                },
+                {
+                  name: 'text',
+                  type: 'String',
+                  orderable: true,
+                },
+                {
+                  name: 'createdAt',
+                  type: 'DateTime',
+                  orderable: true,
+                },
+                {
+                  name: 'author',
+                  type: 'User',
+                  reverseName: 'comments',
+                },
+                {
+                  name: 'micropost',
+                  type: 'Micropost',
+                  reverseName: 'comments',
+                },
+              ],
+              permissions: [
+                {
+                  grantee: 'AUTHENTICATED',
+                  create: true,
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['author'],
+                  read: true,
+                  update: true,
+                  delete: true,
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['micropost', 'author'],
+                  read: true,
+                  delete: true,
+                },
+                {
+                  grantee: 'USER',
+                  userPath: ['micropost', 'author', 'friends'],
+                  read: true,
+                },
+              ],
+            },
+          ],
+        ), true);
+
+        await runQuery(`
+          mutation($input: _UserFriendsConnectionInput!) {
+            addUserToUserFriends(input: $input) {
+              clientMutationId
+            }
+          }
+        `, {
+          input: {
+            user1Id: fixtures.User[0].id,
+            user2Id: fixtures.User[1].id,
           },
         });
 
-        const result = await runQuery(`
-          {
-            micropostById(id: "${micropost.id}") {
+        await runQuery(`
+          mutation($input: _UserFriendsConnectionInput!) {
+            addUserToUserFriends(input: $input) {
+              clientMutationId
+            }
+          }
+        `, {
+          input: {
+            user1Id: fixtures.User[0].id,
+            user2Id: fixtures.User[2].id,
+          },
+        });
+      });
+
+      after(async () => {
+        await migrate(runQuery, TEST_SCHEMA, true);
+      });
+
+      it('user can read and update himself, friends can read', async () => {
+        const author = fixtures.User[0];
+        const friend1 = fixtures.User[1];
+        const stranger = fixtures.User[3];
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UpdateUserInput!) {
+            updateUser(input: $input) {
               id
             }
           }
-        `);
-
-        assert.deepEqual(result, {
+        `, {
+          input: {
+            id: author.id,
+            email: 'newemail@example.com',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+        }), {
           data: {
-            micropostById: {
-              id: micropost.id,
+            updateUser: {
+              id: author.id,
+            },
+          },
+        }, 'self can update');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UpdateUserInput!) {
+            updateUser(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            id: author.id,
+            email: 'other@example.com',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend1.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            updateUser: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `User` ' +
+                'with fields `email`.'
+              ),
+            },
+          ],
+        }, 'friend can not update');
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            userById(id: $id) {
+              id
+            }
+          }
+        `, {
+          id: author.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend1.id),
+          },
+        }), {
+          data: {
+            userById: {
+              id: author.id,
+            },
+          },
+        }, 'friend can read');
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            userById(id: $id) {
+              id
+            }
+          }
+        `, {
+          id: author.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(stranger.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            userById: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to read nodes of type `User`.'
+              ),
+            },
+          ],
+        }, 'friend can read');
+      });
+
+      it('can do stuff to own microposts, friends can read', async () => {
+        const author = fixtures.User[0];
+        const friend1 = fixtures.User[1];
+        const stranger = fixtures.User[3];
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _CreateMicropostInput!) {
+            createMicropost(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            author: friend1.id,
+            text: 'Some text',
+            createdAt: '@TIMESTAMP',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            createMicropost: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `User` ' +
+                'with fields `microposts`.'
+              ),
+            },
+          ],
+        }, 'can not create for other users');
+
+        const micropostResult = await runQuery(`
+          mutation($input: _CreateMicropostInput!) {
+            createMicropost(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            author: author.id,
+            text: 'Some text',
+            createdAt: '@TIMESTAMP',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+        });
+
+        assert.deepEqual(micropostResult, {
+          data: {
+            createMicropost: {
+              id: get(micropostResult, ['data', 'createMicropost', 'id']),
             },
           },
         });
 
-        await runQuery(`
-          mutation unfavorite(
-            $input: _MicropostUserFavoritesConnectionInput!
-          ) {
-            removeMicropostFromUserFavorites(input: $input) {
-              changedUser {
-                id
-              },
-              changedMicropost {
-                id
+        const micropostId = micropostResult.data.createMicropost.id;
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            micropostById(id: $id) {
+              id
+            }
+          }
+        `, {
+          id: micropostId,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend1.id),
+          },
+        }), {
+          data: {
+            micropostById: {
+              id: micropostId,
+            },
+          },
+        }, 'friend can read micropost');
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            micropostById(id: $id) {
+              id
+            }
+          }
+        `, {
+          id: micropostId,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(stranger.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            micropostById: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to read nodes of type `Micropost`.'
+              ),
+            },
+          ],
+        }, 'stranger can not read micropost');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _DeleteMicropostInput!) {
+            deleteMicropost(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            id: micropostId,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend1.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            deleteMicropost: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to delete nodes of type ' +
+                '`Micropost`.\nUser lacks permissions to update nodes ' +
+                'of type `User` with fields `microposts`.'
+              ),
+            },
+          ],
+        }, 'friend can not delete micropost');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _DeleteMicropostInput!) {
+            deleteMicropost(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            id: micropostId,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+        }), {
+          data: {
+            deleteMicropost: {
+              id: micropostId,
+            },
+          },
+        }, 'author can delete own micropost');
+      });
+
+      it('can comment on own and friends microposts', async () => {
+        const author = fixtures.User[0];
+        const micropost = fixtures.Micropost[0][0];
+        const friend1 = fixtures.User[1];
+        const friend2 = fixtures.User[2];
+        const stranger = fixtures.User[3];
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _CreateCommentInput!) {
+            createComment(input: $input) {
+              changedComment {
+                text
               }
             }
           }
         `, {
           input: {
-            micropostId: micropost.id,
-            userId: user.id,
+            micropost: micropost.id,
+            author: stranger.id,
+            text: 'test',
           },
-        });
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(stranger.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            createComment: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `Micropost` ' +
+                'with fields `comments`.'
+              ),
+            },
+          ],
+        }, 'stranger can not comment');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _CreateCommentInput!) {
+            createComment(input: $input) {
+              changedComment {
+                text
+              }
+            }
+          }
+        `, {
+          input: {
+            micropost: micropost.id,
+            author: stranger.id,
+            text: 'test',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            createComment: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `User` ' +
+                'with fields `comments`.'
+              ),
+            },
+          ],
+        }, 'author can not comment through other user');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _CreateCommentInput!) {
+            createComment(input: $input) {
+              changedComment {
+                text
+              }
+            }
+          }
+        `, {
+          input: {
+            micropost: micropost.id,
+            author: author.id,
+            text: 'test',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+        }), {
+          data: {
+            createComment: {
+              changedComment: {
+                text: 'test',
+              },
+            },
+          },
+        }, 'author can comment');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _CreateCommentInput!) {
+            createComment(input: $input) {
+              changedComment {
+                text
+              }
+            }
+          }
+        `, {
+          input: {
+            micropost: micropost.id,
+            author: friend1.id,
+            text: 'test',
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend1.id),
+          },
+        }), {
+          data: {
+            createComment: {
+              changedComment: {
+                text: 'test',
+              },
+            },
+          },
+        }, 'friend can comment');
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            micropostById(id: $id) {
+              comments {
+                count
+              }
+            }
+          }
+        `, {
+          id: micropost.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend2.id),
+          },
+        }), {
+          data: {
+            micropostById: {
+              comments: {
+                count: 2,
+              },
+            },
+          },
+        }, 'other friend can read all comments');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _DeleteMicropostInput!) {
+            deleteMicropost(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            id: micropost.id,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(author.id),
+          },
+          printErrors: false,
+        }), {
+          data: {
+            deleteMicropost: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permission to delete nodes of type ' +
+                '`Micropost`. Node is connected to node(s) of type ' +
+                '`Comment` through connection `comments`.'
+              ),
+            },
+          ],
+        }, 'author can not delete own micropost if it has comments');
       });
-    }
-  });
+    });
+  }
 });
