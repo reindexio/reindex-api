@@ -1,4 +1,5 @@
 import { GraphQLNonNull } from 'graphql';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 import { chain, capitalize, camelCase } from 'lodash';
 
 import checkPermission from '../permissions/checkPermission';
@@ -22,7 +23,7 @@ export default function createGetByField({ type }) {
         const { db } = context.rootValue;
         const value = args[field.name];
         if (field.name === 'id' && !db.isValidID(type.name, value)) {
-          throw new Error(`id: Invalid ID for type ${type.name}`);
+          throw new GraphQLError(`id: Invalid ID for type ${type.name}`);
         }
         const result = await db.getByField(
           type.name,

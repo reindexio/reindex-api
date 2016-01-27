@@ -1,4 +1,5 @@
-import { graphql } from 'graphql';
+import { graphql, formatError } from 'graphql';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
 import Metrics from '../Metrics';
@@ -14,7 +15,7 @@ async function handler(request, reply) {
     Monitoring.addCustomParameter('query', query);
     Monitoring.addCustomParameter('variables', variables);
 
-    const db = request.db;
+    const db = await request.getDB();
     const credentials = request.auth.credentials;
 
     const context = getGraphQLContext(db, await db.getMetadata(), {
@@ -36,14 +37,24 @@ async function handler(request, reply) {
       }
     }
     if (result.errors) {
+      result.errors = result.errors.map((error) => {
+        if (error.originalError &&
+           !(error.originalError instanceof GraphQLError)) {
+          Monitoring.noticeError(error.originalError);
+          return {
+            message: 'Internal Server Error',
+          };
+        } else {
+          return formatError(error);
+        }
+      });
       Monitoring.addCustomParameter('errors', result.errors);
     }
 
-    Metrics.increment('graphql.requests', 1, request.db.hostname);
+    Metrics.increment('graphql.requests', 1, request.info.hostname);
 
     reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
-    Monitoring.noticeError(error);
     reply(error);
   }
 }
