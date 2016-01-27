@@ -1,4 +1,4 @@
-import { isArray, union, isEqual, pick, chain } from 'lodash';
+import { isArray, union, isEqual, pick, chain, difference } from 'lodash';
 
 // Check if user has a certain permission for type
 //
@@ -288,7 +288,7 @@ async function hasConnectionPermissions(
     }
   });
 
-  const permittedFields = [];
+  let permittedFields = [];
   for (const connection of validConnections) {
     let path = connection.userPath;
     let currentObject = object;
@@ -323,7 +323,7 @@ async function hasConnectionPermissions(
     if (isConnectedToUser) {
       let hasEnoughPermissions;
       if (connection.permittedFields) {
-        permittedFields.push(...connection.permittedFields);
+        permittedFields = union(permittedFields, connection.permittedFields);
         hasEnoughPermissions = hasPermissionFromPermissionSet(
           {
             ...connection,
@@ -357,10 +357,10 @@ function hasPermissionFromPermissionSet(permissionSet, permission, fields) {
 
   if (hasBasePermission && fields) {
     if (permissionSet.permittedFields) {
-      return isEqual(
+      return difference(
         union(permissionSet.permittedFields, fields),
         permissionSet.permittedFields,
-      );
+      ).length === 0;
     }
   }
 
