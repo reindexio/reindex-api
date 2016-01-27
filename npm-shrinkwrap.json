@@ -485,18 +485,6 @@
       "from": "chai@>=3.4.1 <4.0.0",
       "resolved": "https://registry.npmjs.org/chai/-/chai-3.4.1.tgz"
     },
-    "chai-oequal": {
-      "version": "0.0.1",
-      "from": "chai-oequal@0.0.1",
-      "resolved": "https://registry.npmjs.org/chai-oequal/-/chai-oequal-0.0.1.tgz",
-      "dependencies": {
-        "chai": {
-          "version": "3.4.1",
-          "from": "chai@latest",
-          "resolved": "https://registry.npmjs.org/chai/-/chai-3.4.1.tgz"
-        }
-      }
-    },
     "chalk": {
       "version": "1.1.1",
       "from": "chalk@>=1.0.0 <2.0.0",
@@ -1205,9 +1193,9 @@
       "resolved": "https://registry.npmjs.org/graceful-readlink/-/graceful-readlink-1.0.1.tgz"
     },
     "graphql": {
-      "version": "0.4.13",
-      "from": "graphql@0.4.13",
-      "resolved": "https://registry.npmjs.org/graphql/-/graphql-0.4.13.tgz"
+      "version": "0.4.14",
+      "from": "graphql@latest",
+      "resolved": "https://registry.npmjs.org/graphql/-/graphql-0.4.14.tgz"
     },
     "growl": {
       "version": "1.8.1",
