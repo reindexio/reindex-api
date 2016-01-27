@@ -21,7 +21,7 @@
     "dot": "^1.0.3",
     "good": "^6.1.4",
     "good-console": "^5.0.2",
-    "graphql": "^0.4.13",
+    "graphql": "^0.4.14",
     "hapi": "^11.1.2",
     "hapi-auth-basic": "^4.1.0",
     "hapi-require-https": "^2.0.2",
@@ -46,7 +46,6 @@
   },
   "devDependencies": {
     "chai": "^3.4.1",
-    "chai-oequal": "0.0.1",
     "diff": "^2.2.1",
     "eslint": "^1.10.2",
     "eslint-plugin-babel": "^3.0.0",

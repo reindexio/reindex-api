@@ -43,6 +43,12 @@ export function makeRunQuery(db) {
       }
     }
 
+    if (result.errors) {
+      result.errors = result.errors.map((error) => ({
+        message: error.message,
+      }));
+    }
+
     return result;
   };
 }
