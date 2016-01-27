@@ -4,6 +4,7 @@ import Inert from 'inert';
 import Promise from 'bluebird';
 import HapiRequireHttpsPlugin from 'hapi-require-https';
 
+import Monitoring from '../Monitoring';
 import Config from './Config';
 import Good from 'good';
 import GoodConsole from 'good-console';
@@ -15,7 +16,7 @@ import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import DBPlugin from './DBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
 
-const loggingOptions = {
+const DEFAULT_LOGGING_OPTIONS = {
   reporters: [
     {
       reporter: GoodConsole,
@@ -27,9 +28,11 @@ const loggingOptions = {
   ],
 };
 
-export default async function createServer() {
+export default async function createServer(
+  loggingOptions = DEFAULT_LOGGING_OPTIONS
+) {
   const server = new Hapi.Server();
-  for (const method of ['register', 'start']) {
+  for (const method of ['register', 'start', 'stop']) {
     server[method] = Promise.promisify(server[method], server);
   }
   server.connection(Config.get('connection'));
@@ -47,6 +50,11 @@ export default async function createServer() {
   server.auth.strategy('token', 'jwt');
 
   await server.register(AppPlugin);
+
+  server.on('request-error', (request, e) => {
+    Monitoring.setIgnoreTransaction(true);
+    Monitoring.noticeError(e);
+  });
 
   server.route(StatusHandler);
   server.route(GraphQLHandler);

@@ -1,4 +1,5 @@
 import { filter } from 'lodash';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 
 import { toReindexID } from '../builtins/ReindexID';
 
@@ -40,7 +41,7 @@ async function validateUnique(
     const field = uniqueFields[index];
     const check = uniqueChecks[index];
     if (check) {
-      throw new Error(
+      throw new GraphQLError(
         `${type.name}.${field.name}: value must be unique, got ` +
         `${JSON.stringify(newObject[field.name])}`
       );
@@ -65,7 +66,7 @@ async function validateNodesExist(
     const id = newObject[field.name];
     if (!db.isValidID(field.type.name, id)) {
       const reindexID = toReindexID(id);
-      throw new Error(
+      throw new GraphQLError(
         `${type.name}.${field.name}: Invalid ID for type ${field.type.name}: ` +
         reindexID
       );
@@ -75,7 +76,7 @@ async function validateNodesExist(
   nodeFields.forEach((field, index) => {
     if (!nodes[index]) {
       const reindexID = toReindexID(newObject[field.name]);
-      throw new Error(
+      throw new GraphQLError(
         `${type.name}.${field.name}: ${field.type.name} with ID ` +
         `"${reindexID}" does not exist.`
       );

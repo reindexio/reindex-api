@@ -1,5 +1,7 @@
 import { omit } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
+import { GraphQLError } from 'graphql/error/GraphQLError';
+
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
@@ -46,13 +48,13 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       const typeInfo = context.rootValue.typeInfoByName[type.name];
 
       if (!db.isValidID(type.name, input.id)) {
-        throw new Error(`input.id: Invalid ID for type ${type.name}`);
+        throw new GraphQLError(`input.id: Invalid ID for type ${type.name}`);
       }
 
       const existing = await db.getByID(type.name, input.id);
 
       if (!existing) {
-        throw new Error(
+        throw new GraphQLError(
           `input.id: Can not find ${type.name} object with given ID: ` +
           toReindexID(input.id)
         );
