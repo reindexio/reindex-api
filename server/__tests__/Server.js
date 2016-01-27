@@ -3,6 +3,9 @@ import Promise from 'bluebird';
 import uuid from 'uuid';
 import { graphql } from 'graphql';
 
+import Config from '../Config';
+import Monitoring from '../../Monitoring';
+import DatabaseTypes from '../../db/DatabaseTypes';
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
 import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
@@ -44,7 +47,10 @@ describe('Server', () => {
   }
 
   before(async function () {
-    server = await createServer();
+    Monitoring.setLogging(false);
+    server = await createServer({
+      reporters: [],
+    });
     const { secret } = await createApp(hostname);
     db = await getDB(hostname);
 
@@ -67,6 +73,7 @@ describe('Server', () => {
   after(async function () {
     await db.close();
     await deleteApp(hostname);
+    Monitoring.setLogging(true);
   });
 
   it('executes a GraphQL query', async function () {
@@ -112,5 +119,48 @@ describe('Server', () => {
         statusCode: 404,
       });
     }
+  });
+
+  describe('Broken database connection', () => {
+    before(async () => {
+      Config.set('database.clusters', JSON.stringify({
+        mongodb: {
+          type: DatabaseTypes.MongoDB,
+          connectionString: 'mongodb://localhost:65355/',
+        },
+      }));
+      Config.validate();
+    });
+
+    after(() => {
+      Config.set('database.clusters', Config.default('database.clusters'));
+      Config.validate();
+    });
+
+    it('returns 500 when databases are not available', async function () {
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query: testQuery,
+        },
+        headers: {
+          authorization: `Bearer ${token}`,
+          host: hostname,
+        },
+      });
+      assert.strictEqual(response.statusCode, 500);
+    });
+
+    it('status page returns service not available', async function () {
+      const response = await makeRequest({
+        method: 'GET',
+        url: '/status',
+        headers: {
+          host: hostname,
+        },
+      });
+      assert.strictEqual(response.statusCode, 503);
+    });
   });
 });

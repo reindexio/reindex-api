@@ -4,21 +4,24 @@ import getDB from '../db/getDB';
 import Monitoring from '../Monitoring';
 
 async function onRequest(request, reply) {
-  try {
-    request.db = await getDB(request.info.hostname);
-    reply.continue();
-  } catch (error) {
-    if (error.name === 'AppNotFound') {
-      return reply(Boom.notFound());
+  request.getDB = async () => {
+    try {
+      request._db = await getDB(request.info.hostname);
+      return request._db;
+    } catch (error) {
+      if (error.name === 'AppNotFound') {
+        throw Boom.notFound();
+      }
+      Monitoring.noticeError(error);
+      throw Boom.wrap(error);
     }
-    Monitoring.noticeError(error);
-    reply(error);
-  }
+  };
+  reply.continue();
 }
 
 async function close(request) {
-  if (request.db) {
-    await request.db.close();
+  if (request._db) {
+    await request._db.close();
   }
 }
 
