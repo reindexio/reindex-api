@@ -57,7 +57,7 @@ function renderCallbackPopup(reply, payload) {
 async function authenticate(request, reply) {
   request.isSocialLoginRequest = true;
   try {
-    const db = request.db;
+    const db = await request.getDB();
     const providerName = request.params.provider;
     const bellProvider = getBellProvider(providerName);
     if (!bellProvider) {
@@ -118,6 +118,12 @@ async function authenticate(request, reply) {
 
     return authenticateWithOAuth(request, reply);
   } catch (error) {
+    if (error.isBoom && (
+      error.output.statusCode === 400 ||
+      error.output.statusCode === 401
+    )) {
+      Monitoring.setIgnoreTransaction(true);
+    }
     return reply(error);
   }
 }
@@ -160,7 +166,7 @@ function normalizeCredentials(credentials) {
 
 async function handler(request, reply) {
   try {
-    const db = request.db;
+    const db = await request.getDB();
     const { credentials } = request.auth;
 
     const { provider } = credentials;
