@@ -16,6 +16,7 @@
     "bell": "^6.0.0",
     "bluebird": "^2.10.2",
     "boom": "^3.0.0",
+    "cli-table": "^0.3.1",
     "convict": "^1.0.1",
     "cryptiles": "^3.0.0",
     "dot": "^1.0.3",
@@ -63,6 +64,8 @@
     "create-app": "babel-node bin/create-app-for-user.js",
     "create-token": "babel-node bin/create-token.js",
     "list-apps": "babel-node bin/list-apps.js",
+    "get-stats": "babel-node bin/get-stats.js",
+    "measure-stats": "babel-node bin/get-stats.js -l",
     "delete-app": "babel-node bin/delete-app",
     "print-schema": "babel-node bin/print-schema.js",
     "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/"

@@ -45,6 +45,11 @@ export default class MongoDBClient {
       );
     }
     this.pool = clusterConnections[connectionString];
+
+    this.stats = {
+      count: 0,
+      totalTime: 0,
+    };
   }
 
   hasSupport(feature) {
@@ -80,8 +85,22 @@ forEach(merge(
   migrationQueries,
 ), (query, name) => {
   MongoDBClient.prototype[name] = async function(...args) {
-    const db = await this.getDB();
-    Metrics.increment('mongodb.queries', 1, this.hostname);
-    return query(db, ...args);
+    const db = await Metrics.timing(
+      'mongodb.connectionTime',
+      this.hostname,
+      () => this.getDB(),
+    );
+    const result = await Metrics.timing(
+      `mongodb.query.${name}`,
+      this.hostname,
+      () => query(db, ...args),
+      (time) => {
+        this.stats = {
+          totalTime: this.stats.totalTime + time,
+          count: this.stats.count + 1,
+        };
+      }
+    );
+    return result;
   };
 });

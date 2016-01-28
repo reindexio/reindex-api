@@ -17,24 +17,26 @@ async function handler(request, reply) {
     const context = getGraphQLContext(db, await db.getMetadata(), {
       credentials,
     });
+
+    const start = process.hrtime();
     const result = await graphql(context.schema, query, context, variables);
+    const elapsed = process.hrtime(start);
+
+    let rootName = 'unknown';
+    let hasErrors = false;
 
     if (result.data) {
-      const rootNames = Object.keys(result.data).sort().join(',');
-      if (credentials.isAdmin) {
-        setImmediate(() => {
-          trackEvent(credentials, 'executed-query', {
-            query,
-            rootNames,
-            variables: JSON.stringify(variables),
-          });
-        });
+      rootName = Object.keys(result.data).sort().join(',');
+      if (rootName === 'viewer') {
+        rootName = Object.keys(result.data.viewer).sort().join(',');
       }
     }
+
     if (result.errors) {
       result.errors = result.errors.map((error) => {
         if (error.originalError &&
            !(error.originalError instanceof GraphQLError)) {
+          hasErrors = true;
           Monitoring.noticeError(error.originalError, {
             request,
             extra: {
@@ -56,13 +58,59 @@ async function handler(request, reply) {
       });
     }
 
-    Metrics.increment('graphql.requests', 1, request.info.hostname);
+    setImmediate(() => {
+      if (result.data && credentials.isAdmin) {
+        trackEvent(credentials, 'executed-query', {
+          query,
+          rootName,
+          variables: JSON.stringify(variables),
+        });
+      }
+
+      Metrics.increment(
+        `graphQL.${rootName}.count`,
+        1,
+        request.info.hostname,
+      );
+
+      Metrics.measureHrTime(
+        `graphQL.${rootName}.totalTime`,
+        elapsed,
+        request.info.hostname
+      );
+
+      if (db.stats) {
+        Metrics.measure(
+          `graphQL.${rootName}.dbTime`,
+          `${db.stats.totalTime.toFixed(2)}ms`,
+          request.info.hostname,
+        );
+
+        Metrics.measure(
+          `graphQL.${rootName}.dbQueryCount`,
+          db.stats.count,
+          request.info.hostname,
+        );
+      }
+
+      if (hasErrors) {
+        Metrics.increment(
+          `graphQL.${rootName}.errorCount`,
+          1,
+          request.info.hostname
+        );
+      }
+    });
 
     console.log(JSON.stringify({
       hostname: request.info.hostname,
       credentials,
       query,
       variables,
+      stats: {
+        elapsed,
+        db: db.stats || {},
+      },
       errors: result.errors || [],
     }));
 
