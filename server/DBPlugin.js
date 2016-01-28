@@ -1,7 +1,6 @@
-import Boom from 'boom';
 
+import Boom from 'boom';
 import getDB from '../db/getDB';
-import Monitoring from '../Monitoring';
 
 async function onRequest(request, reply) {
   request.getDB = async () => {
@@ -9,11 +8,10 @@ async function onRequest(request, reply) {
       request._db = await getDB(request.info.hostname);
       return request._db;
     } catch (error) {
-      if (error.name === 'AppNotFound') {
+      if (error && error.name === 'AppNotFound') {
         throw Boom.notFound();
       }
-      Monitoring.noticeError(error);
-      throw Boom.wrap(error);
+      throw Boom.wrap(error || new Error('Unknown error'));
     }
   };
   reply.continue();

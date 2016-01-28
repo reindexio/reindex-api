@@ -1,7 +1,6 @@
 import Boom from 'boom';
 import JSONWebToken from 'jsonwebtoken';
 
-import Monitoring from '../Monitoring';
 import { fromReindexID } from '../graphQL/builtins/ReindexID';
 
 const authorizationRegExp = /^Bearer (.+)$/i;
@@ -41,14 +40,7 @@ async function authenticateAsync(request) {
   const token = match[1];
 
   const db = await request.getDB();
-
-  let secrets;
-  try {
-    secrets = await db.getSecrets();
-  } catch (error) {
-    Monitoring.noticeError(error);
-    throw error;
-  }
+  const secrets = await db.getSecrets();
 
   let verifiedToken;
   try {
@@ -87,9 +79,6 @@ async function authenticate(request, reply) {
     const credentials = await authenticateAsync(request);
     return reply.continue({ credentials });
   } catch (error) {
-    if (error.isBoom && error.output.statusCode === 401) {
-      Monitoring.setIgnoreTransaction(true);
-    }
     return reply(error);
   }
 }

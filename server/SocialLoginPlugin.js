@@ -7,8 +7,6 @@ import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
 import { Set } from 'immutable';
 
-import Monitoring from '../Monitoring';
-
 import escapeScriptJSON from './escapeScriptJSON';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 
@@ -118,12 +116,6 @@ async function authenticate(request, reply) {
 
     return authenticateWithOAuth(request, reply);
   } catch (error) {
-    if (error.isBoom && (
-      error.output.statusCode === 400 ||
-      error.output.statusCode === 401
-    )) {
-      Monitoring.setIgnoreTransaction(true);
-    }
     return reply(error);
   }
 }
@@ -194,11 +186,6 @@ function onPreResponse(request, reply) {
   const { response } = request;
   if (request.isSocialLoginRequest && response.isBoom) {
     const code = !response.isServer && response.data && response.data.code;
-
-    Monitoring.addCustomParameter('loginError', {
-      code,
-      message: response.message,
-    });
 
     const error = code ?
       {

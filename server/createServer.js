@@ -52,8 +52,9 @@ export default async function createServer(
   await server.register(AppPlugin);
 
   server.on('request-error', (request, e) => {
-    Monitoring.setIgnoreTransaction(true);
-    Monitoring.noticeError(e);
+    Monitoring.noticeError(e, {
+      request,
+    });
   });
 
   server.route(StatusHandler);
