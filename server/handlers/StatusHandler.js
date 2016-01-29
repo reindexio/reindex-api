@@ -1,13 +1,10 @@
 import Boom from 'boom';
 
-import Monitoring from '../../Monitoring';
 import createDBClient from '../../db/createDBClient';
 import DatabaseTypes from '../../db/DatabaseTypes';
 import Config from '../Config';
 
 async function handler(request, reply) {
-  Monitoring.setIgnoreTransaction(true);
-
   const clusters = JSON.parse(Config.get('database.clusters'));
   try {
     for (const clusterName in clusters) {
@@ -22,11 +19,10 @@ async function handler(request, reply) {
       }
     }
   } catch (e) {
-    Monitoring.noticeError(e);
     return reply(Boom.serverTimeout());
   }
 
-  reply({
+  return reply({
     status: 'ok',
   });
 }

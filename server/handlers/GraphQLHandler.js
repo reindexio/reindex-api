@@ -11,10 +11,6 @@ async function handler(request, reply) {
     const query = request.payload.query;
     const variables = request.payload.variables || {};
 
-    Monitoring.setTransactionName('graphql');
-    Monitoring.addCustomParameter('query', query);
-    Monitoring.addCustomParameter('variables', variables);
-
     const db = await request.getDB();
     const credentials = request.auth.credentials;
 
@@ -25,7 +21,6 @@ async function handler(request, reply) {
 
     if (result.data) {
       const rootNames = Object.keys(result.data).sort().join(',');
-      Monitoring.setTransactionName(`graphql/${rootNames}`);
       if (credentials.isAdmin) {
         setImmediate(() => {
           trackEvent(credentials, 'executed-query', {
@@ -40,7 +35,18 @@ async function handler(request, reply) {
       result.errors = result.errors.map((error) => {
         if (error.originalError &&
            !(error.originalError instanceof GraphQLError)) {
-          Monitoring.noticeError(error.originalError);
+          Monitoring.noticeError(error.originalError, {
+            request,
+            extra: {
+              graphQL: {
+                query,
+                variables,
+              },
+            },
+            tags: {
+              type: 'graphQL',
+            },
+          });
           return {
             message: 'Internal Server Error',
           };
@@ -48,14 +54,21 @@ async function handler(request, reply) {
           return formatError(error);
         }
       });
-      Monitoring.addCustomParameter('errors', result.errors);
     }
 
     Metrics.increment('graphql.requests', 1, request.info.hostname);
 
-    reply(JSON.stringify(result)).type('application/json');
+    console.log(JSON.stringify({
+      hostname: request.info.hostname,
+      credentials,
+      query,
+      variables,
+      errors: result.errors || [],
+    }));
+
+    return reply(JSON.stringify(result)).type('application/json');
   } catch (error) {
-    reply(error);
+    return reply(error);
   }
 }
 

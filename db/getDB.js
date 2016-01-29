@@ -21,11 +21,14 @@ const appsByHostname = {};
 export default async function getDB(hostname) {
   let app = appsByHostname[hostname];
   if (!app) {
-    const adminDB = getAdminDB(hostname);
+    let adminDB;
     try {
+      adminDB = getAdminDB(hostname);
       app = await fetchApp(adminDB, hostname);
     } finally {
-      await adminDB.close();
+      if (adminDB) {
+        await adminDB.close();
+      }
     }
     appsByHostname[hostname] = app;
   }

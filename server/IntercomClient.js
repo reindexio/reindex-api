@@ -135,7 +135,7 @@ function getClient() {
 /* `response` defined because number of args is significant. */
 function errorHandler(error, response) {
   if (error) {
-    Monitoring.noticeError(error.body);
+    Monitoring.noticeError(new Error(error.body));
   }
 }
 /* eslint-enable */
