@@ -53,6 +53,7 @@ const Monitoring = {
       }
     }
   },
+
   setLogging(value) {
     logging = value;
   },
