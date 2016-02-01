@@ -358,9 +358,9 @@
       "resolved": "https://registry.npmjs.org/batch/-/batch-0.5.2.tgz"
     },
     "bell": {
-      "version": "6.0.0",
-      "from": "bell@>=6.0.0 <7.0.0",
-      "resolved": "https://registry.npmjs.org/bell/-/bell-6.0.0.tgz",
+      "version": "6.1.0",
+      "from": "bell@latest",
+      "resolved": "https://registry.npmjs.org/bell/-/bell-6.1.0.tgz",
       "dependencies": {
         "hoek": {
           "version": "3.0.4",
@@ -1717,9 +1717,9 @@
       }
     },
     "joi": {
-      "version": "7.0.1",
+      "version": "7.2.3",
       "from": "joi@>=7.0.0 <8.0.0",
-      "resolved": "https://registry.npmjs.org/joi/-/joi-7.0.1.tgz",
+      "resolved": "https://registry.npmjs.org/joi/-/joi-7.2.3.tgz",
       "dependencies": {
         "hoek": {
           "version": "3.0.4",

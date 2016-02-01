@@ -1,5 +1,6 @@
 import Path from 'path';
-
+import { capitalize, get } from 'lodash';
+import { graphql } from 'graphql';
 import Boom from 'boom';
 import DoT from 'dot';
 import JSONWebToken from 'jsonwebtoken';
@@ -7,8 +8,8 @@ import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
 import { Set } from 'immutable';
 
+import getGraphQLContext from '../graphQL/getGraphQLContext';
 import escapeScriptJSON from './escapeScriptJSON';
-import { toReindexID } from '../graphQL/builtins/ReindexID';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
@@ -110,13 +111,23 @@ async function authenticate(request, reply) {
       scope: authenticationProvider.scopes,
     };
 
-    const authenticateWithOAuth = settings.provider.protocol === 'oauth' ?
-      OAuth.v1(settings) :
-      OAuth.v2(settings);
-
-    return authenticateWithOAuth(request, reply);
+    return getAuthenticateWithOAuth(settings)(request, reply);
   } catch (error) {
     return reply(error);
+  }
+}
+
+let simulateOAuthFunction;
+
+function getAuthenticateWithOAuth(settings) {
+  if (simulateOAuthFunction) {
+    return simulateOAuthFunction(settings);
+  } else {
+    if (settings.provider.protocol === 'oauth') {
+      return OAuth.v1(settings);
+    } else {
+      return OAuth.v2(settings);
+    }
   }
 }
 
@@ -163,8 +174,7 @@ async function handler(request, reply) {
 
     const { provider } = credentials;
     const credential = normalizeCredentials(credentials);
-    const dbUser = await db.getOrCreateUser(provider, credential);
-    const user = { ...dbUser, id: toReindexID(dbUser.id) };
+    const user = await getOrCreateUser(db, provider, credential);
 
     const secrets = await db.getSecrets();
     if (!secrets.length) {
@@ -179,6 +189,109 @@ async function handler(request, reply) {
     return renderCallbackPopup(reply, { token, provider, user });
   } catch (error) {
     return reply(error);
+  }
+}
+
+async function getOrCreateUser(db, provider, credential) {
+  const context = getGraphQLContext(db, await db.getMetadata(), {
+    credentials: {
+      isAdmin: true,
+    },
+  });
+  const query = `userByCredentials${capitalize(provider)}Id`;
+
+  const userFragment = `
+    id
+    credentials {
+      github {
+        id
+        accessToken
+        displayName
+      }
+      google {
+        id
+        accessToken
+        displayName
+      }
+      facebook {
+        id
+        accessToken
+        displayName
+      }
+      twitter {
+        id
+        accessToken
+        displayName
+      }
+    }
+  `;
+
+  const fetchResult = await graphql(context.schema, `
+    query($id: String!) {
+      ${query}(id: $id) {
+        id
+      }
+    }
+  `, context, {
+    id: credential.id,
+  });
+
+  if (fetchResult.errors) {
+    throw new Error(JSON.stringify(fetchResult.errors));
+  }
+
+  let updateResult;
+  let updateData;
+  if (fetchResult.data && fetchResult.data[query]) {
+    const id = fetchResult.data[query].id;
+    updateResult = await graphql(context.schema, `
+      mutation($input: _UpdateUserInput!) {
+        updateUser(input: $input) {
+          changedUser {
+            ${userFragment}
+          }
+        }
+      }
+    `, context, {
+      input: {
+        id,
+        credentials: {
+          [provider]: credential,
+        },
+      },
+    });
+    updateData = get(updateResult, [
+      'data',
+      'updateUser',
+      'changedUser',
+    ]);
+  } else {
+    updateResult = await graphql(context.schema, `
+      mutation($input: _CreateUserInput!) {
+        createUser(input: $input) {
+          changedUser {
+            ${userFragment}
+          }
+        }
+      }
+    `, context, {
+      input: {
+        credentials: {
+          [provider]: credential,
+        },
+      },
+    });
+    updateData = get(updateResult, [
+      'data',
+      'createUser',
+      'changedUser',
+    ]);
+  }
+
+  if (!updateResult.errors) {
+    return updateData;
+  } else {
+    throw new Error(JSON.stringify(updateResult.errors));
   }
 }
 
@@ -231,9 +344,18 @@ function register(server, options, next) {
   next();
 }
 
+// Modelled after Bell.simulate API
+function simulate(oauthFunction) {
+  if (oauthFunction) {
+    simulateOAuthFunction = oauthFunction;
+  } else {
+    simulateOAuthFunction = false;
+  }
+}
+
 register.attributes = {
   name: 'SocialAuthenticationScheme',
 };
 
-const SocialAuthenticationScheme = { register };
+const SocialAuthenticationScheme = { register, simulate };
 export default SocialAuthenticationScheme;

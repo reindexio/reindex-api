@@ -13,7 +13,7 @@
     "babel-eslint": "^5.0.0-beta4",
     "base64-url": "^1.2.1",
     "bassmaster": "^1.7.0",
-    "bell": "^6.0.0",
+    "bell": "^6.1.0",
     "bluebird": "^2.10.2",
     "boom": "^3.0.0",
     "cli-table": "^0.3.1",

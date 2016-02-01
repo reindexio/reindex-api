@@ -1,16 +1,20 @@
 import JSONWebToken from 'jsonwebtoken';
 import Promise from 'bluebird';
 import uuid from 'uuid';
-import { graphql } from 'graphql';
 
+import {
+  makeRunQuery,
+  createFixture,
+  deleteFixture,
+} from '../../test/testAppUtils';
 import Config from '../Config';
 import DatabaseTypes from '../../db/DatabaseTypes';
-import getGraphQLContext from '../../graphQL/getGraphQLContext';
 import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
 import getDB from '../../db/getDB';
 import createServer from '../createServer';
 import assert from '../../test/assert';
+import { simulate } from '../SocialLoginPlugin';
 
 describe('Server', () => {
   const hostname = `test.${uuid.v4()}.example.com`;
@@ -18,6 +22,7 @@ describe('Server', () => {
   let server;
   let token;
   let userID;
+  let runQuery;
 
   const testQuery = `{
     viewer {
@@ -26,20 +31,6 @@ describe('Server', () => {
       }
     }
   }`;
-
-  async function runQuery(query, variables, credentials = {
-    isAdmin: true,
-    userID: null,
-  }) {
-    const context = getGraphQLContext(
-      db,
-      await db.getMetadata(),
-      {
-        credentials,
-      }
-    );
-    return await graphql(context.schema, query, context, variables);
-  }
 
   function makeRequest(options) {
     return new Promise((resolve) => server.inject(options, resolve));
@@ -51,6 +42,7 @@ describe('Server', () => {
     });
     const { secret } = await createApp(hostname);
     db = await getDB(hostname);
+    runQuery = makeRunQuery(db);
 
     const userData = await runQuery(`
       mutation user {
@@ -116,6 +108,106 @@ describe('Server', () => {
         statusCode: 404,
       });
     }
+  });
+
+  describe('Social Login', () => {
+    let provider;
+    const githubId = 'SOME-GITHUB-ID';
+
+    before(async () => {
+      simulate(() =>
+        (request, reply) => {
+          reply.continue({
+            credentials: {
+              provider: 'github',
+              profile: {
+                id: githubId,
+                displayName: 'exampleUser',
+                accessToken: 'EXAMPLE-TOKEN',
+                raw: {},
+              },
+            },
+          });
+        }
+      );
+
+      provider = await createFixture(
+        runQuery,
+        'ReindexAuthenticationProvider',
+        {
+          type: 'github',
+          clientId: 'sample-id',
+          clientSecret: 'sample-secret',
+          isEnabled: true,
+        },
+        `id`
+      );
+    });
+
+    after(async () => {
+      simulate(false);
+      await deleteFixture(
+        runQuery,
+        'ReindexAuthenticationProvider',
+        provider.id,
+      );
+    });
+
+    it('should fail for non-existant provider', async () => {
+      const result = await makeRequest({
+        method: 'GET',
+        url: '/auth/google',
+        headers: {
+          host: hostname,
+        },
+      });
+
+      assert.match(result.payload, /PROVIDER_DISABLED/);
+    });
+
+    it('should create new user once for same credential', async () => {
+      await makeRequest({
+        method: 'GET',
+        url: '/auth/github',
+        headers: {
+          host: hostname,
+        },
+      });
+
+      let userResult = await runQuery(`
+        query($id: String!){
+          userByCredentialsGithubId(id: $id) {
+            id
+          }
+        }
+      `, {
+        id: githubId,
+      });
+
+      assert.deepProperty(userResult, 'data.userByCredentialsGithubId.id');
+
+      const userId = userResult.data.userByCredentialsGithubId.id;
+
+      await makeRequest({
+        method: 'GET',
+        url: '/auth/github',
+        headers: {
+          host: hostname,
+        },
+      });
+
+      userResult = await runQuery(`
+        query($id: String!){
+          userByCredentialsGithubId(id: $id) {
+            id
+          }
+        }
+      `, {
+        id: githubId,
+      });
+
+      assert.deepEqual(userId, userResult.data.userByCredentialsGithubId.id);
+    });
   });
 
   describe('Broken database connection', () => {
