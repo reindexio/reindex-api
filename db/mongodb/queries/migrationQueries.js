@@ -1,5 +1,4 @@
-import { chain, remove, groupBy, sortBy, map } from 'lodash';
-import { ObjectId } from 'mongodb';
+import { chain, groupBy, map } from 'lodash';
 
 import {
   constructMissingIndexes,
@@ -9,9 +8,6 @@ import {
 export async function performMigration(db, commands, types, { indexes }) {
   const commandsByType = groupBy(commands, (command) => command.commandType);
 
-  if (commandsByType.DeleteType) {
-    await deleteTypes(db, commandsByType.DeleteType);
-  }
   if (commandsByType.DeleteTypeData) {
     await deleteTypesData(db, commandsByType.DeleteTypeData, indexes);
   }
@@ -21,17 +17,9 @@ export async function performMigration(db, commands, types, { indexes }) {
   if (commandsByType.CreateTypeData) {
     await createNewTypeData(db, commandsByType.CreateTypeData);
   }
-  await updateTypes(db, commands);
-  await constructMissingIndexes(db, types, indexes);
-}
 
-function deleteTypes(db, commands) {
-  const typeIds = commands.map((command) => ObjectId(command.type.id.value));
-  return db
-    .collection('ReindexType')
-    .deleteMany({
-      _id: { $in: typeIds },
-    });
+  await updateTypes(db, commandsByType.DeleteType || [], types);
+  await constructMissingIndexes(db, types, indexes);
 }
 
 async function deleteTypesData(db, commands, indexes) {
@@ -67,85 +55,16 @@ function createNewTypeData() {
   return Promise.resolve(true);
 }
 
-function updateTypes(db, commands) {
-  const commandsByTypeName = chain(commands)
-    .filter((command) => (
-      [
-        'CreateType',
-        'CreateField',
-        'UpdateTypeInfo',
-        'DeleteField',
-        'UpdateFieldInfo',
-      ].includes(
-        command.commandType
-      ))
-    )
-    .groupBy((command) => command.type.name)
-    .value();
+function updateTypes(db, deleteCommands, types) {
+  const batch = db.collection('ReindexType').initializeUnorderedBulkOp();
 
-  const updatedTypes = map(commandsByTypeName, createUpdatedType);
-
-  if (updatedTypes.length) {
-    const batch = db.collection('ReindexType').initializeUnorderedBulkOp();
-    for (const type of updatedTypes) {
-      if (type.id) {
-        batch.find({ _id: ObjectId(type.id.value) }).replaceOne(type);
-      } else {
-        batch.insert(type);
-      }
-    }
-    return batch.execute();
-  } else {
-    return Promise.resolve(true);
-  }
-}
-
-function createUpdatedType(commands) {
-  let type;
-  let fields = [];
-  const commandsByType = groupBy(commands, (command) => command.commandType);
-  if (commandsByType.CreateType) {
-    type = commandsByType.CreateType[0].getData();
-  } else {
-    type = {
-      ...commands[0].type,
-    };
-    fields = type.fields.filter((field) => !field.builtin);
+  for (const command of deleteCommands) {
+    batch.find({ name: command.type.name }).removeOne();
   }
 
-  if (commandsByType.UpdateTypeInfo) {
-    type = {
-      ...type,
-      ...commandsByType.UpdateTypeInfo[0].getData(),
-    };
+  for (const type of types) {
+    batch.find({ name: type.name }).upsert().replaceOne(type);
   }
 
-  for (const command of commandsByType.DeleteField || []) {
-    remove(fields, (field) => field.name === command.fieldName);
-  }
-
-  for (const command of commandsByType.UpdateFieldInfo || []) {
-    fields = fields.map((field) => {
-      if (field.name === command.fieldName) {
-        return {
-          name: field.name,
-          type: field.type,
-          ...command.getData(),
-        };
-      } else {
-        return field;
-      }
-    });
-  }
-
-  for (const command of commandsByType.CreateField || []) {
-    fields.push(command.getData());
-  }
-
-  fields = sortBy(fields, (field) => field.name);
-
-  return {
-    ...type,
-    fields,
-  };
+  return batch.execute();
 }
