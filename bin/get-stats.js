@@ -52,7 +52,7 @@ function printLibrato(apps) {
     }
     perCluster[app.cluster].count++;
     perCluster[app.cluster].size += app.fileSize;
-    Metrics.sample('app.type', app.types, app.hostname);
+    Metrics.sample('app.types', app.types, app.hostname);
     Metrics.sample('app.nodes', app.nodes, app.hostname);
     Metrics.sample(
       'app.averageNodeSize',
