@@ -1,4 +1,4 @@
-import { transform } from 'lodash';
+import { transform, isArray } from 'lodash';
 import RethinkDB from 'rethinkdb';
 import { GraphQLError } from 'graphql/error/GraphQLError';
 
@@ -10,7 +10,6 @@ import {
   PERMISSION_TABLE,
   HOOK_TABLE,
 } from '../DBTableNames';
-import { getIndexFromFields, ensureIndex } from './indexes';
 import {
   getFirstOrNullQuery,
   isValidID,
@@ -77,18 +76,24 @@ export function getByID(conn, type, id) {
   ).run(conn);
 }
 
-export async function getByField(conn, type, field, value, indexes = {}) {
-  let index = getIndexFromFields(indexes, [[field]]);
-  if (!index) {
-    index = await ensureIndex(conn, type, [[field]]);
+export function getByField(conn, type, field, value) {
+  let fields;
+  let actualValue = value;
+
+  if (!isArray(field)) {
+    fields = [field];
+  } else {
+    fields = field;
   }
 
-  const indexValue = index.name === 'id' && value ? value.value : [value];
+  if (fields[0] === 'id') {
+    actualValue = value.value;
+  }
 
   return getFirstOrNullQuery(
-    queryWithIDs(type, RethinkDB.table(type).getAll(indexValue, {
-      index: index.name,
-    }))
+    queryWithIDs(type, RethinkDB.table(type).filter((row) =>
+      fields.reduce((acc, f) => acc(f), row).eq(actualValue)
+    ))
   ).run(conn);
 }
 

@@ -1,4 +1,4 @@
-import { transform } from 'lodash';
+import { transform, isArray } from 'lodash';
 import { ObjectId } from 'mongodb';
 import { GraphQLError } from 'graphql/error/GraphQLError';
 
@@ -49,8 +49,18 @@ export async function getByID(db, type, id) {
 }
 
 export async function getByField(db, type, field, value) {
-  const actualField = field === 'id' ? '_id' : field;
-  const actualValue = field === 'id' ? ObjectId(value.value) : value;
+  let actualField = field;
+  let actualValue = value;
+
+  if (isArray(field)) {
+    actualField = field.join('.');
+  }
+
+  if (actualField === 'id') {
+    actualField = '_id';
+    actualValue = ObjectId(value.value);
+  }
+
   const result = await db.collection(type).findOne({
     [actualField]: actualValue,
   });

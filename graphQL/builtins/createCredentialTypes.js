@@ -24,6 +24,9 @@ function getBaseCredentialFields(providerName) {
     id: {
       type: GraphQLString,
       description: `The ${providerName} user's ID.`,
+      metadata: {
+        unique: true,
+      },
     },
   };
 }
