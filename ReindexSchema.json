@@ -1,5 +1,21 @@
 [
   {
+    "name": "User",
+    "kind": "OBJECT",
+    "interfaces": [
+      "Node"
+    ],
+    "fields": [
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true
+      }
+    ],
+    "permissions": []
+  },
+  {
     "name": "App",
     "kind": "OBJECT",
     "interfaces": [
@@ -30,7 +46,8 @@
         "name": "updatedAt",
         "type": "DateTime"
       }
-    ]
+    ],
+    "permissions": []
   },
   {
     "name": "Database",
@@ -45,7 +62,8 @@
         "name": "name",
         "type": "String"
       }
-    ]
+    ],
+    "permissions": []
   },
   {
     "name": "Domain",
@@ -79,21 +97,7 @@
         "name": "updatedAt",
         "type": "DateTime"
       }
-    ]
-  },
-  {
-    "name": "User",
-    "kind": "OBJECT",
-    "interfaces": [
-      "Node"
     ],
-    "fields": [
-      {
-        "name": "id",
-        "type": "ID",
-        "nonNull": true,
-        "unique": true
-      }
-    ]
+    "permissions": []
   }
 ]
