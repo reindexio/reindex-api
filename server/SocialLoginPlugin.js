@@ -136,7 +136,7 @@ function normalizeCredentials(credentials) {
   const result = {
     accessToken: credentials.token,
     displayName: profile.displayName,
-    id: profile.id,
+    id: profile.id.toString(),
   };
 
   if (profile.email) {  // Facebook, GitHub
