@@ -97,7 +97,7 @@ export function getByField(conn, type, field, value) {
   ).run(conn);
 }
 
-export async function hasByFilter(conn, type, filter) {
+function getAllByFilterQuery(type, filter) {
   const cleanFilter = transform(filter, (result, value, key) => {
     if (key === 'id') {
       result.id = value.value;
@@ -105,11 +105,20 @@ export async function hasByFilter(conn, type, filter) {
       result[key] = value;
     }
   });
-  const result = await RethinkDB
-    .table(type)
-    .filter(cleanFilter)
+  return RethinkDB.table(type).filter(cleanFilter);
+}
+
+export function getAllByFilter(conn, type, filter) {
+  return queryWithIDs(type, getAllByFilterQuery(type, filter))
+    .coerceTo('array')
+    .run(conn);
+}
+
+export async function hasByFilter(conn, type, filter) {
+  const result = await getAllByFilterQuery(type, filter)
     .limit(1)
-    .count();
+    .count()
+    .run(conn);
   return result > 0;
 }
 

@@ -119,8 +119,6 @@ function extractConnectionPermissions(typesByName) {
           ...field.grantPermissions,
           grantee: 'USER',
           userPath: [field.name],
-          connectionType: field.connectionType,
-          reverseName: field.reverseName,
         }));
 
       return chain(permissions.concat(fieldPermissions))
@@ -131,20 +129,24 @@ function extractConnectionPermissions(typesByName) {
         }))
         .flatten()
         .map((permission) => {
-          if (!permission.connectionType) {
-            const lastFieldName = permission.userPath[
-              permission.userPath.length - 1
-            ];
-            const lastField = values(typesByName.User.fields).find(
-              (userField) => userField.reverseName === lastFieldName
-            );
-            if (lastFieldName === 'id') {
-              permission.connectionType = 'ITSELF';
+          let currentType = type.name;
+          permission.path = permission.userPath.map((segment) => {
+            const field = typesByName[currentType].fields[segment];
+            currentType = field.ofType || field.type;
+            let connectionType;
+            if (field.name === 'id') {
+              connectionType = 'ITSELF';
             } else {
-              permission.connectionType = lastField.connectionType;
-              permission.reverseName = lastField.name;
+              connectionType = field.connectionType;
             }
-          }
+            return {
+              name: segment,
+              connectionType,
+              type: currentType,
+              reverseName: field.reverseName,
+            };
+          });
+
           return permission;
         })
         .value();

@@ -391,11 +391,17 @@ function validatePermissions(type, typesByName, invariant) {
       const field = currentType.fields.find(
         (typeField) => typeField.name === element
       );
-      const nextType = field && typesByName[field.type];
+      let nextType;
+      if (field && field.type === 'Connection') {
+        nextType = typesByName[field.ofType];
+      } else {
+        nextType = typesByName[field.type];
+      }
+
       invariant(
         field && nextType && isNodeType(nextType),
         '%s.permissions: Expected `userPath` to be of `Node` ' +
-        'type. Found %s (%s).',
+        'type or a `Connection`. Found %s (%s).',
         type.name, JSON.stringify(path),
         field ? `"${element}" of type \`${field.type}\`` : `"${element}"`
       );

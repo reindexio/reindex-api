@@ -32,7 +32,7 @@ describe('Permissions', () => {
     db = await getDB(hostname);
     runQuery = makeRunQuery(db);
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       fixtures.User[i] = await createFixture(runQuery, 'User', {
         handle: `user-${i}`,
       }, 'id, handle');
@@ -277,7 +277,7 @@ describe('Permissions', () => {
         data: {
           viewer: {
             allMicroposts: {
-              count: 20,
+              count: 25,
             },
           },
         },
@@ -1060,6 +1060,11 @@ describe('Permissions', () => {
                   userPath: ['friends'],
                   read: true,
                 },
+                {
+                  grantee: 'USER',
+                  userPath: ['friends', 'friends'],
+                  read: true,
+                },
               ],
             },
             {
@@ -1178,6 +1183,19 @@ describe('Permissions', () => {
             user2Id: fixtures.User[2].id,
           },
         });
+
+        await runQuery(`
+          mutation($input: _UserFriendsConnectionInput!) {
+            addUserToUserFriends(input: $input) {
+              clientMutationId
+            }
+          }
+        `, {
+          input: {
+            user1Id: fixtures.User[0].id,
+            user2Id: fixtures.User[4].id,
+          },
+        });
       });
 
       after(async () => {
@@ -1187,6 +1205,7 @@ describe('Permissions', () => {
       it('user can read and update himself, friends can read', async () => {
         const author = fixtures.User[0];
         const friend1 = fixtures.User[1];
+        const friendOfFriend = fixtures.User[4];
         const stranger = fixtures.User[3];
 
         assert.deepEqual(await runQuery(`
@@ -1264,6 +1283,27 @@ describe('Permissions', () => {
             },
           },
         }, 'friend can read');
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            userById(id: $id) {
+              id
+            }
+          }
+        `, {
+          id: author.id,
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friendOfFriend.id),
+          },
+        }), {
+          data: {
+            userById: {
+              id: author.id,
+            },
+          },
+        }, 'friend of friend can read');
 
         assert.deepEqual(await runQuery(`
           query($id: ID!) {

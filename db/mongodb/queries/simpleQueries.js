@@ -67,7 +67,7 @@ export async function getByField(db, type, field, value) {
   return addID(type, result);
 }
 
-function getAllByFilter(db, type, filter) {
+function getAllByFilterQuery(db, type, filter) {
   const cleanFilter = transform(filter, (result, value, key) => {
     if (key === 'id') {
       result._id = new ObjectId(value.value);
@@ -78,8 +78,12 @@ function getAllByFilter(db, type, filter) {
   return db.collection(type).find(cleanFilter);
 }
 
+export function getAllByFilter(db, type, filter) {
+  return addID(type, getAllByFilterQuery(db, type, filter)).toArray();
+}
+
 export async function hasByFilter(db, type, filter) {
-  const result = await getAllByFilter(db, type, filter).limit(1).count();
+  const result = await getAllByFilterQuery(db, type, filter).limit(1).count();
   return result > 0;
 }
 
