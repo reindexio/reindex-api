@@ -10,6 +10,13 @@ const DefaultUserType = {
   ],
   kind: 'OBJECT',
   interfaces: ['Node'],
+  permissions: [
+    {
+      grantee: 'USER',
+      userPath: ['id'],
+      read: true,
+    },
+  ],
 };
 
 export default DefaultUserType;
