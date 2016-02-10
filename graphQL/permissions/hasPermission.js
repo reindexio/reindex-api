@@ -290,36 +290,12 @@ async function hasConnectionPermissions(
 
   let permittedFields = [];
   for (const connection of validConnections) {
-    let path = connection.userPath;
-    let currentObject = object;
-    while (path.length > 1) {
-      let name;
-      [name, ...path] = path;
-      const pathValue = currentObject && currentObject[name];
-      if (pathValue) {
-        currentObject = await db.getByID(pathValue.type, pathValue);
-      } else {
-        currentObject = null;
-      }
-    }
-
-    const value = currentObject && currentObject[path[0]];
-
-    let isConnectedToUser = false;
-    if (connection.connectionType === 'MANY_TO_MANY' && isArray(value)) {
-      isConnectedToUser = value.some((id) => id.value === userID);
-    } else if (connection.connectionType === 'ONE_TO_MANY') {
-      isConnectedToUser = await db.hasByFilter('User', {
-        id: {
-          type: 'User',
-          value: userID,
-        },
-        [connection.reverseName]: object.id,
-      });
-    } else if (value) {
-      isConnectedToUser = value.value === userID;
-    }
-
+    const isConnectedToUser = await hasOneConnectionPermission(
+      db,
+      connection.path,
+      object,
+      userID
+    );
     if (isConnectedToUser) {
       let hasEnoughPermissions;
       if (connection.permittedFields) {
@@ -446,5 +422,59 @@ async function checkRelatedExistance(field, object, db, type) {
     return {
       hasPermission: true,
     };
+  }
+}
+
+async function hasOneConnectionPermission(
+  db,
+  path,
+  object,
+  userID
+) {
+  let currentObject = object;
+  while (path.length > 1) {
+    let segment;
+    [segment, ...path] = path;
+    const pathValue = currentObject[segment.name];
+    if (segment.connectionType !== 'ONE_TO_MANY') {
+      const objects = await db.getAllByFilter(segment.type, {
+        [segment.reverseName]: object.id,
+      });
+      for (const relatedObject of objects) {
+        const permission = await hasOneConnectionPermission(
+          db,
+          path,
+          relatedObject,
+          userID,
+        );
+        if (permission) {
+          return permission;
+        }
+      }
+      return false;
+    } else if (pathValue) {
+      currentObject = await db.getByID(segment.type, pathValue);
+    } else {
+      currentObject = null;
+    }
+  }
+
+  const lastSegment = path[0];
+  const value = currentObject && currentObject[lastSegment.name];
+
+  if (lastSegment.connectionType === 'MANY_TO_MANY' && isArray(value)) {
+    return value.some((id) => id.value === userID);
+  } else if (lastSegment.connectionType === 'MANY_TO_ONE') {
+    return await db.hasByFilter('User', {
+      id: {
+        type: 'User',
+        value: userID,
+      },
+      [lastSegment.reverseName]: object.id,
+    });
+  } else if (value) {
+    return value.value === userID;
+  } else {
+    return false;
   }
 }

@@ -1,4 +1,6 @@
-import { get, chain, indexBy, zip, some, every, isEqual } from 'lodash';
+import {
+  get, chain, indexBy, zip, some, every, isEqual, isArray,
+} from 'lodash';
 
 import assert from '../../../test/assert';
 import hasPermission from '../hasPermission';
@@ -17,6 +19,19 @@ describe('hasPermission', () => {
 
     getByID(type, value) {
       return Promise.resolve(get(this.objects, [type, value.value]));
+    }
+
+    getAllByFilter(type, filter) {
+      return Promise.resolve(Object.values(this.objects[type]).filter(
+        (object) => every(filter, (value, key) => {
+          const objectValue = object[key];
+          if (isArray(objectValue)) {
+            return some(objectValue, (oneValue) => isEqual(oneValue, value));
+          } else {
+            return isEqual(objectValue, value);
+          }
+        })
+      ));
     }
 
     hasByFilter(type, filter) {
@@ -84,6 +99,14 @@ describe('hasPermission', () => {
       type: 'User',
       value: 'team-mate2-id',
     };
+    const teamID = {
+      type: 'Team',
+      value: 'team-id',
+    };
+    const teamSupervisorID = {
+      type: 'User',
+      value: 'team-supervisor-id',
+    };
     const supervisorID = {
       type: 'User',
       value: 'supervisor-id',
@@ -91,10 +114,6 @@ describe('hasPermission', () => {
     const supervisorSupervisorID = {
       type: 'User',
       value: 'supervisor-supervisor-id',
-    };
-    const supervisorTeamMateID = {
-      type: 'User',
-      value: 'supervisor-teammate-id',
     };
     const strangerID = {
       type: 'User',
@@ -117,9 +136,9 @@ describe('hasPermission', () => {
       isAdmin: false,
       userID: supervisorSupervisorID,
     };
-    const supervisorTeamMateCredentials = {
+    const teamSupervisorCredentials = {
       isAdmin: false,
-      userID: supervisorTeamMateID,
+      userID: teamSupervisorID,
     };
     const strangerCredentials = {
       isAdmin: false,
@@ -128,20 +147,40 @@ describe('hasPermission', () => {
 
     const user = {
       id: userID,
-      team: [
-        teamMate1ID,
-        teamMate2ID,
-        supervisorID,
+      teams: [
+        teamID,
       ],
       supervisor: supervisorID,
       evalution: 'Good',
       fired: false,
     };
+    const teamMate1 = {
+      id: teamMate1ID,
+      teams: [
+        teamID,
+      ],
+    };
+    const teamMate2 = {
+      id: teamMate2ID,
+      teams: [
+        teamID,
+      ],
+    };
+    const team = {
+      id: teamID,
+      members: [
+        userID,
+        teamMate1ID,
+        teamMate2ID,
+        supervisorID,
+      ],
+      supervisor: teamSupervisorID,
+    };
     const supervisor = {
       id: supervisorID,
       supervisor: supervisorSupervisorID,
-      team: [
-        supervisorTeamMateID,
+      teams: [
+        teamID,
       ],
     };
 
@@ -149,6 +188,9 @@ describe('hasPermission', () => {
       db: new MockDB([
         user,
         supervisor,
+        team,
+        teamMate1,
+        teamMate2,
       ]),
       typePermissions: {
         User: {
@@ -164,30 +206,84 @@ describe('hasPermission', () => {
         User: [
           {
             userPath: ['id'],
+            path: [
+              {
+                name: 'id',
+                type: 'User',
+                connectionType: 'ITSELF',
+                reverseName: undefined,
+              },
+            ],
             delete: true,
-            connectionType: 'ITSELF',
+
           },
           {
             userPath: ['supervisor'],
+            path: [
+              {
+                name: 'supervisor',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'supervises',
+              },
+            ],
             update: true,
             permittedFields: ['fired'],
-            connectionType: 'MANY_TO_ONE',
           },
           {
             userPath: ['supervisor', 'supervisor'],
+            path: [
+              {
+                name: 'supervisor',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'supervises',
+              },
+              {
+                name: 'supervisor',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'supervises',
+              },
+            ],
             delete: true,
-            connectionType: 'MANY_TO_ONE',
           },
           {
-            userPath: ['supervisor', 'team'],
+            userPath: ['teams', 'supervisor'],
+            path: [
+              {
+                name: 'team',
+                type: 'Team',
+                connectionType: 'MANY_TO_MANY',
+                reverseName: 'members',
+              },
+              {
+                name: 'supervisor',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'supervises',
+              },
+            ],
             delete: true,
-            connectionType: 'MANY_TO_MANY',
           },
           {
-            userPath: ['team'],
+            userPath: ['team', 'members'],
+            path: [
+              {
+                name: 'team',
+                type: 'Team',
+                connectionType: 'MANY_TO_MANY',
+                reverseName: 'members',
+              },
+              {
+                name: 'members',
+                type: 'User',
+                connectionType: 'MANY_TO_MANY',
+                reverseName: 'team',
+              },
+            ],
             update: true,
             permittedFields: ['evaluation'],
-            connectionType: 'MANY_TO_MANY',
           },
         ],
       },
@@ -313,9 +409,9 @@ describe('hasPermission', () => {
       ), true);
     });
 
-    it('team of supervisor can delete', async () => {
+    it('supervisor of team can delete', async () => {
       assert.equal(await testPermission(
-        supervisorTeamMateCredentials,
+        teamSupervisorCredentials,
         'User',
         'delete',
         user,
@@ -390,11 +486,27 @@ describe('hasPermission', () => {
         Related: [
           {
             userPath: ['permittedOne'],
+            path: [
+              {
+                name: 'permittedOne',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'permittedOneOf',
+              },
+            ],
             update: true,
             permittedFields: ['related1', 'relatedMany'],
           },
           {
             userPath: ['permittedAll'],
+            path: [
+              {
+                name: 'permittedAll',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'permittedAllOf',
+              },
+            ],
             update: true,
             permittedFields: ['related1', 'related2', 'relatedMany'],
           },

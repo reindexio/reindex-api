@@ -249,24 +249,37 @@ describe('getGraphQLContext', () => {
           {
             grantee: 'USER',
             userPath: ['author'],
+            path: [
+              {
+                name: 'author',
+                type: 'User',
+                connectionType: 'ONE_TO_MANY',
+                reverseName: 'microposts',
+              },
+            ],
             read: true,
             create: true,
             update: true,
             delete: true,
             permittedFields: null,
-            connectionType: 'MANY_TO_ONE',
-            reverseName: 'microposts',
           },
           {
             grantee: 'USER',
             userPath: ['favoritedBy'],
+            path: [
+              {
+                name: 'favoritedBy',
+                type: 'User',
+                connectionType: 'MANY_TO_MANY',
+                reverseName: 'favorites',
+
+              },
+            ],
             read: true,
             create: false,
             update: false,
             delete: false,
             permittedFields: null,
-            connectionType: 'MANY_TO_MANY',
-            reverseName: 'favorites',
           },
         ],
         User: [],
