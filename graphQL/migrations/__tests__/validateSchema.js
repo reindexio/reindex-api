@@ -561,6 +561,11 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'non-Node has permissions': [
+    type('Bar', {
+      permissions: [],
+    }),
+  ],
 };
 
 
