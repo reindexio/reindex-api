@@ -363,6 +363,16 @@ function validateReverseField(
 }
 
 function validatePermissions(type, typesByName, invariant) {
+  invariant(
+    isNodeType(type) || !type.permissions,
+    '%s.permissions: Expected only node types to have `permissions`. Found %s.',
+    type.name, type.name,
+  );
+
+  if (!isNodeType(type)) {
+    return;
+  }
+
   const permissions = type.permissions || [];
   for (const permission of permissions) {
     const grantee = permission.grantee;
