@@ -191,6 +191,17 @@ function createField(field, getTypeSet, interfaces) {
     type = getTypeSet(fieldType).type;
     if (type.getInterfaces().includes(interfaces.Node)) {
       resolve = createNodeFieldResolve(type.name, fieldName);
+    } else {
+      resolve = (parent) => {
+        if (parent[fieldName]) {
+          return {
+            ...parent[fieldName],
+            __node: parent.__node || parent,
+          };
+        } else {
+          return null;
+        }
+      };
     }
   }
 

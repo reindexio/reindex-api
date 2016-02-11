@@ -379,6 +379,18 @@ function validatePermissions(type, typesByName, invariant) {
       type.name
     );
 
+    invariant(
+      !permission.permittedFields || (isArray(permission.permittedFields) &&
+      permission.permittedFields.every((field) =>
+        type.fields.some((typeField) =>
+          typeField.name === field && !typeField.readOnly
+        )
+      )),
+      '%s.permissions: Expected `permittedFields` to be null or an array of' +
+      ' not `readOnly` fields. Found %s',
+      type.name, JSON.stringify(permission.permittedFields),
+    );
+
     if (!(isArray(path) && path.length > 0)) {
       continue;
     }

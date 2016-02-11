@@ -12,6 +12,7 @@ import {
   migrate,
   createTestApp,
   createFixture,
+  deleteFixture,
   augmentSchema,
 } from '../test/testAppUtils';
 
@@ -377,6 +378,148 @@ describe('Permissions', () => {
           },
         ],
       }, 'anonymous can not read microposts');
+    });
+  });
+
+  describe('user credentials', () => {
+    let user;
+    before(async () => {
+      await migrate(runQuery, augmentSchema(
+        TEST_SCHEMA,
+        [
+          {
+            name: 'User',
+            permissions: [
+              {
+                grantee: 'EVERYONE',
+                read: true,
+                update: true,
+              },
+            ],
+          },
+        ],
+      ), true);
+
+      user = await createFixture(runQuery, 'User', {
+        handle: `user-with-credentials`,
+        credentials: {
+          github: {
+            id: '1',
+            accessToken: 'scoodley-pooping',
+          },
+        },
+      }, 'id, handle, credentials { github { id, accessToken } }');
+    });
+
+    after(async () => {
+      await deleteFixture(runQuery, 'User', user.id);
+      await migrate(runQuery, TEST_SCHEMA, true);
+    });
+
+    it('only user himself can read his access token', async () => {
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          userById(id: $id) {
+            id,
+            handle,
+            credentials {
+              github {
+                id,
+                accessToken,
+              }
+            }
+          }
+        }
+      `, {
+        id: user.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
+      }), {
+        data: {
+          userById: user,
+        },
+      });
+
+      assert.deepEqual(await runQuery(`
+        query($id: ID!) {
+          userById(id: $id) {
+            id,
+            handle,
+            credentials {
+              github {
+                id,
+                accessToken,
+              }
+            }
+          }
+        }
+      `, {
+        id: user.id,
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(fixtures.User[0].id),
+        },
+      }), {
+        data: {
+          userById: {
+            id: user.id,
+            handle: user.handle,
+            credentials: {
+              github: null,
+            },
+          },
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to read nodes of type `User` with' +
+              ' fields `credentials.github`.'
+            ),
+          },
+        ],
+      });
+    });
+
+    it('can not update credentials even if you have permissions', async () => {
+      assert.deepEqual(await runQuery(`
+        mutation($input: _UpdateUserInput!) {
+          updateUser(input: $input) {
+            id
+          }
+        }
+      `, {
+        input: {
+          id: user.id,
+          credentials: {
+            github: {
+              id: 'imma personating',
+              accessToken: 'imma injecting',
+            },
+          },
+        },
+      }, {
+        credentials: {
+          isAdmin: false,
+          userID: fromReindexID(user.id),
+        },
+        printErrors: false,
+      }), {
+        data: {
+          updateUser: null,
+        },
+        errors: [
+          {
+            message: (
+              'User lacks permissions to update nodes of type `User` with' +
+              ' fields `credentials`.'
+            ),
+          },
+        ],
+      });
     });
   });
 
@@ -1060,11 +1203,6 @@ describe('Permissions', () => {
                   userPath: ['friends'],
                   read: true,
                 },
-                {
-                  grantee: 'USER',
-                  userPath: ['friends', 'friends'],
-                  read: true,
-                },
               ],
             },
             {
@@ -1183,19 +1321,6 @@ describe('Permissions', () => {
             user2Id: fixtures.User[2].id,
           },
         });
-
-        await runQuery(`
-          mutation($input: _UserFriendsConnectionInput!) {
-            addUserToUserFriends(input: $input) {
-              clientMutationId
-            }
-          }
-        `, {
-          input: {
-            user1Id: fixtures.User[0].id,
-            user2Id: fixtures.User[4].id,
-          },
-        });
       });
 
       after(async () => {
@@ -1205,7 +1330,6 @@ describe('Permissions', () => {
       it('user can read and update himself, friends can read', async () => {
         const author = fixtures.User[0];
         const friend1 = fixtures.User[1];
-        const friendOfFriend = fixtures.User[4];
         const stranger = fixtures.User[3];
 
         assert.deepEqual(await runQuery(`
@@ -1283,27 +1407,6 @@ describe('Permissions', () => {
             },
           },
         }, 'friend can read');
-
-        assert.deepEqual(await runQuery(`
-          query($id: ID!) {
-            userById(id: $id) {
-              id
-            }
-          }
-        `, {
-          id: author.id,
-        }, {
-          credentials: {
-            isAdmin: false,
-            userID: fromReindexID(friendOfFriend.id),
-          },
-        }), {
-          data: {
-            userById: {
-              id: author.id,
-            },
-          },
-        }, 'friend of friend can read');
 
         assert.deepEqual(await runQuery(`
           query($id: ID!) {

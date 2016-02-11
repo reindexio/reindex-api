@@ -140,6 +140,10 @@ be null if grantee is not \`USER\`.`,
           type: GraphQLBoolean,
           description: 'True for builtin fields defined by the system.',
         },
+        readOnly: {
+          type: GraphQLBoolean,
+          description: 'If true, can not be updated by anyone, but admin.',
+        },
         deprecationReason: {
           type: GraphQLString,
           description: 'If set, makes the field show as deprecated.',
