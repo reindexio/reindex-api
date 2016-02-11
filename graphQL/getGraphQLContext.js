@@ -1,4 +1,4 @@
-import { chain, groupBy, indexBy, mapValues, values } from 'lodash';
+import { chain, groupBy, indexBy, mapValues, values, union } from 'lodash';
 import createSchema from './createSchema';
 
 export default function getGraphQLContext(
@@ -87,15 +87,18 @@ function extractPermissions(types) {
   return chain(types)
     .indexBy((type) => type.name)
     .mapValues((type) => type.permissions ?
-      extractTypePermissions(type.permissions) :
-      DEFAULT_TYPE_PERMISSIONS,
+      extractTypePermissions(type) :
+      mapValues(DEFAULT_TYPE_PERMISSIONS, (permission) => addPermittedFields(
+        permission, type.fields
+      )),
     )
     .value();
 }
 
-function extractTypePermissions(typePermissions) {
-  return chain(typePermissions)
+function extractTypePermissions(type) {
+  return chain(type.permissions)
     .filter((permission) => permission.grantee !== 'USER')
+    .map((permission) => addPermittedFields(permission, type.fields))
     .groupBy((permission) => permission.grantee)
     .mapValues((permissions) => permissions.reduce(combinePermissions, {
       userPath: null,
@@ -122,6 +125,7 @@ function extractConnectionPermissions(typesByName) {
         }));
 
       return chain(permissions.concat(fieldPermissions))
+        .map((permission) => addPermittedFields(permission, type.fields))
         .groupBy((permission) => permission.userPath.join('.'))
         .map((pathPermissions) => pathPermissions.reduce(combinePermissions, {
           userPath: null,
@@ -155,15 +159,10 @@ function extractConnectionPermissions(typesByName) {
 }
 
 function combinePermissions(left, right) {
-  let permittedFields = null;
-  if (left.permittedFields && right.permittedFields) {
-    permittedFields = left.permittedFields.concat(right.permittedFields);
-  }
-
   const result = {
     grantee: right.grantee,
     userPath: right.userPath || null,
-    permittedFields,
+    permittedFields: union(left.permittedFields, right.permittedFields),
   };
 
   for (const permission of ['read', 'create', 'update', 'delete']) {
@@ -173,6 +172,19 @@ function combinePermissions(left, right) {
   }
 
   return result;
+}
+
+function addPermittedFields(permission, fields) {
+  if (!permission.permittedFields) {
+    return {
+      ...permission,
+      permittedFields: chain(fields)
+        .filter((field) => !field.readOnly)
+        .map((field) => field.name)
+        .value(),
+    };
+  }
+  return permission;
 }
 
 function extractRelatedPermissions(typesByName) {

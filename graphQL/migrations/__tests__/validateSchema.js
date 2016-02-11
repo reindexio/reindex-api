@@ -531,6 +531,36 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'invalid permissions, invalid permitted field': [
+    type('User', {
+      interfaces: ['Node'],
+      fields: [
+        { name: 'f', type: 'Int' },
+      ],
+      permissions: [
+        {
+          grantee: 'EVERYONE',
+          update: true,
+          permittedFields: ['f', 'bogus'],
+        },
+      ],
+    }),
+  ],
+  'invalid permissions, readOnly permitted field': [
+    type('User', {
+      interfaces: ['Node'],
+      fields: [
+        { name: 'f', type: 'Int', readOnly: true },
+      ],
+      permissions: [
+        {
+          grantee: 'EVERYONE',
+          update: true,
+          permittedFields: ['f'],
+        },
+      ],
+    }),
+  ],
 };
 
 

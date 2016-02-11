@@ -4,9 +4,10 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 import Qs from 'qs';
 import Url from 'url';
-import { pick } from 'lodash';
+import { pick, isEqual } from 'lodash';
 
 import TypeSet from '../TypeSet';
 
@@ -182,6 +183,22 @@ export default function createCredentialTypes() {
       },
     },
   });
+
+  const createCredentialResolve = (provider) => (
+    (parent, args, context) => {
+      const credentials = context.rootValue.credentials;
+      if (credentials.isAdmin ||
+          isEqual(credentials.userID, parent.__node.id)) {
+        return parent[provider];
+      } else {
+        throw new GraphQLError(
+          `User lacks permissions to read nodes of type \`User\` with fields ` +
+          `\`credentials.${provider}\`.`
+        );
+      }
+    }
+  );
+
   const ReindexCredentialCollection = new GraphQLObjectType({
     name: 'ReindexCredentialCollection',
     description:
@@ -190,18 +207,22 @@ export default function createCredentialTypes() {
       facebook: {
         type: ReindexFacebookCredential,
         description: 'The Facebook credentials of the authenticated user.',
+        resolve: createCredentialResolve('facebook'),
       },
       github: {
         type: ReindexGithubCredential,
         description: 'The GitHub credentials of the authenticated user.',
+        resolve: createCredentialResolve('github'),
       },
       google: {
         type: ReindexGoogleCredential,
         description: 'The Google credentials of the authenticated user.',
+        resolve: createCredentialResolve('google'),
       },
       twitter: {
         type: ReindexTwitterCredential,
         description: 'The Twitter credentials of the authenticated user.',
+        resolve: createCredentialResolve('twitter'),
       },
     },
   });

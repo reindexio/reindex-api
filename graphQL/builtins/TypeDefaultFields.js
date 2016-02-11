@@ -6,6 +6,7 @@ export default function getTypeDefaultFields() {
         description: 'The credentials this user can use to sign in.',
         type: 'ReindexCredentialCollection',
         builtin: true,
+        readOnly: true,
       },
     ],
   };

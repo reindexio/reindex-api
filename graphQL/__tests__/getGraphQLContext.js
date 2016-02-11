@@ -139,7 +139,7 @@ describe('getGraphQLContext', () => {
             update: true,
             create: true,
             delete: true,
-            permittedFields: null,
+            permittedFields: ['id', 'microposts', 'favorites'],
           },
         },
       });
@@ -180,7 +180,7 @@ describe('getGraphQLContext', () => {
             update: true,
             create: true,
             delete: true,
-            permittedFields: null,
+            permittedFields: ['id', 'microposts', 'favorites'],
           },
           EVERYONE: {
             grantee: 'EVERYONE',
@@ -189,7 +189,7 @@ describe('getGraphQLContext', () => {
             update: false,
             create: false,
             delete: false,
-            permittedFields: null,
+            permittedFields: ['id', 'microposts', 'favorites'],
           },
         },
       });
@@ -261,7 +261,7 @@ describe('getGraphQLContext', () => {
             create: true,
             update: true,
             delete: true,
-            permittedFields: null,
+            permittedFields: ['id', 'author', 'favoritedBy'],
           },
           {
             grantee: 'USER',
@@ -279,7 +279,7 @@ describe('getGraphQLContext', () => {
             create: false,
             update: false,
             delete: false,
-            permittedFields: null,
+            permittedFields: ['id', 'author', 'favoritedBy'],
           },
         ],
         User: [],
