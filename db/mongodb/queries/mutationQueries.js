@@ -1,8 +1,8 @@
-import { isEmpty, isPlainObject, forEach, omit } from 'lodash';
+import { isEmpty, isPlainObject, forEach, omit, isEqual } from 'lodash';
 import { ObjectId } from 'mongodb';
 
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
-import { addID } from './queryUtils';
+import { addID, addTransform } from './queryUtils';
 
 export async function getOrCreateUser(db, providerName, credential) {
   const result = await db.collection('User').findOneAndUpdate({
@@ -121,6 +121,53 @@ export async function removeFromConnection(
     from: addID(fromType, from.value),
     to: addID(toType, to.value),
   };
+}
+
+export async function removeAllFromConnection(
+  db,
+  type,
+  field,
+  id,
+  manyToMany,
+) {
+  let updateOperation;
+  if (manyToMany) {
+    updateOperation = {
+      $pullAll: {
+        [field]: [id],
+      },
+    };
+  } else {
+    updateOperation = {
+      $set: {
+        [field]: null,
+      },
+    };
+  }
+
+  const cursor = addTransform(db.collection(type).find({
+    [field]: id,
+  }), (object) => addID(object));
+
+  const result = [];
+  let bulk;
+  while (await cursor.hasNext()) {
+    if (!bulk) {
+      bulk = db.collection(type).initializeUnorderedBulkOp();
+    }
+    const object = await cursor.next();
+    bulk.find({ _id: ObjectId(object._id) }).update(updateOperation);
+    if (manyToMany) {
+      object[field] = object[field].filter((value) => !isEqual(value, id));
+    } else {
+      object[field] = null;
+    }
+    result.push(object);
+  }
+  if (bulk) {
+    await bulk.execute();
+  }
+  return result;
 }
 
 function prepareDocument(object, oldObject = {}) {

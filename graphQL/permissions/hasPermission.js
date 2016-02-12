@@ -1,4 +1,12 @@
-import { isArray, union, isEqual, pick, chain, difference } from 'lodash';
+import {
+  isArray,
+  union,
+  isEqual,
+  pick,
+  chain,
+  difference,
+  flatten,
+} from 'lodash';
 
 // Check if user has a certain permission for type
 //
@@ -52,9 +60,9 @@ export default async function hasPermission(
     );
     otherTypePermissions = connectionFields
       .filter((field) => field.name in object)
-      .map((field) => fieldToExtraPermission(
+      .map((field) => fieldToExtraPermissions(
         field,
-        object[field.name],
+        object,
         db,
         permissionsByType,
         permissionsByConnection,
@@ -76,9 +84,9 @@ export default async function hasPermission(
         if (!isEqual(oldValue, newValue)) {
           if (oldValue && field.name in newObject) {
             extras.push(
-              fieldToExtraPermission(
+              fieldToExtraPermissions(
                 field,
-                oldValue,
+                oldObject,
                 db,
                 permissionsByType,
                 permissionsByConnection,
@@ -88,9 +96,9 @@ export default async function hasPermission(
           }
           if (newValue) {
             extras.push(
-              fieldToExtraPermission(
+              fieldToExtraPermissions(
                 field,
-                newValue,
+                newObject,
                 db,
                 permissionsByType,
                 permissionsByConnection,
@@ -119,9 +127,9 @@ export default async function hasPermission(
         if (!isEqual(oldValue, newValue)) {
           if (oldValue) {
             extras.push(
-              fieldToExtraPermission(
+              fieldToExtraPermissions(
                 field,
-                oldValue,
+                oldObject,
                 db,
                 permissionsByType,
                 permissionsByConnection,
@@ -131,9 +139,9 @@ export default async function hasPermission(
           }
           if (newValue) {
             extras.push(
-              fieldToExtraPermission(
+              fieldToExtraPermissions(
                 field,
-                newValue,
+                newObject,
                 db,
                 permissionsByType,
                 permissionsByConnection,
@@ -149,34 +157,27 @@ export default async function hasPermission(
   } else if (permission === 'delete') {
     object = oldObject;
     otherTypePermissions = connectionFields
-      .filter((field) => field.connectionType)
-      .map((field) => {
-        if (field.connectionType === 'ONE_TO_MANY' && object[field.name]) {
-          return fieldToExtraPermission(
-            field,
-            object[field.name],
-            db,
-            permissionsByType,
-            permissionsByConnection,
-            userID,
-          );
-        } else if (field.connectionType !== 'ONE_TO_MANY') {
-          return checkRelatedExistance(
-            field,
-            object,
-            db,
-            typeName
-          );
-        }
-      })
-      .filter((result) => Boolean(result));
+      .filter((field) => (
+        field.connectionType === 'MANY_TO_ONE' ||
+        field.name in object
+      ))
+      .map((field) => fieldToExtraPermissions(
+        field,
+        object,
+        db,
+        permissionsByType,
+        permissionsByConnection,
+        userID,
+      ));
   }
 
   if (fields) {
     fields = fields.sort();
   }
 
-  const results = await* [
+  otherTypePermissions = flatten(await Promise.all(otherTypePermissions));
+
+  const results = await Promise.all([
     reportError(hasPermissionsForThisType(
       db,
       permissionsByType,
@@ -188,7 +189,7 @@ export default async function hasPermission(
       Promise.resolve(object),
     ), typeName, permission, fields),
     ...otherTypePermissions,
-  ];
+  ]);
 
   const result = results.reduce((acc, next) => ({
     hasPermission: acc.hasPermission && next.hasPermission,
@@ -370,58 +371,66 @@ async function reportError(hasPermissionPromise, type, permission, fields) {
   }
 }
 
-function fieldToExtraPermission(
+async function fieldToExtraPermissions(
   field,
-  value,
+  object,
   db,
   permissionsByType,
   permissionsByConnection,
   userID,
 ) {
-  return reportError(
-    hasPermissionsForThisType(
-      db,
-      permissionsByType,
-      permissionsByConnection,
+  if (field.connectionType === 'ONE_TO_MANY') {
+    return [reportError(
+      hasPermissionsForThisType(
+        db,
+        permissionsByType,
+        permissionsByConnection,
+        'update',
+        [field.reverseName],
+        userID,
+        field.type,
+        db.getByID(field.type, object[field.name]),
+      ),
+      field.type,
       'update',
-      [field.reverseName],
-      userID,
+      [field.reverseName]
+    )];
+  } else if (field.connectionType === 'MANY_TO_ONE') {
+    const objects = await db.getAllByFilter(field.type, {
+      [field.reverseName]: object.id,
+    });
+    return objects.map((related) => reportError(
+      hasPermissionsForThisType(
+        db,
+        permissionsByType,
+        permissionsByConnection,
+        'update',
+        [field.reverseName],
+        userID,
+        field.type,
+        Promise.resolve(related),
+      ),
       field.type,
-      db.getByID(field.type, value),
-    ),
-    field.type,
-    'update',
-    [field.reverseName]
-  );
-}
-
-async function checkRelatedExistance(field, object, db, type) {
-  let connected = false;
-  if (field.connectionType === 'MANY_TO_MANY') {
-    const value = object[field.name];
-    connected = isArray(value) && value.length > 0;
-  } else {
-    connected = await db.hasByFilter(
+      'update',
+      [field.reverseName]
+    ));
+  } else if (field.connectionType === 'MANY_TO_MANY') {
+    const ids = object[field.name];
+    return ids.map((id) => reportError(
+      hasPermissionsForThisType(
+        db,
+        permissionsByType,
+        permissionsByConnection,
+        'update',
+        [field.reverseName],
+        userID,
+        field.type,
+        db.getByID(field.type, id),
+      ),
       field.type,
-      {
-        [field.reverseName]: object.id,
-      },
-    );
-  }
-
-  if (connected) {
-    return {
-      hasPermission: false,
-      errors: [
-        `User lacks permission to delete nodes of type \`${type}\`. Node is ` +
-        `connected to node(s) of type \`${field.type}\` through connection ` +
-        `\`${field.name}\`.`,
-      ],
-    };
-  } else {
-    return {
-      hasPermission: true,
-    };
+      'update',
+      [field.reverseName]
+    ));
   }
 }
 

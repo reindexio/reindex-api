@@ -113,6 +113,27 @@ export function deleteType(conn, id) {
   )).run(conn);
 }
 
+export function removeAllFromConnection(conn, type, field, id) {
+  return queryWithIDs(type,
+    RethinkDB
+      .table(type)
+      .filter({
+        [field]: id,
+      })
+      .update({
+        [field]: null,
+      }, {
+        returnChanges: 'always',
+      }).merge((result) => ({
+        changes: RethinkDB.branch(
+          result.hasFields('changes'),
+          result('changes'),
+          RethinkDB.expr([])
+        ),
+      }))('changes')
+  ).run(conn);
+}
+
 function compactObject(object) {
   const result = {};
   for (const key of Object.keys(object)) {

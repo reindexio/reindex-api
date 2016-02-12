@@ -463,6 +463,7 @@ describe('Permissions', () => {
           isAdmin: false,
           userID: fromReindexID(fixtures.User[0].id),
         },
+        printErrors: false,
       }), {
         data: {
           userById: {
@@ -1284,7 +1285,9 @@ describe('Permissions', () => {
                   grantee: 'USER',
                   userPath: ['micropost', 'author'],
                   read: true,
+                  update: true,
                   delete: true,
+                  permittedFields: ['micropost'],
                 },
                 {
                   grantee: 'USER',
@@ -1781,18 +1784,11 @@ describe('Permissions', () => {
           printErrors: false,
         }), {
           data: {
-            deleteMicropost: null,
-          },
-          errors: [
-            {
-              message: (
-                'User lacks permission to delete nodes of type ' +
-                '`Micropost`. Node is connected to node(s) of type ' +
-                '`Comment` through connection `comments`.'
-              ),
+            deleteMicropost: {
+              id: micropost.id,
             },
-          ],
-        }, 'author can not delete own micropost if it has comments');
+          },
+        }, 'author can not delete own micropost even if it has comments');
       });
     });
   }
