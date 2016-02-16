@@ -10,6 +10,7 @@ import {
   makeRunQuery,
   createTestApp,
   createFixture,
+  deleteFixture,
 } from '../test/testAppUtils';
 import assert from '../test/assert';
 
@@ -1728,6 +1729,77 @@ describe('Integration Tests', () => {
             },
           },
         },
+      });
+    });
+
+    describe('related object cascading', () => {
+      let user;
+      let micropost;
+      before(async () => {
+        user = await createFixture(runQuery, 'User', {
+          handle: 'user-cascade',
+        }, 'id, handle');
+        micropost = await createFixture(runQuery, 'Micropost', {
+          author: user.id,
+        }, `id`);
+        await runQuery(`
+          mutation favorite($input: _MicropostUserFavoritesConnectionInput!) {
+            addMicropostToUserFavorites(input: $input) {
+              clientMutationId
+            }
+          }
+        `, {
+          input: {
+            userId: user.id,
+            micropostId: micropost.id,
+          },
+        });
+      });
+
+      after(async () => {
+        await deleteFixture(runQuery, 'Micropost', micropost.id);
+      });
+
+      it('updates related objects on delete', async () => {
+        await runQuery(`
+          mutation($input: _DeleteUserInput!) {
+            deleteUser(input: $input) {
+              id
+            }
+          }
+        `, {
+          input: {
+            id: user.id,
+          },
+        });
+
+        assert.deepEqual(await runQuery(`
+          query($id: ID!) {
+            micropostById(id: $id) {
+              author {
+                id
+              }
+              favoritedBy {
+                count
+                nodes {
+                  id
+                }
+              }
+            }
+          }
+        `, {
+          id: micropost.id,
+        }), {
+          data: {
+            micropostById: {
+              author: null,
+              favoritedBy: {
+                count: 0,
+                nodes: [],
+              },
+            },
+          },
+        });
       });
     });
   }

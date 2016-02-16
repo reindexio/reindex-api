@@ -3,6 +3,7 @@ import { GraphQLError } from 'graphql/error/GraphQLError';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
+import updateRelatedObjects from '../hooks/updateRelatedObjects';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import formatMutationResult from './formatMutationResult';
 
@@ -49,6 +50,9 @@ export default function createDelete({ type, payload }) {
         context
       );
       const result = await db.deleteQuery(type.name, input.id);
+
+      await updateRelatedObjects(type.name, object, context);
+
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,

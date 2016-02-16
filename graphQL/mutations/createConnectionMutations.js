@@ -234,10 +234,10 @@ function createResolveFunction(
 
     await checkPermission(fromType, 'update',
       {
-        [fromField]: fromObject[fromField],
+        [fromField]: fromObject[fromField] && [fromObject[fromField]],
       },
       {
-        [fromField]: toId,
+        [fromField]: toId && [toId],
       },
       context,
     );
