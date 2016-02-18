@@ -95,28 +95,6 @@ if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
       });
     });
 
-    it('getOrCreateUser', async function() {
-      const credentials = {
-        accessToken: 'fakeAccessToken',
-        displayName: 'Mikhail Novikov',
-        email: 'freiksenet@example.com',
-        id: 1,
-        username: 'freiksenet',
-      };
-      const user = await queries.getOrCreateUser(
-        conn,
-        'github',
-        credentials
-      );
-      assert.deepEqual(user.credentials.github, credentials);
-      const newUser = await queries.getOrCreateUser(
-        conn,
-        'github',
-        credentials
-      );
-      assert.equal(user.id.value, newUser.id.value);
-    });
-
     it('create and delete type', async function() {
       const newNodeType = {
         name: 'NewNodeType',

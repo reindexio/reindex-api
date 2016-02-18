@@ -4,19 +4,6 @@ import { ObjectId } from 'mongodb';
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
 import { addID, addTransform } from './queryUtils';
 
-export async function getOrCreateUser(db, providerName, credential) {
-  const result = await db.collection('User').findOneAndUpdate({
-    [`credentials.${providerName}.id`]: credential.id,
-  }, {
-    $set: { [`credentials.${providerName}`]: credential },
-  }, {
-    upsert: true,
-    returnOriginal: false,
-  });
-
-  return addID('User', result.value);
-}
-
 export async function create(db, type, data) {
   const id = ObjectId();
   const created = await db.collection(type).findOneAndUpdate({
