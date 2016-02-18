@@ -1,45 +1,7 @@
 import RethinkDB from 'rethinkdb';
 
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
-import { USER_TABLE } from '../DBTableNames';
 import { queryWithIDs } from './queryUtils';
-
-export async function getOrCreateUser(conn, providerName, credential) {
-  const table = RethinkDB.table(USER_TABLE);
-
-  const users = await queryWithIDs(USER_TABLE,
-    table.filter((user) =>
-      user('credentials')(providerName)('id').eq(credential.id)
-    )
-  ).coerceTo('array').run(conn);
-
-  if (users.length) {
-    const user = users[0];
-    const changes = {
-      credentials: {
-        ...user.credentials,
-        [providerName]: credential,
-      },
-    };
-    await table.get(user.id.value).update(changes).run(conn);
-    return {
-      ...user,
-      ...changes,
-    };
-  }
-
-  return queryWithIDs(
-    USER_TABLE,
-    table.insert(
-      {
-        credentials: {
-          [providerName]: credential,
-        },
-      },
-      { returnChanges: true },
-    )('changes')(0)('new_val'),
-  ).run(conn);
-}
 
 function getCreateQuery(type, data) {
   return RethinkDB.table(type)

@@ -555,22 +555,5 @@ if (!process.env.DATABASE_TYPE ||
         ]);
       });
     });
-
-    describe('getOrCreateUser', () => {
-      it('upserts users', async () => {
-        const credentials = {
-          id: '4',
-          accessToken: 'BLOBBLOBBLOBBLOB',
-          displayName: 'Mark Zuckerberg',
-          email: 'zuck@example.com',
-        };
-        const zuck = await db.getOrCreateUser('facebook', credentials);
-        assert.equal(zuck.id.type, 'User');
-        assert.deepEqual(zuck.credentials.facebook, credentials);
-
-        const zuck2 = await db.getOrCreateUser('facebook', credentials);
-        assert.deepEqual(zuck.id, zuck2.id);
-      });
-    });
   });
 }
