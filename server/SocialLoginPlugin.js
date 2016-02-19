@@ -1,28 +1,19 @@
 import Path from 'path';
-import { capitalize, get } from 'lodash';
-import { graphql } from 'graphql';
 import Boom from 'boom';
 import DoT from 'dot';
-import JSONWebToken from 'jsonwebtoken';
 import OAuth from 'bell/lib/oauth';
 import Providers from 'bell/lib/providers';
-import { Set } from 'immutable';
 
-import getGraphQLContext from '../graphQL/getGraphQLContext';
+import Auth0Provider from '../authentication/Auth0Provider';
+import getOrCreateUser from '../authentication/getOrCreateUser';
 import escapeScriptJSON from './escapeScriptJSON';
+import signToken from '../authentication/signToken';
 
 const templates = DoT.process({
   path: Path.join(__dirname, 'views'),
 });
 
 const COOKIE_NAME = '_reindex_auth';
-
-const WHITELISTED_PROVIDERS = Set([
-  'facebook',
-  'github',
-  'google',
-  'twitter',
-]);
 
 const LoginErrorCode = {
   LOGIN_CANCELED: 'LOGIN_CANCELED',
@@ -32,14 +23,18 @@ const LoginErrorCode = {
   UNKNOWN_PROVIDER: 'UNKNOWN_PROVIDER',
 };
 
-function getBellProvider(providerName) {
-  if (!WHITELISTED_PROVIDERS.has(providerName)) {
-    return null;
+export function getBellProvider(providerName) {
+  switch (providerName) {
+    case 'auth0': return Auth0Provider;
+    case 'facebook': return Providers.facebook;
+    case 'github': return Providers.github;
+    case 'google': return Providers.google;
+    case 'twitter': return Providers.twitter;
+    default: return null;
   }
-  return Providers[providerName].call(null);
 }
 
-function getBellProviderParams(providerName) {
+export function getBellProviderParams(providerName) {
   if (providerName === 'facebook') {
     return { display: 'popup' };
   }
@@ -106,7 +101,7 @@ async function authenticate(request, reply) {
       forceHttps: process.env.NODE_ENV === 'production',
       location: false,
       name: providerName,
-      provider: bellProvider,
+      provider: bellProvider(authenticationProvider),
       providerParams: getBellProviderParams(providerName),
       scope: authenticationProvider.scopes,
     };
@@ -131,167 +126,18 @@ function getAuthenticateWithOAuth(settings) {
   }
 }
 
-function normalizeCredentials(credentials) {
-  const { profile } = credentials;
-  const result = {
-    accessToken: credentials.token,
-    displayName: profile.displayName,
-    id: profile.id.toString(),
-  };
-
-  if (profile.email) {  // Facebook, GitHub
-    result.email = profile.email;
-  } else if (profile.emails) {  // Google
-    const accountEmail = profile.emails.find((email) =>
-      email.type === 'account'
-    );
-    result.email = accountEmail.value;
-  }
-
-  if (credentials.secret) {
-    result.accessTokenSecret = credentials.secret;
-  }
-
-  if (profile.username) {
-    result.username = profile.username;
-  }
-
-  if (profile.raw.profile_image_url_https) {  // Twitter
-    result.picture = profile.raw.profile_image_url_https;
-  } else if (profile.raw.avatar_url) {  // GitHub
-    result.picture = profile.raw.avatar_url;
-  } else if (profile.raw.image && profile.raw.image.url) {  // Google
-    result.picture = profile.raw.image.url;
-  }
-  return result;
-}
-
-
 async function handler(request, reply) {
   try {
     const db = await request.getDB();
     const { credentials } = request.auth;
 
     const { provider } = credentials;
-    const credential = normalizeCredentials(credentials);
-    const user = await getOrCreateUser(db, provider, credential);
+    const user = await getOrCreateUser(db, provider, credentials);
+    const token = await signToken(db, { provider, user });
 
-    const secrets = await db.getSecrets();
-    if (!secrets.length) {
-      throw new Error('We are trying to sign a token but we have no secrets!');
-    }
-
-    const token = JSONWebToken.sign(
-      { provider },
-      secrets[0],
-      { subject: user.id },
-    );
     return renderCallbackPopup(reply, { token, provider, user });
   } catch (error) {
     return reply(error);
-  }
-}
-
-async function getOrCreateUser(db, provider, credential) {
-  const context = getGraphQLContext(db, await db.getMetadata(), {
-    credentials: {
-      isAdmin: true,
-    },
-  });
-  const query = `userByCredentials${capitalize(provider)}Id`;
-
-  const userFragment = `
-    id
-    credentials {
-      github {
-        id
-        accessToken
-        displayName
-      }
-      google {
-        id
-        accessToken
-        displayName
-      }
-      facebook {
-        id
-        accessToken
-        displayName
-      }
-      twitter {
-        id
-        accessToken
-        displayName
-      }
-    }
-  `;
-
-  const fetchResult = await graphql(context.schema, `
-    query($id: String!) {
-      ${query}(id: $id) {
-        id
-      }
-    }
-  `, context, {
-    id: credential.id,
-  });
-
-  if (fetchResult.errors) {
-    throw new Error(JSON.stringify(fetchResult.errors));
-  }
-
-  let updateResult;
-  let updateData;
-  if (fetchResult.data && fetchResult.data[query]) {
-    const id = fetchResult.data[query].id;
-    updateResult = await graphql(context.schema, `
-      mutation($input: _UpdateUserInput!) {
-        updateUser(input: $input) {
-          changedUser {
-            ${userFragment}
-          }
-        }
-      }
-    `, context, {
-      input: {
-        id,
-        credentials: {
-          [provider]: credential,
-        },
-      },
-    });
-    updateData = get(updateResult, [
-      'data',
-      'updateUser',
-      'changedUser',
-    ]);
-  } else {
-    updateResult = await graphql(context.schema, `
-      mutation($input: _CreateUserInput!) {
-        createUser(input: $input) {
-          changedUser {
-            ${userFragment}
-          }
-        }
-      }
-    `, context, {
-      input: {
-        credentials: {
-          [provider]: credential,
-        },
-      },
-    });
-    updateData = get(updateResult, [
-      'data',
-      'createUser',
-      'changedUser',
-    ]);
-  }
-
-  if (!updateResult.errors) {
-    return updateData;
-  } else {
-    throw new Error(JSON.stringify(updateResult.errors));
   }
 }
 
@@ -345,7 +191,7 @@ function register(server, options, next) {
 }
 
 // Modelled after Bell.simulate API
-function simulate(oauthFunction) {
+export function simulate(oauthFunction) {
   if (oauthFunction) {
     simulateOAuthFunction = oauthFunction;
   } else {
@@ -357,5 +203,5 @@ register.attributes = {
   name: 'SocialAuthenticationScheme',
 };
 
-const SocialAuthenticationScheme = { register, simulate };
+const SocialAuthenticationScheme = { register };
 export default SocialAuthenticationScheme;

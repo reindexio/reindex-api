@@ -33,6 +33,21 @@ function getBaseCredentialFields(providerName) {
 }
 
 export default function createCredentialTypes() {
+  const ReindexAuth0Credential = new GraphQLObjectType({
+    name: 'ReindexAuth0Credential',
+    description: 'Auth0 user profile.',
+    fields: {
+      ...getBaseCredentialFields('Auth0'),
+      email: {
+        type: GraphQLString,
+        description: 'The email address stored in the Auth0 user profile.',
+      },
+      picture: {
+        type: GraphQLString,
+        description: `The URL of the person's profile picture.`,
+      },
+    },
+  });
   const ReindexGithubCredential = new GraphQLObjectType({
     name: 'ReindexGithubCredential',
     description: 'GitHub authentication credentials.',
@@ -204,6 +219,11 @@ export default function createCredentialTypes() {
     description:
       'The credentials of the user in different authentication services.',
     fields: {
+      auth0: {
+        type: ReindexAuth0Credential,
+        description: 'The Auth0 user profile of the authenticated user.',
+        resolve: createCredentialResolve('auth0'),
+      },
       facebook: {
         type: ReindexFacebookCredential,
         description: 'The Facebook credentials of the authenticated user.',
@@ -230,6 +250,9 @@ export default function createCredentialTypes() {
   return {
     ReindexCredentialCollection: new TypeSet({
       type: ReindexCredentialCollection,
+    }),
+    ReindexAuth0Credential: new TypeSet({
+      type: ReindexAuth0Credential,
     }),
     ReindexFacebookCredential: new TypeSet({
       type: ReindexFacebookCredential,
