@@ -416,7 +416,7 @@ function validatePermissions(type, typesByName, invariant) {
       let nextType;
       if (field && field.type === 'Connection') {
         nextType = typesByName[field.ofType];
-      } else {
+      } else if (field) {
         nextType = typesByName[field.type];
       }
 
