@@ -441,7 +441,7 @@ async function hasOneConnectionPermission(
   userID
 ) {
   let currentObject = object;
-  while (path.length > 1) {
+  while (path.length > 1 && currentObject) {
     let segment;
     [segment, ...path] = path;
     const pathValue = currentObject[segment.name];
@@ -466,6 +466,10 @@ async function hasOneConnectionPermission(
     } else {
       currentObject = null;
     }
+  }
+
+  if (!currentObject) {
+    return false;
   }
 
   const lastSegment = path[0];
