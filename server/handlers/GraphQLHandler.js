@@ -123,6 +123,15 @@ async function handler(request, reply) {
 const GraphQLHandler = {
   config: {
     auth: 'token',
+    validate: {
+      payload: (value, options, next) => {
+        if (!value || !value.query) {
+          return next(new Error('Missing `query` in POST body.'));
+        } else {
+          return next(null, value);
+        }
+      },
+    },
   },
   handler,
   method: 'POST',

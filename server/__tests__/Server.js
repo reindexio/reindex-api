@@ -65,6 +65,28 @@ describe('Server', () => {
     await deleteApp(hostname);
   });
 
+  it('fails gracefully if query is not provided', async function () {
+    const response = await makeRequest({
+      method: 'POST',
+      url: '/graphql',
+      headers: {
+        authorization: `Bearer ${token}`,
+        host: hostname,
+      },
+    });
+
+    assert.strictEqual(response.statusCode, 400);
+    assert.deepEqual(response.result, {
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'Missing `query` in POST body.',
+      validation: {
+        keys: [],
+        source: 'payload',
+      },
+    });
+  });
+
   it('executes a GraphQL query', async function () {
     const response = await makeRequest({
       method: 'POST',
