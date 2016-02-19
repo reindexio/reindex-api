@@ -34,7 +34,7 @@ if (!process.env.DATABASE_TYPE ||
 
       user = await createFixture(runQuery, 'User', {
         handle: 'user',
-      }, 'id');
+      }, 'id, handle');
 
       for (let i = 0; i < 100; i++) {
         const createdMicropost = await createFixture(runQuery, 'Micropost', {
@@ -71,6 +71,17 @@ if (!process.env.DATABASE_TYPE ||
       };
       return result;
     }
+
+    describe('mutation tests', () => {
+      it('does not clear object when passed an empty update', async () => {
+        const id = fromReindexID(user.id);
+        const result = await db.update('User', id, {});
+        assert.deepEqual({
+          handle: result.handle,
+          id: user.id,
+        }, user);
+      });
+    });
 
     describe('Relay-compliant pagination', () => {
       it('before and after', async () => {
