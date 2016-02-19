@@ -2,6 +2,7 @@ import { isEmpty, isPlainObject, forEach, omit, isEqual } from 'lodash';
 import { ObjectId } from 'mongodb';
 
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
+import { getByID } from './simpleQueries';
 import { addID, addTransform } from './queryUtils';
 
 export async function create(db, type, data) {
@@ -16,12 +17,17 @@ export async function create(db, type, data) {
 }
 
 export async function update(db, type, id, data) {
-  const updated = await db.collection(type).findOneAndUpdate({
-    _id: ObjectId(id.value),
-  }, prepareDocument(data), {
-    returnOriginal: false,
-  });
-  return addID(type, updated.value);
+  const doc = prepareDocument(data);
+  if (isEmpty(doc)) {
+    return getByID(db, type, id);
+  } else {
+    const updated = await db.collection(type).findOneAndUpdate({
+      _id: ObjectId(id.value),
+    }, doc, {
+      returnOriginal: false,
+    });
+    return addID(type, updated.value);
+  }
 }
 
 export async function replace(db, type, id, data, oldObject) {
