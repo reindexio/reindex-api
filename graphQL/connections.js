@@ -166,9 +166,16 @@ export function createNodeFieldResolve(ofType, fieldName) {
 }
 
 async function checkConnectionPermissions(type, reverseName, parent, context) {
-  const object = {
+  let object = {
     [reverseName]: parent.id,
   };
+  const typeData = context.rootValue.typeInfoByName[type];
+  if (typeData &&
+      typeData.fields[reverseName].connectionType === 'MANY_TO_MANY') {
+    object = {
+      [reverseName]: [parent.id],
+    };
+  }
   await checkPermission(type, 'read', {}, object, context);
 }
 
