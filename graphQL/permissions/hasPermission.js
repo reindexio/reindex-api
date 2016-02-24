@@ -445,7 +445,7 @@ async function hasOneConnectionPermission(
     let segment;
     [segment, ...path] = path;
     const pathValue = currentObject[segment.name];
-    if (segment.connectionType !== 'ONE_TO_MANY') {
+    if (segment.connectionType !== 'ONE_TO_MANY' && object.id) {
       const objects = await db.getAllByFilter(segment.type, {
         [segment.reverseName]: object.id,
       });
@@ -461,7 +461,20 @@ async function hasOneConnectionPermission(
         }
       }
       return false;
-    } else if (pathValue) {
+    } else if (segment.connectionType === 'MANY_TO_MANY' && pathValue) {
+      for (const relatedId of pathValue) {
+        const relatedObject = await db.getByID(segment.type, relatedId);
+        const permission = await hasOneConnectionPermission(
+          db,
+          path,
+          relatedObject,
+          userID,
+        );
+        if (permission) {
+          return permission;
+        }
+      }
+    } else if (segment.connectionType === 'ONE_TO_MANY' && pathValue) {
       currentObject = await db.getByID(segment.type, pathValue);
     } else {
       currentObject = null;
