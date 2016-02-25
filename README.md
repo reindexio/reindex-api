@@ -19,38 +19,40 @@ reindex-api was designed with scalability in mind, but so far doesn't have many 
 
 ### Installation
 
-- Install MongoDB
+- Install MongoDB and optionally RethinkDB
 - Install dependencies
 
   ```
   npm install
   ```
+
 - Run tests
 
   ```
   npm test
   ```
-- Create a test app
+
+- Create admin app
+
+  ```
+  npm run create-admin-app admin.localhost.reindexio.com
+  ```
+
+- Create a test app (`localhost`)
 
   ```
   npm run create-app
   ```
+
 - Run server
 
   ```
   npm start
   ```
 
-### Dependencies
+- You can login into GraphiQL by passing the admin token in the `token` query
+string argument:
 
-The package versions are pinned using `npm shrinkwrap`.
-
-#### Adding a dependency
-
-```
-npm install <name> --save
-npm shrinkwrap --dev
-```
-
-Remember to always commit the changes to the `npm-shrinkwrap.json` file after
-modifying dependencies.
+  ```
+  http://localhost:5000/?token=<YOUR_TOKEN>
+  ```
