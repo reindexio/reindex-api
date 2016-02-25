@@ -1,11 +1,10 @@
 import createCreateReindexSecret from '../mutations/createCreateReindexSecret';
-import createLoginWithAccessToken
-  from '../mutations/createLoginWithAccessToken';
+import createLoginWithToken from '../mutations/createLoginWithToken';
 import createMigrate from '../mutations/createMigrate';
 
 const CommonMutationFields = {
   createReindexSecret: createCreateReindexSecret,
-  loginWithAccessToken: createLoginWithAccessToken,
+  loginWithToken: createLoginWithToken,
   migrate: createMigrate,
 };
 

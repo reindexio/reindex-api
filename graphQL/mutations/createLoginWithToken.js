@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import {
-  GraphQLEnumType,
   GraphQLInputObjectType,
   GraphQLNonNull,
   GraphQLObjectType,
@@ -10,30 +9,22 @@ import { GraphQLError } from 'graphql/error';
 
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import getOrCreateUser from '../../authentication/getOrCreateUser';
+import ProviderType from '../builtins/ProviderType';
 import signToken from '../../authentication/signToken';
 import { fromReindexID } from '../builtins/ReindexID';
 import { profile } from '../../authentication/Auth0Provider';
 
-export default function createLoginWithAccessToken(typeSets) {
-  const LoginTokenType = new GraphQLEnumType({
-    name: 'ReindexLoginTokenType',
-    values: {
-      AUTH0: {
-        description: 'Auth0 access token.',
-      },
-    },
-  });
-
-  const LoginWithAccessTokenInput = new GraphQLInputObjectType({
-    name: 'ReindexLoginWithAccessTokenInput',
+export default function createLoginWithToken(typeSets) {
+  const LoginWithTokenInput = new GraphQLInputObjectType({
+    name: 'ReindexLoginWithTokenInput',
     fields: {
-      accessToken: {
+      token: {
         type: new GraphQLNonNull(GraphQLString),
-        description: 'TODO',
+        description: 'Token to login with. (Auth0 `id_token`.)',
       },
-      tokenType: {
-        type: new GraphQLNonNull(LoginTokenType),
-        description: 'TODO',
+      provider: {
+        type: new GraphQLNonNull(ProviderType),
+        description: 'Provider type. (Supported: \'auth0\')',
       },
       clientMutationId: clientMutationIdField,
     },
@@ -55,18 +46,22 @@ export default function createLoginWithAccessToken(typeSets) {
   });
 
   return {
-    name: 'loginWithAccessToken',
+    name: 'loginWithToken',
     description: '',
     type: LoginPayload,
     args: {
       input: {
-        type: new GraphQLNonNull(LoginWithAccessTokenInput),
+        type: new GraphQLNonNull(LoginWithTokenInput),
       },
     },
     async resolve(parent, { input }, context) {
       const { db } = context.rootValue;
-      const { accessToken, clientMutationId } = input;
-      const provider = 'auth0';
+      const { provider, token, clientMutationId } = input;
+      if (provider !== 'auth0') {
+        throw new GraphQLError(
+          'Login with token is only supported using provider: auth0'
+        );
+      }
       const options = await db.getByField(
         'ReindexAuthenticationProvider',
         'type',
@@ -83,27 +78,34 @@ export default function createLoginWithAccessToken(typeSets) {
       if (!domain) {
         throw new GraphQLError('Auth0 domain is not set.');
       }
-      const response = await fetch(`https://${domain}/userinfo`, {
-        headers: { authorization: `Bearer ${accessToken}` },
+      console.log(`https://${domain}/tokeninfo`, token);
+      const response = await fetch(`https://${domain}/tokeninfo`, {
+        method: 'POST',
+        body: JSON.stringify({ id_token: token }),
+        headers: {
+          'content-type': 'application/json',
+        },
       });
       if (response.status < 200 || response.status >= 300) {
+        console.error(await response.text());
         throw new GraphQLError('Fetching the user profile failed.');
       }
       const userInfo = await response.json();
       const user = await getOrCreateUser(db, provider, {
         profile: profile(userInfo),
-        token: accessToken,
+        token,
       });
+
+      const reindexToken = await signToken(db, { provider, user });
+
       // XXX(fson, 2016-02-19): ID needs to be parsed because getOrCreateUser
       // calls the GraphQL endpoint internally.
       user.id = fromReindexID(user.id);
 
-      const token = await signToken(db, { provider, user });
-
       return {
         clientMutationId,
         user,
-        token,
+        token: reindexToken,
       };
     },
   };
