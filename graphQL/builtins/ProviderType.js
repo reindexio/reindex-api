@@ -6,17 +6,20 @@ export const ProviderType = new GraphQLEnumType({
   name: 'ReindexProviderType',
   description: 'Defines the type of authentication service.',
   values: {
-    github: {
-      value: 'github',
+    auth0: {
+      description: 'Auth0',
     },
     facebook: {
-      value: 'facebook',
+      description: 'Facebook Login',
+    },
+    github: {
+      description: 'GitHub Authentication',
     },
     google: {
-      value: 'google',
+      description: 'Google OAuth 2.0',
     },
     twitter: {
-      value: 'twitter',
+      description: 'Sign in with Twitter',
     },
   },
 });

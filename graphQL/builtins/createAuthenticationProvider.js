@@ -53,6 +53,11 @@ Currently supported providers are:
             '`facebook` provider this is the `Facebook App Secret` of the ' +
             'Facebook app used for authentication.',
         },
+        domain: {
+          type: GraphQLString,
+          description: 'The namespace of the application, e.g. ' +
+            '"example.auth0.com". Only used by the Auth0 provider.',
+        },
         isEnabled: {
           type: GraphQLBoolean,
           description: 'Must be set to `true` to enable user authentication ' +
