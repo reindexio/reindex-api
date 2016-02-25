@@ -35,19 +35,13 @@ reindex-api was designed with scalability in mind, but so far doesn't have many 
 - Create admin app
 
   ```
-  npm run create-admin-app r_admin
+  npm run create-admin-app admin.localhost.reindexio.com
   ```
 
-- Create a test app
+- Create a test app (`localhost`)
 
   ```
-  npm run create-app localhost
-  ```
-
-- Get the token
-
-  ```
-  npm run create-token -- -h localhost -a
+  npm run create-app
   ```
 
 - Run server
@@ -56,7 +50,8 @@ reindex-api was designed with scalability in mind, but so far doesn't have many 
   npm start
   ```
 
-- You can login into GraphiQL by adding token to the `token` GET parameter
+- You can login into GraphiQL by passing the admin token in the `token` query
+string argument:
 
   ```
   http://localhost:5000/?token=<YOUR_TOKEN>
