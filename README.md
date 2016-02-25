@@ -19,26 +19,47 @@ reindex-api was designed with scalability in mind, but so far doesn't have many 
 
 ### Installation
 
-- Install MongoDB
+- Install MongoDB and optionally RethinkDB
 - Install dependencies
 
   ```
   npm install
   ```
+
 - Run tests
 
   ```
   npm test
   ```
+
+- Create admin app
+
+  ```
+  npm run create-admin-app r_admin
+  ```
+
 - Create a test app
 
   ```
-  npm run create-app
+  npm run create-app localhost
   ```
+
+- Get the token
+
+  ```
+  npm run create-token -- -h localhost -a
+  ```
+
 - Run server
 
   ```
   npm start
+  ```
+
+- You can login into GraphiQL by adding token to the `token` GET parameter
+
+  ```
+  http://localhost:5000/?token=<YOUR_TOKEN>
   ```
 
 ### Dependencies
