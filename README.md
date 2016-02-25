@@ -61,17 +61,3 @@ reindex-api was designed with scalability in mind, but so far doesn't have many 
   ```
   http://localhost:5000/?token=<YOUR_TOKEN>
   ```
-
-### Dependencies
-
-The package versions are pinned using `npm shrinkwrap`.
-
-#### Adding a dependency
-
-```
-npm install <name> --save
-npm shrinkwrap --dev
-```
-
-Remember to always commit the changes to the `npm-shrinkwrap.json` file after
-modifying dependencies.
