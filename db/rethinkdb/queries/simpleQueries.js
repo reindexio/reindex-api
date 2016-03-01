@@ -7,7 +7,6 @@ import {
   TYPE_TABLE,
   SECRET_TABLE,
   INDEX_TABLE,
-  PERMISSION_TABLE,
   HOOK_TABLE,
 } from '../DBTableNames';
 import {
@@ -44,15 +43,10 @@ export async function getMetadata(conn) {
   const result = await RethinkDB.do(
     queryWithIDs(TYPE_TABLE, RethinkDB.table(TYPE_TABLE)).coerceTo('array'),
     queryWithIDs(INDEX_TABLE, RethinkDB.table(INDEX_TABLE)).coerceTo('array'),
-    queryWithIDs(
-      PERMISSION_TABLE,
-      RethinkDB.table(PERMISSION_TABLE)
-    ).coerceTo('array'),
     queryWithIDs(HOOK_TABLE, RethinkDB.table(HOOK_TABLE)).coerceTo('array'),
-    (types, indexes, permissions, hooks) => ({
+    (types, indexes, hooks) => ({
       types,
       indexes,
-      permissions,
       hooks,
     })
   ).run(conn);

@@ -5,7 +5,6 @@ import {
   AUTHENTICATION_PROVIDER_TABLE,
   SECRET_TABLE,
   TYPE_TABLE,
-  PERMISSION_TABLE,
   INDEX_TABLE,
   HOOK_TABLE,
 } from '../../DBTableNames';
@@ -95,7 +94,6 @@ export const TEST_DATA = fromJS({
         isEnabled: true,
       },
     ],
-    [PERMISSION_TABLE]: [],
     [SECRET_TABLE]: [
       {
         value: 'secret',
