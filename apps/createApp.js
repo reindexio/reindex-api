@@ -17,14 +17,13 @@ export default function createApp(
   hostname,
   clusterName = Config.get('database.defaultCluster')
 ) {
-  return _createApp(hostname, clusterName, true);
+  return _createApp(hostname, clusterName);
 }
 
 export function createAdminApp(hostname) {
   return _createApp(
     hostname,
     Config.get('database.adminCluster'),
-    false,
     AdminReindexSchema,
     Config.get('database.adminDatabase'),
   );
@@ -34,7 +33,6 @@ export function createAdminApp(hostname) {
 async function _createApp(
   hostname,
   clusterName,
-  addWildcardPermission,
   types = null,
   dbName = ObjectId().toString(),
 ) {
@@ -48,7 +46,7 @@ async function _createApp(
   const db = createDBClient(hostname, dbName, cluster);
 
   try {
-    ({ secret } = await createEmptyDatabase(db, types, addWildcardPermission));
+    ({ secret } = await createEmptyDatabase(db, types));
     adminDB = getAdminDB(hostname);
     app = await createAppMetadata(adminDB, hostname, {
       cluster: clusterName,
@@ -66,19 +64,9 @@ async function _createApp(
   };
 }
 
-async function createEmptyDatabase(db, types, addWildcardPermission) {
+async function createEmptyDatabase(db, types) {
   await db.createStorageForApp();
   await db.create('ReindexType', DefaultUserType);
-  if (addWildcardPermission) {
-    await db.create('ReindexPermission', {
-      type: null,
-      user: null,
-      read: true,
-      create: true,
-      update: true,
-      delete: true,
-    });
-  }
   const secret = Cryptiles.randomString(40);
   await db.create('ReindexSecret', { value: secret });
   if (types) {
