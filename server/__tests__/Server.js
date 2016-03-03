@@ -7,8 +7,6 @@ import {
   createFixture,
   deleteFixture,
 } from '../../test/testAppUtils';
-import Config from '../Config';
-import DatabaseTypes from '../../db/DatabaseTypes';
 import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
 import getDB from '../../db/getDB';
@@ -229,49 +227,6 @@ describe('Server', () => {
       });
 
       assert.deepEqual(userId, userResult.data.userByCredentialsGithubId.id);
-    });
-  });
-
-  describe('Broken database connection', () => {
-    before(async () => {
-      Config.set('database.clusters', JSON.stringify({
-        mongodb: {
-          type: DatabaseTypes.MongoDB,
-          connectionString: 'mongodb://localhost:65355/',
-        },
-      }));
-      Config.validate();
-    });
-
-    after(() => {
-      Config.set('database.clusters', Config.default('database.clusters'));
-      Config.validate();
-    });
-
-    it('returns 500 when databases are not available', async function () {
-      const response = await makeRequest({
-        method: 'POST',
-        url: '/graphql',
-        payload: {
-          query: testQuery,
-        },
-        headers: {
-          authorization: `Bearer ${token}`,
-          host: hostname,
-        },
-      });
-      assert.strictEqual(response.statusCode, 500);
-    });
-
-    it('status page returns service not available', async function () {
-      const response = await makeRequest({
-        method: 'GET',
-        url: '/status',
-        headers: {
-          host: hostname,
-        },
-      });
-      assert.strictEqual(response.statusCode, 503);
     });
   });
 });

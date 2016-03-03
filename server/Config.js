@@ -42,6 +42,14 @@ const Config = convict({
       env: 'ADMIN_DATABASE',
       format: String,
     },
+    adminDatabaseSettings: {
+      default: JSON.stringify({
+        type: DatabaseTypes.MongoDB,
+        connectionString: 'mongodb://localhost/',
+      }),
+      doc: 'A JSON blob with all database cluster configurations',
+      env: 'ADMIN_DATABASE_SETTINGS',
+    },
     clusters: {
       default: JSON.stringify({
         mongodb: {
@@ -57,10 +65,10 @@ const Config = convict({
       env: 'DATABASE_CLUSTERS',
       format: validateClusters,
     },
-    defaultCluster: {
-      default: 'mongodb',
-      doc: 'The default database cluster.',
-      env: 'DEFAULT_CLUSTER',
+    defaultDatabaseType: {
+      default: 'MongoDB',
+      doc: 'The default database type.',
+      env: 'DEFAULT_DATABASE_TYPE',
       format: String,
     },
   },
@@ -98,11 +106,13 @@ Config.load({}).validate();
 
 Config.resetTestConfig = function() {
   [
+    'app.key',
     'connection.port',
     'database.adminCluster',
     'database.adminDatabase',
+    'database.adminDatabaseSettings',
     'database.clusters',
-    'database.defaultCluster',
+    'database.defaultDatabaseType',
     'Intercom.appId',
     'Intercom.appApiKey',
     'Intercom.secretKey',

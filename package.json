@@ -60,6 +60,7 @@
     "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive test/setup.js",
     "testonly": "mocha --no-timeouts --compilers js:babel/register --recursive test/setup.js $(find ./ -name __tests__ | grep -v node_modules)",
     "test": "npm run lint && npm run testonly",
+    "add-storage": "babel-node bin/add-storage.js",
     "create-admin-app": "babel-node bin/create-admin-app.js",
     "create-app": "babel-node bin/create-app-for-user.js",
     "create-token": "babel-node bin/create-token.js",

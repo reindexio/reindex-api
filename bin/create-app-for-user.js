@@ -1,8 +1,8 @@
-import Config from '../server/Config';
 import createApp from '../apps/createApp';
 import createToken from '../apps/createToken';
 import createAppName from '../apps/createAppName';
 import hasApp from '../apps/hasApp';
+import DatabaseTypes from '../db/DatabaseTypes';
 import {
   hasIntercom,
   createIntercomUser,
@@ -28,16 +28,16 @@ async function createAppForUser() {
         console.warn(`Hostname "${hostname}" is already taken.`);
       }
     } while (exists);
-    const defaultCluster = Config.get('database.defaultCluster');
-    const clusters = Object.keys(JSON.parse(Config.get('database.clusters')));
-    const choices = clusters.map((name) =>
-      name === defaultCluster ? `[${name}]` : name
+    const types = Object.values(DatabaseTypes).sort();
+    const defaultType = DatabaseTypes.MongoDB;
+    const choices = types.map((name) =>
+      name === defaultType ? `[${name}]` : name
     ).join(', ');
-    const cluster = await choose(`Cluster name: (${choices})`, clusters, {
-      default: defaultCluster,
+    const databaseType = await choose(`Database type: (${choices})`, types, {
+      default: defaultType,
     });
-    console.log(`Creating app ${hostname} in cluster ${cluster}...`);
-    await createApp(hostname, cluster);
+    console.log(`Creating app ${hostname}...`);
+    await createApp(hostname, databaseType);
     const token = await createToken(hostname, { admin: true });
 
     console.log(`
@@ -62,6 +62,7 @@ async function createAppForUser() {
     console.error('Failure!');
     console.error(e);
   }
+  process.exit(0);
 }
 
 createAppForUser();
