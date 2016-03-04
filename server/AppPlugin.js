@@ -20,33 +20,36 @@ async function listAppsHandler(request, reply) {
 }
 
 async function createAppHandler(request, reply) {
-  const email = request.payload.email;
-  const cluster = Config.get('database.defaultCluster');
+  try {
+    const { email, databaseType } = request.payload;
 
-  let hostname;
-  let exists;
-  do {
-    hostname = createAppName();
-    exists = await hasApp(hostname);
-  } while (exists);
+    let hostname;
+    let exists;
+    do {
+      hostname = createAppName();
+      exists = await hasApp(hostname);
+    } while (exists);
 
-  const app = await createApp(hostname, cluster);
-  const token = await createToken(hostname, { admin: true });
+    const app = await createApp(hostname, databaseType);
+    const token = await createToken(hostname, { admin: true });
 
-  if (hasIntercom()) {
-    const user = await createIntercomUser(email, null, hostname);
-    await sendWelcomeEmail(user.id);
+    if (hasIntercom()) {
+      const user = await createIntercomUser(email, null, hostname);
+      await sendWelcomeEmail(user.id);
+    }
+
+    reply({
+      id: toReindexID(app.id),
+      database: app.database,
+      domains: app.domains.map((domain) => ({
+        id: toReindexID(domain.id),
+        hostname: domain.hostname,
+      })),
+      token,
+    });
+  } catch (error) {
+    reply(error);
   }
-
-  reply({
-    id: toReindexID(app.id),
-    database: app.database,
-    domains: app.domains.map((domain) => ({
-      id: toReindexID(domain.id),
-      hostname: domain.hostname,
-    })),
-    token,
-  });
 }
 
 async function register(server, options, next) {

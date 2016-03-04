@@ -2,10 +2,9 @@ import { graphql } from 'graphql';
 
 import getAdminDB from '../db/getAdminDB';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
-import getCluster from '../db/getCluster';
 import DatabaseTypes from '../db/DatabaseTypes';
 import createDBClient from '../db/createDBClient';
-
+import getDatabaseSettings from '../db/getDatabaseSettings';
 
 const query = `query ListApps {
   viewer {
@@ -19,6 +18,12 @@ const query = `query ListApps {
         domains(first: 1) {
           nodes {
             hostname
+          }
+        }
+        storage {
+          settings {
+            connectionString
+            type
           }
         }
       }
@@ -38,15 +43,15 @@ export default async function getStats() {
     return Promise.all(
       result.data.viewer.allApps.nodes
         .filter((app) =>
-          getCluster(app.database.cluster).type === DatabaseTypes.MongoDB
+          getDatabaseSettings(app).type === DatabaseTypes.MongoDB
         )
         .map(async (app) => {
-          const cluster = getCluster(app.database.cluster);
+          const settings = getDatabaseSettings(app);
           const hostname = app.domains.nodes[0].hostname;
           const db = createDBClient(
             hostname,
             app.database.name,
-            cluster,
+            settings,
           );
           try {
             const client = await db.getDB();

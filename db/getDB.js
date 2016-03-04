@@ -1,6 +1,6 @@
 import createDBClient from './createDBClient';
 import getAdminDB from './getAdminDB';
-import getCluster from './getCluster';
+import getDatabaseSettings from './getDatabaseSettings';
 
 function appNotFoundError(hostname) {
   const error = new Error(`App not found: ${hostname}`);
@@ -13,7 +13,12 @@ async function fetchApp(adminDB, hostname) {
   if (!domain) {
     throw appNotFoundError(hostname);
   }
-  return await adminDB.getByID('App', domain.app);
+  const app = await adminDB.getByID('App', domain.app);
+  const storage = app.storage && await adminDB.getByID('Storage', app.storage);
+  return {
+    ...app,
+    storage,
+  };
 }
 
 const appsByHostname = {};
@@ -32,6 +37,5 @@ export default async function getDB(hostname) {
     }
     appsByHostname[hostname] = app;
   }
-  const cluster = getCluster(app.database.cluster);
-  return createDBClient(hostname, app.database.name, cluster);
+  return createDBClient(hostname, app.database.name, getDatabaseSettings(app));
 }

@@ -12,7 +12,7 @@ export default async function deleteApp(hostname) {
     }
     await adminDB.deleteQuery('Domain', domain.id);
     await adminDB.deleteQuery('App', domain.app);
-    await db.deleteStorageForApp();
+    await db.deleteDatabaseForApp();
   } finally {
     await adminDB.close();
     if (db) {

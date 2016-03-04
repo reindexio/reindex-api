@@ -6,57 +6,35 @@ import AdminReindexSchema from '../ReindexSchema.json';
 import buildSchemaMigration from '../graphQL/migrations/buildSchemaMigration';
 import createDBClient from '../db/createDBClient';
 import Config from '../server/Config';
-import getCluster from '../db/getCluster';
-import getAdminDB from '../db/getAdminDB';
-import { TIMESTAMP } from '../graphQL/builtins/DateTime';
 import DefaultUserType from '../graphQL/builtins/DefaultUserType';
+import getAdminDB from '../db/getAdminDB';
+import DatabaseTypes from '../db/DatabaseTypes';
+import { TIMESTAMP } from '../graphQL/builtins/DateTime';
 
 const hostnamePattern = /^[0-9a-z.\-]+$/;
 
-export default function createApp(
+export default async function createApp(
   hostname,
-  clusterName = Config.get('database.defaultCluster')
+  databaseType = Config.get('database.defaultDatabaseType'),
 ) {
-  return _createApp(hostname, clusterName);
-}
+  assert(hostnamePattern.test(hostname), 'Invalid hostname.');
+  assert(Object.values(DatabaseTypes).includes(databaseType),
+    `Invalid database type: ${databaseType}`);
 
-export function createAdminApp(hostname) {
-  return _createApp(
-    hostname,
-    Config.get('database.adminCluster'),
-    AdminReindexSchema,
-    Config.get('database.adminDatabase'),
-  );
-}
+  const storage = await allocateStorage(databaseType, hostname);
 
-
-async function _createApp(
-  hostname,
-  clusterName,
-  types = null,
-  dbName = ObjectId().toString(),
-) {
-  let adminDB;
   let app;
   let secret;
-
-  assert(hostnamePattern.test(hostname), 'Invalid hostname.');
-
-  const cluster = getCluster(clusterName);
-  const db = createDBClient(hostname, dbName, cluster);
+  const dbName = storage.databaseName || ObjectId().toString();
+  const db = createDBClient(hostname, dbName, storage.settings);
+  const adminDB = getAdminDB(hostname);
 
   try {
-    ({ secret } = await createEmptyDatabase(db, types));
-    adminDB = getAdminDB(hostname);
-    app = await createAppMetadata(adminDB, hostname, {
-      cluster: clusterName,
-      name: dbName,
-    });
+    secret = await createEmptyDatabase(db);
+    app = await createAppMetadata(adminDB, hostname, dbName, storage);
   } finally {
     await db.close();
-    if (adminDB) {
-      await adminDB.close();
-    }
+    await adminDB.close();
   }
   return {
     ...app,
@@ -64,8 +42,27 @@ async function _createApp(
   };
 }
 
+export async function createAdminApp(hostname) {
+  assert(hostnamePattern.test(hostname), 'Invalid hostname.');
+
+  const dbName = Config.get('database.adminDatabase');
+  const adminDB = getAdminDB(hostname);
+  try {
+    await createEmptyDatabase(adminDB, AdminReindexSchema);
+    const storage = await adminDB.create('Storage', {
+      createdAt: TIMESTAMP,
+      databasesAvailable: 100,
+      settings: JSON.parse(Config.get('database.adminDatabaseSettings')),
+    });
+    await createAppMetadata(adminDB, hostname, dbName, storage);
+  } finally {
+    await adminDB.close();
+  }
+}
+
+
 async function createEmptyDatabase(db, types) {
-  await db.createStorageForApp();
+  await db.createDatabaseForApp();
   await db.create('ReindexType', DefaultUserType);
   const secret = Cryptiles.randomString(40);
   await db.create('ReindexSecret', { value: secret });
@@ -77,13 +74,16 @@ async function createEmptyDatabase(db, types) {
     );
   }
 
-  return { secret };
+  return secret;
 }
 
-async function createAppMetadata(adminDB, hostname, database) {
+async function createAppMetadata(adminDB, hostname, dbName, storage) {
   const app = await adminDB.create('App', {
     createdAt: TIMESTAMP,
-    database,
+    database: {
+      name: dbName,
+    },
+    storage: storage.id,
   });
   const domain = await adminDB.create('Domain', {
     app: app.id,
@@ -96,4 +96,14 @@ async function createAppMetadata(adminDB, hostname, database) {
       domain,
     ],
   };
+}
+
+async function allocateStorage(type, hostname) {
+  let adminDB;
+  try {
+    adminDB = getAdminDB(hostname);
+    return await adminDB.allocateStorage(type);
+  } finally {
+    await adminDB.close();
+  }
 }

@@ -9,6 +9,16 @@ export function queryWithIDs(type, query) {
   }));
 }
 
+export function addID(type, object) {
+  if (object && object.id) {
+    object.id = {
+      type,
+      value: object.id,
+    };
+  }
+  return object;
+}
+
 export function getFirstOrNullQuery(query) {
   return RethinkDB.branch(query.isEmpty(), null, query(0));
 }

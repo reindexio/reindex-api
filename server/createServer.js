@@ -8,7 +8,6 @@ import Monitoring from '../Monitoring';
 import Config from './Config';
 import Good from 'good';
 import GoodConsole from 'good-console';
-import StatusHandler from './handlers/StatusHandler';
 import GraphQLHandler from './handlers/GraphQLHandler';
 import GraphiQLHandler from './handlers/GraphiQLHandler';
 import AppPlugin from './AppPlugin';
@@ -57,7 +56,6 @@ export default async function createServer(
     });
   });
 
-  server.route(StatusHandler);
   server.route(GraphQLHandler);
   server.route(GraphiQLHandler);
   server.route({

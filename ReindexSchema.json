@@ -43,6 +43,11 @@
         "unique": true
       },
       {
+        "name": "storage",
+        "type": "Storage",
+        "reverseName": "apps"
+      },
+      {
         "name": "updatedAt",
         "type": "DateTime"
       }
@@ -56,14 +61,14 @@
     "fields": [
       {
         "name": "cluster",
-        "type": "String"
+        "type": "String",
+        "deprecationReason": "Cluster configuration will be replaced by Storage in new apps."
       },
       {
         "name": "name",
         "type": "String"
       }
-    ],
-    "permissions": []
+    ]
   },
   {
     "name": "Domain",
@@ -99,5 +104,71 @@
       }
     ],
     "permissions": []
+  },
+  {
+    "name": "Storage",
+    "kind": "OBJECT",
+    "interfaces": [
+      "Node"
+    ],
+    "fields": [
+      {
+        "name": "apps",
+        "type": "Connection",
+        "ofType": "App",
+        "reverseName": "storage"
+      },
+      {
+        "name": "createdAt",
+        "type": "DateTime"
+      },
+      {
+        "name": "databasesAvailable",
+        "type": "Int",
+        "orderable": true
+      },
+      {
+        "name": "databaseName",
+        "type": "String"
+      },
+      {
+        "name": "id",
+        "type": "ID",
+        "nonNull": true,
+        "unique": true
+      },
+      {
+        "name": "settings",
+        "type": "DatabaseSettings"
+      },
+      {
+        "name": "updatedAt",
+        "type": "DateTime"
+      }
+    ],
+    "permissions": []
+  },
+  {
+    "name": "DatabaseSettings",
+    "kind": "OBJECT",
+    "interfaces": [],
+    "fields": [
+      {
+        "name": "authKey",
+        "type": "String"
+      },
+      {
+        "name": "connectionString",
+        "type": "String"
+      },
+      {
+        "name": "host",
+        "type": "String"
+      },
+      {
+        "name": "type",
+        "type": "String"
+      }
+    ]
   }
 ]
