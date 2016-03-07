@@ -3,14 +3,14 @@ import { chain } from 'lodash';
 import { GraphQLObjectType, GraphQLNonNull } from 'graphql';
 
 import checkPermission from '../permissions/checkPermission';
-import createSearchFor from '../query/createSearchFor';
+import createAllNodes from '../query/createAllNodes';
 import ReindexID from './ReindexID';
 import { getIntercomSettings } from './IntercomSettings';
 
 export default function createViewer(typeSets, interfaces) {
   const allObjectsFields = chain(typeSets)
     .pick((typeSet) => typeSet.connection)
-    .map((typeSet) => createSearchFor(typeSet, interfaces, typeSets))
+    .map((typeSet) => createAllNodes(typeSet, interfaces, typeSets))
     .indexBy((field) => field.name)
     .value();
 
