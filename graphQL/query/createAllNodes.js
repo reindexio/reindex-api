@@ -3,22 +3,19 @@ import {
 } from '../connections';
 import checkPermission from '../permissions/checkPermission';
 
-export default function createSearchFor(
+export default function createAllNodes(
   { type, connection, pluralName },
   interfaces,
   typeSets
 ) {
-  const argDefs = createConnectionArguments(
-    type.name,
-    (name) => typeSets[name],
-  );
-  argDefs.first.defaultValue = 10;
-
   return {
     name: 'all' + pluralName,
     description: `A connection with all objects of type \`${type.name}\``,
     type: connection,
-    args: argDefs,
+    args: createConnectionArguments(
+      type.name,
+      (name) => typeSets[name],
+    ),
     async resolve(parent, args, context) {
       await checkPermission(type.name, 'read', {}, {}, context);
       return context.rootValue.db.getConnectionQueries(
