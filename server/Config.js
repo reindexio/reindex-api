@@ -30,12 +30,6 @@ const Config = convict({
     },
   },
   database: {
-    adminCluster: {
-      default: 'mongodb',
-      doc: 'The cluster name of the admin app.',
-      env: 'ADMIN_CLUSTER',
-      format: String,
-    },
     adminDatabase: {
       default: 'r_admin',
       doc: 'The database name of the admin app.',
@@ -108,7 +102,6 @@ Config.resetTestConfig = function() {
   [
     'app.key',
     'connection.port',
-    'database.adminCluster',
     'database.adminDatabase',
     'database.adminDatabaseSettings',
     'database.clusters',
