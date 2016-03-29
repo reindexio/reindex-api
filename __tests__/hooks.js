@@ -193,7 +193,8 @@ describe('Hooks', () => {
                 type: 'error',
                 response: null,
                 errors: [
-                  'Error: Cannot query field "invalidField" on "_UserPayload".',
+                  'Error: Cannot query field "invalidField"' +
+                  ' on type "_UserPayload".',
                 ],
               },
             ],
