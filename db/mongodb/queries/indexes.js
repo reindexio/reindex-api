@@ -9,7 +9,7 @@ export async function constructMissingIndexes(db, types, indexes) {
 
 export async function deleteTypeIndexes(db, type, indexes, fields) {
   if (fields) {
-    const typeIndexes = indexes[type];
+    const typeIndexes = indexes[type] || [];
     const indexesToDelete = typeIndexes.filter((index) =>
       fields.some((field) => isEqual(index.fields, field))
     );
