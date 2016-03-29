@@ -2,6 +2,7 @@ import {
   createConnectionArguments,
 } from '../connections';
 import checkPermission from '../permissions/checkPermission';
+import { getAllQueryName } from '../derivedNames';
 
 export default function createAllNodes(
   { type, connection, pluralName },
@@ -9,7 +10,7 @@ export default function createAllNodes(
   typeSets
 ) {
   return {
-    name: 'all' + pluralName,
+    name: getAllQueryName(type.name, pluralName),
     description: `A connection with all objects of type \`${type.name}\``,
     type: connection,
     args: createConnectionArguments(

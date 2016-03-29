@@ -2,6 +2,10 @@ import { omit } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import {
+  getReplaceMutationName,
+  getReplaceInputObjectTypeName,
+} from '../derivedNames';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
@@ -21,7 +25,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
   );
 
   const inputType = new GraphQLInputObjectType({
-    name: '_Replace' + type.name + 'Input',
+    name: getReplaceInputObjectTypeName(type.name),
     fields: {
       ...objectFields,
       clientMutationId: clientMutationIdField,
@@ -33,7 +37,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
   });
 
   return {
-    name: 'replace' + type.name,
+    name: getReplaceMutationName(type.name),
     description: `Replaces the given \`${type.name}\` object with a new one.`,
     type: payload,
     args: {

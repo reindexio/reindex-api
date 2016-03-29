@@ -2,6 +2,10 @@ import { omit } from 'lodash';
 
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 
+import {
+  getCreateMutationName,
+  getCreateInputObjectTypeName,
+} from '../derivedNames';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
@@ -20,14 +24,14 @@ export default function createCreate(typeSet, interfaces, typeSets) {
   );
 
   const inputType = new GraphQLInputObjectType({
-    name: '_Create' + type.name + 'Input',
+    name: getCreateInputObjectTypeName(type.name),
     fields: {
       ...objectFields,
       clientMutationId: clientMutationIdField,
     },
   });
 
-  const name = `create${type.name}`;
+  const name = getCreateMutationName(type.name);
 
   return {
     name,

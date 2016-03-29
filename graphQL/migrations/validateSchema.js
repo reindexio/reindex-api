@@ -5,7 +5,7 @@ import {
 
 import getInterfaceDefaultFields
   from '../../graphQL/builtins/InterfaceDefaultFields';
-import getPluralName from '../../graphQL/utilities/getPluralName';
+import { getPluralName } from '../../graphQL/derivedNames';
 import ScalarTypes from '../../graphQL/builtins/ScalarTypes';
 import getTypeDefaultFields from '../../graphQL/builtins/TypeDefaultFields';
 import { getName, byName } from './utilities';
@@ -40,6 +40,10 @@ export default function validateSchema(
       .join(', ');
   }
 
+  function getPluralNameFromType(type) {
+    return getPluralName(type.name, type.pluralName);
+  }
+
   if (uniq(types, getName).length !== types.length) {
     const summary = getDuplicateSummary(getName, 'name');
     invariant(false, 'Expected type names to be unique. Found %s', summary);
@@ -48,9 +52,8 @@ export default function validateSchema(
   if (errors.length > 0) {
     return errors;
   }
-
-  if (uniq(types, getPluralName).length !== types.length) {
-    const summary = getDuplicateSummary(getPluralName, 'plural name');
+  if (uniq(types, getPluralNameFromType).length !== types.length) {
+    const summary = getDuplicateSummary(getPluralNameFromType, 'plural name');
     invariant(false, 'Expected plural names of types to be unique. Found %s',
       summary,
     );
@@ -127,7 +130,7 @@ function validateType(type, typesByName, interfaces, invariant) {
       property, name,
     );
   });
-  const pluralName = getPluralName(type);
+  const pluralName = getPluralName(type.name, type.pluralName);
   invariant(
     !typesByName[pluralName] || typesByName[pluralName] === type,
     '%s: Plural name "%s" conflicts with the name of type %s. ' +

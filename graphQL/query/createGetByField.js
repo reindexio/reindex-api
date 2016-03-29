@@ -1,9 +1,10 @@
 import { GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { GraphQLError } from 'graphql/error/GraphQLError';
-import { chain, camelCase } from 'lodash';
+import { chain } from 'lodash';
 
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
+import { getUniqueFieldQueryName } from '../derivedNames';
 
 export default function createGetByField({ type }, interfaces) {
   return extractUniqueFields(type, interfaces).map(({
@@ -13,7 +14,7 @@ export default function createGetByField({ type }, interfaces) {
   }) => {
     const nameChain = prefix.concat([fieldName]);
     return {
-      name: camelCase(`${type.name} by ${nameChain.join(' ')}`),
+      name: getUniqueFieldQueryName(type.name, nameChain),
       description:
 `Get an object of type \`${type.name}\` by \`${nameChain.join('.')}\``,
       type,

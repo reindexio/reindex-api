@@ -4,7 +4,6 @@ import {
 } from 'graphql';
 
 import createInputObjectType from './createInputObjectType';
-import getPluralName from './utilities/getPluralName';
 import ReindexID from './builtins/ReindexID';
 
 export default class TypeSet {
@@ -25,7 +24,7 @@ export default class TypeSet {
     this.orderableFields = orderableFields || null;
     this.payload = payload || null;
     this.blacklistedRootFields = blacklistedRootFields || [];
-    this.pluralName = getPluralName({ name: type.name, pluralName });
+    this.pluralName = pluralName || null;
   }
 
   getInputObjectFields() {

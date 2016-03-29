@@ -7,13 +7,13 @@ import {
   GraphQLList,
 } from 'graphql';
 
+import { getConnectionTypeName, getEdgeTypeName } from './derivedNames';
 import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
-import getGeneratedTypeName from './utilities/getGeneratedTypeName';
 
 export function createConnection({ type }) {
   const edge = new GraphQLObjectType({
-    name: getGeneratedTypeName(type.name, 'Edge'),
+    name: getEdgeTypeName(type.name),
     description:
 `This is a generated Edge for ${type.name}.
 
@@ -43,7 +43,7 @@ Edges are elements of \`edges\` list of Connections.
   return {
     edge,
     connection: new GraphQLObjectType({
-      name: getGeneratedTypeName(type.name, 'Connection'),
+      name: getConnectionTypeName(type.name),
       description:
 `This is a generated Connection for ${type.name}.
 
