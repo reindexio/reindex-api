@@ -19,7 +19,6 @@ dependencies:
 
 test:
   override:
-    - DATABASE_TYPE=RethinkDB npm test
     - DATABASE_TYPE=MongoDB npm test
 
 deployment:
