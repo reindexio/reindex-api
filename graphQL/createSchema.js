@@ -7,7 +7,7 @@ import {
 import { chain, mapValues, forEach } from 'lodash';
 
 import TypeSet from './TypeSet';
-import getGeneratedTypeName from './utilities/getGeneratedTypeName';
+import { getAllQueryName, getPayloadTypeName } from './derivedNames';
 import createInterfaces from './builtins/createInterfaces';
 import createCommonTypes from './builtins/createCommonTypes';
 import CommonQueryFieldCreators from './builtins/CommonQueryFieldCreators';
@@ -223,10 +223,10 @@ function createField(field, getTypeSet, interfaces) {
 }
 
 function createPayload({ type, edge, pluralName }, interfaces, getViewer) {
-  const allConnectionName = `all${pluralName}`;
+  const allConnectionName = getAllQueryName(type.name, pluralName);
   const edgeName = `changed${type.name}Edge`;
   return new GraphQLObjectType({
-    name: getGeneratedTypeName(type.name, 'Payload'),
+    name: getPayloadTypeName(type.name),
     description:
 `The payload returned from mutations of \`${type.name}\`.
 

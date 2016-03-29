@@ -96,6 +96,54 @@ describe('Integration Tests', () => {
     await deleteApp(hostname);
   });
 
+  it('gets type introspection', async function() {
+    const result = await runQuery(`
+      {
+        reindexTypeByName(name: "Micropost") {
+          name
+          introspection {
+            connectionTypeName
+            payloadTypeName
+            edgeTypeName
+            allQueryName
+            byIdQueryName
+            createMutationName
+            createMutationInputName
+            updateMutationName
+            updateMutationInputName
+            replaceMutationName
+            replaceMutationInputName
+            deleteMutationName
+            deleteMutationInputName
+          }
+        }
+      }
+    `);
+
+    assert.deepEqual(result, {
+      data: {
+        reindexTypeByName: {
+          name: 'Micropost',
+          introspection: {
+            connectionTypeName: '_MicropostConnection',
+            payloadTypeName: '_MicropostPayload',
+            edgeTypeName: '_MicropostEdge',
+            allQueryName: 'allMicroposts',
+            byIdQueryName: 'micropostById',
+            createMutationName: 'createMicropost',
+            createMutationInputName: 'createMicropost',
+            updateMutationName: 'updateMicropost',
+            updateMutationInputName: '_UpdateMicropostInput',
+            replaceMutationName: 'replaceMicropost',
+            replaceMutationInputName: '_ReplaceMicropostInput',
+            deleteMutationName: 'deleteMicropost',
+            deleteMutationInputName: '_DeleteMicropostInput',
+          },
+        },
+      },
+    });
+  });
+
   it('queries with node', async function() {
     const micropost = values(fixtures.Micropost)[0];
     const id = micropost.id;

@@ -1,5 +1,10 @@
 import { GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
 import { GraphQLError } from 'graphql/error/GraphQLError';
+
+import {
+  getDeleteMutationName,
+  getDeleteInputObjectTypeName,
+} from '../derivedNames';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
@@ -9,7 +14,7 @@ import formatMutationResult from './formatMutationResult';
 
 export default function createDelete({ type, payload }) {
   const inputType = new GraphQLInputObjectType({
-    name: '_Delete' + type.name + 'Input',
+    name: getDeleteInputObjectTypeName(type.name),
     fields: {
       clientMutationId: clientMutationIdField,
       id: {
@@ -19,7 +24,7 @@ export default function createDelete({ type, payload }) {
     },
   });
   return {
-    name: 'delete' + type.name,
+    name: getDeleteMutationName(type.name),
     description: `Deletes the given \`${type.name}\` object`,
     type: payload,
     args: {

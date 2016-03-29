@@ -3,6 +3,10 @@ import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 import { GraphQLError } from 'graphql/error/GraphQLError';
 
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
+import {
+  getUpdateMutationName,
+  getUpdateInputObjectTypeName,
+} from '../derivedNames';
 import checkPermission from '../permissions/checkPermission';
 import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
@@ -21,7 +25,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
   );
 
   const inputType = new GraphQLInputObjectType({
-    name: '_Update' + type.name + 'Input',
+    name: getUpdateInputObjectTypeName(type.name),
     fields: {
       ...objectFields,
       clientMutationId: clientMutationIdField,
@@ -33,7 +37,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
   });
 
   return {
-    name: 'update' + type.name,
+    name: getUpdateMutationName(type.name),
     description: `Updates the given \`${type.name}\` object. ` +
       'The given fields are merged to the existing object.',
     type: payload,

@@ -7,6 +7,7 @@ import {
   GraphQLEnumType,
 } from 'graphql';
 
+import * as derivedNames from '../derivedNames';
 import createCreate from '../mutations/createCreate';
 import createUpdate from '../mutations/createUpdate';
 import createReplace from '../mutations/createReplace';
@@ -87,7 +88,6 @@ be null if grantee is not \`USER\`.`,
           description:
 `List of fields which can be modified when creating, updating or replacing.`,
         },
-
       },
     }),
   });
@@ -183,6 +183,97 @@ new root query field is created to get values based on that field.`,
     }),
   });
 
+  const introspection = new GraphQLObjectType({
+    name: 'ReindexTypeIntrospection',
+    description:
+'Generated names for derived types, queries and mutations of the type.',
+    fields: () => ({
+      // Possible additions - list of all byUnique query type and
+      // connection mutations
+      connectionTypeName: {
+        type: GraphQLString,
+        description: 'Name of connection type for the type.',
+        resolve: (parent) => derivedNames.getConnectionTypeName(parent.name),
+      },
+      payloadTypeName: {
+        type: GraphQLString,
+        description: 'Name of payload (mutation result) for the type.',
+        resolve: (parent) => derivedNames.getPayloadTypeName(parent.name),
+      },
+      edgeTypeName: {
+        type: GraphQLString,
+        description: 'Name of edge (element of connection) for the type.',
+        resolve: (parent) => derivedNames.getEdgeTypeName(parent.name),
+      },
+      allQueryName: {
+        type: GraphQLString,
+        description: 'Name of the query to get all nodes of the type.',
+        resolve: (parent) => derivedNames.getAllQueryName(
+          parent.name,
+          parent.pluralName
+        ),
+      },
+      byIdQueryName: {
+        type: GraphQLString,
+        description: 'Name of query to get node of the type by id',
+        resolve: (parent) => derivedNames.getUniqueFieldQueryName(
+          parent.name,
+          'id',
+        ),
+      },
+      createMutationName: {
+        type: GraphQLString,
+        description: 'Name of create mutation of the type.',
+        resolve: (parent) => derivedNames.getCreateMutationName(parent.name),
+      },
+      createMutationInputName: {
+        type: GraphQLString,
+        description:
+'Name of input type for the create mutation of the type.',
+        resolve: (parent) => derivedNames.getCreateMutationName(parent.name),
+      },
+      updateMutationName: {
+        type: GraphQLString,
+        description: 'Name of update mutation of the type.',
+        resolve: (parent) => derivedNames.getUpdateMutationName(parent.name),
+      },
+      updateMutationInputName: {
+        type: GraphQLString,
+        description:
+'Name of input type for the update mutation of the type.',
+        resolve: (parent) => derivedNames.getUpdateInputObjectTypeName(
+          parent.name
+        ),
+      },
+      replaceMutationName: {
+        type: GraphQLString,
+        description: 'Name of replace mutation of the type.',
+        resolve: (parent) => derivedNames.getReplaceMutationName(parent.name),
+      },
+      replaceMutationInputName: {
+        type: GraphQLString,
+        description:
+'Name of input type for the replace mutation of the type.',
+        resolve: (parent) => derivedNames.getReplaceInputObjectTypeName(
+          parent.name
+        ),
+      },
+      deleteMutationName: {
+        type: GraphQLString,
+        resolve: (parent) => derivedNames.getDeleteMutationName(parent.name),
+        description: 'Name of delete mutation of the type.',
+      },
+      deleteMutationInputName: {
+        type: GraphQLString,
+        description:
+'Name of input type for the delete mutation of the type.',
+        resolve: (parent) => derivedNames.getDeleteInputObjectTypeName(
+          parent.name
+        ),
+      },
+    }),
+  });
+
   const type = new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexType',
@@ -248,6 +339,13 @@ creating a migration with the CLI tool.
           args: createConnectionArguments('ReindexHook', getTypeSet),
           resolve: createConnectionFieldResolve('ReindexHook', 'type'),
           description: '',
+        },
+        introspection: {
+          type: introspection,
+          resolve: (parent) => parent,
+          metadata: {
+            computed: true,
+          },
         },
       }),
       interfaces: [interfaces.Node],
