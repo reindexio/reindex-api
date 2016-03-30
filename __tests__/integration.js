@@ -515,6 +515,50 @@ describe('Integration Tests', () => {
     });
   });
 
+  it('can query both for nodes, edges and count', async function () {
+    const micropost = values(fixtures.Micropost)[0];
+
+    const result = await runQuery(`
+      {
+        viewer {
+          allMicroposts(first: 1) {
+            nodes {
+              id
+            }
+            edges {
+              node {
+                id
+              }
+            }
+            count
+          }
+        }
+      }
+    `);
+
+    assert.deepEqual(result, {
+      data: {
+        viewer: {
+          allMicroposts: {
+            count: 20,
+            nodes: [
+              {
+                id: micropost.id,
+              },
+            ],
+            edges: [
+              {
+                node: {
+                  id: micropost.id,
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+  });
+
   it('always returns the total count for a connection', async function () {
     const query = `
       query ($after: Cursor) {
