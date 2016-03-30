@@ -208,6 +208,7 @@ function extractHooks(hookData, typeData) {
     .value();
 
   return chain(hookData)
+    .filter((hook) => !hook.type || typesByID[hook.type.value])
     .map((hook) => ({
       ...hook,
       type: hook.type && typesByID[hook.type.value],
