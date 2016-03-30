@@ -13,6 +13,41 @@ export function getConnectionQueries(
   );
 }
 
+// A wrapper around cursor, that one can `toArray` multiple times
+class CachedCursor {
+  constructor(cursor, cache, transform) {
+    this._cursor = cursor;
+    this._cache = cache;
+    this._transform = transform;
+  }
+
+  getTransform() {
+    return this._transform;
+  }
+
+  map(transform) {
+    return new CachedCursor(this._cursor, this._cache, transform);
+  }
+
+  explain() {
+    return this._cursor.explain();
+  }
+
+  async toArray() {
+    if (!this._cache) {
+      this._cache = this._cursor.toArray();
+    }
+
+    const result = await this._cache;
+
+    if (this._transform) {
+      return result.map(this._transform);
+    } else {
+      return result;
+    }
+  }
+}
+
 async function getPaginatedQuery(db, type, filter, {
   orderBy = {},
   before,
@@ -39,9 +74,9 @@ async function getPaginatedQuery(db, type, filter, {
 
   return {
     query: unpaginatedQuery,
-    paginatedQuery: addTransform(query, (object) =>
+    paginatedQuery: new CachedCursor(addTransform(query, (object) =>
       addID(type, object)
-    ),
+    )),
     pageInfo,
   };
 }
