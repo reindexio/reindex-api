@@ -346,6 +346,15 @@ describe('getGraphQLContext', () => {
             url: 'http://example.com/micropost',
             fragment: '{ id }',
           },
+          {
+            type: {
+              type: 'ReindexType',
+              value: 'some-deleted-type-id',
+            },
+            trigger: 'afterUpdate',
+            url: 'http://example.com/deleted',
+            fragment: '{ id }',
+          },
         ],
       });
 
