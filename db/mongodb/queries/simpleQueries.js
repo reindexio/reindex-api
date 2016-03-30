@@ -48,7 +48,7 @@ export async function getByID(db, type, id) {
   return addID(type, result);
 }
 
-export async function getByField(db, type, field, value) {
+export function getByFieldCursor(db, type, field, value) {
   let actualField = field;
   let actualValue = value;
 
@@ -61,10 +61,14 @@ export async function getByField(db, type, field, value) {
     actualValue = ObjectId(value.value);
   }
 
-  const result = await db.collection(type).findOne({
+  return db.collection(type).find({
     [actualField]: actualValue,
-  });
-  return addID(type, result);
+  }).limit(-1).batchSize(1);
+}
+
+export async function getByField(db, type, field, value) {
+  const cursor = getByFieldCursor(db, type, field, value);
+  return addID(type, await cursor.next());
 }
 
 function getAllByFilterQuery(db, type, filter) {
@@ -83,7 +87,10 @@ export function getAllByFilter(db, type, filter) {
 }
 
 export async function hasByFilter(db, type, filter) {
-  const result = await getAllByFilterQuery(db, type, filter).limit(1).count();
+  const result = await getAllByFilterQuery(db, type, filter)
+    .limit(-1)
+    .batchSize(1)
+    .count();
   return result > 0;
 }
 
