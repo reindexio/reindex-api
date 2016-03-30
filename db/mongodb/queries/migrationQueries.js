@@ -63,7 +63,11 @@ function updateTypes(db, deleteCommands, types) {
   }
 
   for (const type of types) {
-    batch.find({ name: type.name }).upsert().replaceOne(type);
+    const cleanType = {
+      ...type,
+      fields: type.fields.filter((field) => !field.builtin),
+    };
+    batch.find({ name: type.name }).upsert().replaceOne(cleanType);
   }
 
   return batch.execute();

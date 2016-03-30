@@ -1,5 +1,6 @@
 import createSchema from '../../../graphQL/createSchema';
 import toReindexSchema from '../../../graphQL/toReindexSchema';
+import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import DefaultUserType from '../../../graphQL/builtins/DefaultUserType';
 import { addID } from './queryUtils';
 import { constructMissingIndexes } from './indexes';
@@ -9,7 +10,11 @@ export async function createDatabaseForApp(db) {
 }
 
 export async function createBuiltInIndexesForApp(db) {
-  const schema = createSchema([DefaultUserType]);
+  const userType = {
+    ...DefaultUserType,
+    fields: injectDefaultFields(DefaultUserType),
+  };
+  const schema = createSchema([userType]);
   const types = toReindexSchema(schema);
   await constructMissingIndexes(db, types, {});
 }

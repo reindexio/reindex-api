@@ -1,4 +1,4 @@
-import { isEqual, flatten } from 'lodash';
+import { isEqual, flatten, indexBy, chain } from 'lodash';
 import { ObjectId } from 'mongodb';
 
 export async function constructMissingIndexes(db, types, indexes) {
@@ -29,17 +29,18 @@ export async function deleteTypeIndexes(db, type, indexes, fields) {
 }
 
 function findPotentialIndexes(types) {
-  return flatten(types.map(findIndexesInType));
+  const typesByName = indexBy(types, (type) => type.name);
+  return chain(types)
+    .filter((type) => type.interfaces.includes('Node'))
+    .map((type) => findIndexesInType(type, typesByName))
+    .flatten()
+    .value();
 }
 
-function findIndexesInType(type) {
-  if (!type.interfaces.includes('Node')) {
-    return [];
-  }
-
+function findIndexesInType(type, typesByName) {
   const orderableFields = type.fields.filter((field) => field.orderable);
   return flatten(type.fields.map((field) => {
-    if (field.name === 'id') {
+    if (type.interfaces.includes('Node') && field.name === 'id') {
       return [];
     } else if (field.unique) {
       return [
@@ -70,6 +71,17 @@ function findIndexesInType(type) {
           fields: [indexField, orderableField.name, '_id'],
         })),
       );
+    } else if (
+      typesByName[field.type] &&
+      !typesByName[field.type].interfaces.includes('Node')
+    ) {
+      const innerType = typesByName[field.type];
+      const innerTypeIndexes = findIndexesInType(innerType, typesByName);
+      return innerTypeIndexes.map((index) => ({
+        type: type.name,
+        fields: [`${field.name}.${index.fields[0]}`, '_id'],
+        unique: index.unique,
+      }));
     } else {
       return [];
     }

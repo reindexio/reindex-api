@@ -1,5 +1,4 @@
 import uuid from 'uuid';
-import { isEqual } from 'lodash';
 
 import assert from '../../../test/assert';
 import {
@@ -8,7 +7,9 @@ import {
   deleteFixture,
   migrate,
   makeRunQuery,
+  augmentSchema,
 } from '../../../test/testAppUtils';
+import { TEST_SCHEMA } from '../../../test/fixtures';
 import {
   fromReindexID,
 } from '../../../graphQL/builtins/ReindexID';
@@ -31,9 +32,40 @@ if (!process.env.DATABASE_TYPE ||
       await createTestApp(hostname);
       db = await getDB(hostname);
       runQuery = makeRunQuery(db);
+      await migrate(runQuery, augmentSchema(TEST_SCHEMA, [
+        {
+          name: 'Contact',
+          kind: 'OBJECT',
+          interfaces: [],
+          fields: [
+            {
+              name: 'email',
+              type: 'String',
+              unique: true,
+            },
+          ],
+        },
+        {
+          name: 'User',
+          fields: [
+            {
+              name: 'contact',
+              type: 'Contact',
+            },
+          ],
+        },
+      ]));
 
       user = await createFixture(runQuery, 'User', {
         handle: 'user',
+        credentials: {
+          github: {
+            id: '1',
+          },
+        },
+        contact: {
+          email: 'user@example.com',
+        },
       }, 'id, handle');
 
       for (let i = 0; i < 100; i++) {
@@ -330,6 +362,40 @@ if (!process.env.DATABASE_TYPE ||
         );
       });
 
+      it('uses index for unique query', async () => {
+        const query = await db.getByFieldCursor('User', 'handle', 'user');
+        const explain = await query.explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+        );
+      });
+
+      it('uses index for unique nested query', async () => {
+        const query = await db.getByFieldCursor(
+          'User',
+          'contact.email',
+          'user@example.com'
+        );
+        const explain = await query.explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+        );
+      });
+
+
+      it('user index for unique nested query for builtin field', async () => {
+        const query = await db.getByFieldCursor(
+          'User',
+          'credentials.github.id',
+          '1'
+        );
+        const explain = await query.explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+        );
+      });
+
+
       it('uses index for ordered unfiltered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
@@ -539,7 +605,7 @@ if (!process.env.DATABASE_TYPE ||
           .filter((index) => !index.type.startsWith('Reindex'));
 
         assert.sameDeepMembers(newIndexes, indexes.filter((index) =>
-          index.type === 'User' && isEqual(index.fields, ['handle', '_id']),
+          index.type === 'User',
         ));
 
         const rawDB = await db.getDB();
@@ -551,6 +617,26 @@ if (!process.env.DATABASE_TYPE ||
 
         assert.sameDeepMembers(rawIndexes, [
           {
+            key: { 'credentials.auth0.id': 1, _id: 1 },
+            unique: true,
+          },
+          {
+            key: { 'credentials.facebook.id': 1, _id: 1 },
+            unique: true,
+          },
+          {
+            key: { 'credentials.github.id': 1, _id: 1 },
+            unique: true,
+          },
+          {
+            key: { 'credentials.google.id': 1, _id: 1 },
+            unique: true,
+          },
+          {
+            key: { 'credentials.twitter.id': 1, _id: 1 },
+            unique: true,
+          },
+          {
             key: {
               _id: 1,
             },
@@ -561,6 +647,10 @@ if (!process.env.DATABASE_TYPE ||
               handle: 1,
               _id: 1,
             },
+            unique: true,
+          },
+          {
+            key: { 'contact.email': 1, _id: 1 },
             unique: true,
           },
         ]);
