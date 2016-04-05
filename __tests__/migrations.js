@@ -322,4 +322,63 @@ describe('Migrations', () => {
 
     assert(result.errors);
   });
+
+  it('does not fail when deleting freshly created types', async () => {
+    const newSchema = [
+      {
+        name: 'User',
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+            unique: true,
+          },
+        ],
+        kind: 'OBJECT',
+        interfaces: ['Node'],
+      },
+      {
+        name: 'Test',
+        kind: 'OBJECT',
+        interfaces: ['Node'],
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+            unique: true,
+          },
+        ],
+      },
+    ];
+
+    const emptySchema = [
+      {
+        name: 'User',
+        fields: [
+          {
+            name: 'id',
+            type: 'ID',
+            nonNull: true,
+            unique: true,
+          },
+        ],
+        kind: 'OBJECT',
+        interfaces: ['Node'],
+      },
+    ];
+
+    await runMigration({
+      types: newSchema,
+      force: true,
+    });
+
+    const result = await runMigration({
+      types: emptySchema,
+      force: true,
+    });
+
+    assert.equal(result.data.migrate.isExecuted, true);
+  });
 });

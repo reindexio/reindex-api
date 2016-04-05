@@ -1,4 +1,5 @@
 import { chain, groupBy, map } from 'lodash';
+import { MongoError } from 'mongodb';
 
 import {
   constructMissingIndexes,
@@ -26,7 +27,14 @@ async function deleteTypesData(db, commands, indexes) {
   const names = commands.map((command) => command.type.name);
   await* names.map(async (name) => {
     await deleteTypeIndexes(db, name, indexes);
-    await db.dropCollection(name);
+    try {
+      await db.dropCollection(name);
+    } catch (e) {
+      if (!(e instanceof MongoError &&
+            e.errmsg && e.errmsg === 'ns not found')) {
+        throw e;
+      }
+    }
   });
 }
 
@@ -50,9 +58,11 @@ async function deleteFieldsData(db, commands, indexes) {
   });
 }
 
-function createNewTypeData() {
-  // NOOP for Mongo, collections are created implicitely
-  return Promise.resolve(true);
+async function createNewTypeData(db, commands) {
+  const names = commands.map((command) => command.type.name);
+  await Promise.all(names.map((name) =>
+    db.createCollection(name)
+  ));
 }
 
 function updateTypes(db, deleteCommands, types) {
