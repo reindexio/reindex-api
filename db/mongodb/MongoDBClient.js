@@ -42,9 +42,15 @@ export default class MongoDBClient {
     if (!clusterConnections[connectionString]) {
       clusterConnections[connectionString] = MongoClient.connect(
         `${queryLessConnectionString}?${fullQs}`
-      );
+      ).then((db) => {
+        db.once('destroy', () => {
+          clusterConnections[connectionString] = null;
+        });
+        return db;
+      });
     }
     this.pool = clusterConnections[connectionString];
+    this.connectionString = connectionString;
 
     this.stats = {
       count: 0,
