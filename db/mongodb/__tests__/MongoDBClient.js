@@ -95,7 +95,7 @@ if (!process.env.DATABASE_TYPE ||
       } = await db.getConnectionQueries('Micropost', filter, args);
       const result = {
         paginated: await addTransform(
-          paginatedQuery,
+          paginatedQuery.getCursor(),
           (item) => item.id
         ).toArray(),
         unpaginated: await query.toArray(),
@@ -356,7 +356,7 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for unfiltered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries('Micropost');
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         assert.equal(
           explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
         );
@@ -408,7 +408,7 @@ if (!process.env.DATABASE_TYPE ||
           }
         );
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         assert.equal(
           explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
         );
@@ -426,7 +426,7 @@ if (!process.env.DATABASE_TYPE ||
           }
         );
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         assert.equal(
           explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
         );
@@ -446,7 +446,7 @@ if (!process.env.DATABASE_TYPE ||
           }
         );
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         assert.equal(
           explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
         );
@@ -468,7 +468,7 @@ if (!process.env.DATABASE_TYPE ||
           }
         );
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
         assert.equal(
           sort.stage,
@@ -499,7 +499,7 @@ if (!process.env.DATABASE_TYPE ||
           }
         );
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
         assert.equal(
           sort.stage,
@@ -530,7 +530,7 @@ if (!process.env.DATABASE_TYPE ||
         );
 
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
         assert.equal(
           sort.stage,
@@ -564,7 +564,7 @@ if (!process.env.DATABASE_TYPE ||
         );
 
 
-        const explain = await paginatedQuery.explain();
+        const explain = await paginatedQuery.getCursor().explain();
         const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
         assert.equal(
           sort.stage,

@@ -14,11 +14,7 @@ export function addID(type, object) {
 export function addTransform(cursor, transform) {
   let finalTransform;
   let existingTransform;
-  if (cursor.getTransform) {
-    existingTransform = cursor.getTransform();
-  } else {
-    existingTransform = get(cursor, ['cursorState', 'transforms', 'doc']);
-  }
+  existingTransform = get(cursor, ['cursorState', 'transforms', 'doc']);
   if (existingTransform) {
     finalTransform = (object) => transform(existingTransform(object));
   } else {
