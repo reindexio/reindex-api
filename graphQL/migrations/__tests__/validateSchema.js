@@ -115,6 +115,30 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'id field not in node': [
+    type('T', {
+      interfaces: [],
+      fields: [field('id', {
+        type: 'ID',
+      })],
+    }),
+  ],
+  'ID field not in node': [
+    type('T', {
+      interfaces: [],
+      fields: [field('foo', {
+        type: 'ID',
+      })],
+    }),
+  ],
+  'ID field not in id': [
+    type('T', {
+      interfaces: ['Node'],
+      fields: [field('foo', {
+        type: 'ID',
+      })],
+    }),
+  ],
   'invalid description of a field': [
     type('T', {
       fields: [

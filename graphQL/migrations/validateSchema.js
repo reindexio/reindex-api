@@ -227,6 +227,15 @@ function validateField(type, field, typesByName, invariant) {
     type.name, field.name, field.type
   );
 
+  invariant(
+    (type.interfaces.includes('Node') && (
+      (field.type === 'ID' && field.name === 'id') ||
+      field.type !== 'ID'
+    )) || (field.type !== 'ID' && field.name !== 'id'),
+    '%s.%s: Expected only field `id` of Node types to have type `ID`.',
+    type.name, field.name,
+  );
+
   // ofType
   if (field.type === 'Connection') {
     invariant(
