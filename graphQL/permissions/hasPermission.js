@@ -32,7 +32,7 @@ export default async function hasPermission(
       },
     },
   },
-  passedFields,
+  overrideFields,
 ) {
   const { isAdmin, userID: id } = credentials;
   const userID = id && id.value;
@@ -50,7 +50,7 @@ export default async function hasPermission(
   // object to check permissions through
   let object = newObject;
   // fields to check or a full permission
-  let fields = passedFields;
+  let fields = overrideFields;
   // list of related permissions that need to be checked
   let otherTypePermissions = [];
 
@@ -72,7 +72,6 @@ export default async function hasPermission(
         userID,
       ));
   } else if (permission === 'update') {
-    permissionName = 'update';
     object = oldObject;
     if (!fields) {
       fields = Object.keys(
