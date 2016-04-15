@@ -238,22 +238,26 @@ function createResolveFunction(
     if (operation === 'addToConnection') {
       await checkPermission(fromType, 'update',
         {
+          ...fromObject,
           [fromField]: [],
         },
         {
           [fromField]: toId && [toId],
         },
         context,
+        [fromField],
       );
     } else {
       await checkPermission(fromType, 'update',
         {
+          ...fromObject,
           [fromField]: toId && [toId],
         },
         {
           [fromField]: [],
         },
         context,
+        [fromField],
       );
     }
 
