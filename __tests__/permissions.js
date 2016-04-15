@@ -730,7 +730,7 @@ describe('Permissions', () => {
           {
             message: (
               'User lacks permissions to replace nodes of type `Test` ' +
-              'with fields `id`, `test`.'
+              'with fields `test`.'
             ),
           },
         ],
@@ -1240,6 +1240,8 @@ describe('Permissions', () => {
                   grantee: 'USER',
                   userPath: ['friends'],
                   read: true,
+                  update: true,
+                  permittedFields: ['friends'],
                 },
               ],
             },
@@ -1826,6 +1828,45 @@ describe('Permissions', () => {
             },
           },
         }, 'author can not delete own micropost even if it has comments');
+      });
+
+      it('can remove from friends', async () => {
+        const friend1 = fixtures.User[0];
+        const friend2 = fixtures.User[2];
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UserFriendsConnectionInput!) {
+            removeUserFromUserFriends(input: $input) {
+              changedUser1 {
+                id
+              }
+              changedUser2 {
+                id
+              }
+            }
+          }
+        `, {
+          input: {
+            user1Id: friend1.id,
+            user2Id: friend2.id,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: fromReindexID(friend2.id),
+          },
+        }), {
+          data: {
+            removeUserFromUserFriends: {
+              changedUser1: {
+                id: friend1.id,
+              },
+              changedUser2: {
+                id: friend2.id,
+              },
+            },
+          },
+        });
       });
     });
   }

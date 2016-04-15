@@ -32,6 +32,7 @@ export default async function hasPermission(
       },
     },
   },
+  overrideFields,
 ) {
   const { isAdmin, userID: id } = credentials;
   const userID = id && id.value;
@@ -49,15 +50,17 @@ export default async function hasPermission(
   // object to check permissions through
   let object = newObject;
   // fields to check or a full permission
-  let fields;
+  let fields = overrideFields;
   // list of related permissions that need to be checked
   let otherTypePermissions = [];
 
   if (permission === 'create') {
     object = newObject;
-    fields = Object.keys(
-      pick(newObject, (value, key) => value && key !== '_id')
-    );
+    if (!fields) {
+      fields = Object.keys(
+        pick(newObject, (value, key) => value && key !== '_id' && key !== 'id')
+      );
+    }
     otherTypePermissions = connectionFields
       .filter((field) => field.name in object)
       .map((field) => fieldToExtraPermissions(
@@ -69,13 +72,12 @@ export default async function hasPermission(
         userID,
       ));
   } else if (permission === 'update') {
-    object = {
-      ...oldObject,
-      ...newObject,
-    };
-    fields = Object.keys(
-      pick(newObject, (value, key) => value && key !== '_id')
-    );
+    object = oldObject;
+    if (!fields) {
+      fields = Object.keys(
+        pick(newObject, (value, key) => value && key !== '_id' && key !== 'id')
+      );
+    }
     otherTypePermissions = chain(connectionFields)
       .map((field) => {
         const oldValue = oldObject[field.name];
@@ -113,12 +115,15 @@ export default async function hasPermission(
       .value();
   } else if (permission === 'replace') {
     permissionName = 'update';
-    fields = Object.keys(
-      pick({
-        ...oldObject,
-        ...newObject,
-      }, (value, key) => value && key !== '_id')
-    );
+    object = oldObject;
+    if (!fields) {
+      fields = Object.keys(
+        pick({
+          ...oldObject,
+          ...newObject,
+        }, (value, key) => value && key !== '_id' && key !== 'id')
+      );
+    }
     otherTypePermissions = chain(connectionFields)
       .map((field) => {
         const oldValue = oldObject[field.name];
