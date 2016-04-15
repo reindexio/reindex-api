@@ -1163,6 +1163,43 @@ describe('Permissions', () => {
             },
           },
         }, 'non-anonymous can follow');
+
+        assert.deepEqual(await runQuery(`
+          mutation($input: _UserFollowersConnectionInput!) {
+            removeUserFromUserFollowers(input: $input) {
+              changedFollowersUser {
+                id
+              }
+              changedFollowingUser {
+                id
+              }
+            }
+          }
+        `, {
+          input: {
+            followersId: user1.id,
+            followingId: user2.id,
+          },
+        }, {
+          credentials: {
+            isAdmin: false,
+            userID: null,
+          },
+          printErrors: false,
+        }), {
+          data: {
+            removeUserFromUserFollowers: null,
+          },
+          errors: [
+            {
+              message: (
+                'User lacks permissions to update nodes of type `User` with ' +
+                'fields `following`.\nUser lacks permissions to update ' +
+                'nodes of type `User` with fields `followers`.'
+              ),
+            },
+          ],
+        }, 'anonymous can not unfollow');
       });
     }
   });

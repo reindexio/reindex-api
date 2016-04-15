@@ -232,15 +232,30 @@ function createResolveFunction(
       }
     }
 
-    await checkPermission(fromType, 'update',
-      {
-        [fromField]: fromObject[fromField] && [fromObject[fromField]],
-      },
-      {
-        [fromField]: toId && [toId],
-      },
-      context,
-    );
+    // If adding we pretend there was nothing in connection and now
+    // there is new item added there. If removing we pretend there was
+    // the particular item we are removing and then there was nothing.
+    if (operation === 'addToConnection') {
+      await checkPermission(fromType, 'update',
+        {
+          [fromField]: [],
+        },
+        {
+          [fromField]: toId && [toId],
+        },
+        context,
+      );
+    } else {
+      await checkPermission(fromType, 'update',
+        {
+          [fromField]: toId && [toId],
+        },
+        {
+          [fromField]: [],
+        },
+        context,
+      );
+    }
 
     const { from, to } = await db[operation]({
       fromType,
