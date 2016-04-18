@@ -98,17 +98,12 @@ export function getCount(db, cursor) {
   return cursor.count();
 }
 
-export function getEdges(db, cursor) {
-  return addTransform(cursor, (node) => ({
-    node,
-    cursor: {
-      value: node._id,
-    },
-  })).toArray();
+export function getEdges(db, query) {
+  return query.getEdges();
 }
 
-export function getNodes(db, cursor) {
-  return cursor.toArray();
+export function getNodes(db, query) {
+  return query.getNodes();
 }
 
 export function getPageInfo(db, promise) {

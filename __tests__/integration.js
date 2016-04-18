@@ -518,10 +518,51 @@ describe('Integration Tests', () => {
   it('can query both for nodes, edges and count', async function () {
     const micropost = values(fixtures.Micropost)[0];
 
-    const result = await runQuery(`
+    let result = await runQuery(`
       {
         viewer {
           allMicroposts(first: 1) {
+            count
+            edges {
+              node {
+                id
+              }
+            }
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    `);
+
+    assert.deepEqual(result, {
+      data: {
+        viewer: {
+          allMicroposts: {
+            count: 20,
+            nodes: [
+              {
+                id: micropost.id,
+              },
+            ],
+            edges: [
+              {
+                node: {
+                  id: micropost.id,
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    result = await runQuery(`
+      {
+        viewer {
+          allMicroposts(first: 1) {
+            count
             nodes {
               id
             }
@@ -530,7 +571,6 @@ describe('Integration Tests', () => {
                 id
               }
             }
-            count
           }
         }
       }
