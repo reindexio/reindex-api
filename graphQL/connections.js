@@ -7,11 +7,16 @@ import {
   GraphQLList,
 } from 'graphql';
 
-import { getConnectionTypeName, getEdgeTypeName } from './derivedNames';
+import {
+  getConnectionTypeName,
+  getEdgeTypeName,
+} from './derivedNames';
+import { processFilters } from './filters';
 import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
 
-export function createConnection({ type }) {
+export function createConnection(typeSet) {
+  const type = typeSet.type;
   const edge = new GraphQLObjectType({
     name: getEdgeTypeName(type.name),
     description:
@@ -40,6 +45,24 @@ Edges are elements of \`edges\` list of Connections.
       },
     },
   });
+
+  let filterField = {};
+  const filterType = typeSet.getFilterType();
+  if (filterType) {
+    filterField = {
+      filter: {
+        name: 'filter',
+        description:
+`
+`,
+        type: new GraphQLList(typeSet.getFilterType()),
+        resolve({ filter }) {
+          return filter;
+        },
+      },
+    };
+  }
+
   return {
     edge,
     connection: new GraphQLObjectType({
@@ -97,6 +120,7 @@ slice.
             return db.getPageInfo(pageInfo);
           },
         },
+        ...filterField,
       },
     }),
   };
@@ -149,6 +173,16 @@ export function createConnectionArguments(typeName, getTypeSet) {
     };
   }
 
+  const filterType = getTypeSet(typeName).getFilterInput();
+  if (filterType) {
+    args.filter = {
+      name: 'filter',
+      description:
+'A list of filter to apply to the results. Filters are AND-end',
+      type: new GraphQLList(filterType),
+    };
+  }
+
   return args;
 }
 
@@ -186,20 +220,32 @@ export function createConnectionFieldResolve(
 ) {
   return async (parent, args, context) => {
     await checkConnectionPermissions(ofType, reverseName, parent, context);
+
     if (!defaultOrdering) {
       defaultOrdering = {
         field: 'id',
       };
     }
+
+    const types = context.rootValue.typeInfoByName;
+    const type = types[ofType];
+
+    const filters = [
+      ...processFilters(types, type, args.filter || []),
+      {
+        op: 'EQ',
+        field: `${reverseName}.value`,
+        value: parent.id.value,
+      },
+    ];
+
     const processedArgs = {
       orderBy: defaultOrdering,
       ...args,
     };
     return context.rootValue.db.getConnectionQueries(
       ofType,
-      {
-        [`${reverseName}.value`]: parent.id.value,
-      },
+      filters,
       processedArgs,
       context.rootValue,
     );

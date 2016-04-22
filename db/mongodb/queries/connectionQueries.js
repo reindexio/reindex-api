@@ -5,11 +5,14 @@ import { addID, addTransform } from './queryUtils';
 export function getConnectionQueries(
   db,
   type,
-  filter = {},
+  filter = [],
   args = {},
 ) {
   return getPaginatedQuery(
-    db, type, filter, args
+    db,
+    type,
+    filtersToMongo(filter),
+    args
   );
 }
 
@@ -49,6 +52,7 @@ async function getPaginatedQuery(db, type, filter, {
   after,
   first,
   last,
+  filter: passedFilter,
 }) {
   const collection = db.collection(type);
   let query;
@@ -73,6 +77,7 @@ async function getPaginatedQuery(db, type, filter, {
       addID(type, object)
     )),
     pageInfo,
+    filter: passedFilter,
   };
 }
 
@@ -145,12 +150,7 @@ async function limitQuery(collection, filter, field, order, before, after) {
     };
   }
 
-  return collection.find(finalFilter).sort([
-    // Adding sort by all index keys to force mongo to use index
-    ...Object.keys(filter).map((key) => [key, order]),
-    [field, order],
-    ['_id', order],
-  ]);
+  return filterAndSortWithIndex(collection, finalFilter, filter, field, order);
 }
 
 function limitQueryWithId(collection, filter, order, before, after) {
@@ -171,7 +171,21 @@ function limitQueryWithId(collection, filter, order, before, after) {
     filter._id[op] = ObjectId(after.value);
   }
 
-  return collection.find(filter).sort([['_id', order]]);
+  return filterAndSortWithIndex(collection, filter, filter, '_id', order);
+}
+
+// Filter and sort with all filter keys to apply index correctly
+function filterAndSortWithIndex(collection, filter, cleanFilter, field, order) {
+  const allFilterKeys = [
+    ...Object.keys(cleanFilter).filter((key) => key !== '$and'),
+    ...(cleanFilter.$and || []).map((part) => Object.keys(part)[0]),
+  ];
+
+  return collection.find(filter).sort([
+    ...allFilterKeys.map((key) => [key, order]),
+    [field, order],
+    ...(field !== 'id' ? [['_id', order]] : []),
+  ]);
 }
 
 async function applyPagination(query, first, last) {
@@ -209,4 +223,60 @@ async function applyPagination(query, first, last) {
     hasNextPage: Boolean(first && count > first),
     hasPreviousPage: Boolean(last && count > last),
   };
+}
+
+function filtersToMongo(filters) {
+  const mongoFilters = filters.map(filterToMongo);
+  return mongoFilters.reduce(mergeFilters, {});
+}
+
+function mergeFilters(filters, next) {
+  return {
+    ...filters,
+    $and: [
+      ...filters.$and || [],
+      next,
+    ],
+  };
+}
+
+const OP_TO_MONGO = {
+  GT: '$gt',
+  GTE: '$gte',
+  LT: '$lt',
+  LTE: '$lte',
+  NEQ: '$ne',
+  IN: '$in',
+  NIN: '$nin',
+};
+
+function filterToMongo(filter) {
+  const { field, op, value } = filter;
+  if (op === 'NULL') {
+    return {
+      [field]: null,
+    };
+  } else if (op === 'NOTNULL') {
+    return {
+      [field]: {
+        $ne: null,
+      },
+    };
+  } else if (op === 'EQ') {
+    return {
+      [field]: value,
+    };
+  } else if (op === 'IN' || op === 'NIN') {
+    return {
+      [field]: {
+        [OP_TO_MONGO[op]]: [value],
+      },
+    };
+  } else {
+    return {
+      [field]: {
+        [OP_TO_MONGO[op]]: value,
+      },
+    };
+  }
 }

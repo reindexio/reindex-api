@@ -3,6 +3,7 @@ import {
 } from '../connections';
 import checkPermission from '../permissions/checkPermission';
 import { getAllQueryName } from '../derivedNames';
+import { processFilters } from '../filters';
 
 export default function createAllNodes(
   { type, connection, pluralName },
@@ -19,9 +20,11 @@ export default function createAllNodes(
     ),
     async resolve(parent, args, context) {
       await checkPermission(type.name, 'read', {}, {}, context);
+      const types = context.rootValue.typeInfoByName;
+      const typeDef = types[type.name];
       return context.rootValue.db.getConnectionQueries(
         type.name,
-        {},
+        processFilters(types, typeDef, args.filter || []),
         args,
         context.rootValue,
       );

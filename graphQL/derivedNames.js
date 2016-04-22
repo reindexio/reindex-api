@@ -76,3 +76,15 @@ export function getPayloadTypeName(typeName) {
 export function getInputObjectTypeName(typeName) {
   return getGeneratedTypeName(typeName, 'Input');
 }
+
+export function getFilterFieldEnumName(typeName) {
+  return getGeneratedTypeName(typeName, 'FilterFieldEnum');
+}
+
+export function getFilterTypeName(typeName) {
+  return getGeneratedTypeName(typeName, 'Filter');
+}
+
+export function getFilterInputName(typeName) {
+  return getGeneratedTypeName(typeName, 'FilterInput');
+}

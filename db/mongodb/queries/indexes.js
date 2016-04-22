@@ -50,6 +50,21 @@ function findIndexesInType(type, typesByName) {
           unique: true,
         },
       ];
+    } else if (field.filterable) {
+      const baseIndexes = [
+        {
+          type: type.name,
+          fields: [field.name, '_id'],
+        },
+      ];
+      return baseIndexes.concat(
+        orderableFields
+          .filter((orderableField) => orderableField !== field.name)
+          .map((orderableField) => ({
+            type: type.name,
+            fields: [field.name, orderableField.name, '_id'],
+          })),
+      );
     } else if (field.orderable) {
       return [
         {
