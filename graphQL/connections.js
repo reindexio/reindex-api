@@ -46,23 +46,6 @@ Edges are elements of \`edges\` list of Connections.
     },
   });
 
-  let filterField = {};
-  const filterType = typeSet.getFilterType();
-  if (filterType) {
-    filterField = {
-      filter: {
-        name: 'filter',
-        description:
-`
-`,
-        type: new GraphQLList(typeSet.getFilterType()),
-        resolve({ filter }) {
-          return filter;
-        },
-      },
-    };
-  }
-
   return {
     edge,
     connection: new GraphQLObjectType({
@@ -120,7 +103,6 @@ slice.
             return db.getPageInfo(pageInfo);
           },
         },
-        ...filterField,
       },
     }),
   };
@@ -139,6 +121,7 @@ export const PageInfo = new GraphQLObjectType({
 });
 
 export function createConnectionArguments(typeName, getTypeSet) {
+  const typeSet = getTypeSet(typeName);
   const args = {
     first: {
       name: 'first',
@@ -162,24 +145,15 @@ export function createConnectionArguments(typeName, getTypeSet) {
       description: 'Only return edges after given cursor.',
       type: Cursor,
     },
+    ...typeSet.getFilterArgs(),
   };
 
-  const ordering = getTypeSet(typeName).getOrdering();
+  const ordering = typeSet.getOrdering();
   if (ordering) {
     args.orderBy = {
       name: 'orderBy',
       description: 'The ordering to sort the results by.',
       type: ordering,
-    };
-  }
-
-  const filterType = getTypeSet(typeName).getFilterInput();
-  if (filterType) {
-    args.filter = {
-      name: 'filter',
-      description:
-'A list of filter to apply to the results. Filters are AND-end',
-      type: new GraphQLList(filterType),
     };
   }
 
@@ -217,6 +191,7 @@ export function createConnectionFieldResolve(
   ofType,
   reverseName,
   defaultOrdering,
+  getTypeSet
 ) {
   return async (parent, args, context) => {
     await checkConnectionPermissions(ofType, reverseName, parent, context);
@@ -227,14 +202,13 @@ export function createConnectionFieldResolve(
       };
     }
 
-    const types = context.rootValue.typeInfoByName;
-    const type = types[ofType];
-
+    const argFilters = processFilters(getTypeSet(ofType), args);
+    const filterName = `${reverseName}.value`;
     const filters = [
-      ...processFilters(types, type, args.filter || []),
+      ...argFilters,
       {
+        field: filterName,
         op: 'EQ',
-        field: `${reverseName}.value`,
         value: parent.id.value,
       },
     ];

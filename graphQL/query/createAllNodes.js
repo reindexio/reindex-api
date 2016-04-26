@@ -6,10 +6,11 @@ import { getAllQueryName } from '../derivedNames';
 import { processFilters } from '../filters';
 
 export default function createAllNodes(
-  { type, connection, pluralName },
+  typeSet,
   interfaces,
   typeSets
 ) {
+  const { type, connection, pluralName } = typeSet;
   return {
     name: getAllQueryName(type.name, pluralName),
     description: `A connection with all objects of type \`${type.name}\``,
@@ -20,11 +21,9 @@ export default function createAllNodes(
     ),
     async resolve(parent, args, context) {
       await checkPermission(type.name, 'read', {}, {}, context);
-      const types = context.rootValue.typeInfoByName;
-      const typeDef = types[type.name];
       return context.rootValue.db.getConnectionQueries(
         type.name,
-        processFilters(types, typeDef, args.filter || []),
+        processFilters(typeSet, args),
         args,
         context.rootValue,
       );

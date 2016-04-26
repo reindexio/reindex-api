@@ -1,26 +1,14 @@
 import { omit, isEmpty, chain, snakeCase } from 'lodash';
 import {
   GraphQLEnumType,
-  GraphQLObjectType,
-  GraphQLInputObjectType,
-  GraphQLBoolean,
-  GraphQLInt,
-  GraphQLNonNull,
-  GraphQLString,
-  GraphQLFloat,
 } from 'graphql';
-import {
-  getFilterFieldEnumName,
-  getFilterTypeName,
-  getFilterInputName,
-} from './derivedNames';
 import createInputObjectType from './createInputObjectType';
-import { FilterOperation } from './filters';
 import ReindexID from './builtins/ReindexID';
-import DateTime from './builtins/DateTime';
+import { createFilterArgs } from './filters';
 
 export default class TypeSet {
   constructor({
+    typeMetadata,
     type,
     connection,
     edge,
@@ -33,6 +21,7 @@ export default class TypeSet {
     blacklistedRootFields,
     pluralName,
   }) {
+    this.typeMetadata = typeMetadata || null;
     this.type = type;
     this.connection = connection || null;
     this.edge = edge || null;
@@ -117,83 +106,10 @@ export default class TypeSet {
     return this.filterableFields || [];
   }
 
-  _createFilterTypes() {
-    const filters = this.getFilters();
-    if (!this._filterType && filters.length > 0) {
-      const fieldEnum = new GraphQLEnumType({
-        name: getFilterFieldEnumName(this.type.name),
-        description: '',
-        values: chain(filters)
-          .map((filter) => ({
-            value: filter,
-          }))
-          .indexBy((filter) => filter.value)
-          .value(),
-      });
-
-      const filterFields = {
-        op: {
-          type: new GraphQLNonNull(FilterOperation),
-        },
-        field: {
-          type: new GraphQLNonNull(fieldEnum),
-        },
-        valueString: {
-          type: GraphQLString,
-          description: 'A value to search with for String fields.',
-        },
-        valueInt: {
-          type: GraphQLInt,
-          description: 'A value to search with for Int fields',
-        },
-        valueFloat: {
-          type: GraphQLFloat,
-          description: 'A value to search with for Float fields',
-        },
-        valueDateTime: {
-          type: DateTime,
-          description: 'A value to search with for DateTime fields',
-        },
-        valueBoolean: {
-          type: GraphQLBoolean,
-          description: 'A value to search with for Boolean fields',
-        },
-        valueID: {
-          type: ReindexID,
-          description: 'A value to search with for Connection or Node fields',
-        },
-      };
-
-
-      this._filterType = new GraphQLObjectType({
-        name: getFilterTypeName(this.type.name),
-        description:
-`
-`,
-        fields: filterFields,
-      });
-
-      this._filterInput = new GraphQLInputObjectType({
-        name: getFilterInputName(this.type.name),
-        description:
-`
-`,
-        fields: filterFields,
-      });
+  getFilterArgs() {
+    if (!this._filterArgs) {
+      this._filterArgs = createFilterArgs(this);
     }
-  }
-
-  getFilterType() {
-    if (!this._filterType) {
-      this._createFilterTypes();
-    }
-    return this._filterType;
-  }
-
-  getFilterInput() {
-    if (!this._filterInput) {
-      this._createFilterTypes();
-    }
-    return this._filterInput;
+    return this._filterArgs;
   }
 }

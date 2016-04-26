@@ -179,7 +179,7 @@ function createField(field, getTypeSet, interfaces) {
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments(ofType, getTypeSet);
     resolve = createConnectionFieldResolve(
-      ofType, reverseName, defaultOrdering
+      ofType, reverseName, defaultOrdering, getTypeSet
     );
   } else if (fieldType === 'List') {
     const innerType = (
@@ -308,14 +308,19 @@ function getFilterableFields(types, type) {
           field.type === 'Connection' ||
           field.type !== 'Connection' && field.reverseName
       )) {
-        return [field.name];
+        return [
+          field,
+        ];
       } else if (!ScalarTypes[field.type]) {
         const newType = types.find((otherType) =>
           otherType.name === field.type
         );
         if (newType) {
           return getFilterableFields(types, newType)
-            .map((fieldChain) => `${field.name}__${fieldChain}`);
+            .map((nestedField) => ({
+              ...nestedField,
+              name: `${field.name}__${nestedField.name}`,
+            }));
         } else {
           return [];
         }

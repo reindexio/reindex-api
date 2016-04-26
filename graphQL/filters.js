@@ -1,103 +1,44 @@
-import { GraphQLEnumType } from 'graphql';
+import { chain, values } from 'lodash';
+import {
+  GraphQLEnumType,
+  GraphQLInputObjectType,
+  GraphQLList,
+  GraphQLNonNull,
+} from 'graphql';
 import { GraphQLError } from 'graphql/error/GraphQLError';
 
-export function processFilters(types, typeName, filters) {
-  const processedFilters = [];
-  for (const filter of filters) {
-    const field = getFilterField(types, typeName, filter);
-    let fieldType = field.type;
+import ScalarTypes from './builtins/ScalarTypes';
+import ReindexID from './builtins/ReindexID';
+import { getFilterOperationName, getFilterName } from './derivedNames';
 
-    const op = filter.op;
-
-    let allowedOps = TYPE_TO_ALLOWED_OP[fieldType];
-    if (!allowedOps) {
-      fieldType = 'Node';
-      allowedOps = TYPE_TO_ALLOWED_OP.Node;
+export function processFilters(typeSet, args) {
+  const filterArgs = typeSet.getFilterArgs();
+  const filters = [];
+  for (const filterArg of values(filterArgs)) {
+    const argValue = args[filterArg.name];
+    if (argValue) {
+      for (const argI in argValue) {
+        const arg = argValue[argI];
+        if ((arg.op === 'NULL' || arg.op === 'NOTNULL') && arg.value) {
+          throw new GraphQLError(
+            `Invalid argument \`${filterArg.name}\`. In element #${argI}: ` +
+            'expected \`value\` to be null.'
+          );
+        } else if ((arg.op !== 'NULL' && arg.op !== 'NOTNULL') && !arg.value) {
+          throw new GraphQLError(
+            `Invalid argument \`${filterArg.name}\`. In element #${argI}: ` +
+            'expected \`value\` to be not null.'
+          );
+        }
+        filters.push({
+          ...arg,
+          field: filterArg.field.replace('__', '.'),
+        });
+      }
     }
-
-    if (!allowedOps.includes(op)) {
-      throw new GraphQLError(
-        `Invalid filter op \`${op}\` ` +
-        `for field ${filter.field} of type \`${fieldType}\`. ` +
-        `Allowed op values are: ${allowedOps.join(', ')}.`
-      );
-    }
-
-    if (fieldType === 'List') {
-      fieldType = field.ofType;
-    }
-
-    let valueKey = TYPE_TO_VALUE[fieldType];
-    if (op === 'NULL' || op === 'NOTNULL') {
-      valueKey = null;
-    }
-
-    const value = valueKey && filter[valueKey];
-
-    const valueThere = !valueKey || value;
-    const noExtraValues = VALUES.every((key) =>
-      (key === valueKey) || !filter[key]
-    );
-
-    if (!valueThere || (!noExtraValues && valueKey)) {
-      throw new GraphQLError(
-        `Invalid filter value for field \`${filter.field}\` of type ` +
-        `\`${fieldType}\` with op \`${op}\`. ` +
-        `Expected only \`${valueKey}\` to be non-null.`
-      );
-    } else if (!noExtraValues && !valueKey) {
-      throw new GraphQLError(
-        `Invalid filter value for field \`${filter.field}\` of type ` +
-        `\`${fieldType}\` with op \`${op}\`. ` +
-        `Expected no values to be present.`
-      );
-    }
-
-    processedFilters.push({
-      op: filter.op,
-      field: filter.field.split('__').join('.'),
-      value,
-    });
   }
-
-  return processedFilters;
+  return filters;
 }
-
-function getFilterField(types, type, filter) {
-  let fields = type.fields;
-  let fieldChain = filter.field;
-  if (fieldChain.includes('__')) {
-    fieldChain = fieldChain.split(/__/);
-  } else {
-    fieldChain = [fieldChain];
-  }
-  let field = fields[fieldChain.shift()];
-  while (fieldChain.length > 0) {
-    type = types[field.type];
-    fields = type.fields;
-    field = fields[fieldChain.shift()];
-  }
-  return field;
-}
-
-const VALUES = [
-  'valueString',
-  'valueBoolean',
-  'valueFloat',
-  'valueDateTime',
-  'valueBoolean',
-  'valueID',
-];
-
-const TYPE_TO_VALUE = {
-  String: 'valueString',
-  Int: 'valueBoolean',
-  Float: 'valueFloat',
-  DateTime: 'valueDateTime',
-  Boolean: 'valueBoolean',
-  Connection: 'valueID',
-  Node: 'valueID',
-};
 
 const TYPE_TO_ALLOWED_OP = {
   String: ['EQ', 'NEQ', 'NULL', 'NOTNULL'],
@@ -110,64 +51,91 @@ const TYPE_TO_ALLOWED_OP = {
   Node: ['EQ', 'NEQ', 'NULL', 'NOTNULL'],
 };
 
-export const FilterOperation = new GraphQLEnumType({
-  name: 'ReindexFilterOperation',
-  description:
-`Type of the filter.
+const OP_DOCS = {
+  EQ: `\`EQ\` - equal (case sensitive for strings)`,
+  NEQ: `\`NEQ\` - not-equal (case sensitive for strings)`,
+  LT: `\`LT\` - less than`,
+  LTE: `\`LTE\` - less than equal`,
+  GT: `\`GT\` - greater than`,
+  GTE: `\`GTE\` - greater than equal`,
+  NULL: `\`NULL\` - value is null`,
+  NOTNULL: `\`NOTNULL\` - value is not null`,
+  IN: `\`IN\` - value is inside list or connection field`,
+  NIN: `\`NIN\` - value is not inside list or connection field`,
+};
 
-Possible value:
+export function createFilterArgs(typeSet) {
+  const reservedArgs = [
+    'orderBy',
+    'first',
+    'last',
+    'before',
+    'after',
+    'pageInfo',
+  ];
+  const args = {};
+  for (const field of typeSet.getFilters() || []) {
+    let filterName = field.name;
+    while (args[filterName] || reservedArgs.includes[filterName]) {
+      filterName = `${filterName}Filter`;
+    }
+    args[filterName] = createFilterArg(typeSet.type, field, filterName);
+  }
+  return args;
+}
 
-* \`EQ\` - equal (case sensitive for strings)
-  Valid types: String, Int, Float, Boolean, DateTime, Node
-* \`NEQ\` - not-equal (case sensitive for strings)
-  Valid types: String, Int, Float, Boolean, DateTime, Node
-* \`LT\` - less than
-  Valid types: Int, Float, DateTime
-* \`LTE\` - less than equal
-  Valid types: Int, Float, DateTime
-* \`GT\` - greater than
-  Valid types: Int, Float, DateTime
-* \`GTE\` - greater than equal
-  Valid types: Int, Float, DateTime
-* \`NULL\` - value is null
-  Valid types: String, Int, Float, Boolean, DateTime
-* \`NOTNULL\` - value is not null
-  Valid types: String, Int, Float, Boolean, DateTime
-* \`IN\` - value is inside list or connection field
-  Valid types: Connection, List
-* \`NIN\` - value is not inside list or connection field
-  Valid types: Connection, List
-`,
-  values: {
-    EQ: {
-      value: 'EQ',
+function createFilterArg(type, field, filterName) {
+  const filterType = new GraphQLInputObjectType({
+    name: getFilterName(type.name, field.name),
+    description:
+`Filter by the \`${field.name}\``,
+    fields: {
+      op: {
+        type: new GraphQLNonNull(createFilterOperation(type, field)),
+      },
+      value: {
+        type: fieldToFilterType(field),
+      },
     },
-    NEQ: {
-      value: 'NEQ',
-    },
-    LT: {
-      value: 'LT',
-    },
-    LTE: {
-      value: 'LTE',
-    },
-    GT: {
-      value: 'GT',
-    },
-    GTE: {
-      value: 'GTE',
-    },
-    NULL: {
-      value: 'NULL',
-    },
-    NOTNULL: {
-      value: 'NOTNULL',
-    },
-    IN: {
-      value: 'IN',
-    },
-    NIN: {
-      value: 'NIN',
-    },
-  },
-});
+  });
+  return {
+    name: filterName,
+    field: field.name,
+    type: new GraphQLList(filterType),
+    description: `Filter the connection based on \`${field.name}\``,
+  };
+}
+
+function createFilterOperation(type, field) {
+  const possibleOperations = (
+    TYPE_TO_ALLOWED_OP[field.type] ||
+    TYPE_TO_ALLOWED_OP.Node
+  );
+  const docs = possibleOperations
+    .map((op) => `* ${OP_DOCS[op]}`)
+    .join('\n');
+  return new GraphQLEnumType({
+    name: getFilterOperationName(type.name, field.name),
+    desciption: `
+      Operation of the filter.
+
+      Possible values:
+
+      ${docs}
+    `,
+    values: chain(possibleOperations)
+      .map((op) => ({ value: op }))
+      .indexBy((op) => op.value)
+      .value(),
+  });
+}
+
+function fieldToFilterType(field) {
+  if (ScalarTypes[field.type]) {
+    return ScalarTypes[field.type];
+  } else if (field.type === 'Connection' || field.reverseName) {
+    return ReindexID;
+  } else if (field.type === 'List') {
+    return ScalarTypes[field.ofType];
+  }
+}

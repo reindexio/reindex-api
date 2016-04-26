@@ -151,7 +151,9 @@ not have a name. Can include typed inline fragments.`,
           log: {
             type: getTypeSet('ReindexHookLog').connection,
             args: createConnectionArguments('ReindexHookLog', getTypeSet),
-            resolve: createConnectionFieldResolve('ReindexHookLog', 'hook'),
+            resolve: createConnectionFieldResolve(
+              'ReindexHookLog', 'hook', {}, getTypeSet
+            ),
           },
           logLevel: {
             type: new GraphQLNonNull(logLevel),

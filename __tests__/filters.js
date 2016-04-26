@@ -71,13 +71,10 @@ describe('Filter Tests', () => {
           viewer {
             allMicroposts(
               first: 10,
-              filter: [
-                {
-                  op: LT,
-                  field: createdAt,
-                  valueDateTime: "2014-02-01",
-                }
-              ],
+              createdAt: {
+                op: LT,
+                value: "2014-02-01",
+              },
               orderBy: CREATED_AT_DESC
             ) {
               nodes {
@@ -116,13 +113,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         query($id: ID!) {
           viewer {
-            allMicroposts(first: 10, filter: [
-              {
-                op: EQ,
-                field: author,
-                valueID: $id
-              }
-            ], orderBy: CREATED_AT_DESC) {
+            allMicroposts(first: 10, author: {
+              op: EQ,
+              value: $id
+            }, orderBy: CREATED_AT_DESC) {
               nodes {
                 id
                 text
@@ -166,13 +160,10 @@ describe('Filter Tests', () => {
             id
             handle
             email
-            microposts(first: 10, filter: [
-              {
-                op: LT,
-                field: createdAt,
-                valueDateTime: "2014-02-01",
-              }
-            ]) {
+            microposts(first: 10, createdAt: {
+              op: LT,
+              value: "2014-02-01",
+            }) {
               nodes {
                 id
                 text
@@ -214,11 +205,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(filter: [
+            allUsers(email: [
               {
                 op: NULL,
-                field: email,
-                valueString: "some@example.com",
+                value: "some@example.com",
               },
             ], orderBy: HANDLE_ASC) {
               nodes {
@@ -239,10 +229,8 @@ describe('Filter Tests', () => {
         },
         errors: [
           {
-            message: (
-              'Invalid filter value for field `email` of type `String` ' +
-              'with op `NULL`. Expected no values to be present.'
-            ),
+            message:
+'Invalid argument `email`. In element #0: expected `value` to be null.',
           },
         ],
       }, 'null with passed value');
@@ -250,11 +238,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(filter: [
+            allUsers(email: [
               {
                 op: LT,
-                field: email,
-                valueString: "some@example.com",
+                value: "some@example.com",
               },
             ], orderBy: HANDLE_ASC) {
               nodes {
@@ -268,16 +255,12 @@ describe('Filter Tests', () => {
       `, {}, {
         printErrors: false,
       }), {
-        data: {
-          viewer: {
-            allUsers: null,
-          },
-        },
         errors: [
           {
             message: (
-              'Invalid filter op `LT` for field email of type `String`. ' +
-              'Allowed op values are: EQ, NEQ, NULL, NOTNULL.'
+              'Argument "email" has invalid value [{op: LT, value: ' +
+              '"some@example.com"}].\nIn element #0: In field "op": ' +
+              'Expected type "_UserEmailFilterOperation", found LT.'
             ),
           },
         ],
@@ -286,11 +269,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(filter: [
+            allUsers(email: [
               {
                 op: EQ,
-                field: email,
-                valueDateTime: "2014-05-10",
               },
             ], orderBy: HANDLE_ASC) {
               nodes {
@@ -311,50 +292,11 @@ describe('Filter Tests', () => {
         },
         errors: [
           {
-            message: (
-              'Invalid filter value for field `email` of type `String` ' +
-              'with op `EQ`. Expected only `valueString` to be non-null.'
-            ),
+            message:
+'Invalid argument `email`. In element #0: expected `value` to be not null.',
           },
         ],
-      }, 'invalid value passed');
-
-      assert.deepEqual(await runQuery(`
-        {
-          viewer {
-            allUsers(filter: [
-              {
-                op: EQ,
-                field: email,
-                valueString: "some@example.com",
-                valueDateTime: "2014-05-10",
-              },
-            ], orderBy: HANDLE_ASC) {
-              nodes {
-                id
-                handle
-                email
-              }
-            }
-          }
-        }
-      `, {}, {
-        printErrors: false,
-      }), {
-        data: {
-          viewer: {
-            allUsers: null,
-          },
-        },
-        errors: [
-          {
-            message: (
-              'Invalid filter value for field `email` of type `String` ' +
-              'with op `EQ`. Expected only `valueString` to be non-null.'
-            ),
-          },
-        ],
-      }, 'more values passed');
+      }, 'no value for non null');
     });
 
     it('ands multiple filters', async () => {
@@ -363,16 +305,14 @@ describe('Filter Tests', () => {
           viewer {
             allMicroposts(
               first: 10,
-              filter: [
+              createdAt: [
                 {
                   op: LTE,
-                  field: createdAt,
-                  valueDateTime: "2014-02-01",
+                  value: "2014-02-01",
                 },
                 {
                   op: GTE,
-                  field: createdAt,
-                  valueDateTime: "2014-02-03"
+                  value: "2014-02-03"
                 }
               ],
               orderBy: CREATED_AT_DESC
@@ -415,10 +355,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(filter: [
+            allUsers(email: [
               {
                 op: NULL,
-                field: email,
               },
             ], orderBy: HANDLE_ASC) {
               nodes {
@@ -449,12 +388,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(filter: [
-              {
-                op: NOTNULL,
-                field: email,
-              },
-            ], orderBy: HANDLE_ASC) {
+            allUsers(email: {
+              op: NOTNULL,
+            }, orderBy: HANDLE_ASC) {
               nodes {
                 id
                 handle
@@ -485,11 +421,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, filter: [
+            allMicroposts(first: 10, mainCategory__name: [
               {
                 op: EQ,
-                field: mainCategory__name,
-                valueString: "category-0",
+                value: "category-0",
               },
             ], orderBy: CREATED_AT_ASC) {
               nodes {
@@ -528,11 +463,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, filter: [
+            allMicroposts(first: 10, tags: [
               {
                 op: IN,
-                field: tags,
-                valueString: "tag-1",
+                value: "tag-1",
               },
             ], orderBy: CREATED_AT_ASC) {
               nodes {
@@ -569,11 +503,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, filter: [
+            allMicroposts(first: 10, tags: [
               {
                 op: NIN,
-                field: tags,
-                valueString: "tag-1",
+                value: "tag-1",
               },
             ], orderBy: CREATED_AT_ASC) {
               nodes {
@@ -631,11 +564,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         query($id: ID!) {
           viewer {
-            allMicroposts(first: 100, filter: [
+            allMicroposts(first: 100, favoritedBy: [
               {
                 op: IN,
-                field: favoritedBy,
-                valueID: $id
+                value: $id
               }
             ], orderBy: CREATED_AT_ASC) {
               nodes {
@@ -668,11 +600,10 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         query($id: ID!) {
           viewer {
-            allMicroposts(first: 10, filter: [
+            allMicroposts(first: 10, favoritedBy: [
               {
                 op: NIN,
-                field: favoritedBy,
-                valueID: $id
+                value: $id
               }
             ], orderBy: CREATED_AT_ASC) {
               nodes {

@@ -343,7 +343,9 @@ creating a migration with the CLI tool.
         hooks: {
           type: getTypeSet('ReindexHook').connection,
           args: createConnectionArguments('ReindexHook', getTypeSet),
-          resolve: createConnectionFieldResolve('ReindexHook', 'type'),
+          resolve: createConnectionFieldResolve(
+            'ReindexHook', 'type', {}, getTypeSet
+          ),
           description: '',
         },
         introspection: {
@@ -365,7 +367,6 @@ creating a migration with the CLI tool.
       createReplace,
       createDelete,
     ],
-    filterableFields: ['name', 'kind'],
   });
 
   return {
