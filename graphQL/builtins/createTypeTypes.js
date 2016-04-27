@@ -179,6 +179,11 @@ new root query field is created to get values based on that field.`,
           description:
 `If set, orderBy can be used on this field. Can be only set on scalar fields.`,
         },
+        filterable: {
+          type: GraphQLBoolean,
+          description:
+`If set, filter can be used on this field. Can be only set on scalar fields.`,
+        },
       },
     }),
   });
@@ -309,6 +314,7 @@ creating a migration with the CLI tool.
           metadata: {
             unique: true,
             orderable: true,
+            filterable: true,
           },
         },
         description: {
@@ -337,7 +343,9 @@ creating a migration with the CLI tool.
         hooks: {
           type: getTypeSet('ReindexHook').connection,
           args: createConnectionArguments('ReindexHook', getTypeSet),
-          resolve: createConnectionFieldResolve('ReindexHook', 'type'),
+          resolve: createConnectionFieldResolve(
+            'ReindexHook', 'type', {}, getTypeSet
+          ),
           description: '',
         },
         introspection: {

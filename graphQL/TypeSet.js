@@ -2,26 +2,34 @@ import { omit, isEmpty, chain, snakeCase } from 'lodash';
 import {
   GraphQLEnumType,
 } from 'graphql';
-
 import createInputObjectType from './createInputObjectType';
 import ReindexID from './builtins/ReindexID';
+import { createFilterArgs } from './filters';
 
 export default class TypeSet {
   constructor({
+    typeMetadata,
     type,
     connection,
     edge,
     inputObject,
     orderableFields,
+    filterableFields,
+    filterType,
+    filterInput,
     payload,
     blacklistedRootFields,
     pluralName,
   }) {
+    this.typeMetadata = typeMetadata || null;
     this.type = type;
     this.connection = connection || null;
     this.edge = edge || null;
     this._inputObject = inputObject || null;
     this.orderableFields = orderableFields || null;
+    this.filterableFields = filterableFields || null;
+    this._filterType = filterType || null;
+    this._filterInput = filterInput || null;
     this.payload = payload || null;
     this.blacklistedRootFields = blacklistedRootFields || [];
     this.pluralName = pluralName || null;
@@ -92,5 +100,16 @@ export default class TypeSet {
       }
     }
     return this._ordering;
+  }
+
+  getFilters() {
+    return this.filterableFields || [];
+  }
+
+  getFilterArgs() {
+    if (!this._filterArgs) {
+      this._filterArgs = createFilterArgs(this);
+    }
+    return this._filterArgs;
   }
 }

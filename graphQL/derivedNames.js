@@ -1,5 +1,5 @@
 import { pluralize } from 'inflection';
-import { camelCase, isArray } from 'lodash';
+import { camelCase, startCase, isArray } from 'lodash';
 
 export function getPluralName(name, pluralName) {
   if (pluralName) {
@@ -75,4 +75,16 @@ export function getPayloadTypeName(typeName) {
 
 export function getInputObjectTypeName(typeName) {
   return getGeneratedTypeName(typeName, 'Input');
+}
+
+export function getFilterName(typeName, fieldName) {
+  return getGeneratedTypeName(
+    typeName, `${startCase(fieldName).replace(/ /gi, '')}Filter`
+  );
+}
+
+export function getFilterOperationName(typeName, fieldName) {
+  return getGeneratedTypeName(
+    typeName, `${startCase(fieldName).replace(/ /gi, '')}FilterOperation`
+  );
 }

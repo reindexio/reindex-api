@@ -282,6 +282,16 @@ function validateField(type, field, typesByName, invariant) {
     type.name, field.name, field.type
   );
 
+  // only scalar filterables
+  invariant(
+    !field.filterable || field.type in ScalarTypes || (
+      field.type === 'List' && field.ofType in ScalarTypes
+    ),
+    '%s.%s: Expected orderable field to have a scalar or List of scalars ' +
+    'type. Found: %s.',
+    type.name, field.name, field.type
+  );
+
   // no overriding default fields
   const typeFields = TypeDefaultFields[type.name];
   invariant(

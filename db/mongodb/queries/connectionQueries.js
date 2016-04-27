@@ -5,11 +5,14 @@ import { addID, addTransform } from './queryUtils';
 export function getConnectionQueries(
   db,
   type,
-  filter = {},
+  filter = [],
   args = {},
 ) {
   return getPaginatedQuery(
-    db, type, filter, args
+    db,
+    type,
+    filtersToMongo(filter),
+    args
   );
 }
 
@@ -145,12 +148,7 @@ async function limitQuery(collection, filter, field, order, before, after) {
     };
   }
 
-  return collection.find(finalFilter).sort([
-    // Adding sort by all index keys to force mongo to use index
-    ...Object.keys(filter).map((key) => [key, order]),
-    [field, order],
-    ['_id', order],
-  ]);
+  return filterAndSortWithIndex(collection, finalFilter, filter, field, order);
 }
 
 function limitQueryWithId(collection, filter, order, before, after) {
@@ -171,7 +169,21 @@ function limitQueryWithId(collection, filter, order, before, after) {
     filter._id[op] = ObjectId(after.value);
   }
 
-  return collection.find(filter).sort([['_id', order]]);
+  return filterAndSortWithIndex(collection, filter, filter, '_id', order);
+}
+
+// Filter and sort with all filter keys to apply index correctly
+function filterAndSortWithIndex(collection, filter, cleanFilter, field, order) {
+  const allFilterKeys = [
+    ...Object.keys(cleanFilter).filter((key) => key !== '$and'),
+    ...(cleanFilter.$and || []).map((part) => Object.keys(part)[0]),
+  ];
+
+  return collection.find(filter).sort([
+    ...allFilterKeys.map((key) => [key, order]),
+    [field, order],
+    ...(field !== 'id' ? [['_id', order]] : []),
+  ]);
 }
 
 async function applyPagination(query, first, last) {
@@ -209,4 +221,62 @@ async function applyPagination(query, first, last) {
     hasNextPage: Boolean(first && count > first),
     hasPreviousPage: Boolean(last && count > last),
   };
+}
+
+function filtersToMongo(filters) {
+  const mongoFilters = filters.map(filterToMongo);
+  return mongoFilters.reduce(mergeFilters, {});
+}
+
+function mergeFilters(filters, next) {
+  return {
+    ...filters,
+    $and: [
+      ...filters.$and || [],
+      next,
+    ],
+  };
+}
+
+const OP_TO_MONGO = {
+  gt: '$gt',
+  gte: '$gte',
+  lt: '$lt',
+  lte: '$lte',
+  neq: '$ne',
+  includes: '$in',
+  excludes: '$nin',
+};
+
+function filterToMongo(filter) {
+  const { field, op, value } = filter;
+  if (op === 'isNull') {
+    if (value) {
+      return {
+        [field]: null,
+      };
+    } else {
+      return {
+        [field]: {
+          $ne: null,
+        },
+      };
+    }
+  } else if (op === 'eq') {
+    return {
+      [field]: value,
+    };
+  } else if (op === 'includes' || op === 'excludes') {
+    return {
+      [field]: {
+        [OP_TO_MONGO[op]]: [value],
+      },
+    };
+  } else {
+    return {
+      [field]: {
+        [OP_TO_MONGO[op]]: value,
+      },
+    };
+  }
 }

@@ -8,6 +8,7 @@ export const TEST_SCHEMA = [
         name: 'name',
         type: 'String',
         orderable: true,
+        filterable: true,
       },
     ],
   },
@@ -31,6 +32,7 @@ export const TEST_SCHEMA = [
         name: 'createdAt',
         type: 'DateTime',
         orderable: true,
+        filterable: true,
       },
       {
         name: 'author',
@@ -47,6 +49,7 @@ export const TEST_SCHEMA = [
         name: 'tags',
         type: 'List',
         ofType: 'String',
+        filterable: true,
       },
       {
         name: 'categories',
@@ -74,10 +77,13 @@ export const TEST_SCHEMA = [
         name: 'handle',
         type: 'String',
         unique: true,
+        orderable: true,
+        filterable: true,
       },
       {
         name: 'email',
         type: 'String',
+        filterable: true,
       },
       {
         name: 'friends',

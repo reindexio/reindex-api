@@ -7,11 +7,16 @@ import {
   GraphQLList,
 } from 'graphql';
 
-import { getConnectionTypeName, getEdgeTypeName } from './derivedNames';
+import {
+  getConnectionTypeName,
+  getEdgeTypeName,
+} from './derivedNames';
+import { processFilters } from './filters';
 import checkPermission from './permissions/checkPermission';
 import Cursor from './builtins/Cursor';
 
-export function createConnection({ type }) {
+export function createConnection(typeSet) {
+  const type = typeSet.type;
   const edge = new GraphQLObjectType({
     name: getEdgeTypeName(type.name),
     description:
@@ -40,6 +45,7 @@ Edges are elements of \`edges\` list of Connections.
       },
     },
   });
+
   return {
     edge,
     connection: new GraphQLObjectType({
@@ -115,6 +121,7 @@ export const PageInfo = new GraphQLObjectType({
 });
 
 export function createConnectionArguments(typeName, getTypeSet) {
+  const typeSet = getTypeSet(typeName);
   const args = {
     first: {
       name: 'first',
@@ -138,9 +145,10 @@ export function createConnectionArguments(typeName, getTypeSet) {
       description: 'Only return edges after given cursor.',
       type: Cursor,
     },
+    ...typeSet.getFilterArgs(),
   };
 
-  const ordering = getTypeSet(typeName).getOrdering();
+  const ordering = typeSet.getOrdering();
   if (ordering) {
     args.orderBy = {
       name: 'orderBy',
@@ -183,23 +191,35 @@ export function createConnectionFieldResolve(
   ofType,
   reverseName,
   defaultOrdering,
+  getTypeSet
 ) {
   return async (parent, args, context) => {
     await checkConnectionPermissions(ofType, reverseName, parent, context);
+
     if (!defaultOrdering) {
       defaultOrdering = {
         field: 'id',
       };
     }
+
+    const argFilters = processFilters(getTypeSet(ofType), args);
+    const filterName = `${reverseName}.value`;
+    const filters = [
+      ...argFilters,
+      {
+        field: filterName,
+        op: 'eq',
+        value: parent.id.value,
+      },
+    ];
+
     const processedArgs = {
       orderBy: defaultOrdering,
       ...args,
     };
     return context.rootValue.db.getConnectionQueries(
       ofType,
-      {
-        [`${reverseName}.value`]: parent.id.value,
-      },
+      filters,
       processedArgs,
       context.rootValue,
     );

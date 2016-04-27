@@ -169,6 +169,38 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'non-scalar orderable': [
+    type('A', {
+      fields: [
+        field('e'),
+      ],
+      interfaces: [],
+    }),
+    type('T', {
+      fields: [
+        field('a', {
+          type: 'A',
+          orderable: true,
+        }),
+      ],
+    }),
+  ],
+  'non-scalar filterable': [
+    type('A', {
+      fields: [
+        field('e'),
+      ],
+      interfaces: [],
+    }),
+    type('T', {
+      fields: [
+        field('a', {
+          type: 'A',
+          filterable: true,
+        }),
+      ],
+    }),
+  ],
   'ofType in a scalar field': [
     type('T', {
       fields: [

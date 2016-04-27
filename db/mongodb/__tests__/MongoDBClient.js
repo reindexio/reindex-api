@@ -117,26 +117,26 @@ if (!process.env.DATABASE_TYPE ||
 
     describe('Relay-compliant pagination', () => {
       it('before and after', async () => {
-        let { paginated } = await getIDs({}, {
+        let { paginated } = await getIDs([], {
           after: microposts[0].cursor,
         });
         assert.deepEqual(paginated, micropostIDs.slice(1),
           'just after',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           before: microposts[5].cursor,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(0, 5),
           'just before',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           after: microposts[2].cursor,
           before: microposts[5].cursor,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(3, 5),
           'before and after',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           after: microposts[5].cursor,
           before: microposts[2].cursor,
         }));
@@ -146,7 +146,7 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('unpaginated query ignores pagination', async () => {
-        const { unpaginated } = await getIDs({}, {
+        const { unpaginated } = await getIDs([], {
           after: microposts[2].cursor,
           before: microposts[5].cursor,
           first: 2,
@@ -156,54 +156,54 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('first and last', async () => {
-        let { paginated } = await getIDs({}, {
+        let { paginated } = await getIDs([], {
           first: 5,
         });
         assert.deepEqual(paginated, micropostIDs.slice(0, 5),
           'just first',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           last: 5,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(95),
           'just last',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           first: 5,
           last: 2,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(3, 5),
           'first and last, enough items for last',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           first: 2,
           last: 5,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(0, 2),
           'first and last, not enough items for last',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           first: 2,
           before: microposts[5].cursor,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(0, 2),
           'first and before',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           first: 2,
           after: microposts[5].cursor,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(6, 8),
           'first and after',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           last: 2,
           before: microposts[5].cursor,
         }));
         assert.deepEqual(paginated, micropostIDs.slice(3, 5),
           'last and before',
         );
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           last: 2,
           after: microposts[5].cursor,
         }));
@@ -213,12 +213,12 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('pageInfo', async () => {
-        let { pageInfo } = await getIDs({}, {});
+        let { pageInfo } = await getIDs([], {});
         assert.deepEqual(pageInfo, {
           hasNextPage: false,
           hasPreviousPage: false,
         }, 'no first or last');
-        ({ pageInfo } = await getIDs({}, {
+        ({ pageInfo } = await getIDs([], {
           first: 10,
           after: microposts[5].cursor,
         }));
@@ -226,7 +226,7 @@ if (!process.env.DATABASE_TYPE ||
           hasNextPage: true,
           hasPreviousPage: false,
         }, 'first has enough');
-        ({ pageInfo } = await getIDs({}, {
+        ({ pageInfo } = await getIDs([], {
           first: 10,
           after: microposts[95].cursor,
         }));
@@ -234,7 +234,7 @@ if (!process.env.DATABASE_TYPE ||
           hasNextPage: false,
           hasPreviousPage: false,
         }, 'first does not have enough');
-        ({ pageInfo } = await getIDs({}, {
+        ({ pageInfo } = await getIDs([], {
           last: 10,
           after: microposts[5].cursor,
         }));
@@ -242,7 +242,7 @@ if (!process.env.DATABASE_TYPE ||
           hasNextPage: false,
           hasPreviousPage: true,
         }, 'last has enough');
-        ({ pageInfo } = await getIDs({}, {
+        ({ pageInfo } = await getIDs([], {
           last: 10,
           after: microposts[95].cursor,
         }));
@@ -250,7 +250,7 @@ if (!process.env.DATABASE_TYPE ||
           hasNextPage: false,
           hasPreviousPage: false,
         }, 'last does not have enough');
-        ({ pageInfo } = await getIDs({}, {
+        ({ pageInfo } = await getIDs([], {
           first: 10,
           last: 20,
           after: microposts[0].cursor,
@@ -262,7 +262,7 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('cursor stable after sequence is changed', async () => {
-        const { paginated: original } = await getIDs({}, {
+        const { paginated: original } = await getIDs([], {
           orderBy: {
             field: 'text',
           },
@@ -279,7 +279,7 @@ if (!process.env.DATABASE_TYPE ||
           createdAt: `@TIMESTAMP`,
         }, 'id');
 
-        const { paginated } = await getIDs({}, {
+        const { paginated } = await getIDs([], {
           orderBy: {
             field: 'text',
           },
@@ -296,13 +296,13 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('ordering stable with duplicate ordering values', async () => {
-        const { paginated: sortedOrder } = await getIDs({}, {
+        const { paginated: sortedOrder } = await getIDs([], {
           orderBy: {
             field: 'text',
           },
         });
 
-        const { paginated } = await getIDs({}, {
+        const { paginated } = await getIDs([], {
           orderBy: {
             field: 'text',
           },
@@ -315,7 +315,7 @@ if (!process.env.DATABASE_TYPE ||
       });
 
       it('ordering and cursors work with order', async () => {
-        let { paginated } = await getIDs({}, {
+        let { paginated } = await getIDs([], {
           orderBy: {
             field: 'createdAt',
             order: 'DESC',
@@ -326,7 +326,7 @@ if (!process.env.DATABASE_TYPE ||
         assert.deepEqual(paginated, micropostIDs.slice(95).reverse(),
           'no cursor');
 
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           orderBy: {
             field: 'createdAt',
             order: 'DESC',
@@ -338,7 +338,7 @@ if (!process.env.DATABASE_TYPE ||
         assert.deepEqual(paginated, micropostIDs.slice(5, 10).reverse(),
           'after');
 
-        ({ paginated } = await getIDs({}, {
+        ({ paginated } = await getIDs([], {
           orderBy: {
             field: 'createdAt',
             order: 'DESC',
@@ -399,7 +399,7 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for ordered unfiltered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
+          [],
           {
             orderBy: {
               field: 'createdAt',
@@ -417,7 +417,7 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for builtin', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'ReindexType',
-          {},
+          [],
           {
             orderBy: {
               field: 'name',
@@ -435,9 +435,13 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for filtered query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {
-            'author.value': fromReindexID(user.id).value,
-          },
+          [
+            {
+              op: 'eq',
+              field: 'author.value',
+              value: fromReindexID(user.id).value,
+            },
+          ],
           {
             orderBy: {
               field: 'createdAt',
@@ -455,7 +459,7 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for paginated query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
+          [],
           {
             after: {
               value: fromReindexID(microposts[1].id).value,
@@ -483,7 +487,7 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for paginated from two sides query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {},
+          [],
           {
             after: {
               value: fromReindexID(microposts[1].id).value,
@@ -514,9 +518,13 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for filtered paginated query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {
-            'author.value': fromReindexID(user.id).value,
-          },
+          [
+            {
+              op: 'eq',
+              field: 'author.value',
+              value: fromReindexID(user.id).value,
+            },
+          ],
           {
             after: {
               value: fromReindexID(microposts[1].id).value,
@@ -545,9 +553,13 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for filtered paginated from two sides query', async () => {
         const { paginatedQuery } = await db.getConnectionQueries(
           'Micropost',
-          {
-            'author.value': fromReindexID(user.id).value,
-          },
+          [
+            {
+              op: 'eq',
+              field: 'author.value',
+              value: fromReindexID(user.id).value,
+            },
+          ],
           {
             after: {
               value: fromReindexID(microposts[1].id).value,
@@ -573,6 +585,112 @@ if (!process.env.DATABASE_TYPE ||
         assert.deepEqual(
           sort.inputStages.map((stage) => stage.stage),
           ['IXSCAN', 'IXSCAN', 'IXSCAN']
+        );
+      });
+
+      it('uses indexs for filter with no ordering', async () => {
+        const { paginatedQuery } = await db.getConnectionQueries(
+          'Micropost',
+          [
+            {
+              op: 'lt',
+              field: 'createdAt',
+              value: new Date('2015-01-10'),
+            },
+          ],
+          {}
+        );
+
+        const explain = await paginatedQuery.getCursor().explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
+        );
+      });
+
+      it('uses index for filter on same field as ordering', async () => {
+        const { paginatedQuery } = await db.getConnectionQueries(
+          'Micropost',
+          [
+            {
+              op: 'lt',
+              field: 'createdAt',
+              value: new Date('2015-01-10'),
+            },
+          ],
+          {
+            orderBy: {
+              field: 'createdAt',
+              order: 'ASC',
+            },
+          },
+        );
+
+        const explain = await paginatedQuery.getCursor().explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
+        );
+      });
+
+      it('uses index for filter on same field as ordering with pagination',
+        async () => {
+          const { paginatedQuery } = await db.getConnectionQueries(
+            'Micropost',
+            [
+              {
+                op: 'lt',
+                field: 'createdAt',
+                value: new Date('2015-01-10'),
+              },
+            ],
+            {
+              orderBy: {
+                field: 'createdAt',
+                order: 'ASC',
+              },
+              after: {
+                value: fromReindexID(microposts[1].id).value,
+              },
+              before: {
+                value: fromReindexID(microposts[10].id).value,
+              },
+              first: 5,
+            },
+          );
+
+          const explain = await paginatedQuery.getCursor().explain();
+          const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
+          assert.equal(
+            sort.stage,
+            'SORT_MERGE'
+          );
+          assert.deepEqual(
+            sort.inputStages.map((stage) => stage.stage),
+            ['IXSCAN', 'IXSCAN', 'IXSCAN']
+          );
+        }
+      );
+
+      it('uses index for filter on different field than ordering', async () => {
+        const { paginatedQuery } = await db.getConnectionQueries(
+          'Micropost',
+          [
+            {
+              op: 'lt',
+              field: 'createdAt',
+              value: new Date('2015-01-10'),
+            },
+          ],
+          {
+            orderBy: {
+              field: 'text',
+              order: 'ASC',
+            },
+          },
+        );
+
+        const explain = await paginatedQuery.getCursor().explain();
+        assert.equal(
+          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN'
         );
       });
 
@@ -652,6 +770,14 @@ if (!process.env.DATABASE_TYPE ||
           {
             key: { 'contact.email': 1, _id: 1 },
             unique: true,
+          },
+          {
+            key: { email: 1, _id: 1 },
+            unique: undefined,
+          },
+          {
+            key: { email: 1, handle: 1, _id: 1 },
+            unique: undefined,
           },
         ]);
       });

@@ -60,6 +60,7 @@ export default function createSchema(dbMetadata, extraRootFields) {
               .filter((field) => field.orderable)
               .map((field) => field.name)
               .value(),
+            filterableFields: getFilterableFields(dbMetadata, typeMetadata),
           });
         }
       })
@@ -178,7 +179,7 @@ function createField(field, getTypeSet, interfaces) {
     type = getTypeSet(ofType).connection;
     argDef = createConnectionArguments(ofType, getTypeSet);
     resolve = createConnectionFieldResolve(
-      ofType, reverseName, defaultOrdering
+      ofType, reverseName, defaultOrdering, getTypeSet
     );
   } else if (fieldType === 'List') {
     const innerType = (
@@ -296,4 +297,37 @@ created object to a connection in Relay.
       };
     },
   });
+}
+
+function getFilterableFields(types, type) {
+  return chain(type.fields)
+    .map((field) => {
+      if (field.name !== 'id' && (
+          field.filterable ||
+          field.unique ||
+          field.type === 'Connection' ||
+          field.type !== 'Connection' && field.reverseName
+      )) {
+        return [
+          field,
+        ];
+      } else if (!ScalarTypes[field.type]) {
+        const newType = types.find((otherType) =>
+          otherType.name === field.type
+        );
+        if (newType) {
+          return getFilterableFields(types, newType)
+            .map((nestedField) => ({
+              ...nestedField,
+              name: `${field.name}__${nestedField.name}`,
+            }));
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    })
+    .flatten()
+    .value();
 }
