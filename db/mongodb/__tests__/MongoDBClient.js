@@ -437,7 +437,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'EQ',
+              op: 'eq',
               field: 'author.value',
               value: fromReindexID(user.id).value,
             },
@@ -520,7 +520,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'EQ',
+              op: 'eq',
               field: 'author.value',
               value: fromReindexID(user.id).value,
             },
@@ -555,7 +555,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'EQ',
+              op: 'eq',
               field: 'author.value',
               value: fromReindexID(user.id).value,
             },
@@ -593,7 +593,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'LT',
+              op: 'lt',
               field: 'createdAt',
               value: new Date('2015-01-10'),
             },
@@ -612,7 +612,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'LT',
+              op: 'lt',
               field: 'createdAt',
               value: new Date('2015-01-10'),
             },
@@ -637,7 +637,7 @@ if (!process.env.DATABASE_TYPE ||
             'Micropost',
             [
               {
-                op: 'LT',
+                op: 'lt',
                 field: 'createdAt',
                 value: new Date('2015-01-10'),
               },
@@ -675,7 +675,7 @@ if (!process.env.DATABASE_TYPE ||
           'Micropost',
           [
             {
-              op: 'LT',
+              op: 'lt',
               field: 'createdAt',
               value: new Date('2015-01-10'),
             },

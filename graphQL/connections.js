@@ -208,7 +208,7 @@ export function createConnectionFieldResolve(
       ...argFilters,
       {
         field: filterName,
-        op: 'EQ',
+        op: 'eq',
         value: parent.id.value,
       },
     ];

@@ -1,67 +1,52 @@
-import { chain, values } from 'lodash';
+import { values } from 'lodash';
 import {
-  GraphQLEnumType,
   GraphQLInputObjectType,
   GraphQLList,
-  GraphQLNonNull,
+  GraphQLBoolean,
 } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
 import ScalarTypes from './builtins/ScalarTypes';
 import ReindexID from './builtins/ReindexID';
-import { getFilterOperationName, getFilterName } from './derivedNames';
+import { getFilterName } from './derivedNames';
 
 export function processFilters(typeSet, args) {
   const filterArgs = typeSet.getFilterArgs();
   const filters = [];
   for (const filterArg of values(filterArgs)) {
-    const argValue = args[filterArg.name];
-    if (argValue) {
-      for (const argI in argValue) {
-        const arg = argValue[argI];
-        if ((arg.op === 'NULL' || arg.op === 'NOTNULL') && arg.value) {
-          throw new GraphQLError(
-            `Invalid argument \`${filterArg.name}\`. In element #${argI}: ` +
-            'expected \`value\` to be null.'
-          );
-        } else if ((arg.op !== 'NULL' && arg.op !== 'NOTNULL') && !arg.value) {
-          throw new GraphQLError(
-            `Invalid argument \`${filterArg.name}\`. In element #${argI}: ` +
-            'expected \`value\` to be not null.'
-          );
-        }
-        filters.push({
-          ...arg,
-          field: filterArg.field.replace('__', '.'),
-        });
-      }
+    const argValue = args[filterArg.name] || {};
+    for (const op in argValue) {
+      const value = argValue[op];
+      filters.push({
+        op,
+        value,
+        field: filterArg.field.replace('__', '.'),
+      });
     }
   }
   return filters;
 }
 
 const TYPE_TO_ALLOWED_OP = {
-  String: ['EQ', 'NEQ', 'NULL', 'NOTNULL'],
-  Boolean: ['EQ', 'NEQ', 'NULL', 'NOTNULL'],
-  Int: ['EQ', 'NEQ', 'LT', 'LTE', 'GT', 'GTE', 'NULL', 'NOTNULL'],
-  Float: ['EQ', 'NEQ', 'LT', 'LTE', 'GT', 'GTE', 'NULL', 'NOTNULL'],
-  DateTime: ['EQ', 'NEQ', 'LT', 'LTE', 'GT', 'GTE', 'NULL', 'NOTNULL'],
-  List: ['IN', 'NIN', 'NULL', 'NULL'],
-  Connection: ['IN', 'NIN'],
-  Node: ['EQ', 'NEQ', 'NULL', 'NOTNULL'],
+  String: ['eq', 'neq', 'isNull'],
+  Boolean: ['eq', 'neq', 'isNull'],
+  Int: ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'isNull'],
+  Float: ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'isNull'],
+  DateTime: ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'isNull'],
+  List: ['includes', 'excludes', 'isNull', 'eq', 'neq'],
+  Connection: ['includes', 'excludes'],
+  Node: ['eq', 'neq', 'isNull'],
 };
 
 const OP_DOCS = {
-  EQ: `\`EQ\` - equal (case sensitive for strings)`,
-  NEQ: `\`NEQ\` - not-equal (case sensitive for strings)`,
-  LT: `\`LT\` - less than`,
-  LTE: `\`LTE\` - less than equal`,
-  GT: `\`GT\` - greater than`,
-  GTE: `\`GTE\` - greater than equal`,
-  NULL: `\`NULL\` - value is null`,
-  NOTNULL: `\`NOTNULL\` - value is not null`,
-  IN: `\`IN\` - value is inside list or connection field`,
-  NIN: `\`NIN\` - value is not inside list or connection field`,
+  eq: `equal (case sensitive for strings)`,
+  neq: `not-equal (case sensitive for strings)`,
+  lt: `less than`,
+  lte: `less than equal`,
+  gt: `greater than`,
+  gte: `greater than equal`,
+  isNull: `value is null if \`true\`, is not null if \`false\``,
+  includes: `value is inside list or connection field`,
+  excludes: `value is not inside list or connection field`,
 };
 
 export function createFilterArgs(typeSet) {
@@ -85,57 +70,51 @@ export function createFilterArgs(typeSet) {
 }
 
 function createFilterArg(type, field, filterName) {
+  const possibleOperations = (
+    TYPE_TO_ALLOWED_OP[field.type] ||
+    TYPE_TO_ALLOWED_OP.Node
+  );
+  const fields = possibleOperations
+    .map((operation) => ({
+      [operation]: {
+        type: (
+          operation === 'isNull' ?
+          GraphQLBoolean :
+          fieldToFilterType(field, operation)
+        ),
+        description: OP_DOCS[operation],
+      },
+    }))
+    .reduce((acc, next) => ({
+      ...acc,
+      ...next,
+    }));
   const filterType = new GraphQLInputObjectType({
     name: getFilterName(type.name, field.name),
     description:
 `Filter by the \`${field.name}\``,
     fields: {
-      op: {
-        type: new GraphQLNonNull(createFilterOperation(type, field)),
-      },
-      value: {
-        type: fieldToFilterType(field),
-      },
+      ...fields,
     },
   });
   return {
     name: filterName,
     field: field.name,
-    type: new GraphQLList(filterType),
+    type: filterType,
     description: `Filter the connection based on \`${field.name}\``,
   };
 }
 
-function createFilterOperation(type, field) {
-  const possibleOperations = (
-    TYPE_TO_ALLOWED_OP[field.type] ||
-    TYPE_TO_ALLOWED_OP.Node
-  );
-  const docs = possibleOperations
-    .map((op) => `* ${OP_DOCS[op]}`)
-    .join('\n');
-  return new GraphQLEnumType({
-    name: getFilterOperationName(type.name, field.name),
-    desciption: `
-      Operation of the filter.
-
-      Possible values:
-
-      ${docs}
-    `,
-    values: chain(possibleOperations)
-      .map((op) => ({ value: op }))
-      .indexBy((op) => op.value)
-      .value(),
-  });
-}
-
-function fieldToFilterType(field) {
+function fieldToFilterType(field, operation) {
   if (ScalarTypes[field.type]) {
     return ScalarTypes[field.type];
   } else if (field.type === 'Connection' || field.reverseName) {
     return ReindexID;
-  } else if (field.type === 'List') {
+  } else if (field.type === 'List' &&
+             operation !== 'eq' &&
+             operation !== 'neq') {
     return ScalarTypes[field.ofType];
+  } else if (field.type === 'List') {
+    return new GraphQLList(ScalarTypes[field.ofType]);
   }
 }

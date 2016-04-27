@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import { chain } from 'lodash';
+import { chain, isEqual } from 'lodash';
 
 import deleteApp from '../apps/deleteApp';
 import getDB from '../db/getDB';
@@ -72,8 +72,7 @@ describe('Filter Tests', () => {
             allMicroposts(
               first: 10,
               createdAt: {
-                op: LT,
-                value: "2014-02-01",
+                lt: "2014-02-01",
               },
               orderBy: CREATED_AT_DESC
             ) {
@@ -114,8 +113,7 @@ describe('Filter Tests', () => {
         query($id: ID!) {
           viewer {
             allMicroposts(first: 10, author: {
-              op: EQ,
-              value: $id
+              eq: $id
             }, orderBy: CREATED_AT_DESC) {
               nodes {
                 id
@@ -161,8 +159,7 @@ describe('Filter Tests', () => {
             handle
             email
             microposts(first: 10, createdAt: {
-              op: LT,
-              value: "2014-02-01",
+              lt: "2014-02-01",
             }) {
               nodes {
                 id
@@ -201,120 +198,16 @@ describe('Filter Tests', () => {
       });
     });
 
-    it('does not allow wrong filter inputs', async () => {
-      assert.deepEqual(await runQuery(`
-        {
-          viewer {
-            allUsers(email: [
-              {
-                op: NULL,
-                value: "some@example.com",
-              },
-            ], orderBy: HANDLE_ASC) {
-              nodes {
-                id
-                handle
-                email
-              }
-            }
-          }
-        }
-      `, {}, {
-        printErrors: false,
-      }), {
-        data: {
-          viewer: {
-            allUsers: null,
-          },
-        },
-        errors: [
-          {
-            message:
-'Invalid argument `email`. In element #0: expected `value` to be null.',
-          },
-        ],
-      }, 'null with passed value');
-
-      assert.deepEqual(await runQuery(`
-        {
-          viewer {
-            allUsers(email: [
-              {
-                op: LT,
-                value: "some@example.com",
-              },
-            ], orderBy: HANDLE_ASC) {
-              nodes {
-                id
-                handle
-                email
-              }
-            }
-          }
-        }
-      `, {}, {
-        printErrors: false,
-      }), {
-        errors: [
-          {
-            message: (
-              'Argument "email" has invalid value [{op: LT, value: ' +
-              '"some@example.com"}].\nIn element #0: In field "op": ' +
-              'Expected type "_UserEmailFilterOperation", found LT.'
-            ),
-          },
-        ],
-      }, 'invalid op');
-
-      assert.deepEqual(await runQuery(`
-        {
-          viewer {
-            allUsers(email: [
-              {
-                op: EQ,
-              },
-            ], orderBy: HANDLE_ASC) {
-              nodes {
-                id
-                handle
-                email
-              }
-            }
-          }
-        }
-      `, {}, {
-        printErrors: false,
-      }), {
-        data: {
-          viewer: {
-            allUsers: null,
-          },
-        },
-        errors: [
-          {
-            message:
-'Invalid argument `email`. In element #0: expected `value` to be not null.',
-          },
-        ],
-      }, 'no value for non null');
-    });
-
     it('ands multiple filters', async () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
             allMicroposts(
               first: 10,
-              createdAt: [
-                {
-                  op: LTE,
-                  value: "2014-02-01",
-                },
-                {
-                  op: GTE,
-                  value: "2014-02-03"
-                }
-              ],
+              createdAt: {
+                lte: "2014-02-01",
+                gte: "2014-02-03"
+              },
               orderBy: CREATED_AT_DESC
             ) {
               nodes {
@@ -355,11 +248,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allUsers(email: [
-              {
-                op: NULL,
-              },
-            ], orderBy: HANDLE_ASC) {
+            allUsers(email: {
+              isNull: true,
+            }, orderBy: HANDLE_ASC) {
               nodes {
                 id
                 handle
@@ -389,7 +280,7 @@ describe('Filter Tests', () => {
         {
           viewer {
             allUsers(email: {
-              op: NOTNULL,
+              isNull: false,
             }, orderBy: HANDLE_ASC) {
               nodes {
                 id
@@ -421,12 +312,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, mainCategory__name: [
-              {
-                op: EQ,
-                value: "category-0",
-              },
-            ], orderBy: CREATED_AT_ASC) {
+            allMicroposts(first: 10, mainCategory__name: {
+              eq: "category-0",
+            }, orderBy: CREATED_AT_ASC) {
               nodes {
                 id
                 text
@@ -463,12 +351,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, tags: [
-              {
-                op: IN,
-                value: "tag-1",
-              },
-            ], orderBy: CREATED_AT_ASC) {
+            allMicroposts(first: 10, tags: {
+              includes: "tag-1",
+            }, orderBy: CREATED_AT_ASC) {
               nodes {
                 id
                 text
@@ -503,12 +388,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         {
           viewer {
-            allMicroposts(first: 10, tags: [
-              {
-                op: NIN,
-                value: "tag-1",
-              },
-            ], orderBy: CREATED_AT_ASC) {
+            allMicroposts(first: 10, tags: {
+              excludes: "tag-1",
+            }, orderBy: CREATED_AT_ASC) {
               nodes {
                 id
                 text
@@ -539,6 +421,43 @@ describe('Filter Tests', () => {
           },
         },
       }, 'not includes');
+
+      assert.deepEqual(await runQuery(`
+        {
+          viewer {
+            allMicroposts(first: 10, tags: {
+              eq: ["tag-0", "tag-0"],
+            }, orderBy: CREATED_AT_ASC) {
+              nodes {
+                id
+                text
+                createdAt
+                author {
+                  id
+                }
+                mainCategory {
+                  name
+                }
+                tags
+              }
+            }
+          }
+        }
+      `), {
+        data: {
+          viewer: {
+            allMicroposts: {
+              nodes: chain(fixtures.Micropost)
+                .filter((micropost) => (
+                  isEqual(micropost.tags, ['tag-0', 'tag-0'])
+                ))
+                .sortBy((micropost) => micropost.createdAt)
+                .value()
+                .slice(0, 10),
+            },
+          },
+        },
+      }, 'equals');
     });
 
     it('filters by connections', async () => {
@@ -564,12 +483,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         query($id: ID!) {
           viewer {
-            allMicroposts(first: 100, favoritedBy: [
-              {
-                op: IN,
-                value: $id
-              }
-            ], orderBy: CREATED_AT_ASC) {
+            allMicroposts(first: 100, favoritedBy: {
+              includes: $id
+            }, orderBy: CREATED_AT_ASC) {
               nodes {
                 id
                 text
@@ -600,12 +516,9 @@ describe('Filter Tests', () => {
       assert.deepEqual(await runQuery(`
         query($id: ID!) {
           viewer {
-            allMicroposts(first: 10, favoritedBy: [
-              {
-                op: NIN,
-                value: $id
-              }
-            ], orderBy: CREATED_AT_ASC) {
+            allMicroposts(first: 10, favoritedBy: {
+              excludes: $id
+            }, orderBy: CREATED_AT_ASC) {
               nodes {
                 id
                 text

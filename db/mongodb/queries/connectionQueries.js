@@ -52,7 +52,6 @@ async function getPaginatedQuery(db, type, filter, {
   after,
   first,
   last,
-  filter: passedFilter,
 }) {
   const collection = db.collection(type);
   let query;
@@ -77,7 +76,6 @@ async function getPaginatedQuery(db, type, filter, {
       addID(type, object)
     )),
     pageInfo,
-    filter: passedFilter,
   };
 }
 
@@ -241,32 +239,34 @@ function mergeFilters(filters, next) {
 }
 
 const OP_TO_MONGO = {
-  GT: '$gt',
-  GTE: '$gte',
-  LT: '$lt',
-  LTE: '$lte',
-  NEQ: '$ne',
-  IN: '$in',
-  NIN: '$nin',
+  gt: '$gt',
+  gte: '$gte',
+  lt: '$lt',
+  lte: '$lte',
+  neq: '$ne',
+  includes: '$in',
+  excludes: '$nin',
 };
 
 function filterToMongo(filter) {
   const { field, op, value } = filter;
-  if (op === 'NULL') {
-    return {
-      [field]: null,
-    };
-  } else if (op === 'NOTNULL') {
-    return {
-      [field]: {
-        $ne: null,
-      },
-    };
-  } else if (op === 'EQ') {
+  if (op === 'isNull') {
+    if (value) {
+      return {
+        [field]: null,
+      };
+    } else {
+      return {
+        [field]: {
+          $ne: null,
+        },
+      };
+    }
+  } else if (op === 'eq') {
     return {
       [field]: value,
     };
-  } else if (op === 'IN' || op === 'NIN') {
+  } else if (op === 'includes' || op === 'excludes') {
     return {
       [field]: {
         [OP_TO_MONGO[op]]: [value],
