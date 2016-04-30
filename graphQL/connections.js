@@ -71,7 +71,7 @@ type.
 `The total number of elements in the connection.
 `,
           type: GraphQLInt,
-          resolve({ query }, args, { rootValue: { db } }) {
+          resolve({ query }, args, { db }) {
             return db.getCount(query);
           },
         },
@@ -80,7 +80,7 @@ type.
           description:
 `A plain list of ${type.name} objects without the ${edge.name} wrapper object.`,
           type: new GraphQLList(type),
-          resolve({ paginatedQuery }, args, { rootValue: { db } }) {
+          resolve({ paginatedQuery }, args, { db }) {
             return db.getNodes(paginatedQuery);
           },
         },
@@ -88,7 +88,7 @@ type.
           name: 'edges',
           description: 'A list of edges included in the connection.',
           type: new GraphQLList(edge),
-          resolve({ paginatedQuery }, args, { rootValue: { db } }) {
+          resolve({ paginatedQuery }, args, { db }) {
             return db.getEdges(paginatedQuery);
           },
         },
@@ -99,7 +99,7 @@ type.
 slice.
 `,
           type: new GraphQLNonNull(PageInfo),
-          resolve({ pageInfo }, args, { rootValue: { db } }) {
+          resolve({ pageInfo }, args, { db }) {
             return db.getPageInfo(pageInfo);
           },
         },
@@ -164,7 +164,7 @@ export function createNodeFieldResolve(ofType, fieldName) {
   return async (parent, args, context) => {
     const id = isFunction(fieldName) ? fieldName(parent) : parent[fieldName];
     if (id) {
-      const result = await context.rootValue.db.getByID(ofType, id);
+      const result = await context.db.getByID(ofType, id);
       await checkPermission(ofType, 'read', {}, result, context);
       return result;
     } else {
@@ -177,7 +177,7 @@ async function checkConnectionPermissions(type, reverseName, parent, context) {
   let object = {
     [reverseName]: parent.id,
   };
-  const typeData = context.rootValue.typeInfoByName[type];
+  const typeData = context.typeInfoByName[type];
   if (typeData &&
       typeData.fields[reverseName].connectionType === 'MANY_TO_MANY') {
     object = {
@@ -217,11 +217,11 @@ export function createConnectionFieldResolve(
       orderBy: defaultOrdering,
       ...args,
     };
-    return context.rootValue.db.getConnectionQueries(
+    return context.db.getConnectionQueries(
       ofType,
       filters,
       processedArgs,
-      context.rootValue,
+      context,
     );
   };
 }

@@ -201,7 +201,7 @@ export default function createCredentialTypes() {
 
   const createCredentialResolve = (provider) => (
     (parent, args, context) => {
-      const credentials = context.rootValue.credentials;
+      const credentials = context.credentials;
       if (credentials.isAdmin ||
           isEqual(credentials.userID, parent.__node.id)) {
         return parent[provider];

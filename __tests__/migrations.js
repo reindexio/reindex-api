@@ -39,9 +39,9 @@ describe('Migrations', () => {
           isExecuted
         }
       }`,
-      context, {
-        input,
-      }
+      null,
+      context,
+      { input },
     );
   }
 

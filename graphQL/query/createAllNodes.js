@@ -21,11 +21,11 @@ export default function createAllNodes(
     ),
     async resolve(parent, args, context) {
       await checkPermission(type.name, 'read', {}, {}, context);
-      return context.rootValue.db.getConnectionQueries(
+      return context.db.getConnectionQueries(
         type.name,
         processFilters(typeSet, args),
         args,
-        context.rootValue,
+        context,
       );
     },
   };

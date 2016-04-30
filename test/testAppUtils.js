@@ -31,7 +31,13 @@ export function makeRunQuery(db) {
       credentials,
     });
 
-    const result = await graphql(context.schema, query, context, variables);
+    const result = await graphql(
+      context.schema,
+      query,
+      null,
+      context,
+      variables,
+    );
 
     if (clearContext) {
       metadata = null;

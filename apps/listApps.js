@@ -29,7 +29,7 @@ export default async function listApps() {
     const context = getGraphQLContext(db, await db.getMetadata(), {
       credentials: { isAdmin: true, userID: null },
     });
-    const result = await graphql(context.schema, query, context);
+    const result = await graphql(context.schema, query, null, context);
     if (result.errors) {
       console.error(result.errors);
       throw new Error(result.errors[0].message);

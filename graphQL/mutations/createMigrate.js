@@ -88,7 +88,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
       },
     },
     async resolve(parent, { input }, context) {
-      const db = context.rootValue.db;
+      const db = context.db;
       const clientMutationId = input.clientMutationId;
 
       await checkPermission(
@@ -104,7 +104,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
       ]);
 
       setImmediate(() => {
-        trackEvent(context.rootValue.credentials, 'pushed-schema', {
+        trackEvent(context.credentials, 'pushed-schema', {
           dryRun: Boolean(input.dryRun),
           force: Boolean(input.force),
           types: input.types && input.types.map((type) => type.name).join(','),
@@ -115,9 +115,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
         // XXX(freiksenet, 2015-09-22): Can be fixed when graphql is updated
         throw new GraphQLError(errors.join('\n'));
       } else {
-        const commands = buildSchemaMigration(
-          context.rootValue.types, input.types
-        );
+        const commands = buildSchemaMigration(context.types, input.types);
         const isDestructive = commands.some((command) => command.isDestructive);
 
         if (input.dryRun || (isDestructive && !input.force)) {
@@ -127,7 +125,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
             isExecuted: false,
           };
         } else {
-          await db.performMigration(commands, input.types, context.rootValue);
+          await db.performMigration(commands, input.types, context);
           return {
             clientMutationId,
             commands,

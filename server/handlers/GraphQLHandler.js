@@ -19,7 +19,13 @@ async function handler(request, reply) {
     });
 
     const start = process.hrtime();
-    const result = await graphql(context.schema, query, context, variables);
+    const result = await graphql(
+      context.schema,
+      query,
+      null,
+      context,
+      variables,
+    );
     const elapsed = process.hrtime(start);
 
     let rootName = 'unknown';

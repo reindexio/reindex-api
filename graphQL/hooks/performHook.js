@@ -13,7 +13,7 @@ export default async function performHook(context, hook) {
       }
     `);
 
-    result = await graphql(context.schema, query, context);
+    result = await graphql(context.schema, query, null, context);
 
     if (!result.errors) {
       httpResult = await fetch(hook.url, {
@@ -48,16 +48,19 @@ export default async function performHook(context, hook) {
         createReindexHookLog(input: $input) {
           id
         }
-      }
-    `, context, {
-      input: {
-        hook: toReindexID(hook.id),
-        createdAt: '@TIMESTAMP',
-        response,
-        type: error ? 'error' : 'success',
-        errors: result && result.errors,
+      }`,
+      null,
+      context,
+      {
+        input: {
+          hook: toReindexID(hook.id),
+          createdAt: '@TIMESTAMP',
+          response,
+          type: error ? 'error' : 'success',
+          errors: result && result.errors,
+        },
       },
-    });
+    );
     if (hookLogResult.errors) {
       console.error(hookLogResult.errors);
     }

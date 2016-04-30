@@ -55,14 +55,12 @@ describe('hasPermission', () => {
     } = {},
   ) {
     return (await hasPermission(type, permission, oldObject, newObject, {
-      rootValue: {
-        db,
-        credentials,
-        permissions: {
-          type: typePermissions,
-          connection: connectionPermissions,
-          related: relatedPermissions,
-        },
+      db,
+      credentials,
+      permissions: {
+        type: typePermissions,
+        connection: connectionPermissions,
+        related: relatedPermissions,
       },
     })).hasPermission;
   }

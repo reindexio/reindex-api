@@ -22,14 +22,12 @@ export default async function hasPermission(
   oldObject = {},
   newObject = {},
   {
-    rootValue: {
-      db,
-      credentials,
-      permissions: {
-        type: permissionsByType,
-        connection: permissionsByConnection,
-        related: relatedPermissionsByType,
-      },
+    db,
+    credentials,
+    permissions: {
+      type: permissionsByType,
+      connection: permissionsByConnection,
+      related: relatedPermissionsByType,
     },
   },
   overrideFields,

@@ -41,11 +41,11 @@ of the type.
         description: 'The signed in user. Returned for requests made as a ' +
           'user signed in using Reindex authentication.',
         async resolve(parent, args, context) {
-          const { userID } = context.rootValue.credentials;
+          const { userID } = context.credentials;
           if (!userID) {
             return null;
           }
-          const result = await context.rootValue.db.getByID('User', userID);
+          const result = await context.db.getByID('User', userID);
           await checkPermission('User', 'read', {}, result, context);
           return result;
         },
@@ -54,7 +54,7 @@ of the type.
         type: typeSets.ReindexIntercomSettings.type,
         description: 'INTERNAL',
         resolve(parent, args, context) {
-          return getIntercomSettings(context.rootValue.credentials);
+          return getIntercomSettings(context.credentials);
         },
       },
     },

@@ -2,13 +2,11 @@ import checkAndEnqueueHooks from './checkAndEnqueueHooks';
 
 // Check related connection onDelete property and perform nullifying updates
 export default async function updateRelatedObjects(typeName, object, {
-  rootValue: {
-    db,
-    permissions: {
-      related: relatedConnections,
-    },
-    hooks,
+  db,
+  permissions: {
+    related: relatedConnections,
   },
+  hooks,
 }) {
   const connectionFields = relatedConnections[typeName] || [];
   const nullableConnections = connectionFields.filter(

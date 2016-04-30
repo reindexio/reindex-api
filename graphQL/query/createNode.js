@@ -39,17 +39,17 @@ query NodeExample {
         description: 'The ID of the object.',
       },
     },
-    async resolve(parent, { id }, context) {
+    async resolve(parent, { id }, context, info) {
       if (isViewerID(id)) {
         return {
           id,
         };
       }
-      const type = context.schema.getType(id.type);
+      const type = info.schema.getType(id.type);
       if (!type || !type.getInterfaces().includes(interfaces.Node)) {
         return null;
       }
-      const result = await context.rootValue.db.getByID(type.name, id);
+      const result = await context.db.getByID(type.name, id);
       await checkPermission(type.name, 'read', {}, result, context);
       return result;
     },

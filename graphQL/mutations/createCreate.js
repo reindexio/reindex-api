@@ -43,7 +43,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const db = context.rootValue.db;
+      const db = context.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['clientMutationId']);
 
@@ -73,7 +73,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
 
       checkAndEnqueueHooks(
         db,
-        context.rootValue.hooks,
+        context.hooks,
         type.name,
         'afterCreate',
         clientMutationId,

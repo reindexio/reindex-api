@@ -31,7 +31,7 @@ export default function createCreateReindexSecret(typeSets) {
       context,
     ) {
       await checkPermission('ReindexSecret', 'create', {}, {}, context);
-      const result = await context.rootValue.db.create('ReindexSecret', {
+      const result = await context.db.create('ReindexSecret', {
         value: generateSecret(),
       });
       return formatMutationResult(clientMutationId, 'ReindexSecret', result);
