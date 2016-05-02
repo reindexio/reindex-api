@@ -194,7 +194,7 @@ function createResolveFunction(
   },
 ) {
   return async (parent, { input }, context) => {
-    const db = context.rootValue.db;
+    const db = context.db;
 
     if (!db.hasSupport('manyToMany')) {
       throw new GraphQLError(
@@ -287,7 +287,7 @@ function createResolveFunction(
 
     checkAndEnqueueHooks(
       db,
-      context.rootValue.hooks,
+      context.hooks,
       fromType,
       'afterUpdate',
       clientMutationId,
@@ -297,7 +297,7 @@ function createResolveFunction(
     if (!isEqual(fromId, toId)) {
       checkAndEnqueueHooks(
         db,
-        context.rootValue.hooks,
+        context.hooks,
         toType,
         'afterUpdate',
         clientMutationId,

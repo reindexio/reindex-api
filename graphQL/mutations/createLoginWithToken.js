@@ -55,7 +55,7 @@ export default function createLoginWithToken(typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const { db } = context.rootValue;
+      const { db } = context;
       const { provider, token, clientMutationId } = input;
       if (provider !== 'auth0') {
         throw new GraphQLError(

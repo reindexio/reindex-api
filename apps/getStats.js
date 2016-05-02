@@ -38,7 +38,7 @@ export default async function getStats() {
     const context = getGraphQLContext(adminDB, await adminDB.getMetadata(), {
       credentials: { isAdmin: true, userID: null },
     });
-    const result = await graphql(context.schema, query, context);
+    const result = await graphql(context.schema, query, null, context);
 
     return Promise.all(
       result.data.viewer.allApps.nodes

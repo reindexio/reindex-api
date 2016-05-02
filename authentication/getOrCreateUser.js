@@ -48,10 +48,11 @@ export default async function getOrCreateUser(db, provider, credentials) {
       ${query}(id: $id) {
         id
       }
-    }
-  `, context, {
-    id: credential.id,
-  });
+    }`,
+    null,
+    context,
+    { id: credential.id },
+  );
 
   if (fetchResult.errors) {
     throw new Error(JSON.stringify(fetchResult.errors));
@@ -68,15 +69,18 @@ export default async function getOrCreateUser(db, provider, credentials) {
             ${userFragment}
           }
         }
-      }
-    `, context, {
-      input: {
-        id,
-        credentials: {
-          [provider]: credential,
+      }`,
+      null,
+      context,
+      {
+        input: {
+          id,
+          credentials: {
+            [provider]: credential,
+          },
         },
       },
-    });
+    );
     updateData = get(updateResult, [
       'data',
       'updateUser',
@@ -90,14 +94,17 @@ export default async function getOrCreateUser(db, provider, credentials) {
             ${userFragment}
           }
         }
-      }
-    `, context, {
-      input: {
-        credentials: {
-          [provider]: credential,
+      }`,
+      null,
+      context,
+      {
+        input: {
+          credentials: {
+            [provider]: credential,
+          },
         },
       },
-    });
+    );
     updateData = get(updateResult, [
       'data',
       'createUser',

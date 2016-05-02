@@ -34,7 +34,7 @@ async function validateUnique(
     type.name,
     field.name,
     newObject[field.name],
-    context.rootValue.indexes[type.name],
+    context.indexes[type.name],
   ));
 
   for (const index in uniqueFields) {

@@ -46,10 +46,10 @@ export default function createReplace(typeSet, interfaces, typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const db = context.rootValue.db;
+      const db = context.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
-      const typeInfo = context.rootValue.typeInfoByName[type.name];
+      const typeInfo = context.typeInfoByName[type.name];
 
       if (!db.isValidID(type.name, input.id)) {
         throw new GraphQLError(`input.id: Invalid ID for type ${type.name}`);
@@ -103,7 +103,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
 
       checkAndEnqueueHooks(
         db,
-        context.rootValue.hooks,
+        context.hooks,
         type.name,
         'afterUpdate',
         clientMutationId,

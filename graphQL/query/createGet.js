@@ -19,7 +19,7 @@ export default function createGet({ type }) {
       },
     },
     async resolve(parent, { id }, context) {
-      const { db } = context.rootValue;
+      const { db } = context;
       if (!db.isValidID(type.name, id)) {
         throw new GraphQLError(`id: Invalid ID for type ${type.name}`);
       }

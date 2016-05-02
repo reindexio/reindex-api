@@ -47,7 +47,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
       },
     },
     async resolve(parent, { input }, context) {
-      const db = context.rootValue.db;
+      const db = context.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
 
@@ -95,7 +95,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
 
       checkAndEnqueueHooks(
         db,
-        context.rootValue.hooks,
+        context.hooks,
         type.name,
         'afterUpdate',
         clientMutationId,

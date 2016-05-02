@@ -23,13 +23,13 @@ class MockConnection {
 
 describe('Relay Cursor Connections Specification', () => {
   const schema = createSchema(types);
-  const rootValue = {
+  const contextValue = {
     conn: new MockConnection(),
     indexes: {},
   };
 
   function runQuery(query, variables) {
-    return graphql(schema, query, rootValue, variables);
+    return graphql(schema, query, null, contextValue, variables);
   }
 
   describe('Connection', () => {

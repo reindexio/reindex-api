@@ -33,7 +33,7 @@ export default function createDelete({ type, payload }) {
       },
     },
     async resolve(parent, { input }, context) {
-      const db = context.rootValue.db;
+      const db = context.db;
       const clientMutationId = input.clientMutationId;
       if (!db.isValidID(type.name, input.id)) {
         throw new GraphQLError(`input.id: Invalid ID for type ${type.name}`);
@@ -66,7 +66,7 @@ export default function createDelete({ type, payload }) {
 
       checkAndEnqueueHooks(
         db,
-        context.rootValue.hooks,
+        context.hooks,
         type.name,
         'afterDelete',
         clientMutationId,

@@ -26,7 +26,7 @@ export default function createGetByField({ type }, interfaces) {
         },
       },
       async resolve(parent, args, context) {
-        const { db } = context.rootValue;
+        const { db } = context;
         const value = args[fieldName];
         if (fieldType === ReindexID && !db.isValidID(type.name, value)) {
           throw new GraphQLError(`id: Invalid ID for type ${type.name}`);
@@ -35,7 +35,7 @@ export default function createGetByField({ type }, interfaces) {
           type.name,
           nameChain,
           value,
-          context.rootValue.indexes[type.name],
+          context.indexes[type.name],
         );
         await checkPermission(type.name, 'read', {}, result, context);
         return result;
