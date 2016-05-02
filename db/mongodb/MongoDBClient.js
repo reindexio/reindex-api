@@ -1,4 +1,6 @@
 import { parse as parseQs, stringify as stringifyQs } from 'qs';
+import DataLoader from 'dataloader';
+import { GraphQLError } from 'graphql/error/GraphQLError';
 
 import { forEach, merge } from 'lodash';
 import { MongoClient } from 'mongodb';
@@ -55,6 +57,11 @@ export default class MongoDBClient {
     this.stats = {
       count: 0,
       totalTime: 0,
+      byQuery: {},
+    };
+
+    this.cache = {
+      idLoader: {},
     };
   }
 
@@ -71,6 +78,12 @@ export default class MongoDBClient {
       this.db = pool.db(this.dbName);
     }
     return this.db;
+  }
+
+  clearCache() {
+    for (const key in this.cache.idLoader) {
+      this.cache.idLoader[key].clearAll();
+    }
   }
 
   close() {
@@ -104,9 +117,29 @@ forEach(merge(
         this.stats = {
           totalTime: this.stats.totalTime + time,
           count: this.stats.count + 1,
+          byQuery: this.stats.byQuery,
         };
+        const currentStats = this.stats.byQuery[name] || {
+          count: 0,
+          totalTime: 0,
+        };
+        currentStats.count = currentStats.count + 1;
+        currentStats.totalTime = currentStats.totalTime + time;
+        this.stats.byQuery[name] = currentStats;
       }
     );
     return result;
   };
 });
+
+MongoDBClient.prototype.getByID = function(type, id) {
+  if (!this.isValidID(type, id)) {
+    throw new GraphQLError(`Invalid ID for type ${type}`);
+  }
+  if (!this.cache.idLoader[type]) {
+    this.cache.idLoader[type] = new DataLoader(
+      async (ids) => this.getByIDBatch(type, ids)
+    );
+  }
+  return this.cache.idLoader[type].load(id.value);
+};

@@ -19,6 +19,7 @@
     "cli-table": "^0.3.1",
     "convict": "^1.0.1",
     "cryptiles": "^3.0.0",
+    "dataloader": "^1.2.0",
     "dot": "^1.0.3",
     "good": "^6.1.4",
     "good-console": "^5.0.2",
