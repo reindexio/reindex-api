@@ -42,6 +42,7 @@
     "raven": "^0.10.0",
     "rethinkdb": "^2.1.0",
     "secure-filters": "^1.0.5",
+    "stats-lite": "^2.0.1",
     "uuid": "^2.0.1",
     "winchan": "^0.1.1"
   },
@@ -69,6 +70,7 @@
     "measure-stats": "babel-node bin/get-stats.js -l",
     "delete-app": "babel-node bin/delete-app",
     "print-schema": "babel-node bin/print-schema.js",
+    "benchmark": "DATABASE_TYPE=MongoDB babel-node bin/run-benchmark",
     "graphiql": "cd ./public/reindex-graphiql && npm install && npm run build && cd ../ && cp reindex-graphiql/public/static/* static/"
   }
 }

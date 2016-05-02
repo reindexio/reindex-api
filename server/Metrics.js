@@ -29,18 +29,14 @@ const Metrics = {
   },
 
   async timing(key, source, createPromise, callback) {
-    if (libratoEnabled && source) {
-      const start = process.hrtime();
-      const result = await Promise.resolve(createPromise());
-      const end = process.hrtime(start);
-      const msec = Metrics.measureHrTime(key, end, source);
-      if (callback) {
-        callback(msec);
-      }
-      return result;
-    } else {
-      return createPromise();
+    const start = process.hrtime();
+    const result = await Promise.resolve(createPromise());
+    const end = process.hrtime(start);
+    const msec = Metrics.measureHrTime(key, end, source);
+    if (callback) {
+      callback(msec);
     }
+    return result;
   },
 };
 
