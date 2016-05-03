@@ -5,8 +5,8 @@
   "private": true,
   "repository": "reindexio/reindex-api",
   "engines": {
-    "node": "5.6.0",
-    "npm": "3.6.0"
+    "node": "6.0.0",
+    "npm": "3.8.8"
   },
   "dependencies": {
     "babel": "^5.8.34",
