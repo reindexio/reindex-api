@@ -40,9 +40,11 @@ async function handler(request, reply) {
 
     if (result.errors) {
       result.errors = result.errors.map((error) => {
-        if (!isUserError(error) &&
-            !(error.originalError &&
-              isUserError(error.originalError))) {
+        if (isUserError(error) ||
+            (error.originalError &&
+             isUserError(error.originalError))) {
+          return formatError(error);
+        } else {
           hasErrors = true;
           Monitoring.noticeError(error.originalError, {
             request,
@@ -59,8 +61,6 @@ async function handler(request, reply) {
           return {
             message: 'Internal Server Error',
           };
-        } else {
-          return formatError(error);
         }
       });
     }
