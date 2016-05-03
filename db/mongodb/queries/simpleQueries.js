@@ -1,7 +1,7 @@
 import { transform, isArray } from 'lodash';
 import { ObjectId } from 'mongodb';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../../../graphQL/UserError';
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import { addID, addTransform, isValidID } from './queryUtils';
 
@@ -42,7 +42,7 @@ export async function getMetadata(db) {
 
 export async function getByID(db, type, id) {
   if (!isValidID(type, id)) {
-    throw new GraphQLError(`Invalid ID for type ${type}`);
+    throw new UserError(`Invalid ID for type ${type}`);
   }
   const result = await db.collection(type).findOne({ _id: ObjectId(id.value) });
   return addID(type, result);

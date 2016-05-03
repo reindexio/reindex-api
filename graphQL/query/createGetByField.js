@@ -1,7 +1,7 @@
 import { GraphQLNonNull, GraphQLObjectType } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 import { chain } from 'lodash';
 
+import { UserError } from '../UserError';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import { getUniqueFieldQueryName } from '../derivedNames';
@@ -29,7 +29,7 @@ export default function createGetByField({ type }, interfaces) {
         const { db } = context;
         const value = args[fieldName];
         if (fieldType === ReindexID && !db.isValidID(type.name, value)) {
-          throw new GraphQLError(`id: Invalid ID for type ${type.name}`);
+          throw new UserError(`id: Invalid ID for type ${type.name}`);
         }
         const result = await db.getByField(
           type.name,

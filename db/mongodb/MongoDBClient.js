@@ -1,10 +1,9 @@
 import { parse as parseQs, stringify as stringifyQs } from 'qs';
 import DataLoader from 'dataloader';
-import { GraphQLError } from 'graphql/error/GraphQLError';
-
 import { forEach, merge } from 'lodash';
 import { MongoClient } from 'mongodb';
 
+import { UserError } from '../../graphQL/UserError';
 import Metrics from '../../server/Metrics';
 import * as appQueries from './queries/appQueries';
 import * as simpleQueries from './queries/simpleQueries';
@@ -134,7 +133,7 @@ forEach(merge(
 
 MongoDBClient.prototype.getByID = function(type, id) {
   if (!this.isValidID(type, id)) {
-    throw new GraphQLError(`Invalid ID for type ${type}`);
+    throw new UserError(`Invalid ID for type ${type}`);
   }
   if (!this.cache.idLoader[type]) {
     this.cache.idLoader[type] = new DataLoader(

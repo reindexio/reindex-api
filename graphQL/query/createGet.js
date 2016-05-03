@@ -1,7 +1,7 @@
 import { camelCase } from 'lodash';
 import { GraphQLNonNull } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../UserError';
 import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 
@@ -21,7 +21,7 @@ export default function createGet({ type }) {
     async resolve(parent, { id }, context) {
       const { db } = context;
       if (!db.isValidID(type.name, id)) {
-        throw new GraphQLError(`id: Invalid ID for type ${type.name}`);
+        throw new UserError(`id: Invalid ID for type ${type.name}`);
       }
       const result = await db.getByID(type.name, id);
       await checkPermission(type.name, 'read', {}, result, context);

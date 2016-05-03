@@ -1,12 +1,12 @@
 import { uniq } from 'lodash';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../UserError';
 import hasPermission from './hasPermission';
 
 export default async function checkPermission(type, permission, ...args) {
   const result = await hasPermission(type, permission, ...args);
   if (result.errors) {
-    throw new GraphQLError(
+    throw new UserError(
       uniq(result.errors).join('\n')
     );
   }

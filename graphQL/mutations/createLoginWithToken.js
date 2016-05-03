@@ -5,8 +5,8 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
-import { GraphQLError } from 'graphql/error';
 
+import { UserError } from '../UserError';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import getOrCreateUser from '../../authentication/getOrCreateUser';
 import ProviderType from '../builtins/ProviderType';
@@ -58,7 +58,7 @@ export default function createLoginWithToken(typeSets) {
       const { db } = context;
       const { provider, token, clientMutationId } = input;
       if (provider !== 'auth0') {
-        throw new GraphQLError(
+        throw new UserError(
           'Login with token is only supported using provider: auth0'
         );
       }
@@ -68,7 +68,7 @@ export default function createLoginWithToken(typeSets) {
         provider,
       );
       if (!options || !options.isEnabled) {
-        throw new GraphQLError('Auth0 provider is disabled. See ' +
+        throw new UserError('Auth0 provider is disabled. See ' +
           'https://www.reindex.io/docs/security/authentication/' +
           '#social-login-authentication-providers for instructions on how to ' +
           'enable providers.'
@@ -76,7 +76,7 @@ export default function createLoginWithToken(typeSets) {
       }
       const { domain } = options;
       if (!domain) {
-        throw new GraphQLError('Auth0 domain is not set.');
+        throw new UserError('Auth0 domain is not set.');
       }
       console.log(`https://${domain}/tokeninfo`, token);
       const response = await fetch(`https://${domain}/tokeninfo`, {
@@ -88,7 +88,7 @@ export default function createLoginWithToken(typeSets) {
       });
       if (response.status < 200 || response.status >= 300) {
         console.error(await response.text());
-        throw new GraphQLError('Fetching the user profile failed.');
+        throw new UserError('Fetching the user profile failed.');
       }
       const userInfo = await response.json();
       const user = await getOrCreateUser(db, provider, {

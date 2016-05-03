@@ -1,7 +1,7 @@
 import { transform, isArray } from 'lodash';
 import RethinkDB from 'rethinkdb';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../../../graphQL/UserError';
 import injectDefaultFields from '../../../graphQL/builtins/injectDefaultFields';
 import {
   TYPE_TABLE,
@@ -63,7 +63,7 @@ export function getAllQuery(type) {
 
 export function getByID(conn, type, id) {
   if (!isValidID(type, id)) {
-    throw new GraphQLError(`Invalid ID for type ${type}`);
+    throw new UserError(`Invalid ID for type ${type}`);
   }
   return getFirstOrNullQuery(
     queryWithIDs(id.type, RethinkDB.table(type).getAll(id.value))

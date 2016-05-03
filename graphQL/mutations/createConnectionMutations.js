@@ -4,8 +4,8 @@ import {
   GraphQLObjectType,
   GraphQLInputObjectType,
 } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../UserError';
 import checkPermission from '../permissions/checkPermission';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import clientMutationIdField from '../utilities/clientMutationIdField';
@@ -197,7 +197,7 @@ function createResolveFunction(
     const db = context.db;
 
     if (!db.hasSupport('manyToMany')) {
-      throw new GraphQLError(
+      throw new UserError(
         'This operation is not enabled for your app. ' +
         'Please contact support.'
       );
@@ -206,11 +206,11 @@ function createResolveFunction(
     const { clientMutationId, [toArg]: toId, [fromArg]: fromId } = input;
 
     if (!db.isValidID(toType, toId)) {
-      throw new GraphQLError(`input.${toArg}: Invalid ID for type ${toType}`);
+      throw new UserError(`input.${toArg}: Invalid ID for type ${toType}`);
     }
 
     if (!db.isValidID(fromType, fromId)) {
-      throw new GraphQLError(
+      throw new UserError(
         `input.${fromArg}: Invalid ID for type ${fromType}`
       );
     }
@@ -225,7 +225,7 @@ function createResolveFunction(
       [toId, toType, toObject, toArg],
     ]) {
       if (!object && validateExistence) {
-        throw new GraphQLError(
+        throw new UserError(
           `input.${arg}: Can not find ${typeName} object with given ID: ` +
           toReindexID(oId)
         );

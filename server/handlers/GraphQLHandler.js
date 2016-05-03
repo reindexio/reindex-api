@@ -1,6 +1,6 @@
 import { graphql, formatError } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { isUserError } from '../../graphQL/UserError';
 import getGraphQLContext from '../../graphQL/getGraphQLContext';
 import Metrics from '../Metrics';
 import Monitoring from '../../Monitoring';
@@ -40,8 +40,11 @@ async function handler(request, reply) {
 
     if (result.errors) {
       result.errors = result.errors.map((error) => {
-        if (error.originalError &&
-           !(error.originalError instanceof GraphQLError)) {
+        if (isUserError(error) ||
+            (error.originalError &&
+             isUserError(error.originalError))) {
+          return formatError(error);
+        } else {
           hasErrors = true;
           Monitoring.noticeError(error.originalError, {
             request,
@@ -58,8 +61,6 @@ async function handler(request, reply) {
           return {
             message: 'Internal Server Error',
           };
-        } else {
-          return formatError(error);
         }
       });
     }
