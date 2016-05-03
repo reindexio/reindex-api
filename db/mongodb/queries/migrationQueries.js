@@ -25,7 +25,7 @@ export async function performMigration(db, commands, types, { indexes }) {
 
 async function deleteTypesData(db, commands, indexes) {
   const names = commands.map((command) => command.type.name);
-  await* names.map(async (name) => {
+  await Promise.all(names.map(async (name) => {
     await deleteTypeIndexes(db, name, indexes);
     try {
       await db.dropCollection(name);
@@ -35,7 +35,7 @@ async function deleteTypesData(db, commands, indexes) {
         throw e;
       }
     }
-  });
+  }));
 }
 
 async function deleteFieldsData(db, commands, indexes) {
@@ -52,10 +52,10 @@ async function deleteFieldsData(db, commands, indexes) {
     },
   }));
 
-  return await* typeData.map(async ({ type, fields, update }) => {
+  return Promise.all(typeData.map(async ({ type, fields, update }) => {
     await deleteTypeIndexes(db, type, indexes, fields);
     await db.collection(type).updateMany({}, update);
-  });
+  }));
 }
 
 async function createNewTypeData(db, commands) {

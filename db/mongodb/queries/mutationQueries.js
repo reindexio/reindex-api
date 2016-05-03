@@ -59,7 +59,7 @@ export async function addToConnection(
     toField,
   },
 ) {
-  const [from, to] = await* [
+  const [from, to] = await Promise.all([
     db.collection(fromType).findOneAndUpdate({
       _id: ObjectId(fromId.value),
     }, {
@@ -74,7 +74,7 @@ export async function addToConnection(
         [toField]: fromId,
       },
     }),
-  ];
+  ]);
 
   return {
     from: addID(fromType, from.value),
@@ -93,7 +93,7 @@ export async function removeFromConnection(
     toField,
   },
 ) {
-  const [from, to] = await* [
+  const [from, to] = await Promise.all([
     db.collection(fromType).findOneAndUpdate({
       _id: ObjectId(fromId.value),
     }, {
@@ -108,7 +108,7 @@ export async function removeFromConnection(
         [toField]: [fromId],
       },
     }),
-  ];
+  ]);
 
   return {
     from: addID(fromType, from.value),

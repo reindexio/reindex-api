@@ -30,11 +30,13 @@ async function validateUnique(
     )
   );
 
-  const uniqueChecks = await* uniqueFields.map((field) => db.getByField(
-    type.name,
-    field.name,
-    newObject[field.name],
-    context.indexes[type.name],
+  const uniqueChecks = await Promise.all(uniqueFields.map((field) =>
+    db.getByField(
+      type.name,
+      field.name,
+      newObject[field.name],
+      context.indexes[type.name],
+    )
   ));
 
   for (const index in uniqueFields) {
@@ -62,7 +64,7 @@ async function validateNodesExist(
     field.type.getInterfaces &&
     field.type.getInterfaces().includes(interfaces.Node)
   );
-  const nodes = await* nodeFields.map((field) => {
+  const nodes = await Promise.all(nodeFields.map((field) => {
     const id = newObject[field.name];
     if (!db.isValidID(field.type.name, id)) {
       const reindexID = toReindexID(id);
@@ -72,7 +74,7 @@ async function validateNodesExist(
       );
     }
     return db.getByID(field.type.name, id);
-  });
+  }));
   nodeFields.forEach((field, index) => {
     if (!nodes[index]) {
       const reindexID = toReindexID(newObject[field.name]);

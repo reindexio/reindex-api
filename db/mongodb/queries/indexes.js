@@ -15,8 +15,8 @@ export async function deleteTypeIndexes(db, type, indexes, fields) {
     );
     const indexIds = indexesToDelete.map((index) => index.id.value);
     const indexNames = indexesToDelete.map((index) => index.name);
-    await* indexNames.map((indexName) =>
-      db.collection(type).dropIndex(indexName
+    await Promise.all(indexNames.map((indexName) =>
+      db.collection(type).dropIndex(indexName)
     ));
     return db.collection('ReindexIndex').deleteMany({
       _id: {
@@ -112,7 +112,7 @@ function filterExistingIndexes(indexes, potentialIndexes) {
 }
 
 async function createIndexes(db, indexes) {
-  await* indexes.map(async (index) => {
+  await Promise.all(indexes.map(async (index) => {
     index.name = new ObjectId().toString();
     const spec = index.fields.map((field) => [field, 1]);
     await db.collection(index.type).createIndex(spec, {
@@ -120,5 +120,5 @@ async function createIndexes(db, indexes) {
       unique: index.unique,
     });
     await db.collection('ReindexIndex').insert(index);
-  });
+  }));
 }

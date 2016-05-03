@@ -1,4 +1,20 @@
 {
-  "stage": 1,
-  "optional": ["bluebirdCoroutines", "es7.classProperties"]
+  plugins: [
+    // Stage 1
+    'transform-class-properties',
+    // Stage 2
+    'syntax-trailing-function-commas',
+    'transform-object-rest-spread',
+    // Stage 3
+    'syntax-async-functions',
+    ['transform-async-to-module-method', {
+      module: 'bluebird', method: 'coroutine',
+    }],
+    'transform-exponentiation-operator',
+    // Other
+    'transform-runtime',
+  ],
+  presets: [
+    'es2015-node5',
+  ],
 }

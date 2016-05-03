@@ -6,9 +6,9 @@ import { addID } from './queryUtils';
 
 export async function createDatabaseForApp(conn, dbName) {
   await RethinkDB.dbCreate(dbName).run(conn);
-  await* values(DBTableNames).map((tableName) =>
+  await Promise.all(values(DBTableNames).map((tableName) =>
     RethinkDB.db(dbName).tableCreate(tableName).run(conn)
-  );
+  ));
   return true;
 }
 
