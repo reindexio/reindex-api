@@ -31,9 +31,12 @@ export function makeRunQuery(db) {
       };
     }
 
+
     if (newContext || !metadata) {
       metadata = await db.getMetadata();
     }
+
+    db.clearCache();
 
     const context = getGraphQLContext(db, metadata, {
       credentials,

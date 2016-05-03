@@ -48,6 +48,18 @@ export async function getByID(db, type, id) {
   return addID(type, result);
 }
 
+export async function getByIDBatch(db, type, ids) {
+  const cursor = addTransform(db.collection(type).find({
+    _id: {
+      $in: ids.map((id) => ObjectId(id)),
+    },
+  }), (object) => addID(type, object));
+  const result = await cursor.toArray();
+  return ids.map((id) => (
+    result.find((item) => item.id.value === id.toString())
+  ));
+}
+
 export function getByFieldCursor(db, type, field, value) {
   let actualField = field;
   let actualValue = value;
