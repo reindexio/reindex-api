@@ -56,12 +56,11 @@ export function createFilterArgs(typeSet) {
     'last',
     'before',
     'after',
-    'pageInfo',
   ];
   const args = {};
   for (const field of typeSet.getFilters() || []) {
     let filterName = field.name;
-    while (args[filterName] || reservedArgs.includes[filterName]) {
+    while (args[filterName] || reservedArgs.includes(filterName)) {
       filterName = `${filterName}Filter`;
     }
     args[filterName] = createFilterArg(typeSet.type, field, filterName);
