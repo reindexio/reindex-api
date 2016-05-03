@@ -1,6 +1,14 @@
+import uuid from 'uuid';
 import { chain, get, indexBy, values } from 'lodash';
 import { graphql } from 'graphql';
 
+import Config from '../server/Config';
+import DatabaseTypes from '../db/DatabaseTypes';
+import deleteApp from '../apps/deleteApp';
+import getAdminDB from '../db/getAdminDB';
+import Monitoring from '../Monitoring';
+import { createAdminApp } from '../apps/createApp';
+import { TIMESTAMP } from '../graphQL/builtins/DateTime';
 import createApp from '../apps/createApp';
 import getDB from '../db/getDB';
 import getGraphQLContext from '../graphQL/getGraphQLContext';
@@ -183,4 +191,50 @@ function mergeFields(oldFields, newFields) {
   }
 
   return values(oldByName);
+}
+
+export async function testSetup(adminHostname) {
+  Monitoring.setLogging(false);
+  Config.resetTestConfig();
+
+  const adminDatabase = 'testadmin_' + uuid.v4().replace(/-/g, '_');
+  let settings;
+  let defaultDatabaseType;
+  if (process.env.DATABASE_TYPE === DatabaseTypes.RethinkDB) {
+    settings = {
+      type: DatabaseTypes.RethinkDB,
+      host: 'localhost',
+    };
+    defaultDatabaseType = DatabaseTypes.RethinkDB;
+  } else {
+    settings = {
+      type: DatabaseTypes.MongoDB,
+      connectionString: 'mongodb://localhost/',
+    };
+    defaultDatabaseType = DatabaseTypes.MongoDB;
+  }
+
+  Config.set('database.adminDatabase', adminDatabase);
+  Config.set('database.adminDatabaseSettings', JSON.stringify(settings));
+  Config.set('database.defaultDatabaseType', defaultDatabaseType);
+
+  await createAdminApp(adminHostname);
+  await createStorage(settings);
+}
+
+export async function testTearDown(adminHostname) {
+  await deleteApp(adminHostname);
+}
+
+async function createStorage(settings) {
+  const adminDB = getAdminDB();
+  try {
+    await adminDB.create('Storage', {
+      createdAt: TIMESTAMP,
+      databasesAvailable: 200,
+      settings,
+    });
+  } finally {
+    await adminDB.close();
+  }
 }

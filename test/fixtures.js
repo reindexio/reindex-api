@@ -122,3 +122,248 @@ export const TEST_SCHEMA = [
     ],
   },
 ];
+
+export const BENCHMARK_SCHEMA = [
+  {
+    kind: 'OBJECT',
+    name: 'User',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+        unique: true,
+      },
+      {
+        name: 'handle',
+        type: 'String',
+        unique: true,
+      },
+      {
+        name: 'applications',
+        type: 'Connection',
+        ofType: 'Application',
+        reverseName: 'user',
+      },
+      {
+        name: 'screenshots',
+        type: 'Connection',
+        ofType: 'Screenshot',
+        reverseName: 'user',
+      },
+      {
+        name: 'comments',
+        type: 'Connection',
+        ofType: 'Comment',
+        reverseName: 'user',
+      },
+      {
+        name: 'invitedApplications',
+        type: 'Connection',
+        ofType: 'Application',
+        reverseName: 'invitedUsers',
+      },
+    ],
+    permissions: [
+      {
+        grantee: 'USER',
+        userPath: ['id'],
+        read: true,
+        update: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['applications', 'invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['invitedApplications', 'user'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['invitedApplications', 'invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['screenshots', 'application', 'user'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['screenshots', 'application', 'invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['comments', 'screenshot', 'application', 'user'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['comments', 'screenshot', 'application', 'invitedUsers'],
+        read: true,
+      },
+    ],
+  },
+  {
+    kind: 'OBJECT',
+    name: 'Application',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+        unique: true,
+      },
+      {
+        name: 'user',
+        type: 'User',
+        reverseName: 'applications',
+      },
+      {
+        name: 'screenshots',
+        type: 'Connection',
+        ofType: 'Screenshot',
+        reverseName: 'application',
+      },
+      {
+        name: 'invitedUsers',
+        type: 'Connection',
+        ofType: 'User',
+        reverseName: 'invitedApplications',
+      },
+    ],
+    permissions: [
+      {
+        grantee: 'USER',
+        userPath: ['user'],
+        read: true,
+        update: true,
+        create: true,
+        delete: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['invitedUsers'],
+        update: true,
+        permittedFields: [
+          'screenshots',
+        ],
+      },
+    ],
+  },
+  {
+    kind: 'OBJECT',
+    name: 'Screenshot',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+        unique: true,
+      },
+      {
+        name: 'user',
+        type: 'User',
+        reverseName: 'screenshots',
+      },
+      {
+        name: 'application',
+        type: 'Application',
+        reverseName: 'screenshots',
+      },
+      {
+        name: 'comments',
+        type: 'Connection',
+        ofType: 'Comment',
+        reverseName: 'screenshot',
+      },
+    ],
+    permissions: [
+      {
+        grantee: 'USER',
+        userPath: ['application', 'user'],
+        read: true,
+        update: true,
+        create: true,
+        delete: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['application', 'invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['user'],
+        read: true,
+        update: true,
+        create: true,
+        delete: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['application', 'invitedUsers'],
+        update: true,
+        permittedFields: ['comments'],
+      },
+    ],
+  },
+  {
+    kind: 'OBJECT',
+    name: 'Comment',
+    interfaces: ['Node'],
+    fields: [
+      {
+        name: 'id',
+        type: 'ID',
+        nonNull: true,
+        unique: true,
+      },
+      {
+        name: 'user',
+        type: 'User',
+        reverseName: 'comments',
+      },
+      {
+        name: 'screenshot',
+        type: 'Screenshot',
+        reverseName: 'comments',
+      },
+    ],
+    permissions: [
+      {
+        grantee: 'USER',
+        userPath: ['screenshot', 'application', 'user'],
+        read: true,
+        update: true,
+        create: true,
+        delete: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['screenshot', 'application', 'invitedUsers'],
+        read: true,
+      },
+      {
+        grantee: 'USER',
+        userPath: ['user'],
+        read: true,
+        update: true,
+        create: true,
+        delete: true,
+      },
+    ],
+  },
+];

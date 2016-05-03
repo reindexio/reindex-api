@@ -2333,6 +2333,11 @@
       "from": "isemail@>=2.0.0 <3.0.0",
       "resolved": "https://registry.npmjs.org/isemail/-/isemail-2.1.0.tgz"
     },
+    "isnumber": {
+      "version": "1.0.0",
+      "from": "isnumber@>=1.0.0 <1.1.0",
+      "resolved": "https://registry.npmjs.org/isnumber/-/isnumber-1.0.0.tgz"
+    },
     "isobject": {
       "version": "1.0.2",
       "from": "isobject@>=1.0.0 <2.0.0",
@@ -3554,6 +3559,11 @@
       "version": "0.0.7",
       "from": "stack-trace@0.0.7",
       "resolved": "https://registry.npmjs.org/stack-trace/-/stack-trace-0.0.7.tgz"
+    },
+    "stats-lite": {
+      "version": "2.0.1",
+      "from": "stats-lite@>=2.0.1 <3.0.0",
+      "resolved": "https://registry.npmjs.org/stats-lite/-/stats-lite-2.0.1.tgz"
     },
     "statuses": {
       "version": "1.2.1",
