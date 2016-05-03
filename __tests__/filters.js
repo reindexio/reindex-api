@@ -9,7 +9,10 @@ import {
   makeRunQuery,
   createTestApp,
   createFixture,
+  migrate,
+  augmentSchema,
 } from '../test/testAppUtils';
+import { TEST_SCHEMA } from '../test/fixtures';
 
 import assert from '../test/assert';
 
@@ -553,6 +556,112 @@ describe('Filter Tests', () => {
           },
         },
       }, 'connection filtering not includes');
+    });
+
+    describe('conflicting filter names', () => {
+      let testFixture;
+      before(async () => {
+        await migrate(runQuery, augmentSchema(
+          TEST_SCHEMA,
+          [
+            {
+              kind: 'OBJECT',
+              name: 'Test',
+              interfaces: ['Node'],
+              fields: [
+                {
+                  name: 'id',
+                  type: 'ID',
+                  nonNull: true,
+                  unique: true,
+                },
+                {
+                  name: 'before',
+                  type: 'DateTime',
+                  filterable: true,
+                },
+                {
+                  name: 'beforeFilter',
+                  type: 'DateTime',
+                  filterable: true,
+                },
+                {
+                  name: 'arguments',
+                  type: 'String',
+                  filterable: true,
+                },
+              ],
+            },
+          ],
+        ), true);
+
+        testFixture = await createFixture(runQuery, 'Test', {
+          before: '2020-01-01',
+          beforeFilter: '2010-01-01',
+          arguments: 'yes!',
+        }, `id before beforeFilter arguments`);
+      });
+
+      after(async () => {
+        await migrate(runQuery, TEST_SCHEMA, true);
+      });
+
+      it('must work with conflicting filter names', async () => {
+        assert.deepEqual(await runQuery(`
+          {
+            viewer {
+              allTests(
+                _before: { gt: "2015-01-01" },
+                beforeFilter: { lt: "2015-01-01" }
+                arguments: { eq: "yes!" }
+              ) {
+                nodes {
+                  id
+                  before
+                  beforeFilter
+                  arguments
+                }
+              }
+            }
+          }
+        `), {
+          data: {
+            viewer: {
+              allTests: {
+                nodes: [
+                  testFixture,
+                ],
+              },
+            },
+          },
+        });
+
+        assert.deepEqual(await runQuery(`
+          {
+            viewer {
+              allTests(
+                _before: { lt: "2015-01-01" },
+                beforeFilter: { gt: "2015-01-01" }
+              ) {
+                nodes {
+                  id
+                  before
+                  beforeFilter
+                  arguments
+                }
+              }
+            }
+          }
+        `), {
+          data: {
+            viewer: {
+              allTests: {
+                nodes: [],
+              },
+            },
+          },
+        });
+      });
     });
   }
 });
