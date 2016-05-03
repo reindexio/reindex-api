@@ -40,9 +40,9 @@ async function handler(request, reply) {
 
     if (result.errors) {
       result.errors = result.errors.map((error) => {
-        if (isUserError(error) ||
-            (error.originalError &&
-             !isUserError(error.originalError))) {
+        if (!isUserError(error) &&
+            !(error.originalError &&
+              isUserError(error.originalError))) {
           hasErrors = true;
           Monitoring.noticeError(error.originalError, {
             request,
