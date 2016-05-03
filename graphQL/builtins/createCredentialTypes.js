@@ -4,11 +4,11 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 import Qs from 'qs';
 import Url from 'url';
 import { pick, isEqual } from 'lodash';
 
+import { UserError } from '../UserError';
 import TypeSet from '../TypeSet';
 
 function getBaseCredentialFields(providerName) {
@@ -206,7 +206,7 @@ export default function createCredentialTypes() {
           isEqual(credentials.userID, parent.__node.id)) {
         return parent[provider];
       } else {
-        throw new GraphQLError(
+        throw new UserError(
           `User lacks permissions to read nodes of type \`User\` with fields ` +
           `\`credentials.${provider}\`.`
         );

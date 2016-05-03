@@ -1,6 +1,6 @@
 import { GraphQLNonNull, GraphQLInputObjectType } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../UserError';
 import {
   getDeleteMutationName,
   getDeleteInputObjectTypeName,
@@ -36,12 +36,12 @@ export default function createDelete({ type, payload }) {
       const db = context.db;
       const clientMutationId = input.clientMutationId;
       if (!db.isValidID(type.name, input.id)) {
-        throw new GraphQLError(`input.id: Invalid ID for type ${type.name}`);
+        throw new UserError(`input.id: Invalid ID for type ${type.name}`);
       }
       const object = await db.getByID(type.name, input.id);
 
       if (!object) {
-        throw new GraphQLError(
+        throw new UserError(
           `input.id: Can not find ${type.name} object with given ID: ` +
           toReindexID(input.id)
         );

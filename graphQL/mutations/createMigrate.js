@@ -5,8 +5,8 @@ import {
   GraphQLInputObjectType,
   GraphQLNonNull,
 } from 'graphql';
-import { GraphQLError } from 'graphql/error/GraphQLError';
 
+import { UserError } from '../UserError';
 import validateSchema from '../../graphQL/migrations/validateSchema';
 import buildSchemaMigration from
   '../../graphQL/migrations/buildSchemaMigration';
@@ -113,7 +113,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
 
       if (errors.length > 0) {
         // XXX(freiksenet, 2015-09-22): Can be fixed when graphql is updated
-        throw new GraphQLError(errors.join('\n'));
+        throw new UserError(errors.join('\n'));
       } else {
         const commands = buildSchemaMigration(context.types, input.types);
         const isDestructive = commands.some((command) => command.isDestructive);
