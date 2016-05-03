@@ -61,7 +61,7 @@ export function createFilterArgs(typeSet) {
   for (const field of typeSet.getFilters() || []) {
     let filterName = field.name;
     while (args[filterName] || reservedArgs.includes(filterName)) {
-      filterName = `${filterName}Filter`;
+      filterName = `_${filterName}`;
     }
     args[filterName] = createFilterArg(typeSet.type, field, filterName);
   }

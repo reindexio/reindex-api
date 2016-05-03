@@ -611,8 +611,8 @@ describe('Filter Tests', () => {
           {
             viewer {
               allTests(
-                beforeFilter: { gt: "2015-01-01" },
-                beforeFilterFilter: { lt: "2015-01-01" }
+                _before: { gt: "2015-01-01" },
+                beforeFilter: { lt: "2015-01-01" }
                 arguments: { eq: "yes!" }
               ) {
                 nodes {
@@ -640,8 +640,8 @@ describe('Filter Tests', () => {
           {
             viewer {
               allTests(
-                beforeFilter: { lt: "2015-01-01" },
-                beforeFilterFilter: { gt: "2015-01-01" }
+                _before: { lt: "2015-01-01" },
+                beforeFilter: { gt: "2015-01-01" }
               ) {
                 nodes {
                   id
