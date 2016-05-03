@@ -10,11 +10,8 @@ checkout:
 
 dependencies:
   pre:
-    - bin/ci-install-rethinkdb
     - bin/ci-install-mongodb
     - npm install -g npm@3.8.8
-    - rethinkdb:
-        background: true
     - sudo service mongod restart
 
 test:
