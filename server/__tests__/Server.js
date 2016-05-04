@@ -109,6 +109,99 @@ describe('Server', () => {
     });
   });
 
+  it('returns correct errors', async function () {
+    let response = await makeRequest({
+      method: 'POST',
+      url: '/graphql',
+      payload: {
+        query:
+`{ userByI(id: "UmVpbmRleFR5cGU6NTZhOGE0OTE5MDg1Y2FiZjYwYTA5OTk1") { id } }`,
+      },
+      headers: {
+        authorization: `Bearer ${token}`,
+        host: hostname,
+      },
+    });
+    assert.strictEqual(response.statusCode, 200, 'syntax error');
+    assert.deepEqual(JSON.parse(response.result), {
+      errors: [
+        {
+          locations: [
+            {
+              column: 3,
+              line: 1,
+            },
+          ],
+          message: (
+            'Cannot query field "userByI" on type "ReindexQueryRoot".'
+          ),
+        },
+      ],
+    }, 'syntax error');
+
+    response = await makeRequest({
+      method: 'POST',
+      url: '/graphql',
+      payload: {
+        query: `
+          {
+            userById(id: "UmVpbmRleFR5cGU6NTZhOGE0OTE5MDg1Y2FiZjYwYTA5OTk1") {
+              id
+            }
+          }
+        `,
+      },
+      headers: {
+        authorization: `Bearer ${token}`,
+        host: hostname,
+      },
+    });
+    assert.strictEqual(response.statusCode, 200, 'user error');
+    assert.deepEqual(JSON.parse(response.result), {
+      data: {
+        userById: null,
+      },
+      errors: [
+        {
+          locations: [
+            {
+              column: 13,
+              line: 3,
+            },
+          ],
+          message: 'id: Invalid ID for type User',
+        },
+      ],
+    }, 'user error');
+
+    response = await makeRequest({
+      method: 'POST',
+      url: '/graphql',
+      payload: {
+        query: `
+          {
+            error
+          }
+        `,
+      },
+      headers: {
+        authorization: `Bearer ${token}`,
+        host: hostname,
+      },
+    });
+    assert.strictEqual(response.statusCode, 200, 'internal error');
+    assert.deepEqual(JSON.parse(response.result), {
+      data: {
+        error: null,
+      },
+      errors: [
+        {
+          message: 'Internal Server Error',
+        },
+      ],
+    }, 'internal error');
+  });
+
   it('returns 404 for non-existent apps or reserved names', async function () {
     for (const invalidHost of ['nonexistent.example.com', 'rethinkdb.com']) {
       const response = await makeRequest({
