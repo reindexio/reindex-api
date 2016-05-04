@@ -133,8 +133,7 @@ describe('Server', () => {
             },
           ],
           message: (
-            'Cannot query field "userByI" on type "ReindexQueryRoot". ' +
-            'Did you mean "userById"?'
+            'Cannot query field "userByI" on type "ReindexQueryRoot".'
           ),
         },
       ],
