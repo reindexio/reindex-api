@@ -1,3 +1,3 @@
 require('babel-register');
 require('./Monitoring');
-require('./server/main')();
+require('./server/main').default();
