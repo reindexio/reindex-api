@@ -9,8 +9,17 @@
     "npm": "3.8.8"
   },
   "dependencies": {
-    "babel": "^5.8.34",
-    "babel-eslint": "^5.0.0-beta4",
+    "babel-cli": "^6.8.0",
+    "babel-plugin-syntax-async-functions": "^6.8.0",
+    "babel-plugin-syntax-trailing-function-commas": "^6.8.0",
+    "babel-plugin-transform-async-to-module-method": "^6.8.0",
+    "babel-plugin-transform-class-properties": "^6.8.0",
+    "babel-plugin-transform-exponentiation-operator": "^6.8.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
+    "babel-plugin-transform-runtime": "^6.8.0",
+    "babel-preset-es2015-node5": "^1.2.0",
+    "babel-register": "^6.8.0",
+    "babel-runtime": "^6.6.1",
     "base64-url": "^1.2.1",
     "bassmaster": "^1.7.0",
     "bell": "^6.1.0",
@@ -48,6 +57,7 @@
     "winchan": "^0.1.1"
   },
   "devDependencies": {
+    "babel-eslint": "^6.0.4",
     "chai": "^3.4.1",
     "diff": "^2.2.1",
     "eslint": "^1.10.2",
@@ -59,8 +69,8 @@
   "scripts": {
     "start": "nodemon index.js",
     "lint": "eslint ./",
-    "mocha": "mocha --no-timeouts --compilers js:babel/register --recursive test/setup.js",
-    "testonly": "mocha --no-timeouts --compilers js:babel/register --recursive test/setup.js $(find ./ -name __tests__ | grep -v node_modules)",
+    "mocha": "mocha --no-timeouts --compilers js:babel-register --recursive test/setup.js",
+    "testonly": "mocha --no-timeouts --compilers js:babel-register --recursive test/setup.js $(find ./ -name __tests__ | grep -v node_modules)",
     "test": "npm run lint && npm run testonly",
     "add-storage": "babel-node bin/add-storage.js",
     "create-admin-app": "babel-node bin/create-admin-app.js",

@@ -28,11 +28,11 @@ export function getIndexes(db) {
 }
 
 export async function getMetadata(db) {
-  const metadata = await* [
+  const metadata = await Promise.all([
     getTypes(db),
     getIndexes(db),
     getAllQuery(db, 'ReindexHook').toArray(),
-  ];
+  ]);
   return {
     types: metadata[0],
     indexes: metadata[1],

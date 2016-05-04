@@ -49,7 +49,7 @@ async function enqueueHooks(hostname, type, hooks, object) {
       },
     });
 
-    await* hooks.map((hook) => performHook(context, hook));
+    await Promise.all(hooks.map((hook) => performHook(context, hook)));
   } catch (error) {
     console.error(error);
   } finally {

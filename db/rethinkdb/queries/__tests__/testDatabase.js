@@ -194,13 +194,13 @@ export function createEmptyDatabase(conn, dbName) {
 
 export async function createTestDatabase(conn, dbName) {
   await createEmptyDatabase(conn, dbName);
-  await* TEST_DATA.get('tables').map(async function (data, table) {
+  await Promise.all(TEST_DATA.get('tables').map(async function (data, table) {
     await RethinkDB.db(dbName).tableCreate(table).run(conn);
     await RethinkDB.db(dbName)
       .table(table)
       .insert(data.toJS())
       .run(conn);
-  }).toArray();
+  }).toArray());
 }
 
 export async function deleteTestDatabase(conn, dbName) {

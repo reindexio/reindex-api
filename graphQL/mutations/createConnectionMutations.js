@@ -215,10 +215,10 @@ function createResolveFunction(
       );
     }
 
-    const [fromObject, toObject] = await* [
+    const [fromObject, toObject] = await Promise.all([
       db.getByID(fromType, fromId),
       db.getByID(toType, toId),
-    ];
+    ]);
 
     for (const [oId, typeName, object, arg] of [
       [fromId, fromType, fromObject, fromArg],
