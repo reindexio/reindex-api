@@ -1,4 +1,4 @@
-import { isEmpty, isPlainObject, forEach, omit, isEqual } from 'lodash';
+import { isEmpty, isPlainObject, omit, isEqual } from 'lodash';
 import { ObjectId } from 'mongodb';
 
 import { TIMESTAMP } from '../../../graphQL/builtins/DateTime';
@@ -204,12 +204,13 @@ function prepareDocument(object, oldObject = {}) {
 
 function flattenUpdate(object, parentKey = []) {
   const result = [];
-  forEach(object, (value, key) => {
+  for (const key in object) {
+    const value = object[key];
     if (isPlainObject(value)) {
       result.push(...(flattenUpdate(value, [...parentKey, key])));
     } else if (value !== undefined) {
       result.push([[...parentKey, key], value]);
     }
-  });
+  }
   return result;
 }

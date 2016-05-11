@@ -119,6 +119,10 @@ export const TEST_SCHEMA = [
         ofType: 'Micropost',
         reverseName: 'favoritedBy',
       },
+      {
+        name: 'length',
+        type: 'Int',
+      },
     ],
   },
 ];
