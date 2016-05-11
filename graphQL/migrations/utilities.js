@@ -39,5 +39,6 @@ export function extractFieldOptions(field) {
     'defaultOrdering',
     'unique',
     'orderable',
+    'filterable',
   ]);
 }
