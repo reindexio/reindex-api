@@ -49,7 +49,8 @@ describe('Integration Tests', () => {
     for (let i = 0; i < 2; i++) {
       const createdUser = await createFixture(runQuery, 'User', {
         handle: `user-${i}`,
-      }, 'id, handle');
+        length: (i + 1) * 10,
+      }, 'id, handle, length');
 
       fixtures.User[createdUser.id] = createdUser;
     }
@@ -691,7 +692,8 @@ describe('Integration Tests', () => {
           changedUser {
             id,
             handle,
-            email
+            email,
+            length,
           }
         }
       }
@@ -699,6 +701,7 @@ describe('Integration Tests', () => {
       input: {
         id,
         handle: 'villeimmonen',
+        length: 50,
       },
     });
 
@@ -710,6 +713,7 @@ describe('Integration Tests', () => {
             id,
             handle: 'villeimmonen',
             email: 'immonenv@example.com',
+            length: 50,
           },
         },
       },
@@ -723,6 +727,7 @@ describe('Integration Tests', () => {
             id,
             handle,
             email
+            length,
           }
         }
       }
@@ -742,6 +747,7 @@ describe('Integration Tests', () => {
             id,
             handle: 'immonenv',
             email: null,
+            length: null,
           },
         },
       },
@@ -755,6 +761,7 @@ describe('Integration Tests', () => {
             id,
             handle,
             email
+            length
           }
         }
       }
