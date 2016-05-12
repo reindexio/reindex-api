@@ -110,6 +110,7 @@ async function handler(request, reply) {
 
     console.log(JSON.stringify({
       hostname: request.info.hostname,
+      authHeader: request.headers.authorization,
       credentials,
       query,
       variables,
