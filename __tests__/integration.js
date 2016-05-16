@@ -1072,6 +1072,7 @@ describe('Integration Tests', () => {
       mutation postMicropost($input: _CreateMicropostInput!) {
         createMicropost(input: $input) {
           changedMicropost {
+            id
             text,
             tags,
             categories { name },
@@ -1086,13 +1087,22 @@ describe('Integration Tests', () => {
       },
     });
 
+    const id = get(result, [
+      'data', 'createMicropost', 'changedMicropost', 'id',
+    ]);
+
     assert.deepEqual(result, {
       data: {
         createMicropost: {
-          changedMicropost: micropost,
+          changedMicropost: {
+            ...micropost,
+            id,
+          },
         },
       },
     });
+
+    await deleteFixture(runQuery, 'Micropost', id);
   });
 
   it('creates a secret', async function() {
@@ -1935,6 +1945,46 @@ describe('Integration Tests', () => {
               favoritedBy: {
                 count: 0,
                 nodes: [],
+              },
+            },
+          },
+        });
+
+        assert.deepEqual(await runQuery(`
+          query {
+            viewer {
+              allMicroposts(author: { isNull: true }) {
+                nodes {
+                  id
+                  author {
+                    id
+                  }
+                  favoritedBy {
+                    count
+                    nodes {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `, {
+          id: micropost.id,
+        }), {
+          data: {
+            viewer: {
+              allMicroposts: {
+                nodes: [
+                  {
+                    id: micropost.id,
+                    author: null,
+                    favoritedBy: {
+                      count: 0,
+                      nodes: [],
+                    },
+                  },
+                ],
               },
             },
           },
