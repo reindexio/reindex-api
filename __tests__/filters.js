@@ -55,6 +55,16 @@ describe('Filter Tests', () => {
       }
     }
 
+    fixtures.Micropost.push(
+      await createFixture(runQuery, 'Micropost', {
+        author: null,
+        text: 'orphan-micropost',
+        createdAt: '2000-01-01',
+        mainCategory: null,
+        tags: null,
+      }, `id, text, createdAt, author { id } mainCategory { name } tags`)
+    );
+
     // user with undefined email
     fixtures.User[5] = await createFixture(runQuery, 'User', {
       handle: 'user-5',
@@ -141,6 +151,7 @@ describe('Filter Tests', () => {
             allMicroposts: {
               nodes: chain(fixtures.Micropost)
                 .filter((micropost) => (
+                  micropost.author &&
                   micropost.author.id === fixtures.User[0].id
                 ))
                 .sortBy((micropost) => new Date(micropost.createdAt))
@@ -188,6 +199,7 @@ describe('Filter Tests', () => {
             microposts: {
               nodes: chain(fixtures.Micropost)
                 .filter((micropost) => (
+                  micropost.author &&
                   micropost.author.id === user.id &&
                   (new Date(micropost.createdAt) <
                    new Date('2014-02-01'))
@@ -309,6 +321,72 @@ describe('Filter Tests', () => {
           },
         },
       }, 'is not null');
+
+      assert.deepEqual(await runQuery(`
+        {
+          viewer {
+            allMicroposts(author: {
+              isNull: true,
+            }) {
+              nodes {
+                id
+                text
+                createdAt
+                author {
+                  id
+                }
+                mainCategory {
+                  name
+                }
+                tags
+              }
+            }
+          }
+        }
+      `), {
+        data: {
+          viewer: {
+            allMicroposts: {
+              nodes: fixtures.Micropost.filter(
+                (micropost) => !micropost.author
+              ),
+            },
+          },
+        },
+      }, 'is null node reference');
+
+      assert.deepEqual(await runQuery(`
+        {
+          viewer {
+            allMicroposts(author: {
+              isNull: false,
+            }) {
+              nodes {
+                id
+                text
+                createdAt
+                author {
+                  id
+                }
+                mainCategory {
+                  name
+                }
+                tags
+              }
+            }
+          }
+        }
+      `), {
+        data: {
+          viewer: {
+            allMicroposts: {
+              nodes: fixtures.Micropost.filter(
+                (micropost) => micropost.author
+              ),
+            },
+          },
+        },
+      }, 'is not null node reference');
     });
 
     it('filters by nested fields', async () => {
@@ -339,6 +417,7 @@ describe('Filter Tests', () => {
             allMicroposts: {
               nodes: chain(fixtures.Micropost)
                 .filter((micropost) => (
+                  micropost.mainCategory &&
                   micropost.mainCategory.name === 'category-0'
                 ))
                 .sortBy((micropost) => micropost.createdAt)
@@ -378,6 +457,7 @@ describe('Filter Tests', () => {
             allMicroposts: {
               nodes: chain(fixtures.Micropost)
                 .filter((micropost) => (
+                  micropost.tags &&
                   micropost.tags.includes('tag-1')
                 ))
                 .sortBy((micropost) => micropost.createdAt)
@@ -415,6 +495,7 @@ describe('Filter Tests', () => {
             allMicroposts: {
               nodes: chain(fixtures.Micropost)
                 .filter((micropost) => (
+                  !micropost.tags ||
                   !micropost.tags.includes('tag-1')
                 ))
                 .sortBy((micropost) => micropost.createdAt)

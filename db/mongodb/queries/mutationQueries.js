@@ -140,7 +140,7 @@ export async function removeAllFromConnection(
 
   const cursor = addTransform(db.collection(type).find({
     [field]: id,
-  }), (object) => addID(object));
+  }), (object) => addID(type, object));
 
   const result = [];
   let bulk;
