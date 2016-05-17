@@ -30,6 +30,7 @@ const Monitoring = {
           method: request.method,
           path: request.path,
           query_string: request.query,
+          data: (request.url.path !== '/graphql') ? request.payload : null,
         };
       }
       raven.captureException(error, {
