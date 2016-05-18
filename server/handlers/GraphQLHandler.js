@@ -74,26 +74,26 @@ async function handler(request, reply) {
       }
 
       Metrics.increment(
-        `graphQL.${rootName}.count`,
+        `reindex.graphQL.count`,
         1,
         request.info.hostname,
       );
 
       Metrics.measureHrTime(
-        `graphQL.${rootName}.totalTime`,
+        `reindex.graphQL.totalTime`,
         elapsed,
         request.info.hostname
       );
 
       if (db.stats) {
         Metrics.measure(
-          `graphQL.${rootName}.dbTime`,
+          `reindex.graphQL.dbTime`,
           `${db.stats.totalTime.toFixed(2)}ms`,
           request.info.hostname,
         );
 
         Metrics.measure(
-          `graphQL.${rootName}.dbQueryCount`,
+          `reindex.graphQL.dbQueryCount`,
           db.stats.count,
           request.info.hostname,
         );
@@ -101,7 +101,7 @@ async function handler(request, reply) {
 
       if (hasErrors) {
         Metrics.increment(
-          `graphQL.${rootName}.errorCount`,
+          `reindex.graphQL.errorCount`,
           1,
           request.info.hostname
         );
