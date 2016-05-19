@@ -15,6 +15,8 @@ import { isValidID } from './queries/queryUtils';
 const clusterConnections = {
 };
 
+const MONGO_EVENTS = ['error', 'timeout', 'reconnect'];
+
 export default class MongoDBClient {
   constructor(
     hostname,
@@ -41,10 +43,22 @@ export default class MongoDBClient {
     const fullQs = stringifyQs(options);
 
     if (!clusterConnections[connectionString]) {
+      Metrics.increment('mongodb.connectCount', 1, this.hostname);
       clusterConnections[connectionString] = MongoClient.connect(
         `${queryLessConnectionString}?${fullQs}`
       ).then((db) => {
+        const callbacks = {};
+        for (const eventType of MONGO_EVENTS) {
+          callbacks[eventType] = () => {
+            Metrics.increment(`mongodb.${eventType}Count`, 1, this.hostname);
+          };
+          db.on(eventType, callbacks[eventType]);
+        }
         db.once('destroy', () => {
+          Metrics.increment('mongodb.destroyCount', 1, this.hostname);
+          for (const eventType of MONGO_EVENTS) {
+            db.removeListener(eventType, callbacks[eventType]);
+          }
           clusterConnections[connectionString] = null;
         });
         return db;
