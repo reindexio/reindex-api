@@ -41,10 +41,21 @@ export default class MongoDBClient {
     const fullQs = stringifyQs(options);
 
     if (!clusterConnections[connectionString]) {
+      Metrics.increment('mongodb.connectCount', 1, this.hostname);
       clusterConnections[connectionString] = MongoClient.connect(
         `${queryLessConnectionString}?${fullQs}`
       ).then((db) => {
+        db.on('error', () => {
+          Metrics.increment('mongodb.errorCount', 1, this.hostname);
+        });
+        db.on('timeout', () => {
+          Metrics.increment('mongodb.timeoutCount', 1, this.hostname);
+        });
+        db.on('reconnect', () => {
+          Metrics.increment('mongodb.reconnectCount', 1, this.hostname);
+        });
         db.once('destroy', () => {
+          Metrics.increment('mongodb.destroyCount', 1, this.hostname);
           clusterConnections[connectionString] = null;
         });
         return db;
