@@ -14,6 +14,7 @@ import AppPlugin from './AppPlugin';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import DBPlugin from './DBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
+import RateLimiterPlugin from './RateLimiterPlugin';
 
 const DEFAULT_LOGGING_OPTIONS = {
   reporters: [
@@ -49,6 +50,8 @@ export default async function createServer(
   server.auth.strategy('token', 'jwt');
 
   await server.register(AppPlugin);
+
+  await server.register(RateLimiterPlugin);
 
   server.on('request-error', (request, e) => {
     Monitoring.noticeError(e, {

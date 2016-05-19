@@ -66,6 +66,14 @@ const Config = convict({
       format: String,
     },
   },
+  redis: {
+    url: {
+      default: 'redis://127.0.0.1:6379',
+      doc: 'Redis URL',
+      env: 'REDISCLOUD_URL',
+      format: String,
+    },
+  },
   Intercom: {
     appId: {
       default: undefined,
