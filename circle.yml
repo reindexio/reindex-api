@@ -1,8 +1,6 @@
 machine:
   node:
     version: 6.1.0
-  services:
-    - redis
 
 checkout:
   post:
@@ -12,7 +10,11 @@ checkout:
 
 dependencies:
   pre:
+    - bin/ci-install-mongodb
+    - bin/ci-install-redis
     - npm install -g npm@3.8.8
+    - sudo service mongod restart
+    - sudo service redis-server restart
 
 test:
   override:
