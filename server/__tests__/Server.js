@@ -325,7 +325,7 @@ describe('Server', () => {
   });
 
   describe('Rate limiting', () => {
-    let newHostname = `test.${uuid.v4()}.example.com`;
+    const newHostname = `test.${uuid.v4()}.example.com`;
     let newToken;
 
     before(async () => {
