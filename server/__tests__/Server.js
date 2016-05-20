@@ -49,7 +49,7 @@ describe('Server', () => {
           id
         }
       }
-    `);
+    `, {});
 
     userID = userData.data.createUser.id;
 

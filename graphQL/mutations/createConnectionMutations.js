@@ -285,7 +285,7 @@ function createResolveFunction(
       Object.assign(output, formattedResult);
     }
 
-    checkAndEnqueueHooks(
+    await checkAndEnqueueHooks(
       db,
       context.hooks,
       fromType,
@@ -295,7 +295,7 @@ function createResolveFunction(
     );
 
     if (!isEqual(fromId, toId)) {
-      checkAndEnqueueHooks(
+      await checkAndEnqueueHooks(
         db,
         context.hooks,
         toType,

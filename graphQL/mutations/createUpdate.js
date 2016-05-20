@@ -93,7 +93,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
         result
       );
 
-      checkAndEnqueueHooks(
+      await checkAndEnqueueHooks(
         db,
         context.hooks,
         type.name,

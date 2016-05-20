@@ -126,6 +126,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
           };
         } else {
           await db.performMigration(commands, input.types, context);
+          await db.purgeMetadata();
           return {
             clientMutationId,
             commands,

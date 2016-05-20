@@ -64,7 +64,7 @@ export default function createDelete({ type, payload }) {
         result
       );
 
-      checkAndEnqueueHooks(
+      await checkAndEnqueueHooks(
         db,
         context.hooks,
         type.name,

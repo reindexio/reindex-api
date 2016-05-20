@@ -23,9 +23,7 @@ describe('Hooks', () => {
     await createApp(host);
     await server.start();
     db = await getDB(host);
-    runQuery = (query, variables) => makeRunQuery(db)(query, variables, {
-      newContext: true,
-    });
+    runQuery = (query, variables) => makeRunQuery(db)(query, variables);
     typesByName = await getTypesByName(db);
   });
 

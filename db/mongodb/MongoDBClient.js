@@ -11,6 +11,8 @@ import * as connectionQueries from './queries/connectionQueries';
 import * as mutationQueries from './queries/mutationQueries';
 import * as migrationQueries from './queries/migrationQueries';
 import { isValidID } from './queries/queryUtils';
+import getRedisClient from '../getRedisClient';
+import RedisCache from '../RedisCache';
 
 const clusterConnections = {
 };
@@ -61,6 +63,10 @@ export default class MongoDBClient {
 
     this.cache = {
       idLoader: {},
+      metadata: new RedisCache(
+        'MetadataCache',
+        () => this._getMetadata()
+      ),
     };
   }
 
@@ -141,4 +147,19 @@ MongoDBClient.prototype.getByID = function(type, id) {
     );
   }
   return this.cache.idLoader[type].load(id.value);
+};
+
+MongoDBClient.prototype._getMetadata = MongoDBClient.prototype.getMetadata;
+
+MongoDBClient.prototype.getMetadata = function() {
+  const metadataKey = `reindex.cache.metadata.${this.hostname}`;
+  return this.cache.metadata.get(metadataKey);
+};
+
+MongoDBClient.prototype.purgeMetadata = async function() {
+  const metadataKey = `reindex.cache.metadata.${this.hostname}`;
+  const client = getRedisClient('MetadataCache');
+  if (client && client.connected) {
+    await client.delAsync(metadataKey);
+  }
 };
