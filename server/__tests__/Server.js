@@ -11,6 +11,7 @@ import createApp from '../../apps/createApp';
 import deleteApp from '../../apps/deleteApp';
 import getDB from '../../db/getDB';
 import createServer from '../createServer';
+import Config from '../Config';
 import assert from '../../test/assert';
 import { simulate } from '../SocialLoginPlugin';
 
@@ -320,6 +321,87 @@ describe('Server', () => {
       });
 
       assert.deepEqual(userId, userResult.data.userByCredentialsGithubId.id);
+    });
+  });
+
+  describe('Rate limiting', () => {
+    let newHostname = `test.${uuid.v4()}.example.com`;
+    let newToken;
+
+    before(async () => {
+      const { secret } = await createApp(newHostname);
+      newToken = JSONWebToken.sign({
+        sub: null,
+        isAdmin: true,
+      }, secret);
+      Config.set('RateLimiterPlugin.count', 1);
+      Config.set('RateLimiterPlugin.excludedHosts', JSON.stringify([hostname]));
+    });
+
+    after(async () => {
+      Config.set(
+        'RateLimiterPlugin.count',
+        Config.default('RateLimiterPlugin.count')
+      );
+      Config.set(
+        'RateLimiterPlugin.excludedHosts',
+        Config.default('RateLimiterPlugin.excludedHosts')
+      );
+      await deleteApp(newHostname);
+    });
+
+    it('should include rate limiting headers', async () => {
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query: testQuery,
+        },
+        headers: {
+          authorization: `Bearer ${newToken}`,
+          host: newHostname,
+        },
+      });
+      assert.strictEqual(response.statusCode, 200);
+      assert.strictEqual(response.headers['x-rate-limit-limit'], 1);
+      assert.strictEqual(response.headers['x-rate-limit-remaining'], 0);
+      assert.isDefined(response.headers['x-rate-limit-reset']);
+    });
+
+    it('should rate limit', async () => {
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query: testQuery,
+        },
+        headers: {
+          authorization: `Bearer ${newToken}`,
+          host: newHostname,
+        },
+      });
+      assert.strictEqual(response.statusCode, 429);
+      assert.strictEqual(response.headers['x-rate-limit-limit'], 1);
+      assert.strictEqual(response.headers['x-rate-limit-remaining'], 0);
+      assert.isDefined(response.headers['x-rate-limit-reset']);
+    });
+
+    it('excludes excluded hosts', async () => {
+      const response = await makeRequest({
+        method: 'POST',
+        url: '/graphql',
+        payload: {
+          query: testQuery,
+        },
+        headers: {
+          authorization: `Bearer ${token}`,
+          host: hostname,
+        },
+      });
+      assert.strictEqual(response.statusCode, 200);
+      assert.isUndefined(response.headers['x-rate-limit-limit']);
+      assert.isUndefined(response.headers['x-rate-limit-remaining']);
+      assert.isUndefined(response.headers['x-rate-limit-reset']);
     });
   });
 });

@@ -139,7 +139,7 @@ const GraphQLHandler = {
       },
     },
     plugins: {
-      RateLimitPlugin: {
+      RateLimiterPlugin: {
         enabled: true,
       },
     },

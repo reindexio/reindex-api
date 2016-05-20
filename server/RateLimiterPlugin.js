@@ -4,33 +4,33 @@ import Promise from 'bluebird';
 
 Promise.promisifyAll(Limiter.prototype);
 
+import Config from '../server/Config';
+import Metrics from '../server/Metrics';
 import getRedisClient from '../db/getRedisClient';
 
-// 250 requests per minute
-const RATE_LIMIT_COUNT = 200;
-const RATE_LIMIT_DURATION = 60 * 1000;
-
 async function onPreAuth(request, reply) {
-  if (rateLimitEnabled(request)) {
+  const client = getRedisClient('RateLimiterPlugin');
+  if (rateLimitEnabled(request) && client && client.connected) {
     const limiter = new Limiter({
       id: request.info.hostname,
       db: getRedisClient('rateLimiter'),
-      max: RATE_LIMIT_COUNT,
-      duration: RATE_LIMIT_DURATION,
+      max: Config.get('RateLimiterPlugin.count'),
+      duration: Config.get('RateLimiterPlugin.duration'),
     });
 
     const rateLimit = await limiter.getAsync();
-    request.plugins['reindex-ratelimit'] = {};
-    request.plugins['reindex-ratelimit'].limit = rateLimit.total;
-    request.plugins['reindex-ratelimit'].remaining = rateLimit.remaining - 1;
-    request.plugins['reindex-ratelimit'].reset = rateLimit.reset;
+    request.plugins.RateLimiterPlugin = {};
+    request.plugins.RateLimiterPlugin.limit = rateLimit.total;
+    request.plugins.RateLimiterPlugin.remaining = rateLimit.remaining - 1;
+    request.plugins.RateLimiterPlugin.reset = rateLimit.reset;
 
     if (rateLimit.remaining <= 0) {
       const error = Boom.tooManyRequests('Rate limit exceeded');
       error.output.headers['X-Rate-Limit-Limit'] = rateLimit.total;
-      error.output.headers['X-Rate-Limit-Remaining'] = rateLimit.remaining - 1;
+      error.output.headers['X-Rate-Limit-Remaining'] = rateLimit.remaining;
       error.output.headers['X-Rate-Limit-Reset'] = rateLimit.reset;
       error.reformat();
+      Metrics.increment('reindex.rateLimited', 1, request.info.hostname);
       return reply(error);
     }
   }
@@ -38,8 +38,8 @@ async function onPreAuth(request, reply) {
 }
 
 function onPostHandler(request, reply) {
-  if (rateLimitEnabled(request) && 'reindex-ratelimit' in request.plugins) {
-    const rateLimit = request.plugins['reindex-ratelimit'];
+  if (rateLimitEnabled(request) && 'RateLimiterPlugin' in request.plugins) {
+    const rateLimit = request.plugins.RateLimiterPlugin;
     const response = request.response;
     if (!response.isBoom) {
       response.headers['X-Rate-Limit-Limit'] = rateLimit.limit;
@@ -52,9 +52,13 @@ function onPostHandler(request, reply) {
 }
 
 function rateLimitEnabled(request) {
+  const excludedHosts = JSON.parse(
+    Config.get('RateLimiterPlugin.excludedHosts')
+  );
   return (
-    request.route.settings.plugins.RateLimitPlugin &&
-    request.route.settings.plugins.RateLimitPlugin.enabled
+    request.route.settings.plugins.RateLimiterPlugin &&
+    request.route.settings.plugins.RateLimiterPlugin.enabled &&
+    !excludedHosts.includes(request.info.hostname)
   );
 }
 

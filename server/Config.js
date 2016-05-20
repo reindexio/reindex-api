@@ -102,6 +102,23 @@ const Config = convict({
       format: String,
     },
   },
+  RateLimiterPlugin: {
+    count: {
+      default: 200,
+      doc: 'Number of allowed requests per RateLimiterPlugin.duration',
+      format: 'int',
+    },
+    duration: {
+      default: 60 * 100,
+      doc: 'Duration through which to count events, in ms',
+      format: 'int',
+    },
+    excludedHosts: {
+      default: '["admin.myreindex.com"]',
+      doc: 'Hosts excluded from rate limiting',
+      format: String,
+    },
+  },
 });
 
 Config.load({}).validate();
