@@ -18,7 +18,9 @@ const Monitoring = {
   } = {}) {
     if (raven) {
       let requestContext = {};
+      let userId;
       if (request) {
+        userId = request.info.hostname;
         const url = (
           request.connection.info.protocol +
           '://' +
@@ -35,7 +37,7 @@ const Monitoring = {
       }
       raven.captureException(error, {
         user: {
-          id: request.info.hostname,
+          id: userId,
         },
         request: requestContext,
         extra,
