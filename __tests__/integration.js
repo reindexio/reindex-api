@@ -514,6 +514,34 @@ describe('Integration Tests', () => {
         },
       },
     });
+
+    assert.deepEqual(await runQuery(`
+      {
+        viewer {
+          allMicroposts(after: "invalidcursor") {
+            edges {
+              cursor
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    `, {}, {
+      printErrors: false,
+    }), {
+      data: {
+        viewer: {
+          allMicroposts: null,
+        },
+      },
+      errors: [
+        {
+          message: 'Invalid `after` cursor',
+        },
+      ],
+    });
   });
 
   it('can query both for nodes, edges and count', async function () {
