@@ -300,6 +300,39 @@ function validateField(type, field, typesByName, invariant) {
     '%s.%s: Field name shadows a built-in field.',
     type.name, field.name,
   );
+
+  // default value
+  const defaultValue = field.defaultValue;
+  invariant(
+    type.name !== 'User' || field.name === 'id' ||
+    !field.nonNull || defaultValue,
+    '%s.%s: Type user can only have `nonNull` fields with `defaultValue`' +
+    ' specified.',
+    type.name, field.name
+  );
+
+  if (defaultValue) {
+    invariant(
+      field.type in ScalarTypes,
+      '%s.%s: Expected only scalar fields to have defaultValue. Found %s.',
+      type.name, field.name, field.type,
+    );
+    if (defaultValue.type === 'CREDENTIALS') {
+      invariant(
+        type.name === 'User',
+        '%s.%s: Expected only `User` type having `CREDENTIALS` ' +
+        'defaultValue. Found %s.',
+        type.name, field.name, type.name,
+      );
+    } else if (defaultValue.type === 'TIMESTAMP') {
+      invariant(
+        field.type === 'DateTime' && !defaultValue.value,
+        '%s.%s: Expected only `DateTime` fields to have `TIMESTAMP` ' +
+        'defaultValue. Found %s.',
+        type.name, field.name, field.type,
+      );
+    }
+  }
 }
 
 function validateReverseField(

@@ -13,6 +13,8 @@ import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
+import addDefaults from './addDefaults';
+
 
 export default function createUpdate(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -86,7 +88,8 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
         interfaces,
       );
 
-      const result = await db.update(type.name, input.id, object);
+      const finalObject = addDefaults(type, object, existing, false);
+      const result = await db.update(type.name, input.id, finalObject);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,

@@ -416,6 +416,75 @@ const invalidSchemas = {
       ],
     }),
   ],
+  'user with non-null non-default fields': [
+    type('User', {
+      interfaces: ['Node'],
+      fields: [
+        { name: 'f', type: 'Int', nonNull: true },
+      ],
+    }),
+  ],
+  'non-scalar default value': [
+    type('Bar', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'foos',
+          type: 'Connection',
+          ofType: 'Foo',
+          reverseName: 'bars',
+          defaultValue: {
+            type: 'VALUE',
+            value: 'test',
+          },
+        },
+        {
+          name: 'zoos',
+          type: 'String',
+        },
+      ],
+    }),
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'Connection',
+          ofType: 'Bar',
+          reverseName: 'foos',
+        },
+      ],
+    }),
+  ],
+  'non-user default credentials': [
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'String',
+          defaultValue: {
+            type: 'CREDENTIALS',
+            value: 'username',
+          },
+        },
+      ],
+    }),
+  ],
+  'non-datetime default timestamp': [
+    type('Foo', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          name: 'bars',
+          type: 'String',
+          defaultValue: {
+            type: 'TIMESTAMP',
+          },
+        },
+      ],
+    }),
+  ],
   'missing interface fields': [
     {
       name: 'Foo',

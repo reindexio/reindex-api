@@ -11,7 +11,10 @@ import {
   createTestApp,
   createFixture,
   deleteFixture,
+  migrate,
+  augmentSchema,
 } from '../test/testAppUtils';
+import { TEST_SCHEMA } from '../test/fixtures';
 import assert from '../test/assert';
 
 describe('Integration Tests', () => {
@@ -1992,4 +1995,257 @@ describe('Integration Tests', () => {
       });
     });
   }
+
+  describe('default values', () => {
+    before(async () => {
+      await migrate(runQuery, augmentSchema(
+        TEST_SCHEMA,
+        [
+          {
+            name: 'User',
+            fields: [
+              {
+                name: 'handle',
+                type: 'String',
+                unique: true,
+                orderable: true,
+                filterable: true,
+                defaultValue: {
+                  type: 'CREDENTIALS',
+                  updateOn: 'UPDATE',
+                  value: 'username',
+                },
+              },
+            ],
+          },
+          {
+            kind: 'OBJECT',
+            name: 'TestType',
+            interfaces: ['Node'],
+            fields: [
+              {
+                name: 'id',
+                type: 'ID',
+                nonNull: true,
+                unique: true,
+              },
+              {
+                name: 'defaultValue',
+                type: 'Int',
+                defaultValue: {
+                  type: 'VALUE',
+                  updateOn: 'CREATE',
+                  value: '1',
+                },
+              },
+              {
+                name: 'defaultValueUpdate',
+                type: 'String',
+                defaultValue: {
+                  type: 'VALUE',
+                  updateOn: 'UPDATE',
+                  value: 'someOtherDefault',
+                },
+              },
+              {
+                name: 'createdOn',
+                type: 'DateTime',
+                defaultValue: {
+                  type: 'TIMESTAMP',
+                  updateOn: 'CREATE',
+                },
+              },
+              {
+                name: 'updatedOn',
+                type: 'DateTime',
+                defaultValue: {
+                  type: 'TIMESTAMP',
+                  updateOn: 'UPDATE',
+                },
+              },
+            ],
+          },
+        ],
+      ), true);
+    });
+
+    after(async () => {
+      await migrate(runQuery, TEST_SCHEMA, true);
+    });
+
+    it('uses default values', async () => {
+      const createResult = await runQuery(`
+        mutation($input: _CreateTestTypeInput!) {
+          createTestType(input: $input) {
+            changedTestType {
+              id
+              defaultValue
+              defaultValueUpdate
+              createdOn
+              updatedOn
+            }
+          }
+        }
+      `, {
+        input: {},
+      });
+
+      const createId = get(createResult, [
+        'data', 'createTestType', 'changedTestType', 'id',
+      ]);
+
+      assert.deepEqual(createResult, {
+        data: {
+          createTestType: {
+            changedTestType: {
+              id: createId,
+              defaultValue: 1,
+              defaultValueUpdate: 'someOtherDefault',
+              createdOn: get(createResult, [
+                'data', 'createTestType', 'changedTestType', 'createdOn',
+              ]),
+              updatedOn: get(createResult, [
+                'data', 'createTestType', 'changedTestType', 'updatedOn',
+              ]),
+            },
+          },
+        },
+      }, 'uses default value on create');
+
+      assert.equal(
+        get(createResult, [
+          'data', 'createTestType', 'changedTestType', 'createdOn',
+        ]),
+        get(createResult, [
+          'data', 'createTestType', 'changedTestType', 'updatedOn',
+        ]),
+        'uses default value on create',
+      );
+
+      const updateResult = await runQuery(`
+        mutation($input: _UpdateTestTypeInput!) {
+          updateTestType(input: $input) {
+            changedTestType {
+              id
+              defaultValue
+              defaultValueUpdate
+              createdOn
+              updatedOn
+            }
+          }
+        }
+      `, {
+        input: {
+          id: createId,
+        },
+      });
+
+      assert.deepEqual(updateResult, {
+        data: {
+          updateTestType: {
+            changedTestType: {
+              id: createId,
+              defaultValue: 1,
+              defaultValueUpdate: 'someOtherDefault',
+              createdOn: get(createResult, [
+                'data', 'createTestType', 'changedTestType', 'createdOn',
+              ]),
+              updatedOn: get(updateResult, [
+                'data', 'updateTestType', 'changedTestType', 'updatedOn',
+              ]),
+            },
+          },
+        },
+      }, 'uses default value on update');
+
+      assert.notEqual(
+        get(updateResult, [
+          'data', 'updateTestType', 'changedTestType', 'createdOn',
+        ]),
+        get(updateResult, [
+          'data', 'updateTestType', 'changedTestType', 'updatedOn',
+        ]),
+        'uses default value on update',
+      );
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _CreateTestTypeInput!) {
+          createTestType(input: $input) {
+            changedTestType {
+              defaultValue
+              defaultValueUpdate
+              createdOn
+              updatedOn
+            }
+          }
+        }
+      `, {
+        input: {
+          defaultValue: 5,
+          defaultValueUpdate: 'test2',
+          createdOn: '2015-01-01T00:00:00.000Z',
+          updatedOn: '2015-01-01T00:00:00.000Z',
+        },
+      }), {
+        data: {
+          createTestType: {
+            changedTestType: {
+              defaultValue: 5,
+              defaultValueUpdate: 'test2',
+              createdOn: '2015-01-01T00:00:00.000Z',
+              updatedOn: '2015-01-01T00:00:00.000Z',
+            },
+          },
+        },
+      }, 'does not use default value when passed');
+    });
+
+    it('uses credentials default values', async () => {
+      assert.deepEqual(await runQuery(`
+        mutation($input: _CreateUserInput!) {
+          createUser(input: $input) {
+            changedUser {
+              handle
+            }
+          }
+        }
+      `, {
+        input: {
+          credentials: {
+            github: {
+              username: 'freiksenet',
+            },
+          },
+        },
+      }), {
+        data: {
+          createUser: {
+            changedUser: {
+              handle: 'freiksenet',
+            },
+          },
+        },
+      }, 'uses credentials correctly');
+
+      assert.deepEqual(await runQuery(`
+        mutation($input: _CreateUserInput!) {
+          createUser(input: $input) {
+            changedUser {
+              handle
+            }
+          }
+        }
+      `, {
+        input: {},
+      }), {
+        data: {
+          createUser: {
+            changedUser: {
+              handle: null,
+            },
+          },
+        },
+      }, 'does not break without credentials');
+    });
+  });
 });

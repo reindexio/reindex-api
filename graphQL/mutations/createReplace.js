@@ -5,6 +5,7 @@ import { UserError } from '../UserError';
 import {
   getReplaceMutationName,
   getReplaceInputObjectTypeName,
+  getUpdateMutationName,
 } from '../derivedNames';
 import ReindexID, { toReindexID } from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
@@ -13,6 +14,7 @@ import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
+import addDefaults from './addDefaults';
 
 export default function createReplace(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -39,6 +41,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
   return {
     name: getReplaceMutationName(type.name),
     description: `Replaces the given \`${type.name}\` object with a new one.`,
+    deprecationReason: `User \`${getUpdateMutationName(type.name)}\`.`,
     type: payload,
     args: {
       input: {
@@ -88,10 +91,11 @@ export default function createReplace(typeSet, interfaces, typeSets) {
           .map((field) => field.name)
       );
 
+      const finalObject = addDefaults(type, object, {}, true);
       const result = await db.replace(
         type.name,
         input.id,
-        object,
+        finalObject,
         cleanedExisting
       );
 
