@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 
+import { UserError } from '../../../graphQL/UserError';
 import { addID, addTransform } from './queryUtils';
 
 export function getConnectionQueries(
@@ -8,6 +9,14 @@ export function getConnectionQueries(
   filter = [],
   args = {},
 ) {
+  if (args.before && !ObjectId.isValid(args.before.value)) {
+    throw new UserError('Invalid `before` cursor');
+  }
+
+  if (args.after && !ObjectId.isValid(args.after.value)) {
+    throw new UserError('Invalid `after` cursor');
+  }
+
   return getPaginatedQuery(
     db,
     type,
