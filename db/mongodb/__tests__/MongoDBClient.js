@@ -365,8 +365,10 @@ if (!process.env.DATABASE_TYPE ||
       it('uses index for unique query', async () => {
         const query = await db.getByFieldCursor('User', 'handle', 'user');
         const explain = await query.explain();
+
         assert.equal(
-          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+          explain.queryPlanner.winningPlan.inputStage.inputStage.stage,
+          'IXSCAN',
         );
       });
 
@@ -378,7 +380,8 @@ if (!process.env.DATABASE_TYPE ||
         );
         const explain = await query.explain();
         assert.equal(
-          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+          explain.queryPlanner.winningPlan.inputStage.inputStage.stage,
+          'IXSCAN',
         );
       });
 
@@ -391,7 +394,8 @@ if (!process.env.DATABASE_TYPE ||
         );
         const explain = await query.explain();
         assert.equal(
-          explain.queryPlanner.winningPlan.inputStage.stage, 'IXSCAN',
+          explain.queryPlanner.winningPlan.inputStage.inputStage.stage,
+          'IXSCAN',
         );
       });
 
@@ -473,7 +477,9 @@ if (!process.env.DATABASE_TYPE ||
         );
 
         const explain = await paginatedQuery.getCursor().explain();
-        const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
+        const sort = (
+          explain.queryPlanner.winningPlan.inputStage.inputStage.inputStage
+        );
         assert.equal(
           sort.stage,
           'SORT_MERGE'
@@ -504,7 +510,9 @@ if (!process.env.DATABASE_TYPE ||
         );
 
         const explain = await paginatedQuery.getCursor().explain();
-        const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
+        const sort = (
+          explain.queryPlanner.winningPlan.inputStage.inputStage.inputStage
+        );
         assert.equal(
           sort.stage,
           'SORT_MERGE'
@@ -539,7 +547,9 @@ if (!process.env.DATABASE_TYPE ||
 
 
         const explain = await paginatedQuery.getCursor().explain();
-        const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
+        const sort = (
+          explain.queryPlanner.winningPlan.inputStage.inputStage.inputStage
+        );
         assert.equal(
           sort.stage,
           'SORT_MERGE'
@@ -577,7 +587,9 @@ if (!process.env.DATABASE_TYPE ||
 
 
         const explain = await paginatedQuery.getCursor().explain();
-        const sort = explain.queryPlanner.winningPlan.inputStage.inputStage;
+        const sort = (
+          explain.queryPlanner.winningPlan.inputStage.inputStage.inputStage
+        );
         assert.equal(
           sort.stage,
           'SORT_MERGE'
