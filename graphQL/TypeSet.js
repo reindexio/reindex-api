@@ -8,7 +8,8 @@ import { createFilterArgs } from './filters';
 
 export default class TypeSet {
   constructor({
-    typeMetadata,
+    id,
+    name,
     type,
     connection,
     edge,
@@ -20,8 +21,12 @@ export default class TypeSet {
     payload,
     blacklistedRootFields,
     pluralName,
+    indexes,
+    permissions,
+    hooks,
   }) {
-    this.typeMetadata = typeMetadata || null;
+    this.id = id || null;
+    this.name = name || type.name;
     this.type = type;
     this.connection = connection || null;
     this.edge = edge || null;
@@ -33,6 +38,12 @@ export default class TypeSet {
     this.payload = payload || null;
     this.blacklistedRootFields = blacklistedRootFields || [];
     this.pluralName = pluralName || null;
+
+    this.indexes = indexes || [];
+    this.hooks = hooks || [];
+    this.rawPermissions = permissions || [];
+    this.permissions = null;
+    this.connectionTypes = {};
   }
 
   getInputObjectFields() {
@@ -45,13 +56,11 @@ export default class TypeSet {
     });
   }
 
-  getInputObject(getTypeSet, interfaces) {
+  getInputObject(typeRegistry) {
     if (!this._inputObject) {
       const fields = this.getInputObjectFields();
       if (!isEmpty(fields)) {
-        this._inputObject = createInputObjectType(
-          this, getTypeSet, interfaces, fields
-        );
+        this._inputObject = createInputObjectType(this, fields, typeRegistry);
       }
     }
     return this._inputObject;

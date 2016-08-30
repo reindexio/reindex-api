@@ -14,13 +14,15 @@ import formatMutationResult from './formatMutationResult';
 
 export default function createConnectionMutations(
   { type, edge },
-  interfaces,
-  typeSets
+  typeRegistry
 ) {
   return chain(type.getFields())
     .filter((field) => {
       if (field.metadata && field.metadata.type === 'Connection') {
-        const ofTypeFields = typeSets[field.metadata.ofType].type.getFields();
+        const ofTypeFields = typeRegistry
+          .getTypeSet(field.metadata.ofType)
+          .type
+          .getFields();
         const reverseField = ofTypeFields[field.metadata.reverseName];
         if (reverseField.metadata &&
             reverseField.metadata.type === 'Connection') {
@@ -30,16 +32,18 @@ export default function createConnectionMutations(
       return false;
     })
     .map((field) => createMutationsFromConnectionField(
-      field, type, edge, typeSets,
+      field, type, edge, typeRegistry,
     ))
     .flatten()
     .value();
 }
 
-function createMutationsFromConnectionField(field, toType, toEdge, typeSets) {
+function createMutationsFromConnectionField(
+  field, toType, toEdge, typeRegistry
+) {
   const toTypeName = toType.name;
   const fromTypeName = field.metadata.ofType;
-  const fromTypeSet = typeSets[fromTypeName];
+  const fromTypeSet = typeRegistry.getTypeSet('fromTypeName');
   const { type: fromType, edge: fromEdge } = fromTypeSet;
   const reverseName = field.metadata.reverseName;
 

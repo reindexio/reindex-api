@@ -9,8 +9,8 @@ import {
   GraphQLString,
 } from 'graphql';
 
-export default function createAuthenticationProvider(interfaces) {
-  return new TypeSet({
+export default function createAuthenticationProvider(typeRegistry) {
+  return [new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexAuthenticationProvider',
       description:
@@ -71,11 +71,11 @@ Currently supported providers are:
         },
       },
       interfaces: [
-        interfaces.Node,
+        typeRegistry.getInterface('Node'),
       ],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexAuthenticationProvider';
       },
     }),
-  });
+  })];
 }

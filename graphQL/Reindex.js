@@ -1,30 +1,44 @@
 import { graphql, formatError } from 'graphql';
 
-import { isUserError } from '../../graphQL/UserError';
-import getGraphQLContext from '../../graphQL/getGraphQLContext';
-import Metrics from '../Metrics';
-import Monitoring from '../../Monitoring';
-import { trackEvent } from '../IntercomClient';
+import TypeRegistry from './TypeRegistry';
+import createInterfaces from './builtins/createInterfaces';
+import { isUserError } from './UserError';
+import Monitoring from '../Monitoring';
+import Metrics from '../server/Metrics';
+import { trackEvent } from '../server/IntercomClient';
+import hatchTypeSets from './hatchTypeSets';
+import createSchema from './createSchema';
 
-async function handler(request, reply) {
-  try {
-    const query = request.payload.query;
-    const variables = request.payload.variables || {};
+export default class Reindex {
+  constructor(contextFunction) {
+    if (!(contextFunction instanceof Function)) {
+      this._contextFunction = () => contextFunction;
+    } else {
+      this._contextFunction = contextFunction;
+    }
+  }
 
-    const db = await request.getDB();
-    const credentials = request.auth.credentials;
+  async processRequest(request) {
+    const typeRegistry = new TypeRegistry();
 
-    const context = getGraphQLContext(db, await db.getMetadata(), {
-      credentials,
-    });
+    createInterfaces(typeRegistry);
+
+    const {
+      query,
+      variables,
+      ...context,
+    } = await this._contextFunction(request, typeRegistry);
+
+    hatchTypeSets(typeRegistry);
+    const schema = createSchema(typeRegistry);
 
     const start = process.hrtime();
     const result = await graphql(
-      context.schema,
+      schema,
       query,
       null,
       context,
-      variables,
+      variables
     );
     const elapsed = process.hrtime(start);
 
@@ -65,8 +79,8 @@ async function handler(request, reply) {
     }
 
     setImmediate(() => {
-      if (result.data && credentials.isAdmin) {
-        trackEvent(credentials, 'executed-query', {
+      if (result.data && context.credentials.isAdmin) {
+        trackEvent(context.credentials, 'executed-query', {
           query,
           rootName,
           variables: JSON.stringify(variables),
@@ -85,16 +99,16 @@ async function handler(request, reply) {
         request.info.hostname
       );
 
-      if (db.stats) {
+      if (context.db.stats) {
         Metrics.measure(
           `reindex.graphQL.dbTime`,
-          `${db.stats.totalTime.toFixed(2)}ms`,
+          `${context.db.stats.totalTime.toFixed(2)}ms`,
           request.info.hostname,
         );
 
         Metrics.measure(
           `reindex.graphQL.dbQueryCount`,
-          db.stats.count,
+          context.db.stats.count,
           request.info.hostname,
         );
       }
@@ -110,38 +124,16 @@ async function handler(request, reply) {
 
     console.log(JSON.stringify({
       hostname: request.info.hostname,
-      credentials,
+      credentials: context.credentials,
       query,
       variables,
       stats: {
         elapsed,
-        db: db.stats || {},
+        db: context.db.stats || {},
       },
       errors: result.errors || [],
     }));
 
-    return reply(JSON.stringify(result)).type('application/json');
-  } catch (error) {
-    return reply(error);
+    return result;
   }
 }
-
-const GraphQLHandler = {
-  config: {
-    auth: 'token',
-    validate: {
-      payload: (value, options, next) => {
-        if (!value || !value.query) {
-          return next(new Error('Missing `query` in POST body.'));
-        } else {
-          return next(null, value);
-        }
-      },
-    },
-  },
-  handler,
-  method: 'POST',
-  path: '/graphql',
-};
-
-export default GraphQLHandler;

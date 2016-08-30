@@ -14,14 +14,13 @@ import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
-export default function createReplace(typeSet, interfaces, typeSets) {
+export default function createReplace(typeSet, typeRegistry) {
   const type = typeSet.type;
   const payload = typeSet.payload;
   const objectFields = createInputObjectFields(
     typeSet.getInputObjectFields(),
     true,
-    (name) => typeSets[name],
-    interfaces
+    typeRegistry,
   );
 
   const inputType = new GraphQLInputObjectType({
@@ -78,7 +77,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         type,
         object,
         existing,
-        interfaces,
+        typeRegistry
       );
 
       const cleanedExisting = omit(

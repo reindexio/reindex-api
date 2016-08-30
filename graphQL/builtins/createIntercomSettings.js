@@ -6,7 +6,7 @@ import {
 import TypeSet from '../TypeSet';
 
 export default function createIntercomSettings() {
-  return new TypeSet({
+  return [new TypeSet({
     type: new GraphQLObjectType({
       name: 'ReindexIntercomSettings',
       description: 'INTERNAL',
@@ -22,5 +22,5 @@ export default function createIntercomSettings() {
         },
       },
     }),
-  });
+  })];
 }

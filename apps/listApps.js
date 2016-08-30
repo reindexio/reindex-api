@@ -1,7 +1,6 @@
 import { graphql } from 'graphql';
 
 import getAdminDB from '../db/getAdminDB';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
 
 const query = `query ListApps {
   viewer {

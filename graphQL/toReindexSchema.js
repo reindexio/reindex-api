@@ -15,12 +15,16 @@ export default function toReindexSchema(schema) {
       !type.name.endsWith('Edge') &&
       !type.name.endsWith('Payload')
     ))
-    .map((type) => ({
-      name: type.name,
-      interfaces: type.getInterfaces().map((interFace) => interFace.name),
-      kind: 'OBJECT',
-      fields: values(type.getFields()).map(toReindexField),
-    }));
+    .map(toReindexType);
+}
+
+export function toReindexType(type) {
+  return {
+    name: type.name,
+    interfaces: type.getInterfaces().map((interFace) => interFace.name),
+    kind: 'OBJECT',
+    fields: values(type.getFields()).map(toReindexField),
+  };
 }
 
 function toReindexField(field) {

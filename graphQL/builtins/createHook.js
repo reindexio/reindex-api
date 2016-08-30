@@ -18,7 +18,7 @@ import {
   createConnectionArguments,
 } from '../connections';
 
-export default function createHook(interfaces, getTypeSet) {
+export default function createHook(typeRegistry) {
   const triggerType = new GraphQLEnumType({
     name: 'ReindexTriggerType',
     description:
@@ -87,134 +87,138 @@ Possible values:
     },
   });
 
-  return {
-    ReindexHttpResponse: new TypeSet({
-      type: new GraphQLObjectType({
-        name: 'ReindexHttpResponse',
-        description: 'A response from an HTTP endpoint',
-        fields: {
-          status: {
-            type: GraphQLInt,
-            description: 'response status code',
-          },
-          statusText: {
-            type: GraphQLString,
-            description: 'response status text',
-          },
-          body: {
-            type: GraphQLString,
-            description: 'response body',
-          },
+  const ReindexHttpResponse = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexHttpResponse',
+      description: 'A response from an HTTP endpoint',
+      fields: {
+        status: {
+          type: GraphQLInt,
+          description: 'response status code',
         },
-      }),
+        statusText: {
+          type: GraphQLString,
+          description: 'response status text',
+        },
+        body: {
+          type: GraphQLString,
+          description: 'response body',
+        },
+      },
     }),
-    ReindexHook: new TypeSet({
-      type: new GraphQLObjectType({
-        name: 'ReindexHook',
-        description:
+  });
+  const ReindexHook = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexHook',
+      description:
 `A hook that is triggered after some event happening to some type. Performs a
 POST request to a specified URL.
 
 * [Reindex docs: Integrating third-party services
 ](https://www.reindex.io/docs/integrations/)
 `,
-        fields: () => ({
-          id: {
-            type: new GraphQLNonNull(ReindexID),
-            description: 'The ID of the object.',
-            metadata: {
-              unique: true,
-            },
+      fields: () => ({
+        id: {
+          type: new GraphQLNonNull(ReindexID),
+          description: 'The ID of the object.',
+          metadata: {
+            unique: true,
           },
-          type: {
-            type: getTypeSet('ReindexType').type,
-            resolve: createNodeFieldResolve('ReindexType', 'type'),
-            description:
+        },
+        type: {
+          type: typeRegistry.getTypeSet('ReindexType').type,
+          resolve: createNodeFieldResolve('ReindexType', 'type'),
+          description:
 `Type, from operation on which hook triggers. If null, hook will trigger to any
 type operation.
 `,
-          },
-          trigger: {
-            type: new GraphQLNonNull(triggerType),
-            description: 'Event that triggers the hook.',
-          },
-          url: {
-            type: new GraphQLNonNull(GraphQLString),
-            description: 'The full URL to send the request to.',
-          },
-          fragment: {
-            type: new GraphQLNonNull(GraphQLString),
-            description:
+        },
+        trigger: {
+          type: new GraphQLNonNull(triggerType),
+          description: 'Event that triggers the hook.',
+        },
+        url: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'The full URL to send the request to.',
+        },
+        fragment: {
+          type: new GraphQLNonNull(GraphQLString),
+          description:
 `Fragment body on the corresponding type payload. Must be surrounded by {} and
 not have a name. Can include typed inline fragments.`,
-          },
-          log: {
-            type: getTypeSet('ReindexHookLog').connection,
-            args: createConnectionArguments('ReindexHookLog', getTypeSet),
-            resolve: createConnectionFieldResolve(
-              'ReindexHookLog', 'hook', {}, getTypeSet
-            ),
-          },
-          logLevel: {
-            type: new GraphQLNonNull(logLevel),
-            description:
+        },
+        log: {
+          type: typeRegistry.getTypeSet('ReindexHookLog').connection,
+          args: createConnectionArguments('ReindexHookLog', typeRegistry),
+          resolve: createConnectionFieldResolve(
+            'ReindexHookLog', 'hook', {}, typeRegistry
+          ),
+        },
+        logLevel: {
+          type: new GraphQLNonNull(logLevel),
+          description:
 `Which events to log in ReindexHookLog. \`error\` is the default.`,
-            resolve(obj) {
-              return obj.logLevel || 'error';
-            },
+          resolve(obj) {
+            return obj.logLevel || 'error';
           },
-        }),
-        interfaces: [interfaces.Node],
-        isTypeOf(obj) {
-          return obj.id.type === 'ReindexHook';
         },
       }),
+      interfaces: [typeRegistry.getInterface('Node')],
+      isTypeOf(obj) {
+        return obj.id.type === 'ReindexHook';
+      },
     }),
-    ReindexHookLog: new TypeSet({
-      type: new GraphQLObjectType({
-        name: 'ReindexHookLog',
-        description: 'Log of executed hooks. Log level is configured per hook.',
-        fields: () => ({
-          id: {
-            type: new GraphQLNonNull(ReindexID),
-            description: 'The ID of the object.',
-            metadata: {
-              unique: true,
-            },
+  });
+  const ReindexHookLog = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexHookLog',
+      description: 'Log of executed hooks. Log level is configured per hook.',
+      fields: () => ({
+        id: {
+          type: new GraphQLNonNull(ReindexID),
+          description: 'The ID of the object.',
+          metadata: {
+            unique: true,
           },
-          hook: {
-            type: getTypeSet('ReindexHook').type,
-            description: 'Hook for which this log entry is for.',
+        },
+        hook: {
+          type: typeRegistry.getTypeSet('ReindexHook').type,
+          description: 'Hook for which this log entry is for.',
+        },
+        response: {
+          type: typeRegistry.getTypeSet('ReindexHttpResponse').type,
+          description: 'HTTP response from the endpoint, if any.',
+        },
+        createdAt: {
+          type: DateTime,
+          description: 'When log happened.',
+          metadata: {
+            orderable: true,
           },
-          response: {
-            type: getTypeSet('ReindexHttpResponse').type,
-            description: 'HTTP response from the endpoint, if any.',
-          },
-          createdAt: {
-            type: DateTime,
-            description: 'When log happened.',
-            metadata: {
-              orderable: true,
-            },
-          },
-          type: {
-            type: new GraphQLNonNull(eventType),
-            description: 'Type of the log entry.',
-          },
-          errors: {
-            type: new GraphQLList(GraphQLString),
-            description: 'List of errors, if any.',
-          },
-        }),
-        interfaces: [interfaces.Node],
-        isTypeOf(obj) {
-          return obj.id.type === 'ReindexHookLog';
+        },
+        type: {
+          type: new GraphQLNonNull(eventType),
+          description: 'Type of the log entry.',
+        },
+        errors: {
+          type: new GraphQLList(GraphQLString),
+          description: 'List of errors, if any.',
         },
       }),
-      blacklistedRootFields: [
-        createUpdate,
-        createReplace,
-      ],
+      interfaces: [typeRegistry.getInterface('Node')],
+      isTypeOf(obj) {
+        return obj.id.type === 'ReindexHookLog';
+      },
     }),
-  };
+    blacklistedRootFields: [
+      createUpdate,
+      createReplace,
+    ],
+  });
+
+  return [
+    ReindexHttpResponse,
+    ReindexHook,
+    ReindexHookLog,
+  ];
 }

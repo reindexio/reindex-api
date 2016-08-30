@@ -30,7 +30,5 @@ export default function createMigrationTypes() {
     }),
   });
 
-  return {
-    ReindexMigrationCommand,
-  };
+  return [ReindexMigrationCommand];
 }
