@@ -7,10 +7,10 @@ import createAllNodes from '../query/createAllNodes';
 import ReindexID from './ReindexID';
 import { getIntercomSettings } from './IntercomSettings';
 
-export default function createViewer(typeSets, interfaces) {
-  const allObjectsFields = chain(typeSets)
+export default function createViewer(typeRegistry) {
+  const allObjectsFields = chain(typeRegistry.getTypeSets())
     .pick((typeSet) => typeSet.connection)
-    .map((typeSet) => createAllNodes(typeSet, interfaces, typeSets))
+    .map((typeSet) => createAllNodes(typeSet, typeRegistry))
     .indexBy((field) => field.name)
     .value();
 
@@ -26,7 +26,7 @@ For each type, \`ReindexViewer\` holds a field with a Connection to all objects
 of that type. Its name is \`allObjects\`, where \`Objects\` is a pluralized name
 of the type.
 `,
-    interfaces: [interfaces.Node],
+    interfaces: [typeRegistry.getInterface('Node')],
     isTypeOf(obj) {
       return isViewerID(obj.id);
     },
@@ -37,7 +37,7 @@ of the type.
         description: 'The ID of the global viewer node.',
       },
       user: {
-        type: typeSets.User.type,
+        type: typeRegistry.getTypeSet('User').type,
         description: 'The signed in user. Returned for requests made as a ' +
           'user signed in using Reindex authentication.',
         async resolve(parent, args, context) {
@@ -51,7 +51,7 @@ of the type.
         },
       },
       __intercomSettings: {
-        type: typeSets.ReindexIntercomSettings.type,
+        type: typeRegistry.getTypeSet('ReindexIntercomSettings').type,
         description: 'INTERNAL',
         resolve(parent, args, context) {
           return getIntercomSettings(context.credentials);

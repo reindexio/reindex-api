@@ -3,7 +3,7 @@ import ReindexID from '../builtins/ReindexID';
 import { isViewerID } from '../builtins/createViewer';
 import checkPermission from '../permissions/checkPermission';
 
-export default function createNode(typeSets, interfaces) {
+export default function createNode(typeRegistry) {
   return {
     name: 'node',
     /* eslint-disable */
@@ -32,7 +32,7 @@ query NodeExample {
 \`\`\`
 `,
     /* eslint-enable */
-    type: interfaces.Node,
+    type: typeRegistry.getInterface('Node'),
     args: {
       id: {
         type: new GraphQLNonNull(ReindexID),
@@ -46,7 +46,9 @@ query NodeExample {
         };
       }
       const type = info.schema.getType(id.type);
-      if (!type || !type.getInterfaces().includes(interfaces.Node)) {
+      if (!type || !type.getInterfaces().includes(
+        typeRegistry.getInterface('Node'))
+      ) {
         return null;
       }
       const result = await context.db.getByID(type.name, id);

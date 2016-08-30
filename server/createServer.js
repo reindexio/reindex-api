@@ -3,17 +3,17 @@ import Hapi from 'hapi';
 import Inert from 'inert';
 import Promise from 'bluebird';
 import HapiRequireHttpsPlugin from 'hapi-require-https';
+import Good from 'good';
+import GoodConsole from 'good-console';
 
 import Monitoring from '../Monitoring';
 import Config from './Config';
-import Good from 'good';
-import GoodConsole from 'good-console';
-import GraphQLHandler from './handlers/GraphQLHandler';
 import GraphiQLHandler from './handlers/GraphiQLHandler';
 import AppPlugin from './AppPlugin';
 import JWTAuthenticationScheme from './JWTAuthenticationScheme';
 import DBPlugin from './DBPlugin';
 import SocialLoginPlugin from './SocialLoginPlugin';
+import createReindex from '../graphQL/createReindex';
 
 const DEFAULT_LOGGING_OPTIONS = {
   reporters: [
@@ -56,7 +56,32 @@ export default async function createServer(
     });
   });
 
-  server.route(GraphQLHandler);
+  const reindex = createReindex();
+  server.route({
+    config: {
+      auth: 'token',
+      validate: {
+        payload: (value, options, next) => {
+          if (!value || !value.query) {
+            return next(new Error('Missing `query` in POST body.'));
+          } else {
+            return next(null, value);
+          }
+        },
+      },
+    },
+    handler: async (request, reply) => {
+      try {
+        const result = await reindex.processRequest(request);
+        return reply(JSON.stringify(result)).type('application/json');
+      } catch (error) {
+        return reply(error);
+      }
+    },
+    method: 'POST',
+    path: '/graphql',
+  });
+
   server.route(GraphiQLHandler);
   server.route({
     handler: {

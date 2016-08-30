@@ -14,14 +14,13 @@ import clientMutationIdField from '../utilities/clientMutationIdField';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
-export default function createUpdate(typeSet, interfaces, typeSets) {
+export default function createUpdate(typeSet, typeRegistry) {
   const type = typeSet.type;
   const payload = typeSet.payload;
   const objectFields = createInputObjectFields(
     typeSet.getInputObjectFields(),
     false,
-    (name) => typeSets[name],
-    interfaces
+    typeRegistry,
   );
 
   const inputType = new GraphQLInputObjectType({
@@ -83,7 +82,7 @@ export default function createUpdate(typeSet, interfaces, typeSets) {
         type,
         checkObject,
         existing,
-        interfaces,
+        typeRegistry,
       );
 
       const result = await db.update(type.name, input.id, object);

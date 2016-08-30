@@ -11,13 +11,12 @@ import ReindexID from './builtins/ReindexID';
 export default function createInputObjectFields(
   fields,
   preserveNonNull,
-  getTypeSet,
-  interfaces
+  typeRegistry,
 ) {
   return chain(fields)
     .pick((field) => !(field.metadata && field.metadata.computed))
     .mapValues((field) =>
-      convertInputObjectField(field, preserveNonNull, getTypeSet, interfaces)
+      convertInputObjectField(field, preserveNonNull, typeRegistry)
     )
     .value();
 }
@@ -25,8 +24,7 @@ export default function createInputObjectFields(
 function convertInputObjectField(
   field,
   preserveNonNull,
-  getTypeSet,
-  interfaces,
+  typeRegistry,
 ) {
   let fieldType = field.type;
   const wrappers = [];
@@ -39,9 +37,13 @@ function convertInputObjectField(
   if (!(fieldType instanceof GraphQLInputObjectType ||
         fieldType instanceof GraphQLScalarType ||
         fieldType instanceof GraphQLEnumType)) {
-    fieldType = fieldType.getInterfaces().includes(interfaces.Node) ?
-      ReindexID :
-      getTypeSet(fieldType.name).getInputObject(getTypeSet, interfaces);
+    if (fieldType.getInterfaces().includes(typeRegistry.getInterface('Node'))) {
+      fieldType = ReindexID;
+    } else {
+      fieldType = typeRegistry
+        .getTypeSet(fieldType.name)
+        .getInputObject(typeRegistry);
+    }
   }
 
   fieldType = wrappers.reduce((type, Wrapper) => {

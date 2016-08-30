@@ -8,8 +8,8 @@ function generateSecret() {
   return Cryptiles.randomString(40);
 }
 
-export default function createCreateReindexSecret(typeSets) {
-  const secretPayload = typeSets.ReindexSecret.payload;
+export default function createCreateReindexSecret(typeRegistry) {
+  const secretPayload = typeRegistry.getTypeSet('ReindexSecret').payload;
   const input = new GraphQLInputObjectType({
     name: '_CreateReindexSecretInput',
     fields: {

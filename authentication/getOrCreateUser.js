@@ -1,8 +1,6 @@
 import { capitalize, get } from 'lodash';
 import { graphql } from 'graphql';
 
-import getGraphQLContext from '../graphQL/getGraphQLContext';
-
 export default async function getOrCreateUser(db, provider, credentials) {
   const credential = normalizedCredential(credentials);
   const context = getGraphQLContext(db, await db.getMetadata(), {

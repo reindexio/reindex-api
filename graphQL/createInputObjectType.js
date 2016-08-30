@@ -7,14 +7,13 @@ import { getInputObjectTypeName } from './derivedNames';
 
 export default function createInputObjectType(
   typeSet,
-  getTypeSet,
-  interfaces,
   fields,
+  typeRegistry,
 ) {
   const { type } = typeSet;
   return new GraphQLInputObjectType({
     name: getInputObjectTypeName(type.name),
     description: `The input object for mutations of type \`${type.name}\`.`,
-    fields: () => createInputObjectFields(fields, true, getTypeSet, interfaces),
+    fields: () => createInputObjectFields(fields, true, typeRegistry),
   });
 }

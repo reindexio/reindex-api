@@ -1,7 +1,6 @@
 import { get } from 'lodash';
 
 import getDB from '../../db/getDB';
-import getGraphQLContext from '../getGraphQLContext';
 import formatMutationResult from '../mutations/formatMutationResult';
 import performHook from './performHook';
 

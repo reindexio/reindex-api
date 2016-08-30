@@ -14,7 +14,7 @@ import signToken from '../../authentication/signToken';
 import { fromReindexID } from '../builtins/ReindexID';
 import { profile } from '../../authentication/Auth0Provider';
 
-export default function createLoginWithToken(typeSets) {
+export default function createLoginWithToken(typeRegistry) {
   const LoginWithTokenInput = new GraphQLInputObjectType({
     name: 'ReindexLoginWithTokenInput',
     fields: {
@@ -35,7 +35,7 @@ export default function createLoginWithToken(typeSets) {
     fields: {
       clientMutationId: clientMutationIdField,
       user: {
-        type: typeSets.User.type,
+        type: typeRegistry.getTypeSet('User').type,
         description: 'The logged-in user.',
       },
       token: {

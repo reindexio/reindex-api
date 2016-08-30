@@ -6,14 +6,14 @@ import createSecret from './createSecret';
 import createMigrationTypes from './createMigrationTypes';
 import createHook from './createHook';
 
-export default function createCommonTypes(interfaces, getTypeSet) {
-  return {
-    ...createTypeTypes(interfaces, getTypeSet),
-    ...createCredentialTypes(interfaces, getTypeSet),
-    ...createMigrationTypes(interfaces, getTypeSet),
-    ...createHook(interfaces, getTypeSet),
-    ReindexSecret: createSecret(interfaces),
-    ReindexAuthenticationProvider: createAuthenticationProvider(interfaces),
-    ReindexIntercomSettings: createIntercomSettings(),
-  };
+export default function createCommonTypes(typeRegistry) {
+  return [
+    ...createTypeTypes(typeRegistry),
+    ...createCredentialTypes(typeRegistry),
+    ...createMigrationTypes(typeRegistry),
+    ...createHook(typeRegistry),
+    ...createSecret(typeRegistry),
+    ...createAuthenticationProvider(typeRegistry),
+    ...createIntercomSettings(typeRegistry),
+  ];
 }

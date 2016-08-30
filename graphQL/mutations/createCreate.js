@@ -13,14 +13,13 @@ import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
 
-export default function createCreate(typeSet, interfaces, typeSets) {
+export default function createCreate(typeSet, typeRegistry) {
   const type = typeSet.type;
   const payload = typeSet.payload;
   const objectFields = createInputObjectFields(
     typeSet.getInputObjectFields(),
     true,
-    (name) => typeSets[name],
-    interfaces
+    typeRegistry
   );
 
   const inputType = new GraphQLInputObjectType({
@@ -61,7 +60,7 @@ export default function createCreate(typeSet, interfaces, typeSets) {
         type,
         object,
         undefined,
-        interfaces,
+        typeRegistry,
       );
 
       const result = await db.create(type.name, object);

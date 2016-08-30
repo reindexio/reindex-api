@@ -24,11 +24,7 @@ export default async function hasPermission(
   {
     db,
     credentials,
-    permissions: {
-      type: permissionsByType,
-      connection: permissionsByConnection,
-      related: relatedPermissionsByType,
-    },
+    typeRegistry,
   },
   overrideFields,
 ) {
@@ -41,7 +37,9 @@ export default async function hasPermission(
     };
   }
 
-  const connectionFields = relatedPermissionsByType[typeName] || [];
+  const typeSet = typeRegistry.getTypeSet(typeName);
+
+  const connectionFields = typeSet.permissions.related || [];
 
   // actual permission name
   let permissionName = permission;
@@ -65,8 +63,7 @@ export default async function hasPermission(
         field,
         object,
         db,
-        permissionsByType,
-        permissionsByConnection,
+        typeRegistry,
         userID,
       ));
   } else if (permission === 'update') {
@@ -88,8 +85,7 @@ export default async function hasPermission(
                 field,
                 oldObject,
                 db,
-                permissionsByType,
-                permissionsByConnection,
+                typeRegistry,
                 userID,
               )
             );
@@ -100,8 +96,7 @@ export default async function hasPermission(
                 field,
                 newObject,
                 db,
-                permissionsByType,
-                permissionsByConnection,
+                typeRegistry,
                 userID,
               )
             );
@@ -134,8 +129,7 @@ export default async function hasPermission(
                 field,
                 oldObject,
                 db,
-                permissionsByType,
-                permissionsByConnection,
+                typeRegistry,
                 userID,
               )
             );
@@ -146,8 +140,7 @@ export default async function hasPermission(
                 field,
                 newObject,
                 db,
-                permissionsByType,
-                permissionsByConnection,
+                typeRegistry,
                 userID,
               )
             );
@@ -168,8 +161,7 @@ export default async function hasPermission(
         field,
         object,
         db,
-        permissionsByType,
-        permissionsByConnection,
+        typeRegistry,
         userID,
       ));
   }
@@ -183,8 +175,7 @@ export default async function hasPermission(
   const results = await Promise.all([
     reportError(hasPermissionsForThisType(
       db,
-      permissionsByType,
-      permissionsByConnection,
+      typeRegistry,
       permissionName,
       fields,
       userID,
@@ -213,8 +204,7 @@ export default async function hasPermission(
 
 async function hasPermissionsForThisType(
   db,
-  permissionsByType,
-  permissionsByConnection,
+  typeRegistry,
   permission,
   fields,
   userID,
@@ -222,7 +212,7 @@ async function hasPermissionsForThisType(
   objectPromise
 ) {
   const typePermission = hasTypePermissions(
-    permissionsByType,
+    typeRegistry,
     permission,
     fields,
     type,
@@ -235,7 +225,7 @@ async function hasPermissionsForThisType(
     const object = await objectPromise;
     return await hasConnectionPermissions(
       db,
-      permissionsByConnection,
+      typeRegistry,
       permission,
       fields,
       object,
@@ -245,8 +235,8 @@ async function hasPermissionsForThisType(
   }
 }
 
-function hasTypePermissions(permissions, permission, fields, type, userID) {
-  const typePermissions = permissions[type] || {};
+function hasTypePermissions(typeRegistry, permission, fields, type, userID) {
+  const typePermissions = typeRegistry.getTypeSet(type).permissions.type || {};
 
   return (
     userID && hasPermissionFromPermissionSet(
@@ -265,7 +255,7 @@ function hasTypePermissions(permissions, permission, fields, type, userID) {
 
 async function hasConnectionPermissions(
   db,
-  permissions,
+  typeRegistry,
   permission,
   fields,
   object,
@@ -276,7 +266,12 @@ async function hasConnectionPermissions(
     return false;
   }
 
-  const validConnections = (permissions[type] || []).filter((connection) => {
+  const connectionPermissions = typeRegistry
+    .getTypeSet(type)
+    .permissions
+    .connection || [];
+
+  const validConnections = connectionPermissions.filter((connection) => {
     if (fields) {
       return (
         connection[permission] &&
@@ -378,16 +373,14 @@ async function fieldToExtraPermissions(
   field,
   object,
   db,
-  permissionsByType,
-  permissionsByConnection,
+  typeRegistry,
   userID,
 ) {
   if (field.connectionType === 'ONE_TO_MANY') {
     return [reportError(
       hasPermissionsForThisType(
         db,
-        permissionsByType,
-        permissionsByConnection,
+        typeRegistry,
         'update',
         [field.reverseName],
         userID,
@@ -405,8 +398,7 @@ async function fieldToExtraPermissions(
     return objects.map((related) => reportError(
       hasPermissionsForThisType(
         db,
-        permissionsByType,
-        permissionsByConnection,
+        typeRegistry,
         'update',
         [field.reverseName],
         userID,
@@ -422,8 +414,7 @@ async function fieldToExtraPermissions(
     return ids.map((id) => reportError(
       hasPermissionsForThisType(
         db,
-        permissionsByType,
-        permissionsByConnection,
+        typeRegistry,
         'update',
         [field.reverseName],
         userID,

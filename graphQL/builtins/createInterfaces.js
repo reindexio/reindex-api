@@ -4,9 +4,9 @@ import {
 } from 'graphql';
 import ReindexID from './ReindexID';
 
-export default function createInterfaces() {
-  return {
-    Node: new GraphQLInterfaceType({
+export default function createInterfaces(typeRegistry) {
+  typeRegistry.registerInterface(
+    new GraphQLInterfaceType({
       name: 'Node',
       description: 'An object with a globally unique ID.',
       fields: {
@@ -24,5 +24,5 @@ export default function createInterfaces() {
         }
       },
     }),
-  };
+  );
 }
