@@ -138,6 +138,11 @@ const GraphQLHandler = {
         }
       },
     },
+    plugins: {
+      RateLimiterPlugin: {
+        enabled: true,
+      },
+    },
   },
   handler,
   method: 'POST',
