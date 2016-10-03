@@ -112,6 +112,87 @@ be null if grantee is not \`USER\`.`,
     }),
   });
 
+  const defaultValueTypeType = new GraphQLEnumType({
+    name: 'ReindexDefaultValueType',
+    description:
+`The type of defaultValue.
+
+Possible values:
+
+* \`CREDENTIALS\` - can only be used in \`User\` type. Copy value from user's
+  credentianls. \`value\` is field name in credentials.
+* \`TIMESTAMP\` - set field to the current timestamp. Can only be used if field
+  is \`DateTime\`. \`value\` must be null.
+* \`VALUE\` - set field to a scalar value, provided as \`String\`.
+`,
+    values: {
+      CREDENTIALS: {
+        value: 'CREDENTIALS',
+      },
+      TIMESTAMP: {
+        value: 'TIMESTAMP',
+      },
+      VALUE: {
+        value: 'VALUE',
+      },
+    },
+  });
+
+  const defaultValueTypeUpdateOn = new GraphQLEnumType({
+    name: 'ReindexDefaultValueUpdateOn',
+    description:
+`When to use defaultValue.
+
+Possible values:
+
+* \`CREATE\` - sets the default only on create.
+* \`UPDATE\` - sets the default on create and update.
+`,
+    values: {
+      CREATE: {
+        value: 'CREATE',
+      },
+      UPDATE: {
+        value: 'UPDATE',
+      },
+    },
+  });
+
+  const defaultValueType = new TypeSet({
+    type: new GraphQLObjectType({
+      name: 'ReindexDefaultValue',
+      description:
+`A default value for the field. Value is used if the mutation is not provided
+with a field. Consists of three fields - \`type\`, \`updateOn\` and \`value\`.
+
+\`type\` can be:
+* \`CREDENTIALS\` - can only be used in \`User\` type. Copy value from user's
+  credentianls. \`value\` is field name in credentials.
+* \`TIMESTAMP\` - set field to the current timestamp. Can only be used if field
+  is \`DateTime\`. \`value\` must be null.
+* \`VALUE\` - set field to a scalar value, provided as \`String\`.
+
+\`updateOn\` can be:
+* \`CREATE\` - sets the default only on create.
+* \`UPDATE\` - sets the default on create and update.
+`,
+      fields: {
+        type: {
+          type: defaultValueTypeType,
+          description: 'The type of defaultValue',
+        },
+        updateOn: {
+          type: defaultValueTypeUpdateOn,
+          description: 'When to use defaultValue',
+        },
+        value: {
+          type: GraphQLString,
+          description: 'What to default the field to',
+        },
+      },
+    }),
+  });
+
   // XXX(freiksenet, 2015-08-19): Interface would be nicer, but there is no
   // way to neatly convert it to InputObjectType
   const field = new TypeSet({
@@ -183,6 +264,15 @@ new root query field is created to get values based on that field.`,
           type: GraphQLBoolean,
           description:
 `If set, filter can be used on this field. Can be only set on scalar fields.`,
+        },
+        defaultValue: {
+          type: defaultValueType.type,
+          description:
+`If set, sets the value of the type to the given value if it is not passed in
+mutation.
+
+Coupled with read-only, can be used to create generated types that are not
+changeable by normal user.`,
         },
       },
     }),
@@ -371,6 +461,7 @@ creating a migration with the CLI tool.
 
   return {
     ReindexPermission: permission,
+    ReindexDefaultValue: defaultValueType,
     ReindexField: field,
     ReindexType: type,
     ReindexOrdering: ordering,

@@ -12,6 +12,7 @@ import validate from '../validation/validate';
 import checkAndEnqueueHooks from '../hooks/checkAndEnqueueHooks';
 import createInputObjectFields from '../createInputObjectFields';
 import formatMutationResult from './formatMutationResult';
+import addDefaults from './addDefaults';
 
 export default function createCreate(typeSet, interfaces, typeSets) {
   const type = typeSet.type;
@@ -64,7 +65,8 @@ export default function createCreate(typeSet, interfaces, typeSets) {
         interfaces,
       );
 
-      const result = await db.create(type.name, object);
+      const finalObject = addDefaults(type, object, {}, true);
+      const result = await db.create(type.name, finalObject);
       const formattedResult = formatMutationResult(
         clientMutationId,
         type.name,
