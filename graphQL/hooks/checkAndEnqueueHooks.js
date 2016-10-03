@@ -5,7 +5,9 @@ import getGraphQLContext from '../getGraphQLContext';
 import formatMutationResult from '../mutations/formatMutationResult';
 import performHook from './performHook';
 
-export default function checkAndEnqueueHooks(
+const METADATA_ALTERING_TYPES = ['ReindexHook', 'ReindexSecret'];
+
+export default async function checkAndEnqueueHooks(
   db,
   allHooks,
   type,
@@ -26,6 +28,10 @@ export default function checkAndEnqueueHooks(
       );
       enqueueHooks(db.hostname, type, hooks, object);
     });
+  }
+
+  if (METADATA_ALTERING_TYPES.includes(type)) {
+    await db.purgeMetadata();
   }
 }
 

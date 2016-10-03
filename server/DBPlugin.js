@@ -1,4 +1,3 @@
-
 import Boom from 'boom';
 import getDB from '../db/getDB';
 

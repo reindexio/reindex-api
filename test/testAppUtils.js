@@ -17,11 +17,8 @@ import { TEST_SCHEMA } from './fixtures';
 import assert from './assert';
 
 export function makeRunQuery(db) {
-  let metadata = null;
   return async function runQuery(query, variables, {
     credentials,
-    newContext,
-    clearContext,
     printErrors = true,
   } = {}) {
     if (!credentials) {
@@ -31,10 +28,7 @@ export function makeRunQuery(db) {
       };
     }
 
-
-    if (newContext || !metadata) {
-      metadata = await db.getMetadata();
-    }
+    const metadata = await db.getMetadata();
 
     db.clearCache();
 
@@ -49,10 +43,6 @@ export function makeRunQuery(db) {
       context,
       variables,
     );
-
-    if (clearContext) {
-      metadata = null;
-    }
 
     if (printErrors) {
       for (const error of result.errors || []) {
@@ -82,9 +72,6 @@ export async function migrate(runQuery, newTypes, force) {
       types: newTypes,
       force,
     },
-  }, {
-    newContext: true,
-    clearContext: true,
   });
 
   assert.deepEqual(migrationResult, {

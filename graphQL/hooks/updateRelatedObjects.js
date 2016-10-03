@@ -21,7 +21,14 @@ export default async function updateRelatedObjects(typeName, object, {
       field.connectionType === 'MANY_TO_MANY',
     );
     for (const node of result) {
-      checkAndEnqueueHooks(db, hooks, field.type, 'afterUpdate', null, node);
+      await checkAndEnqueueHooks(
+        db,
+        hooks,
+        field.type,
+        'afterUpdate',
+        null,
+        node
+      );
     }
   }));
 }

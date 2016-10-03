@@ -101,7 +101,7 @@ export default function createReplace(typeSet, interfaces, typeSets) {
         result
       );
 
-      checkAndEnqueueHooks(
+      await checkAndEnqueueHooks(
         db,
         context.hooks,
         type.name,
