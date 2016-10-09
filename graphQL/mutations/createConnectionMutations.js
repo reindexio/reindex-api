@@ -43,7 +43,7 @@ function createMutationsFromConnectionField(
 ) {
   const toTypeName = toType.name;
   const fromTypeName = field.metadata.ofType;
-  const fromTypeSet = typeRegistry.getTypeSet('fromTypeName');
+  const fromTypeSet = typeRegistry.getTypeSet(fromTypeName);
   const { type: fromType, edge: fromEdge } = fromTypeSet;
   const reverseName = field.metadata.reverseName;
 

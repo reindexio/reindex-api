@@ -31,7 +31,7 @@ export default function createTypesFromReindexSchema(
           .map((field) => field.name)
           .value(),
         filterableFields: getFilterableFields(typesMetadata, typeMetadata),
-        indexes: hooksByType[type.name],
+        indexes: indexesByType[type.name],
         hooks: hooksByType[type.name],
         permissions: typeMetadata.permissions,
       });
