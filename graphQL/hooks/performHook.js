@@ -3,7 +3,7 @@ import { graphql } from 'graphql';
 
 import { toReindexID } from '../builtins/ReindexID';
 
-export default async function performHook(context, hook) {
+export default async function performHook({ schema, context }, hook) {
   let result;
   let httpResult;
   try {
@@ -13,7 +13,7 @@ export default async function performHook(context, hook) {
       }
     `);
 
-    result = await graphql(context.schema, query, null, context);
+    result = await graphql(schema, query, null, context);
 
     if (!result.errors) {
       httpResult = await fetch(hook.url, {
@@ -43,7 +43,7 @@ export default async function performHook(context, hook) {
       statusText: httpResult.statusText,
       body: await httpResult.text(),
     };
-    const hookLogResult = await graphql(context.schema, `
+    const hookLogResult = await graphql(schema, `
       mutation createLog($input: _CreateReindexHookLogInput!) {
         createReindexHookLog(input: $input) {
           id

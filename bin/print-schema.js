@@ -1,5 +1,6 @@
 import { printSchema } from 'graphql/utilities';
 
+import createDefaultTypeRegistry from '../graphQL/createDefaultTypeRegistry';
 import createSchema from '../graphQL/createSchema';
 
 import getDB from '../db/getDB';
@@ -19,7 +20,7 @@ async function main() {
   try {
     db = await getDB(hostname);
     const types = await db.getTypes();
-    const schema = createSchema(types);
+    const schema = createSchema(createDefaultTypeRegistry({ types }));
     console.log(printSchema(schema));
   } catch (e) {
     console.error(e.stack);

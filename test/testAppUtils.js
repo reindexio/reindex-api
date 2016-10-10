@@ -11,17 +11,14 @@ import { createAdminApp } from '../apps/createApp';
 import { TIMESTAMP } from '../graphQL/builtins/DateTime';
 import createApp from '../apps/createApp';
 import getDB from '../db/getDB';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
+import createReindex from '../graphQL/createReindex';
 import { toReindexID } from '../graphQL/builtins/ReindexID';
 import { TEST_SCHEMA } from './fixtures';
 import assert from './assert';
 
 export function makeRunQuery(db) {
-  let metadata = null;
   return async function runQuery(query, variables, {
     credentials,
-    newContext,
-    clearContext,
     printErrors = true,
   } = {}) {
     if (!credentials) {
@@ -31,28 +28,20 @@ export function makeRunQuery(db) {
       };
     }
 
-
-    if (newContext || !metadata) {
-      metadata = await db.getMetadata();
-    }
-
     db.clearCache();
 
-    const context = getGraphQLContext(db, metadata, {
+    const { schema, context } = await createReindex().getOptions({
+      db,
       credentials,
     });
 
     const result = await graphql(
-      context.schema,
+      schema,
       query,
       null,
       context,
       variables,
     );
-
-    if (clearContext) {
-      metadata = null;
-    }
 
     if (printErrors) {
       for (const error of result.errors || []) {
@@ -82,9 +71,6 @@ export async function migrate(runQuery, newTypes, force) {
       types: newTypes,
       force,
     },
-  }, {
-    newContext: true,
-    clearContext: true,
   });
 
   assert.deepEqual(migrationResult, {
