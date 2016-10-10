@@ -425,6 +425,8 @@ async function fieldToExtraPermissions(
       'update',
       [field.reverseName]
     ));
+  } else {
+    throw new Error(`Unexpected connectionType: ${field.connectionType}`);
   }
 }
 

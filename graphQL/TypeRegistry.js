@@ -33,17 +33,6 @@ export default class TypeRegistry {
     return this._typeSets[name];
   }
 
-  getTypeSetForObjectOrConnection(objectType) {
-    let name = objectType.name;
-    if (name.endswidth('Connection')) {
-      name = name.slice(0, name.length - 'Connection'.length);
-      if (name.startswith('_')) {
-        name = name.slice(1);
-      }
-    }
-    return this.getTypeSet(name);
-  }
-
   getTypeSets() {
     return values(this._typeSets);
   }

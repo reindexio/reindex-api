@@ -104,8 +104,6 @@ slice.
     },
   });
 
-  connection.isConnection = true;
-
   return {
     edge,
     connection,

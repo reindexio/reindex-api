@@ -20,9 +20,9 @@ const DEFAULT_TYPE_PERMISSIONS = {
   },
 };
 
-export default function extractTypePermissions(typeSet) {
+export function extractTypePermissions(typeSet) {
   const type = typeSet.type;
-  if (typeSet.permissionMetadata) {
+  if (!typeSet.rawPermissions.length) {
     return mapValues(
       DEFAULT_TYPE_PERMISSIONS,
       (permission) => addPermittedFields(permission, type.getFields())
@@ -41,19 +41,20 @@ export default function extractTypePermissions(typeSet) {
 }
 
 export function extractConnectionPermissions(typeSet, typeRegistry) {
-  const fields = typeSet.getFields();
-  const permissions = (typeSet.permissionMetadata || [])
+  const fields = typeSet.type.getFields();
+  const permissions = typeSet.rawPermissions
     .filter((permission) => permission.userPath);
 
   // Legacy grantPermissions
   const fieldPermissions = values(fields)
     .filter((field) => (
+      field.metadata &&
       field.metadata.grantPermissions &&
       (field.metadata.type === 'User' ||
       field.metadata.type === 'Connection' && field.metadata.ofType === 'User')
     ))
     .map((field) => ({
-      ...field.grantPermissions,
+      ...field.metadata.grantPermissions,
       grantee: 'USER',
       userPath: [field.name],
     }));
@@ -70,20 +71,23 @@ export function extractConnectionPermissions(typeSet, typeRegistry) {
       let currentType = typeSet.name;
       permission.path = permission.userPath.map((segment) => {
         const field = typeRegistry
-          .getTypeSet(currentType)
-          .getFields[segment];
-        currentType = typeRegistry.getTypeSetForObjectOrConnection(field.type);
+          .getTypeSet(currentType).type.getFields()[segment];
+
         let connectionType;
         if (field.name === 'id') {
           connectionType = 'ITSELF';
         } else {
-          connectionType = typeSet.connectionTypes[field.name];
+          connectionType = typeRegistry
+            .getTypeSet(currentType).connectionTypes[field.name];
         }
+        currentType = field.metadata.type === 'Connection' ?
+          field.metadata.ofType :
+          field.metadata.type;
 
         return {
-          name: segment,
+          name: field.name,
           connectionType,
-          type: currentType.name,
+          type: currentType,
           reverseName: field.metadata.reverseName,
         };
       });
@@ -94,12 +98,12 @@ export function extractConnectionPermissions(typeSet, typeRegistry) {
 }
 
 export function extractRelatedPermissions(typeSet) {
-  return chain(typeSet.getFields())
-    .filter((field) => field.metadata.reverseName)
+  return chain(typeSet.type.getFields())
+    .filter((field) => field.metadata && field.metadata.reverseName)
     .map((field) => ({
       name: field.name,
-      type: field.ofType || field.type,
-      reverseName: field.reverseName,
+      type: field.metadata.ofType || field.metadata.type,
+      reverseName: field.metadata.reverseName,
       connectionType: typeSet.connectionTypes[field.name],
     }))
     .value();
@@ -126,7 +130,7 @@ function addPermittedFields(permission, fields) {
     return {
       ...permission,
       permittedFields: chain(fields)
-        .filter((field) => !field.metadata.readOnly)
+        .filter((field) => field.metadata && !field.metadata.readOnly)
         .map((field) => field.name)
         .value(),
     };

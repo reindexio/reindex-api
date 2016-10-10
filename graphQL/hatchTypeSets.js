@@ -24,21 +24,23 @@ export default function hatchTypeSets(typeRegistry) {
     if (!typeRegistry.payload) {
       typeSet.payload = createPayload(typeSet, typeRegistry);
     }
-    typeSet.permissions = createPermissions(typeSet, typeRegistry);
     typeSet.connectionTypes = createConnectionTypes(typeSet, typeRegistry);
+  }
+  for (const typeSet of typeRegistry.getTypeSets()) {
+    typeSet.permissions = createPermissions(typeSet, typeRegistry);
   }
 }
 
 function createConnectionTypes(typeSet, typeRegistry) {
   return chain(typeSet.type.getFields())
-    .pick((field) => field.reverseName)
+    .pick((field) => field.metadata && field.metadata.reverseName)
     .mapValues((field) => {
-      if (field.type.isConnection) {
-        const relatedType = typeRegistry.getTypeSet(field.type.name).type;
+      if (field.metadata.type === 'Connection') {
+        const relatedType = typeRegistry.getTypeSet(field.metadata.ofType).type;
         const relatedField = relatedType.getFields()[
           field.metadata.reverseName
         ];
-        if (relatedField.type.isConnection) {
+        if (relatedField.metadata.type === 'Connection') {
           return 'MANY_TO_MANY';
         } else {
           return 'MANY_TO_ONE';
