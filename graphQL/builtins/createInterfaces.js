@@ -18,9 +18,9 @@ export default function createInterfaces(typeRegistry) {
           },
         },
       },
-      resolveType(object, { schema }) {
+      resolveType(object, context, info) {
         if (object && object.id && object.id.type) {
-          return schema.getType(object.id.type);
+          return info.schema.getType(object.id.type);
         }
       },
     }),

@@ -1,12 +1,15 @@
 import { forEach } from 'lodash';
 
 import assert from '../../../test/assert';
+import createInterfaces from '../../../graphQL/builtins/createInterfaces';
+import TypeRegistry from '../../../graphQL/TypeRegistry';
 import validateSchema from '../validateSchema';
 import { field, type } from './helpers';
 
 import TMDbSchema from './fixtures/TMDbSchema';
 
-const interfaces = { Node: true };
+const typeRegistry = new TypeRegistry();
+createInterfaces(typeRegistry);
 
 const invalidSchemas = {
   'missing type name': [
@@ -627,12 +630,12 @@ const invalidSchemas = {
 
 describe('validateSchema', () => {
   it('passes for a valid schema', () => {
-    validateSchema(TMDbSchema, interfaces);
+    validateSchema(TMDbSchema, typeRegistry);
   });
 
   it('returns errors for an invalid schema', () => {
     forEach(invalidSchemas, (types, issue) => {
-      assert(validateSchema({ types }, interfaces).length > 0,
+      assert(validateSchema({ types }, typeRegistry).length > 0,
         `${issue} should raise a validation error`,
       );
     });
@@ -643,7 +646,7 @@ describe('validateSchema', () => {
       type('DuplicateName'),
       type('DuplicateName'),
     ];
-    const errors = validateSchema({ types }, interfaces);
+    const errors = validateSchema({ types }, typeRegistry);
     assert.deepEqual(errors, [
       'Expected type names to be unique. ' +
       'Found 2 types with name "DuplicateName"',
@@ -654,7 +657,7 @@ describe('validateSchema', () => {
     const types = [
       type('Foo'),
     ];
-    const errors = validateSchema({ types }, interfaces, ['User']);
+    const errors = validateSchema({ types }, typeRegistry, ['User']);
     assert.deepEqual(errors, [
       'Expected User type to be present.',
     ]);
@@ -666,7 +669,7 @@ describe('validateSchema', () => {
       type('Typos'),
       type('Type', { pluralName: 'Typos' }),
     ];
-    const errors = validateSchema({ types }, interfaces);
+    const errors = validateSchema({ types }, typeRegistry);
     assert.deepEqual(errors, [
       'Expected plural names of types to be unique. ' +
       'Found 3 types with plural name \"Typos\"',

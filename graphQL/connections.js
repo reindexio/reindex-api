@@ -181,9 +181,10 @@ async function checkConnectionPermissions(type, reverseName, parent, context) {
   let object = {
     [reverseName]: parent.id,
   };
-  const typeData = context.typeInfoByName[type];
-  if (typeData &&
-      typeData.fields[reverseName].connectionType === 'MANY_TO_MANY') {
+
+  const connectionType = context.typeRegistry.getTypeSet(type)
+    .connectionTypes[reverseName];
+  if (connectionType === 'MANY_TO_MANY') {
     object = {
       [reverseName]: [parent.id],
     };

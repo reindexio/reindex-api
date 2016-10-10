@@ -116,7 +116,8 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
         // XXX(freiksenet, 2015-09-22): Can be fixed when graphql is updated
         throw new UserError(errors.join('\n'));
       } else {
-        const commands = buildSchemaMigration(context.types, input.types);
+        const types = await db.getTypes();
+        const commands = buildSchemaMigration(types, input.types);
         const isDestructive = commands.some((command) => command.isDestructive);
 
         if (input.dryRun || (isDestructive && !input.force)) {

@@ -1,4 +1,4 @@
-import { omit } from 'lodash';
+import { omit, pick } from 'lodash';
 import { GraphQLInputObjectType, GraphQLNonNull } from 'graphql';
 
 import { UserError } from '../UserError';
@@ -48,7 +48,6 @@ export default function createReplace(typeSet, typeRegistry) {
       const db = context.db;
       const clientMutationId = input.clientMutationId;
       const object = omit(input, ['id', 'clientMutationId']);
-      const typeInfo = context.typeInfoByName[type.name];
 
       if (!db.isValidID(type.name, input.id)) {
         throw new UserError(`input.id: Invalid ID for type ${type.name}`);
@@ -82,9 +81,12 @@ export default function createReplace(typeSet, typeRegistry) {
 
       const cleanedExisting = omit(
         existing,
-        Object.values(typeInfo.fields)
-          .filter((field) => field.connectionType === 'MANY_TO_MANY')
-          .map((field) => field.name)
+        Object.keys(
+          pick(
+            typeSet.connectionTypes,
+            (connectionType) => connectionType === 'MANY_TO_MANY',
+          ),
+        ),
       );
 
       const result = await db.replace(
