@@ -35,7 +35,6 @@ async function validateUnique(
       type.name,
       field.name,
       newObject[field.name],
-      context.indexes[type.name],
     )
   ));
 

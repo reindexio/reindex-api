@@ -21,9 +21,7 @@ export default class TypeSet {
     payload,
     blacklistedRootFields,
     pluralName,
-    indexes,
     permissions,
-    hooks,
   }) {
     this.id = id || null;
     this.name = name || type.name;
@@ -39,11 +37,9 @@ export default class TypeSet {
     this.blacklistedRootFields = blacklistedRootFields || [];
     this.pluralName = pluralName || null;
 
-    this.indexes = indexes || [];
-    this.hooks = hooks || [];
     this.rawPermissions = permissions || [];
     this.permissions = null;
-    this.connectionTypes = {};
+    this.connectionTypes = null;
   }
 
   getInputObjectFields() {

@@ -35,7 +35,6 @@ export default function createGetByField({ type }, typeRegistry) {
           type.name,
           nameChain,
           value,
-          context.indexes[type.name],
         );
         await checkPermission(type.name, 'read', {}, result, context);
         return result;

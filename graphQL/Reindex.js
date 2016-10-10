@@ -1,12 +1,9 @@
 import { graphql, formatError } from 'graphql';
 
-import TypeRegistry from './TypeRegistry';
-import createInterfaces from './builtins/createInterfaces';
 import { isUserError } from './UserError';
 import Monitoring from '../Monitoring';
 import Metrics from '../server/Metrics';
 import { trackEvent } from '../server/IntercomClient';
-import hatchTypeSets from './hatchTypeSets';
 import createSchema from './createSchema';
 
 export default class Reindex {
@@ -18,19 +15,30 @@ export default class Reindex {
     }
   }
 
-  async processRequest(request) {
-    const typeRegistry = new TypeRegistry();
+  async getOptions({ db, credentials, extraRootFields = null }) {
+    const { typeRegistry, ...context } = await this._contextFunction({ db });
+    const schema = createSchema(typeRegistry, extraRootFields);
+    return {
+      schema,
+      context: {
+        db,
+        credentials,
+        typeRegistry,
+        ...context,
+      },
+    };
+  }
 
-    createInterfaces(typeRegistry);
+  async processRequest(request) {
+    const query = request.payload.query;
+    const variables = request.payload.variables || {};
+    const credentials = request.auth.credentials;
+    const db = await request.getDB();
 
     const {
-      query,
-      variables,
-      ...context,
-    } = await this._contextFunction(request, typeRegistry);
-
-    hatchTypeSets(typeRegistry);
-    const schema = createSchema(typeRegistry);
+      schema,
+      context,
+    } = await this.getOptions({ db, credentials });
 
     const start = process.hrtime();
     const result = await graphql(

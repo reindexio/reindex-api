@@ -1,49 +1,40 @@
 import { chain, groupBy, indexBy } from 'lodash';
 import Reindex from './Reindex';
-
-import createCommonTypes from './builtins/createCommonTypes';
-import createTypesFromReindexSchema from './createTypesFromReindexSchema';
+import createDefaultTypeRegistry from './createDefaultTypeRegistry';
 
 export default function createReindex() {
-  return new Reindex(async (request, typeRegistry) => {
-    const query = request.payload.query;
-    const variables = request.payload.variables || {};
-    const db = await request.getDB();
+  return new Reindex(async ({ db }) => {
     const { hooks, types, indexes } = await db.getMetadata();
 
-    const typesById = indexBy(types, (type) => type.id.value);
     const indexesByType = groupBy(indexes, (index) => index.type);
-    const hooksByType = extractHooks(hooks, typesById);
+    const hooksByType = extractHooks(hooks, types);
 
-    typeRegistry.registerTypeSets(createCommonTypes(typeRegistry));
-    typeRegistry.registerTypeSets(createTypesFromReindexSchema(
-      typeRegistry, types, indexesByType, hooksByType
-    ));
+    const typeRegistry = createDefaultTypeRegistry({
+      types,
+      indexesByType,
+      hooksByType,
+    });
 
     return {
-      query,
-      variables,
       typeRegistry,
-      db,
-      credentials: request.auth.credentials,
+      types,
+      hooks: hooksByType,
+      indexes: indexesByType,
     };
   });
 }
 
-export function extractHooks(hooks, typesByID) {
-  const globalHooks = hooks.filter((hook) => !hook.type);
+export function extractHooks(hookData, types) {
+  const typesByID = indexBy(types, (type) => type.id.value);
 
-  return chain(hooks)
-    .filter((hook) => hook.type && typesByID[hook.type.value])
+  return chain(hookData)
+    .filter((hook) => !hook.type || typesByID[hook.type.value])
     .map((hook) => ({
       ...hook,
-      type: hook.type && typesByID[hook.type.value].name,
+      type: hook.type && typesByID[hook.type.value],
     }))
     .flatten()
-    .groupBy((hook) => hook.type)
-    .mapValues((typeHooks) => groupBy(
-      typeHooks.concat(globalHooks),
-      (hook) => hook.trigger)
-    )
+    .groupBy((hook) => hook.type ? hook.type.name : 'global')
+    .mapValues((hooks) => groupBy(hooks, (hook) => hook.trigger))
     .value();
 }

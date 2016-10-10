@@ -13,13 +13,8 @@ import {
   createNodeFieldResolve,
  } from './connections';
 
-export default function createTypesFromReindexSchema(
-  typeRegistry,
-  typesMetadata,
-  indexesByType,
-  hooksByType,
-) {
-  return typesMetadata.map((typeMetadata) => {
+export default function createTypesFromReindexSchema(typeRegistry, types) {
+  return types.map((typeMetadata) => {
     const kind = typeMetadata.kind;
     if (kind === 'OBJECT') {
       const type = createObjectType(typeMetadata, typeRegistry);
@@ -30,9 +25,7 @@ export default function createTypesFromReindexSchema(
           .filter((field) => field.orderable)
           .map((field) => field.name)
           .value(),
-        filterableFields: getFilterableFields(typesMetadata, typeMetadata),
-        indexes: indexesByType[type.name],
-        hooks: hooksByType[type.name],
+        filterableFields: getFilterableFields(types, typeMetadata),
         permissions: typeMetadata.permissions,
       });
     }
