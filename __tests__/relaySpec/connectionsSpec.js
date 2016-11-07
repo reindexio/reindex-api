@@ -3,6 +3,7 @@ import { graphql } from 'graphql';
 
 import assert from '../../test/assert';
 import createSchema from '../../graphQL/createSchema';
+import createDefaultTypeRegistry from '../../graphQL/createDefaultTypeRegistry';
 import injectDefaultFields from '../../graphQL/builtins/injectDefaultFields';
 import typeFixtures from './fixtures/types.json';
 
@@ -22,7 +23,8 @@ class MockConnection {
 }
 
 describe('Relay Cursor Connections Specification', () => {
-  const schema = createSchema(types);
+  const typeRegistry = createDefaultTypeRegistry({ types });
+  const schema = createSchema(typeRegistry);
   const contextValue = {
     conn: new MockConnection(),
     indexes: {},

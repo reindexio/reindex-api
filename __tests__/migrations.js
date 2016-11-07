@@ -2,7 +2,7 @@ import uuid from 'uuid';
 import { graphql } from 'graphql';
 
 import getDB from '../db/getDB';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
+import createReindex from '../graphQL/createReindex';
 import assert from '../test/assert';
 import createApp from '../apps/createApp';
 import deleteApp from '../apps/deleteApp';
@@ -22,13 +22,14 @@ describe('Migrations', () => {
   });
 
   async function runMigration(input) {
-    const context = getGraphQLContext(db, await db.getMetadata(), {
+    const { schema, context } = await createReindex().getOptions({
+      db,
       credentials: {
         isAdmin: true,
         userID: 'admin',
       },
     });
-    return await graphql(context.schema, `
+    return await graphql(schema, `
       mutation migration($input: ReindexMigrationInput!) {
         migrate(input: $input) {
           commands {

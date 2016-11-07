@@ -15,7 +15,7 @@ const TypeDefaultFields = getTypeDefaultFields();
 
 export default function validateSchema(
   { types },
-  interfaces,
+  typeRegistry,
   requiredTypes = []
 ) {
   const errors = [];
@@ -78,7 +78,7 @@ export default function validateSchema(
 
   const typesByName = byName(types);
   types.forEach((type) =>
-    validateType(type, typesByName, interfaces, invariant)
+    validateType(type, typesByName, typeRegistry, invariant)
   );
 
   if (errors.length > 0) {
@@ -108,7 +108,7 @@ export default function validateSchema(
 
 const TYPE_NAME_PATTERN = /^[A-Z][_0-9A-Za-z]*$/;
 
-function validateType(type, typesByName, interfaces, invariant) {
+function validateType(type, typesByName, typeRegistry, invariant) {
   invariant(
     isString(type.name) && type.name.length > 0,
     'Expected `name` of a type to be a non-empty string. Found: %s',
@@ -149,7 +149,9 @@ function validateType(type, typesByName, interfaces, invariant) {
   );
   invariant(
     Array.isArray(type.interfaces) &&
-    type.interfaces.every((name) => isString(name) && interfaces[name]),
+    type.interfaces.every((name) =>
+      isString(name) && Boolean(typeRegistry.getInterface(name))
+    ),
     '%s: Expected `interfaces` to be an array of interface names. Found: %s',
     type.name,
     type.interfaces,

@@ -1,14 +1,13 @@
 import { capitalize, get } from 'lodash';
 import { graphql } from 'graphql';
 
-import getGraphQLContext from '../graphQL/getGraphQLContext';
+import createReindex from '../graphQL/createReindex';
 
 export default async function getOrCreateUser(db, provider, credentials) {
   const credential = normalizedCredential(credentials);
-  const context = getGraphQLContext(db, await db.getMetadata(), {
-    credentials: {
-      isAdmin: true,
-    },
+  const { schema, context } = await createReindex().getOptions({
+    db,
+    credentials: { isAdmin: true },
   });
   const query = `userByCredentials${capitalize(provider)}Id`;
 
@@ -43,7 +42,7 @@ export default async function getOrCreateUser(db, provider, credentials) {
     }
   `;
 
-  const fetchResult = await graphql(context.schema, `
+  const fetchResult = await graphql(schema, `
     query($id: String!) {
       ${query}(id: $id) {
         id
@@ -62,7 +61,7 @@ export default async function getOrCreateUser(db, provider, credentials) {
   let updateData;
   if (fetchResult.data && fetchResult.data[query]) {
     const id = fetchResult.data[query].id;
-    updateResult = await graphql(context.schema, `
+    updateResult = await graphql(schema, `
       mutation($input: _UpdateUserInput!) {
         updateUser(input: $input) {
           changedUser {
@@ -87,7 +86,7 @@ export default async function getOrCreateUser(db, provider, credentials) {
       'changedUser',
     ]);
   } else {
-    updateResult = await graphql(context.schema, `
+    updateResult = await graphql(schema, `
       mutation($input: _CreateUserInput!) {
         createUser(input: $input) {
           changedUser {

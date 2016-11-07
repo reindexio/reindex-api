@@ -11,10 +11,10 @@ import {
 
 import ReindexID from '../builtins/ReindexID';
 import DateTime from '../builtins/DateTime';
-import createInterfaces from '../builtins/createInterfaces';
 import createSecret from '../builtins/createSecret';
 import injectDefaultFields from '../builtins/injectDefaultFields';
 import createSchema from '../createSchema';
+import createDefaultTypeRegistry from '../createDefaultTypeRegistry';
 import assert from '../../test/assert';
 
 describe('createSchema', () => {
@@ -33,10 +33,11 @@ describe('createSchema', () => {
         ],
       }]);
     }
-    return createSchema(data.map((type) => ({
+    const types = data.map((type) => ({
       ...type,
       fields: injectDefaultFields(type),
-    })));
+    }));
+    return createSchema(createDefaultTypeRegistry({ types }));
   }
 
   it('creates types with appropriate scalar fields', () => {
@@ -279,7 +280,8 @@ describe('createSchema', () => {
     const reindexSecretFields = reindexSecret.getFields();
     assert.isDefined(reindexSecret);
 
-    const testSecret = createSecret(createInterfaces()).type;
+    const typeRegistry = createDefaultTypeRegistry({ types: [] });
+    const testSecret = createSecret(typeRegistry)[0].type;
     const testSecretFields = testSecret.getFields();
 
     for (const fieldName of Object.keys(testSecretFields)) {
@@ -292,7 +294,7 @@ describe('createSchema', () => {
 
   it('creates builtin interfaces', () => {
     const schema = injectAndCreateSchema([]);
-    const interfaces = Object.keys(createInterfaces());
+    const interfaces = ['Node'];
     interfaces.forEach((name) => {
       assert.instanceOf(schema.getType(name), GraphQLInterfaceType);
     });

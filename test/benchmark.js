@@ -112,7 +112,6 @@ export function benchmarkQuery(runQuery, userID) {
       isAdmin: false,
       userID,
     },
-    newContext: true,
   });
 }
 

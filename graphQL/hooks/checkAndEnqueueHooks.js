@@ -1,9 +1,9 @@
 import { get } from 'lodash';
 
 import getDB from '../../db/getDB';
-import getGraphQLContext from '../getGraphQLContext';
 import formatMutationResult from '../mutations/formatMutationResult';
 import performHook from './performHook';
+import createReindex from '../createReindex';
 
 export default function checkAndEnqueueHooks(
   db,
@@ -38,18 +38,22 @@ async function enqueueHooks(hostname, type, hooks, object) {
       userID: null,
     };
 
-    const context = getGraphQLContext(db, await db.getMetadata(), {
+    const { schema, context } = await createReindex().getOptions({
+      db,
       credentials,
-    }, {
-      hook: {
-        name: 'hook',
-        returnTypeName: type,
-        returnTypeType: 'payload',
-        resolve: () => object,
+      extraRootFields: {
+        hook: {
+          name: 'hook',
+          returnTypeName: type,
+          returnTypeType: 'payload',
+          resolve: () => object,
+        },
       },
     });
 
-    await Promise.all(hooks.map((hook) => performHook(context, hook)));
+    await Promise.all(
+      hooks.map((hook) => performHook({ schema, context }, hook))
+    );
   } catch (error) {
     console.error(error);
   } finally {

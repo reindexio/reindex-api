@@ -20,7 +20,7 @@ import {
   createConnectionArguments,
 } from '../connections';
 
-export default function createTypeTypes(interfaces, getTypeSet) {
+export default function createTypeTypes(typeRegistry) {
   const permissionGrantee = new GraphQLEnumType({
     name: 'ReindexGranteeType',
     description:
@@ -341,10 +341,10 @@ creating a migration with the CLI tool.
            'field names like `allStories`.',
         },
         hooks: {
-          type: getTypeSet('ReindexHook').connection,
-          args: createConnectionArguments('ReindexHook', getTypeSet),
+          type: typeRegistry.getTypeSet('ReindexHook').connection,
+          args: createConnectionArguments('ReindexHook', typeRegistry),
           resolve: createConnectionFieldResolve(
-            'ReindexHook', 'type', {}, getTypeSet
+            'ReindexHook', 'type', {}, typeRegistry
           ),
           description: '',
         },
@@ -356,7 +356,7 @@ creating a migration with the CLI tool.
           },
         },
       }),
-      interfaces: [interfaces.Node],
+      interfaces: [typeRegistry.getInterface('Node')],
       isTypeOf(obj) {
         return obj.id.type === 'ReindexType';
       },
@@ -369,10 +369,10 @@ creating a migration with the CLI tool.
     ],
   });
 
-  return {
-    ReindexPermission: permission,
-    ReindexField: field,
-    ReindexType: type,
-    ReindexOrdering: ordering,
-  };
+  return [
+    permission,
+    field,
+    type,
+    ordering,
+  ];
 }

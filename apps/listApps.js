@@ -1,7 +1,7 @@
 import { graphql } from 'graphql';
 
+import createReindex from '../graphQL/createReindex';
 import getAdminDB from '../db/getAdminDB';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
 
 const query = `query ListApps {
   viewer {
@@ -26,10 +26,11 @@ const query = `query ListApps {
 export default async function listApps() {
   const db = getAdminDB();
   try {
-    const context = getGraphQLContext(db, await db.getMetadata(), {
+    const { schema, context } = await createReindex().getOptions({
+      db,
       credentials: { isAdmin: true, userID: null },
     });
-    const result = await graphql(context.schema, query, null, context);
+    const result = await graphql(schema, query, null, context);
     if (result.errors) {
       console.error(result.errors);
       throw new Error(result.errors[0].message);

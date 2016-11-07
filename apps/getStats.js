@@ -1,10 +1,10 @@
 import { graphql } from 'graphql';
 
 import getAdminDB from '../db/getAdminDB';
-import getGraphQLContext from '../graphQL/getGraphQLContext';
 import DatabaseTypes from '../db/DatabaseTypes';
 import createDBClient from '../db/createDBClient';
 import getDatabaseSettings from '../db/getDatabaseSettings';
+import createReindex from '../graphQL/createReindex';
 
 const query = `query ListApps {
   viewer {
@@ -35,10 +35,12 @@ const query = `query ListApps {
 export default async function getStats() {
   const adminDB = getAdminDB();
   try {
-    const context = getGraphQLContext(adminDB, await adminDB.getMetadata(), {
+    const { schema, context } = await createReindex().getOptions({
+      db: adminDB,
       credentials: { isAdmin: true, userID: null },
     });
-    const result = await graphql(context.schema, query, null, context);
+
+    const result = await graphql(schema, query, null, context);
 
     return Promise.all(
       result.data.viewer.allApps.nodes

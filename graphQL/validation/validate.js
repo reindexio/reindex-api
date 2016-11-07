@@ -9,10 +9,10 @@ export default async function validate(
   type,
   newObject,
   existingObject,
-  interfaces,
+  typeRegistry,
 ) {
   await validateUnique(db, context, type, newObject, existingObject);
-  await validateNodesExist(db, interfaces, type, newObject, existingObject);
+  await validateNodesExist(db, typeRegistry, type, newObject, existingObject);
 }
 
 async function validateUnique(
@@ -35,7 +35,6 @@ async function validateUnique(
       type.name,
       field.name,
       newObject[field.name],
-      context.indexes[type.name],
     )
   ));
 
@@ -53,7 +52,7 @@ async function validateUnique(
 
 async function validateNodesExist(
   db,
-  interfaces,
+  typeRegistry,
   type,
   newObject,
   existingObject = {},
@@ -62,7 +61,7 @@ async function validateNodesExist(
     newObject[field.name] &&
     newObject[field.name] !== existingObject[field.name] &&
     field.type.getInterfaces &&
-    field.type.getInterfaces().includes(interfaces.Node)
+    field.type.getInterfaces().includes(typeRegistry.getInterface('Node'))
   );
   const nodes = await Promise.all(nodeFields.map((field) => {
     const id = newObject[field.name];

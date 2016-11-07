@@ -3,6 +3,8 @@ import {
 } from 'lodash';
 
 import assert from '../../../test/assert';
+import TypeRegistry from '../../TypeRegistry';
+import TypeSet from '../../TypeSet';
 import hasPermission from '../hasPermission';
 
 describe('hasPermission', () => {
@@ -41,6 +43,16 @@ describe('hasPermission', () => {
     }
   }
 
+  function createTypeRegistry(typeSpecs) {
+    const typeRegistry = new TypeRegistry();
+    for (const { permissions, ...params } of typeSpecs) {
+      const typeSet = new TypeSet(params);
+      typeSet.permissions = permissions;
+      typeRegistry.registerTypeSet(typeSet);
+    }
+    return typeRegistry;
+  }
+
   async function testPermission(
     credentials,
     type,
@@ -49,19 +61,13 @@ describe('hasPermission', () => {
     newObject = {},
     {
       db = {},
-      typePermissions = {},
-      connectionPermissions = {},
-      relatedPermissions = {},
+      typeRegistry = createTypeRegistry([]),
     } = {},
   ) {
     return (await hasPermission(type, permission, oldObject, newObject, {
       db,
       credentials,
-      permissions: {
-        type: typePermissions,
-        connection: connectionPermissions,
-        related: relatedPermissions,
-      },
+      typeRegistry,
     })).hasPermission;
   }
 
@@ -190,101 +196,104 @@ describe('hasPermission', () => {
         teamMate1,
         teamMate2,
       ]),
-      typePermissions: {
-        User: {
-          EVERYONE: {
-            read: true,
-          },
-          AUTHENTICATED: {
-            create: true,
+      typeRegistry: createTypeRegistry([
+        {
+          name: 'User',
+          permissions: {
+            type: {
+              EVERYONE: {
+                read: true,
+              },
+              AUTHENTICATED: {
+                create: true,
+              },
+            },
+            connection: [
+              {
+                userPath: ['id'],
+                path: [
+                  {
+                    name: 'id',
+                    type: 'User',
+                    connectionType: 'ITSELF',
+                    reverseName: undefined,
+                  },
+                ],
+                delete: true,
+
+              },
+              {
+                userPath: ['supervisor'],
+                path: [
+                  {
+                    name: 'supervisor',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'supervises',
+                  },
+                ],
+                update: true,
+                permittedFields: ['fired'],
+              },
+              {
+                userPath: ['supervisor', 'supervisor'],
+                path: [
+                  {
+                    name: 'supervisor',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'supervises',
+                  },
+                  {
+                    name: 'supervisor',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'supervises',
+                  },
+                ],
+                delete: true,
+              },
+              {
+                userPath: ['teams', 'supervisor'],
+                path: [
+                  {
+                    name: 'team',
+                    type: 'Team',
+                    connectionType: 'MANY_TO_MANY',
+                    reverseName: 'members',
+                  },
+                  {
+                    name: 'supervisor',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'supervises',
+                  },
+                ],
+                delete: true,
+              },
+              {
+                userPath: ['team', 'members'],
+                path: [
+                  {
+                    name: 'team',
+                    type: 'Team',
+                    connectionType: 'MANY_TO_MANY',
+                    reverseName: 'members',
+                  },
+                  {
+                    name: 'members',
+                    type: 'User',
+                    connectionType: 'MANY_TO_MANY',
+                    reverseName: 'team',
+                  },
+                ],
+                update: true,
+                permittedFields: ['evaluation'],
+              },
+            ],
           },
         },
-      },
-      connectionPermissions: {
-        User: [
-          {
-            userPath: ['id'],
-            path: [
-              {
-                name: 'id',
-                type: 'User',
-                connectionType: 'ITSELF',
-                reverseName: undefined,
-              },
-            ],
-            delete: true,
-
-          },
-          {
-            userPath: ['supervisor'],
-            path: [
-              {
-                name: 'supervisor',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'supervises',
-              },
-            ],
-            update: true,
-            permittedFields: ['fired'],
-          },
-          {
-            userPath: ['supervisor', 'supervisor'],
-            path: [
-              {
-                name: 'supervisor',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'supervises',
-              },
-              {
-                name: 'supervisor',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'supervises',
-              },
-            ],
-            delete: true,
-          },
-          {
-            userPath: ['teams', 'supervisor'],
-            path: [
-              {
-                name: 'team',
-                type: 'Team',
-                connectionType: 'MANY_TO_MANY',
-                reverseName: 'members',
-              },
-              {
-                name: 'supervisor',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'supervises',
-              },
-            ],
-            delete: true,
-          },
-          {
-            userPath: ['team', 'members'],
-            path: [
-              {
-                name: 'team',
-                type: 'Team',
-                connectionType: 'MANY_TO_MANY',
-                reverseName: 'members',
-              },
-              {
-                name: 'members',
-                type: 'User',
-                connectionType: 'MANY_TO_MANY',
-                reverseName: 'team',
-              },
-            ],
-            update: true,
-            permittedFields: ['evaluation'],
-          },
-        ],
-      },
+      ]),
     };
 
     it('anonymous can read', async () => {
@@ -469,89 +478,98 @@ describe('hasPermission', () => {
         relatedObject,
         relatedObject2,
       ]),
-      typePermissions: {
-        Thing: {
-          AUTHENTICATED: {
-            read: true,
-            create: true,
-            update: true,
-            delete: true,
+      typeRegistry: createTypeRegistry([
+        {
+          name: 'Thing',
+          permissions: {
+            type: {
+              AUTHENTICATED: {
+                read: true,
+                create: true,
+                update: true,
+                delete: true,
+              },
+            },
+            connection: [],
+            related: [
+              {
+                name: 'related1',
+                type: 'Related',
+                reverseName: 'related1',
+                connectionType: 'ONE_TO_MANY',
+              },
+              {
+                name: 'related2',
+                type: 'Related',
+                reverseName: 'related2',
+                connectionType: 'ONE_TO_MANY',
+              },
+              {
+                name: 'relatedMany',
+                type: 'Related',
+                reverseName: 'relatedMany',
+                connectionType: 'MANY_TO_MANY',
+              },
+            ],
           },
         },
-      },
-      connectionPermissions: {
-        Thing: [],
-        Related: [
-          {
-            userPath: ['permittedOne'],
-            path: [
+        {
+          name: 'Related',
+          type: {},
+          permissions: {
+            connection: [
               {
-                name: 'permittedOne',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'permittedOneOf',
+                userPath: ['permittedOne'],
+                path: [
+                  {
+                    name: 'permittedOne',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'permittedOneOf',
+                  },
+                ],
+                update: true,
+                permittedFields: ['related1', 'relatedMany'],
+              },
+              {
+                userPath: ['permittedAll'],
+                path: [
+                  {
+                    name: 'permittedAll',
+                    type: 'User',
+                    connectionType: 'ONE_TO_MANY',
+                    reverseName: 'permittedAllOf',
+                  },
+                ],
+                update: true,
+                permittedFields: ['related1', 'related2', 'relatedMany'],
               },
             ],
-            update: true,
-            permittedFields: ['related1', 'relatedMany'],
-          },
-          {
-            userPath: ['permittedAll'],
-            path: [
-              {
-                name: 'permittedAll',
-                type: 'User',
-                connectionType: 'ONE_TO_MANY',
-                reverseName: 'permittedAllOf',
-              },
+            related: [
+              [
+                {
+                  name: 'related1',
+                  type: 'Thing',
+                  reverseName: 'related1',
+                  connectionType: 'MANY_TO_ONE',
+                },
+                {
+                  name: 'related2',
+                  type: 'Thing',
+                  reverseName: 'related2',
+                  connectionType: 'MANY_TO_ONE',
+                },
+                {
+                  name: 'relatedMany',
+                  type: 'Thing',
+                  reverseName: 'relatedMany',
+                  connectionType: 'MANY_TO_MANY',
+                },
+              ],
             ],
-            update: true,
-            permittedFields: ['related1', 'related2', 'relatedMany'],
           },
-        ],
-      },
-      relatedPermissions: {
-        Thing: [
-          {
-            name: 'related1',
-            type: 'Related',
-            reverseName: 'related1',
-            connectionType: 'ONE_TO_MANY',
-          },
-          {
-            name: 'related2',
-            type: 'Related',
-            reverseName: 'related2',
-            connectionType: 'ONE_TO_MANY',
-          },
-          {
-            name: 'relatedMany',
-            type: 'Related',
-            reverseName: 'relatedMany',
-            connectionType: 'MANY_TO_MANY',
-          },
-        ],
-        Related: [
-          {
-            name: 'related1',
-            type: 'Thing',
-            reverseName: 'related1',
-            connectionType: 'MANY_TO_ONE',
-          },
-          {
-            name: 'related2',
-            type: 'Thing',
-            reverseName: 'related2',
-            connectionType: 'MANY_TO_ONE',
-          },
-          {
-            name: 'relatedMany',
-            type: 'Thing',
-            reverseName: 'relatedMany',
-            connectionType: 'MANY_TO_MANY',
-          },
-        ],
-      },
+        },
+      ]),
     };
 
     async function assertWithAllCredentials(

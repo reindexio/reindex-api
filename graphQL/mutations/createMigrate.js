@@ -15,9 +15,11 @@ import checkPermission from '../permissions/checkPermission';
 import clientMutationIdField from '../utilities/clientMutationIdField';
 import { trackEvent } from '../../server/IntercomClient';
 
-export default function createMigrate(typeSets, interfaces) {
-  const ReindexTypeSet = typeSets.ReindexType;
-  const ReindexMigrationCommandSet = typeSets.ReindexMigrationCommand;
+export default function createMigrate(typeRegistry) {
+  const ReindexTypeSet = typeRegistry.getTypeSet('ReindexType');
+  const ReindexMigrationCommandSet = typeRegistry.getTypeSet(
+    'ReindexMigrationCommand'
+  );
 
   const payload = new GraphQLObjectType({
     name: 'ReindexMigrationPayload',
@@ -37,11 +39,10 @@ export default function createMigrate(typeSets, interfaces) {
 
   const ReindexTypeInputObject = new GraphQLInputObjectType({
     name: 'ReindexTypeInput',
-    fields: createInputObjectFields(
+    fields: () => createInputObjectFields(
       ReindexTypeSet.getInputObjectFields(),
       false,
-      (name) => typeSets[name],
-      interfaces
+      typeRegistry
     ),
   });
 
@@ -99,7 +100,7 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
         context,
       );
 
-      const errors = validateSchema({ types: input.types }, interfaces, [
+      const errors = validateSchema({ types: input.types }, typeRegistry, [
         'User',
       ]);
 
@@ -115,7 +116,8 @@ This mutation is used by \`reindex-cli\` to perform \`schema-push\`.
         // XXX(freiksenet, 2015-09-22): Can be fixed when graphql is updated
         throw new UserError(errors.join('\n'));
       } else {
-        const commands = buildSchemaMigration(context.types, input.types);
+        const types = await db.getTypes();
+        const commands = buildSchemaMigration(types, input.types);
         const isDestructive = commands.some((command) => command.isDestructive);
 
         if (input.dryRun || (isDestructive && !input.force)) {

@@ -6,8 +6,8 @@ import ReindexID from '../builtins/ReindexID';
 import checkPermission from '../permissions/checkPermission';
 import { getUniqueFieldQueryName } from '../derivedNames';
 
-export default function createGetByField({ type }, interfaces) {
-  return extractUniqueFields(type, interfaces).map(({
+export default function createGetByField({ type }, typeRegistry) {
+  return extractUniqueFields(type, typeRegistry).map(({
     name: fieldName,
     type: fieldType,
     prefix,
@@ -35,7 +35,6 @@ export default function createGetByField({ type }, interfaces) {
           type.name,
           nameChain,
           value,
-          context.indexes[type.name],
         );
         await checkPermission(type.name, 'read', {}, result, context);
         return result;
@@ -44,15 +43,16 @@ export default function createGetByField({ type }, interfaces) {
   });
 }
 
-function extractUniqueFields(type, interfaces, prefix = []) {
+function extractUniqueFields(type, typeRegistry, prefix = []) {
+  const node = typeRegistry.getInterface('Node');
   return chain(type.getFields())
     .map((field) => {
       const fieldType = field.type.ofType || field.type;
       if (fieldType instanceof GraphQLObjectType &&
-          !fieldType.getInterfaces().includes(interfaces.Node)) {
+          !fieldType.getInterfaces().includes(node)) {
         return extractUniqueFields(
           fieldType,
-          interfaces,
+          typeRegistry,
           prefix.concat([field.name]
         ));
       } else if (field.metadata && field.metadata.unique) {

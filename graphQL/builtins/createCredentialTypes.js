@@ -247,24 +247,24 @@ export default function createCredentialTypes() {
     },
   });
 
-  return {
-    ReindexCredentialCollection: new TypeSet({
+  return [
+    new TypeSet({
       type: ReindexCredentialCollection,
     }),
-    ReindexAuth0Credential: new TypeSet({
+    new TypeSet({
       type: ReindexAuth0Credential,
     }),
-    ReindexFacebookCredential: new TypeSet({
+    new TypeSet({
       type: ReindexFacebookCredential,
     }),
-    ReindexGithubCredential: new TypeSet({
+    new TypeSet({
       type: ReindexGithubCredential,
     }),
-    ReindexGoogleCredential: new TypeSet({
+    new TypeSet({
       type: ReindexGoogleCredential,
     }),
-    ReindexTwitterCredential: new TypeSet({
+    new TypeSet({
       type: ReindexTwitterCredential,
     }),
-  };
+  ];
 }

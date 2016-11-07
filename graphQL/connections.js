@@ -46,11 +46,9 @@ Edges are elements of \`edges\` list of Connections.
     },
   });
 
-  return {
-    edge,
-    connection: new GraphQLObjectType({
-      name: getConnectionTypeName(type.name),
-      description:
+  const connection = new GraphQLObjectType({
+    name: getConnectionTypeName(type.name),
+    description:
 `This is a generated Connection for ${type.name}.
 
 Connection is a pattern from Relay.
@@ -64,47 +62,51 @@ type.
 * [Relay docs: Connections
 ](https://facebook.github.io/relay/docs/graphql-connections.html#content)
 `,
-      fields: {
-        count: {
-          name: 'count',
-          description:
+    fields: {
+      count: {
+        name: 'count',
+        description:
 `The total number of elements in the connection.
 `,
-          type: GraphQLInt,
-          resolve({ query }, args, { db }) {
-            return db.getCount(query);
-          },
+        type: GraphQLInt,
+        resolve({ query }, args, { db }) {
+          return db.getCount(query);
         },
-        nodes: {
-          name: 'nodes',
-          description:
+      },
+      nodes: {
+        name: 'nodes',
+        description:
 `A plain list of ${type.name} objects without the ${edge.name} wrapper object.`,
-          type: new GraphQLList(type),
-          resolve({ paginatedQuery }, args, { db }) {
-            return db.getNodes(paginatedQuery);
-          },
+        type: new GraphQLList(type),
+        resolve({ paginatedQuery }, args, { db }) {
+          return db.getNodes(paginatedQuery);
         },
-        edges: {
-          name: 'edges',
-          description: 'A list of edges included in the connection.',
-          type: new GraphQLList(edge),
-          resolve({ paginatedQuery }, args, { db }) {
-            return db.getEdges(paginatedQuery);
-          },
+      },
+      edges: {
+        name: 'edges',
+        description: 'A list of edges included in the connection.',
+        type: new GraphQLList(edge),
+        resolve({ paginatedQuery }, args, { db }) {
+          return db.getEdges(paginatedQuery);
         },
-        pageInfo: {
-          name: 'pageInfo',
-          description:
+      },
+      pageInfo: {
+        name: 'pageInfo',
+        description:
 `Information about if there are any more elements before or after the current
 slice.
 `,
-          type: new GraphQLNonNull(PageInfo),
-          resolve({ pageInfo }, args, { db }) {
-            return db.getPageInfo(pageInfo);
-          },
+        type: new GraphQLNonNull(PageInfo),
+        resolve({ pageInfo }, args, { db }) {
+          return db.getPageInfo(pageInfo);
         },
       },
-    }),
+    },
+  });
+
+  return {
+    edge,
+    connection,
   };
 }
 
@@ -120,8 +122,8 @@ export const PageInfo = new GraphQLObjectType({
   },
 });
 
-export function createConnectionArguments(typeName, getTypeSet) {
-  const typeSet = getTypeSet(typeName);
+export function createConnectionArguments(typeName, typeRegistry) {
+  const typeSet = typeRegistry.getTypeSet(typeName);
   const args = {
     first: {
       name: 'first',
@@ -177,9 +179,10 @@ async function checkConnectionPermissions(type, reverseName, parent, context) {
   let object = {
     [reverseName]: parent.id,
   };
-  const typeData = context.typeInfoByName[type];
-  if (typeData &&
-      typeData.fields[reverseName].connectionType === 'MANY_TO_MANY') {
+
+  const connectionType = context.typeRegistry.getTypeSet(type)
+    .connectionTypes[reverseName];
+  if (connectionType === 'MANY_TO_MANY') {
     object = {
       [reverseName]: [parent.id],
     };
@@ -191,7 +194,7 @@ export function createConnectionFieldResolve(
   ofType,
   reverseName,
   defaultOrdering,
-  getTypeSet
+  typeRegistry
 ) {
   return async (parent, args, context) => {
     await checkConnectionPermissions(ofType, reverseName, parent, context);
@@ -202,7 +205,7 @@ export function createConnectionFieldResolve(
       };
     }
 
-    const argFilters = processFilters(getTypeSet(ofType), args);
+    const argFilters = processFilters(typeRegistry.getTypeSet(ofType), args);
     const filterName = `${reverseName}.value`;
     const filters = [
       ...argFilters,
