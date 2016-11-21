@@ -6,7 +6,6 @@ async function main() {
   const table = new CliTable({
     head: ['ID', 'Hostname', 'DB Name', 'Cluster'],
   });
-  console.log(apps);
   apps.forEach((app) =>
     table.push([
       app.id || '',
