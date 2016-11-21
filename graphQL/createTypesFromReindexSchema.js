@@ -21,10 +21,7 @@ export default function createTypesFromReindexSchema(typeRegistry, types) {
       return new TypeSet({
         type,
         pluralName: typeMetadata.pluralName,
-        orderableFields: chain(typeMetadata.fields)
-          .filter((field) => field.orderable)
-          .map((field) => field.name)
-          .value(),
+        orderableFields: getOrderableFields(typeMetadata),
         filterableFields: getFilterableFields(types, typeMetadata),
         permissions: typeMetadata.permissions,
       });
@@ -107,6 +104,17 @@ function createField(field, typeRegistry) {
   };
 }
 
+function getOrderableFields(type) {
+  return chain(type.fields)
+    .filter((field) =>
+      field.orderable ||
+      (
+        field.name === 'id' && type.interfaces.includes('Node')
+      )
+    )
+    .map((field) => field.name)
+    .value();
+}
 
 function getFilterableFields(types, type) {
   return chain(type.fields)

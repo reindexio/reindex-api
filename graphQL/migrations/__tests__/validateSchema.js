@@ -118,7 +118,21 @@ const invalidSchemas = {
       ],
     }),
   ],
-  'id field not in node': [
+  'id field not orderable': [
+    type('T', {
+      interfaces: ['Node'],
+      fields: [
+        {
+          type: 'ID',
+          name: 'id',
+          nonNull: true,
+          unique: true,
+          orderable: false,
+        },
+      ],
+    }),
+  ],
+  'id field in a non-Node type': [
     type('T', {
       interfaces: [],
       fields: [field('id', {
@@ -126,7 +140,7 @@ const invalidSchemas = {
       })],
     }),
   ],
-  'ID field not in node': [
+  'ID field in a non-Node type': [
     type('T', {
       interfaces: [],
       fields: [field('foo', {
@@ -134,7 +148,7 @@ const invalidSchemas = {
       })],
     }),
   ],
-  'ID field not in id': [
+  'ID field named something else than "id"': [
     type('T', {
       interfaces: ['Node'],
       fields: [field('foo', {
