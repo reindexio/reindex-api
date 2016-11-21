@@ -1,6 +1,6 @@
 import invariantFunction from 'invariant';
 import {
-  chain, groupBy, isEqual, isPlainObject, isString, uniq, isArray,
+  chain, groupBy, isEqual, isPlainObject, isString, uniq, isArray, pick,
 } from 'lodash';
 
 import getInterfaceDefaultFields
@@ -182,8 +182,12 @@ function validateFields(type, invariant) {
   // must have all fields of interfaces
   type.interfaces.forEach((interfaceName) => {
     for (const defaultField of InterfaceDefaultFields[interfaceName] || []) {
+      const implementedField = type.fields.find(({ name }) =>
+        name === defaultField.name
+      );
+      const requiredProperties = Object.keys(defaultField);
       invariant(
-        type.fields.some((field) => isEqual(field, defaultField)),
+        isEqual(defaultField, pick(implementedField, requiredProperties)),
         '%s.%s: Expected %s%sfield of type %s from interface %s',
         type.name, defaultField.name,
         defaultField.nonNull ? 'non-null ' : '',
@@ -230,7 +234,7 @@ function validateField(type, field, typesByName, invariant) {
   );
 
   invariant(
-    (type.interfaces.includes('Node') && (
+    (isNodeType(type) && (
       (field.type === 'ID' && field.name === 'id') ||
       field.type !== 'ID'
     )) || (field.type !== 'ID' && field.name !== 'id'),
@@ -277,19 +281,28 @@ function validateField(type, field, typesByName, invariant) {
     type.name, field.name, field.type
   );
 
-  // only scalar sortables
+  // only scalar orderables
   invariant(
     !field.orderable || field.type in ScalarTypes,
     '%s.%s: Expected orderable field to have a scalar type. Found: %s.',
     type.name, field.name, field.type
   );
 
+  // Node id must be orderable
+  if (isNodeType(type) && field.name === 'id') {
+    invariant(
+      field.orderable == null || field.orderable === true,
+      '%s.%s: Expected the field `id` of a Node type to be orderable.',
+      type.name, field.name,
+    );
+  }
+
   // only scalar filterables
   invariant(
     !field.filterable || field.type in ScalarTypes || (
       field.type === 'List' && field.ofType in ScalarTypes
     ),
-    '%s.%s: Expected orderable field to have a scalar or List of scalars ' +
+    '%s.%s: Expected filterable field to have a scalar or List of scalars ' +
     'type. Found: %s.',
     type.name, field.name, field.type
   );
