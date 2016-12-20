@@ -17,6 +17,16 @@ import deleteApp from '../../../apps/deleteApp';
 import getDB from '../../getDB';
 import { addTransform } from '../queries/queryUtils';
 import DatabaseTypes from '../../DatabaseTypes';
+import TypeRegistry from '../../../graphQL/TypeRegistry';
+import TypeSet from '../../../graphQL/TypeSet';
+
+function createTypeRegistry(typeSpecs) {
+  const typeRegistry = new TypeRegistry();
+  for (const spec of typeSpecs) {
+    typeRegistry.registerTypeSet(new TypeSet(spec));
+  }
+  return typeRegistry;
+}
 
 if (!process.env.DATABASE_TYPE ||
     process.env.DATABASE_TYPE === DatabaseTypes.MongoDB) {
@@ -27,12 +37,13 @@ if (!process.env.DATABASE_TYPE ||
     let user;
     const microposts = [];
     let micropostIDs;
+    let context;
 
     before(async () => {
       await createTestApp(hostname);
       db = await getDB(hostname);
       runQuery = makeRunQuery(db);
-      await migrate(runQuery, augmentSchema(TEST_SCHEMA, [
+      const schema = augmentSchema(TEST_SCHEMA, [
         {
           name: 'Contact',
           kind: 'OBJECT',
@@ -54,7 +65,11 @@ if (!process.env.DATABASE_TYPE ||
             },
           ],
         },
-      ]));
+      ]);
+      context = {
+        typeRegistry: createTypeRegistry(schema),
+      };
+      await migrate(runQuery, schema);
 
       user = await createFixture(runQuery, 'User', {
         handle: 'user',
@@ -92,7 +107,7 @@ if (!process.env.DATABASE_TYPE ||
         paginatedQuery,
         query,
         pageInfo,
-      } = await db.getConnectionQueries('Micropost', filter, args);
+      } = await db.getConnectionQueries('Micropost', filter, args, context);
       const result = {
         paginated: await addTransform(
           paginatedQuery.getCursor(),
@@ -354,7 +369,12 @@ if (!process.env.DATABASE_TYPE ||
 
     describe('indexes', () => {
       it('uses index for unfiltered query', async () => {
-        const { paginatedQuery } = await db.getConnectionQueries('Micropost');
+        const { paginatedQuery } = await db.getConnectionQueries(
+          'Micropost',
+          [],
+          {},
+          context,
+        );
 
         const explain = await paginatedQuery.getCursor().explain();
         assert.equal(
@@ -409,7 +429,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -427,6 +448,11 @@ if (!process.env.DATABASE_TYPE ||
               field: 'name',
               order: 'ASC',
             },
+          },
+          {
+            typeRegistry: createTypeRegistry([
+              { name: 'ReindexType' },
+            ]),
           }
         );
 
@@ -451,7 +477,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -473,7 +500,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -506,7 +534,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -542,7 +571,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
 
@@ -582,7 +612,8 @@ if (!process.env.DATABASE_TYPE ||
               field: 'createdAt',
               order: 'ASC',
             },
-          }
+          },
+          context,
         );
 
 
@@ -610,7 +641,8 @@ if (!process.env.DATABASE_TYPE ||
               value: new Date('2015-01-10'),
             },
           ],
-          {}
+          {},
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -635,6 +667,7 @@ if (!process.env.DATABASE_TYPE ||
               order: 'ASC',
             },
           },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
@@ -667,6 +700,7 @@ if (!process.env.DATABASE_TYPE ||
               },
               first: 5,
             },
+            context,
           );
 
           const explain = await paginatedQuery.getCursor().explain();
@@ -698,6 +732,7 @@ if (!process.env.DATABASE_TYPE ||
               order: 'ASC',
             },
           },
+          context,
         );
 
         const explain = await paginatedQuery.getCursor().explain();
