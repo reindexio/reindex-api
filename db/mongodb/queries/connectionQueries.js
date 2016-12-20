@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { ObjectId } from 'mongodb';
 
 import { UserError } from '../../../graphQL/UserError';
@@ -8,6 +9,7 @@ export function getConnectionQueries(
   type,
   filter = [],
   args = {},
+  context,
 ) {
   if (args.before && !ObjectId.isValid(args.before.value)) {
     throw new UserError('Invalid `before` cursor');
@@ -17,11 +19,16 @@ export function getConnectionQueries(
     throw new UserError('Invalid `after` cursor');
   }
 
+  const unsortableKeys = new Set(
+    context.typeRegistry.getTypeSet(type).getFilters().map(({ name }) => name)
+  );
+
   return getPaginatedQuery(
     db,
     type,
     filtersToMongo(filter),
-    args
+    unsortableKeys,
+    args,
   );
 }
 
@@ -55,7 +62,7 @@ class Query {
   }
 }
 
-async function getPaginatedQuery(db, type, filter, {
+async function getPaginatedQuery(db, type, filter, unsortableKeys, {
   orderBy = {},
   before,
   after,
@@ -72,9 +79,9 @@ async function getPaginatedQuery(db, type, filter, {
   const order = orderBy.order === 'DESC' ? -1 : 1;
 
   if (field === '_id') {
-    query = limitQueryWithId(collection, filter, order, before, after);
+    query = limitQueryWithId(collection, filter, order, before, after, unsortableKeys);
   } else {
-    query = await limitQuery(collection, filter, field, order, before, after);
+    query = await limitQuery(collection, filter, field, order, before, after, unsortableKeys);
   }
 
   const pageInfo = await applyPagination(query, first, last);
@@ -103,7 +110,7 @@ async function getPaginatedQuery(db, type, filter, {
 // There are many ways to do it mongo, several experiments shown that it's best
 // to have all those three cases on top level in an $or; in this case we have
 // at most three index hits, with no non-index filtering or sorting.
-async function limitQuery(collection, filter, field, order, before, after) {
+async function limitQuery(collection, filter, field, order, before, after, unsortableKeys) {
   let finalFilter = filter;
   const limits = {};
   const ors = [];
@@ -157,10 +164,12 @@ async function limitQuery(collection, filter, field, order, before, after) {
     };
   }
 
-  return filterAndSortWithIndex(collection, finalFilter, filter, field, order);
+  const sort = getSort(filter, field, order, unsortableKeys);
+
+  return collection.find(finalFilter).sort(sort);
 }
 
-function limitQueryWithId(collection, filter, order, before, after) {
+function limitQueryWithId(collection, filter, order, before, after, unsortableKeys) {
   if (before || after) {
     filter = {
       ...filter,
@@ -178,21 +187,26 @@ function limitQueryWithId(collection, filter, order, before, after) {
     filter._id[op] = ObjectId(after.value);
   }
 
-  return filterAndSortWithIndex(collection, filter, filter, '_id', order);
+  const sort = getSort(filter, '_id', order, unsortableKeys);
+
+  return collection.find(filter).sort(sort);
 }
 
-// Filter and sort with all filter keys to apply index correctly
-function filterAndSortWithIndex(collection, filter, cleanFilter, field, order) {
+function getSort(filter, field, order, unsortableKeys) {
   const allFilterKeys = [
-    ...Object.keys(cleanFilter).filter((key) => key !== '$and'),
-    ...(cleanFilter.$and || []).map((part) => Object.keys(part)[0]),
+    ...Object.keys(filter).filter((key) => key !== '$and'),
+    ...(filter.$and || []).map((part) => Object.keys(part)[0]),
   ];
-
-  return collection.find(filter).sort([
-    ...allFilterKeys.map((key) => [key, order]),
+  const sort = [
+    ...allFilterKeys
+      .filter((key) => !unsortableKeys.has(key))
+      .map((key) => [key, order]),
     [field, order],
-    ...(field !== 'id' ? [['_id', order]] : []),
-  ]);
+  ];
+  if (field !== 'id') {
+    sort.push(['_id', order]);
+  }
+  return sort;
 }
 
 async function applyPagination(query, first, last) {
