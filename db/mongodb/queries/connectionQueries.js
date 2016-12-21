@@ -20,7 +20,11 @@ export function getConnectionQueries(
   }
 
   const unsortableKeys = new Set(
-    context.typeRegistry.getTypeSet(type).getFilters().map(({ name }) => name)
+    context.typeRegistry
+      .getTypeSet(type)
+      .getFilters()
+      .filter((field) => field.type === 'List')
+      .map((field) => field.name)
   );
 
   return getPaginatedQuery(
