@@ -1,5 +1,7 @@
 # reindex-api
 
+> **Note: This project is no longer maintained. The source code is released under the license specified in file LICENSE.**
+
 [![Circle CI](https://circleci.com/gh/reindexio/reindex-api.svg?style=svg&circle-token=080d24db0ad712462742bb77cd91a316c2267e46)](https://circleci.com/gh/reindexio/reindex-api)
 
 reindex-api is a multi-tenant, hosted GraphQL database solution. reindex-api converts a JSON based schema into a GraphQL API in addition to creating a database storage (MongoDB or RethinkDB) underneath. GraphQL API is fully Relay compatible and contains CRUD operations as entry points. Input is Relay-aware and declarative. Additionally, reindex-api provides Social Login with 5 providers (Auth0, Facebook, Google, Twitter and Github). Functionality of reindex-api can be extended by configuring hooks that call external web services. It also provides a rich permission system based on defining graph paths to the user type.
